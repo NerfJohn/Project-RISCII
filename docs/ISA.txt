@@ -1,0 +1,162 @@
+Project RISCII Simple ISA ("The x36")
+by John Eslinger
+================================================================================
+Table of Contents:
+	-> Instruction Set
+	-> Hardware-related Notes/Info
+	-> Software-related Notes/Info
+================================================================================
+Instruction Set:
+	AND: Bitwise AND
+	[1111][DST][SR1][000][SR2] *Register format
+	[1111][DST][SR1][1][5bImm] *5-bit, sign extended immediate format
+	================
+	ORR: Bitwise OR
+	[1110][DST][SR1][000][SR2] *Register format
+	[1110][DST][SR1][1][5bImm] *5-bit, sign extended immediate format
+	================
+	XOR: Bitwise XOR
+	[1011][DST][SR1][000][SR2] *Register format
+	[1011][DST][SR1][1][5bImm] *5-bit, sign extended immediate format
+	================
+	SHL: Shift Left (Logical) 
+	[1100][DST][SR1][000][SR2] *Register format
+	[1100][DST][SR1][10][4bIm] *4-bit immediate format
+	================
+	SHR: Shift Right (Configurable- logical or arithmetic)
+	[1101][DST][SR1][000][SR2] *Register format (SR2[4] decides shift type!)
+	[1101][DST][SR1][10][4bIm] *4-bit, logical immediate format
+	[1101][DST][SR1][11][4bIm] *4-bit, arithmetic immediate format
+	================
+	ADD: Arithmetic Addition
+	[1000][DST][SR1][000][SR2] *Register Format
+	[1000][DST][SR1][1][5bImm] *5-bit, sign extended immediate format
+	================
+	SUB: Arithmetic Subtraction (S2 - S1 = DST)
+	[1001][DST][SR1][000][SR2] *Register Format
+	[1001][DST][SR1][1][5bImm] *5-bit, sign extended immediate format
+	================
+	LBI: Load Byte Immediate
+	[1010][DST][0][8bImmVal] *Sign extend format
+	[1010][DST][1][8bImmVal] *Shift format (DST's lower byte becomes upper byte)
+	================
+	LDR: Load Base Register
+	[0100][DST][SR1][6bOfst] *Register, signed offset format (MEM[SR1 + ofst])
+	================
+	STR: Store Base Register
+	[0111][VAL][SR1][6bOfst] *Register, signed offset format (MEM[SR1 + ofst])
+	================
+	BRC: Conditional Branch
+	[0011][nzp][9bImmOfst] *PC, signed offset format (jump for one ALU match)
+						   *(nzp = negative, zero, positive ALU result)
+	================
+	JPR: Jump Base Register
+	[0101][000][SR1][6bOfst] *Register, signed offset format (PC = SR1 + ofst)
+	================
+	JAL: Jump and Link
+	[0010][LNK][9bImmOfst] *PC, signed offset format (Link to register LNK)
+	================
+	JLR: Jump and Link Register
+	[0110][LNK][SR1][6bOfst] *Register, signed offset format (PC = SR1 + ofst)
+							 *(Link to register LNK)
+	================
+	NOP: No operation
+	[0001][000000000000] *Command format
+	================
+	HLT: Halt operations
+	[0000][000000000000] *Command format
+
+================================================================================
+Hardware-related Notes/Info:
+	General Instruction Formats:
+		-> D-type: [opcd][DST][SR1][i][SR2Im]
+		-> I-type: [opcd][ARG][9bImmOfst]
+		-> O-type: [opcd][REG][SR1][offset]
+		-> C-type: [opcd][000000000000]
+	
+	Register File Connections:
+		-> SR1 is:
+			[11:9] for opcode == 4'bX010 (for LBI's shift format)
+			[8:6] otherwise
+		-> SR2 is:
+			[11:9] for opcode == 4'b0XXX (for STR's write format)
+			[2:0] otherwise
+		-> DST is [11:9] for all cases
+	
+	Control Signal Designs:
+		-> ALU opcode is:
+			[11:9] for opcode == 4'b0011 (ie BRC opcode)
+			[14:12] for opcode == 4'b1XXX
+			3'b000 otherwise
+		-> Use immediate if:
+			(~[15] | [5]) OR
+			(opcode == 4'bX010) (ie LBI/JAL opcodes)
+		-> Immediate length is:
+			6-bit for opcode == 4'b01XX
+			9-bit for opcode == 4'b00XX or 4'bX010 (ie LBI/JAL opcode)
+			5-bit otherwise
+		-> When writing to a register, use:
+			ALU result for opcode == 4'b1XXX
+			MEM result for opcode == 4'b01XX and ~([13] ^ [12]) (ie enable MEM)
+			PC result otherwise
+		-> Do not write to the registers if:
+			(~[15] & [12]) OR
+			(opcode == 4'b0000) (ie HLT opcode/signal)
+		-> When jumping, use the ALU result if opcode == 4'bX1XX
+			(use PC+2+imm result otherwise)
+	
+	Resuable Signals:
+		-> BRC opcode is used to set ALU opcode and Allow Branch signal.
+		-> LBI opcode is used in multiple immediate/register file calculations.
+		-> Enabling memory also sets register based on MEM result
+		-> The halt signal and pcUseAluResult signal determine the PC value
+			(if not using alu result, uses pcUseImmResult unless halting)
+		-> SHR and LBI can use immediates to pass their "flags" to the ALU
+			(Both should have unique ALU paths- the ALU can handle flags)
+		
+================================================================================
+Software-related Notes/Info:
+	General Assembly Formats:
+		-> DR-format: FOO r3 r1 r2
+		-> DI-format: FOO r3 r1 0x5
+		-> RI-format: FOO r3 0x5
+		-> RF-format: FOO r3 -f 0x5
+		-> RL-format: FOO r3 .label
+		-> CF-format: FOO -f 0x5
+		-> CL-format: FOO -f .label
+		-> CC-format: FOO
+		(Labels used for short, PC-related jumps)
+	
+	Instruction/Assembly Mappings:
+		-> DR-format: AND, ORR, XOR, SHL, SHR, ADD, SUB
+		-> DI-format: AND, ORR, XOR, SHL, SHR, ADD, SUB, LDR, STR, JLR
+		-> RI-format: LBI, JPR, JAL
+		-> RF-format: LBI
+		-> RL-format: JAL
+		-> CF-format: BRC
+		-> CL-format: BRC
+		-> CC-format: NOP, HLT 
+	
+	Notable Included Operations:
+		-> SHR's dual shift type costs:
+			Shift by immediate can be done in 1 instruction
+			Shift by register requires an extra instruction:
+				a) a preceeding AND by 0x0f for a logical shift
+				b) a preceeding ORR by 0x10 for an arithmetic shift
+				(This will dirty the original register value)
+		-> LBI:
+			Signed bytes can be done in 1 instructions
+			2-byte values require an extra instruction:
+				1) Set intended upper byte as lower byte
+				2) Shift set lower byte, shifting the first set byte up
+		-> JAL/JLR:
+			Both instructions allow for specifying the link register
+				(Usually hardcoded; win-win feature of this ISA)
+	
+	Missing Operation Substitutions:
+		-> Bitwise NOT: XOR using sign extended 0x1f immediate
+		-> Arithmetic invert: SUB using 0x0 immediate, 0 - S1= -S1
+		-> Load PC address: JAL by 0x0, jumps to PC+2+0 = PC+2 while linking
+		-> Jump by PC offset: BRC with all flags set, always jumps
+
+================================================================================
