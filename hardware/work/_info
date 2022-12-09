@@ -1,0 +1,47 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\Users\John\OneDrive\Documents\ProjectRISCII\risciiCheckout\Project-RISCII\hardware
+vsampleCode
+!i10b 1
+Z1 !s100 oEAdBia67PSdMU<QAVW<e1
+Z2 IkMbSOMSo?@Bk26cNOU;Va2
+Z3 VFN>RfU9T:ab[<lzjnHj3Z3
+Z4 dC:\Users\John\OneDrive\Documents\ProjectRISCII\risciiCheckout\Project-RISCII\hardware
+Z5 w1670544764
+Z6 8./proc/sampleCode.v
+Z7 F./proc/sampleCode.v
+L0 1
+Z8 OV;L;10.1d;51
+r1
+!s85 0
+31
+Z9 !s108 1670545990.517000
+Z10 !s107 ./scripts/sim_top.sv|./proc/sampleCode.v|
+Z11 !s90 ./proc/sampleCode.v|./scripts/sim_top.sv|
+!s101 -O0
+o-O0
+Z12 nsample@code
+vsim_top
+Z13 DXx6 sv_std 3 std 0 22 F[19LRNL:5;XmIFh[XOPn1
+!i10b 1
+!s100 ZWz@j<@6oV4?azN2=FfJg2
+IdYTOKizUDHnP[RYD9aG_`0
+Z14 Vf<W0:b>]7hbYGQ4ZUkMeB1
+Z15 !s105 sim_top_sv_unit
+S1
+R4
+w1670545983
+Z16 8./scripts/sim_top.sv
+Z17 F./scripts/sim_top.sv
+L0 1
+R8
+r1
+!s85 0
+31
+R9
+R10
+R11
+!s101 -O0
+o-O0
