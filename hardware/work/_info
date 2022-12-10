@@ -6,107 +6,107 @@ Z0 dC:\Users\John\OneDrive\Documents\ProjectRISCII\risciiCheckout\Project-RISCII
 vclk_rst
 Z1 DXx6 sv_std 3 std 0 22 F[19LRNL:5;XmIFh[XOPn1
 !i10b 1
-!s100 ECUe8FmJz5RlDm:NVg9:L2
-IPU3XP;==2z=1:6elfII]B0
-VUEa5>`7J;chDf_ChljRnC1
-!s105 clk_rst_sv_unit
+Z2 !s100 ECUe8FmJz5RlDm:NVg9:L2
+Z3 IPU3XP;==2z=1:6elfII]B0
+Z4 VUEa5>`7J;chDf_ChljRnC1
+Z5 !s105 clk_rst_sv_unit
 S1
-Z2 dC:\Users\John\OneDrive\Documents\ProjectRISCII\risciiCheckout\Project-RISCII\hardware
-w1670598359
-8./scripts/clk_rst.sv
-F./scripts/clk_rst.sv
+Z6 dC:\Users\John\OneDrive\Documents\ProjectRISCII\risciiCheckout\Project-RISCII\hardware
+Z7 w1670598359
+Z8 8./scripts/clk_rst.sv
+Z9 F./scripts/clk_rst.sv
 L0 1
-Z3 OV;L;10.1d;51
+Z10 OV;L;10.1d;51
 r1
 !s85 0
 31
-Z4 !s108 1670612348.570000
-Z5 !s107 ./scripts/sim_top.sv|./scripts/mem_64k.sv|./scripts/dut_soc.sv|./scripts/clk_rst.sv|./proc/proc.v|
-Z6 !s90 ./proc/proc.v|./scripts/clk_rst.sv|./scripts/dut_soc.sv|./scripts/mem_64k.sv|./scripts/sim_top.sv|
+Z11 !s108 1670644966.989000
+Z12 !s107 ./scripts/sim_top.sv|./scripts/mem_64k.sv|./scripts/dut_soc.sv|./scripts/clk_rst.sv|./proc/proc.v|
+Z13 !s90 ./proc/proc.v|./scripts/clk_rst.sv|./scripts/dut_soc.sv|./scripts/mem_64k.sv|./scripts/sim_top.sv|
 !s101 -O0
 o-O0
 vdut_soc
 R1
 !i10b 1
-!s100 2`C@z0NHE6FShLP@XbWMk2
-I5MZ6fKLdh6ETo]AKS2OQI0
-V:5jk[Lk?QInNfcHLZnR>@3
-!s105 dut_soc_sv_unit
+Z14 !s100 2`C@z0NHE6FShLP@XbWMk2
+Z15 I5MZ6fKLdh6ETo]AKS2OQI0
+Z16 V:5jk[Lk?QInNfcHLZnR>@3
+Z17 !s105 dut_soc_sv_unit
 S1
-R2
-w1670612083
-8./scripts/dut_soc.sv
-F./scripts/dut_soc.sv
+R6
+Z18 w1670612083
+Z19 8./scripts/dut_soc.sv
+Z20 F./scripts/dut_soc.sv
 L0 1
-R3
+R10
 r1
 !s85 0
 31
-R4
-R5
-R6
+R11
+R12
+R13
 !s101 -O0
 o-O0
 vmem_64k
 R1
 !i10b 1
-!s100 JI^WTl@_E1<lUED@50hTi2
-InJV;inAQ>Sh7GlCm;KG1C1
-V3jaI?la:2nl[j^RAnaF^A2
-!s105 mem_64k_sv_unit
+Z21 !s100 JI^WTl@_E1<lUED@50hTi2
+Z22 InJV;inAQ>Sh7GlCm;KG1C1
+Z23 V3jaI?la:2nl[j^RAnaF^A2
+Z24 !s105 mem_64k_sv_unit
 S1
-R2
-w1670599783
-8./scripts/mem_64k.sv
-F./scripts/mem_64k.sv
+R6
+Z25 w1670599783
+Z26 8./scripts/mem_64k.sv
+Z27 F./scripts/mem_64k.sv
 L0 1
-R3
+R10
 r1
 !s85 0
 31
-R4
-R5
-R6
+R11
+R12
+R13
 !s101 -O0
 o-O0
 vproc
 !i10b 1
 !s100 `YK]0:JbXRYB9[_g:a]Mh3
 I5Yc@;PE<c8Y1;STXAPI:;0
-V]24Aj1<CSgQH_iB9^78T=3
-R2
-w1670611699
-8./proc/proc.v
-F./proc/proc.v
+Z28 V]24Aj1<CSgQH_iB9^78T=3
+R6
+w1670644963
+Z29 8./proc/proc.v
+Z30 F./proc/proc.v
 L0 1
-R3
+R10
 r1
 !s85 0
 31
-R4
-R5
-R6
+R11
+R12
+R13
 !s101 -O0
 o-O0
 vsim_top
 R1
 !i10b 1
-!s100 cn_zUWOOUN2ejfS;fKIE23
-IcOQE8eIeTFDO2;5Zn`KB70
-Vf<W0:b>]7hbYGQ4ZUkMeB1
-!s105 sim_top_sv_unit
+Z31 !s100 [dd]E6D9h6ZlG8T6z1Uja2
+Z32 I<m4DdAiSCT9a9d2^Hi9Aj3
+Z33 Vf<W0:b>]7hbYGQ4ZUkMeB1
+Z34 !s105 sim_top_sv_unit
 S1
-R2
-w1670612346
-8./scripts/sim_top.sv
-F./scripts/sim_top.sv
+R6
+Z35 w1670631904
+Z36 8./scripts/sim_top.sv
+Z37 F./scripts/sim_top.sv
 L0 1
-R3
+R10
 r1
 !s85 0
 31
-R4
-R5
-R6
+R11
+R12
+R13
 !s101 -O0
 o-O0

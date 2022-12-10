@@ -74,7 +74,7 @@ always @(posedge clk) begin
 	if (haltDetected && ((clkCnt - clkAtHalt) == 5)) begin
 		// Write the output file.
 		outFile = $fopen("sim_output");
-		$fdisplay(outFile, "%d %d", wordAtHalt, clkCnt);
+		$fdisplay(outFile, "%d\n%d", wordAtHalt, clkCnt);
 		$fclose(outFile);
 		
 		// Exit the simulation (successfully- file created).
