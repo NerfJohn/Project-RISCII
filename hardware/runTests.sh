@@ -21,6 +21,9 @@ echo Running tests from "$PWD"...
 TESTS_RUN=0
 TESTS_PASSED=0
 
+# Keep track of time taken to run tests.
+TIME_START=$(date +%s)
+
 # Iterate through the tests.
 for TEST in $TESTS;
 do
@@ -64,4 +67,5 @@ do
 done
 
 # Report result/end of tests.
-echo Finished tests. $TESTS_PASSED / $TESTS_RUN passed.
+DURATION=$(($(date +%s) - $TIME_START))
+echo Finished tests in $DURATION seconds. $TESTS_PASSED / $TESTS_RUN passed.
