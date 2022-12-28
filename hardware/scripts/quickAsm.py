@@ -78,6 +78,7 @@ if __name__ == "__main__":
         
         # Match the string (brute force- simple and decently effective).
         if (re.search(r';.*', line)): continue
+        elif (re.search(r';.*', line)): continue
         elif (re.search(r'(NOP|HLT)', line)): binArray.append(op(line[0:3]) + '000000000000')
         elif (re.search(r'BRC -[nzp\.]* -?[0-9]+', line)): binArray.append(op(line[0:3]) + flg(line[5:8]) + imm(line[9:], 9))
         elif (re.search(r'LBI r[0-7] -?[0-9]+', line)): binArray.append(op(line[0:3]) + reg(line[5]) + '0' + imm(line[7:], 8))
@@ -90,6 +91,8 @@ if __name__ == "__main__":
         # (Handle pure data operations)
         elif (re.search(r'[A-Z]{3} r[0-7] r[0-7] r[0-7]', line)): binArray.append(op(line[0:3])+ reg(line[5]) + reg(line[8]) + '000' + reg(line[11]))
         elif (re.search(r'[A-Z]{3} r[0-7] r[0-7] -?[0-9]+', line)): binArray.append(op(line[0:3]) + reg(line[5]) + reg(line[8]) + '1' + imm(line[10:], 5))
+        elif (re.search(r'\.blank [0-9]+', line)):
+            for i in range(int(line[7:])): binArray.append('0000000000000000')
         else:
             print("Unrecognized format: %s"%line)
             sys.exit(1)
