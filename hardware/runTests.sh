@@ -56,12 +56,12 @@ do
 		continue
 	fi
 	if [[ $(head -n 1 $TEST_OUT) -ne 1 ]]; then
-		echo FAILED! \($TEST\) Result was $(head -n 1 $TEST_OUT)...
+		echo FAILED! \($TEST\) Result was $(head -n 1 $TEST_OUT)... \(in $(head -n 2 $TEST_OUT | tail -n 1) cycles\)
 		continue
 	fi
 	
 	# Test passed!
-	echo passed! \($TEST\)
+	echo passed! \($TEST\) in $(head -n 2 $TEST_OUT | tail -n 1) cycles
 	TESTS_PASSED=$((TESTS_PASSED+1))
 	
 done

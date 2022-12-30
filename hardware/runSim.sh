@@ -22,6 +22,19 @@ fi
 # Get source files to check for update.
 SRC_FILES=$(find . -name "*.sv" -o -name "*.v")
 
+# Check/create the verilog library as needed.
+if [ ! -d "work" ]; then
+	echo Verilog/ModelSim library not detected- creating and compiling hardware...
+	vlib work
+	vlog $SRC_FILES
+	
+	# Exit if recompiling failed.
+	if [ $? -ne 0 ]; then
+		echo Failed to recompile! Exiting...
+		exit 1
+	fi
+fi
+
 # Re-compile if any files have been created/updated (DOESN'T DETECT DELETES)
 for ENTRY in $SRC_FILES;
 do
