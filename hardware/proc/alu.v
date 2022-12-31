@@ -23,7 +23,7 @@ assign rsltOr = src1 | src2;
 assign rsltXor = src1 ^ src2;
 
 // Shift Operations- barrel shifter.
-shifter_16b iSHIFT0 (.in(src1), .cnt(src2[4:0]), .op({op[0], ~op[0] | src2[4]}), .out(rsltShift));
+shifter_16b iSHIFT0 (.in(src1), .cnt(src2[3:0]), .op({op[0], ~op[0] | src2[4]}), .out(rsltShift));
 
 // Arithmetic Operations- adder.
 add_16b iADD0 (.src1(src1 ^ {16{op[0]}}), .src2(src2), .cin(op[0]), .sum(rsltAdder), .cout(/* NC */));

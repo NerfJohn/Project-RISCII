@@ -6,7 +6,7 @@ input clk, rstn;
 
 // I/Os.
 input D, en;
-output reg Q;
+output Q;
 
 // Intermediate wires.
 wire nextD;
