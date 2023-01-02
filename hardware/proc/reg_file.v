@@ -26,14 +26,14 @@ assign skipBypass1 = (raddr1[2] ^ waddr[2]) | (raddr1[1] ^ waddr[1]) | (raddr1[0
 assign skipBypass2 = (raddr2[2] ^ waddr[2]) | (raddr2[1] ^ waddr[1]) | (raddr2[0] ^ waddr[0]);
 
 // Decode the write address into the enable logic.
-assign en0 = ~waddr[2] & ~waddr[1] & ~waddr[0];
-assign en1 = ~waddr[2] & ~waddr[1] & waddr[0];
-assign en2 = ~waddr[2] & waddr[1] & ~waddr[0];
-assign en3 = ~waddr[2] & waddr[1] & waddr[0];
-assign en4 = waddr[2] & ~waddr[1] & ~waddr[0];
-assign en5 = waddr[2] & ~waddr[1] & waddr[0];
-assign en6 = waddr[2] & waddr[1] & ~waddr[0];
-assign en7 = waddr[2] & waddr[1] & waddr[0];
+assign en0 = wr & ~waddr[2] & ~waddr[1] & ~waddr[0];
+assign en1 = wr & ~waddr[2] & ~waddr[1] & waddr[0];
+assign en2 = wr & ~waddr[2] & waddr[1] & ~waddr[0];
+assign en3 = wr & ~waddr[2] & waddr[1] & waddr[0];
+assign en4 = wr & waddr[2] & ~waddr[1] & ~waddr[0];
+assign en5 = wr & waddr[2] & ~waddr[1] & waddr[0];
+assign en6 = wr & waddr[2] & waddr[1] & ~waddr[0];
+assign en7 = wr & waddr[2] & waddr[1] & waddr[0];
 
 // Determine the first read address data.
 mux4 iMUXES0[31:0] (.A(regQs[31:0]), .B(regQs[63:32]), .C(regQs[95:64]), .D(regQs[127:96]), .sel(raddr1[2:1]), .out(regStoredPair1));
