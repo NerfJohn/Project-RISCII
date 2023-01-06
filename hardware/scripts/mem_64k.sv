@@ -49,6 +49,9 @@ end
 
 // Main logical loop.
 always @(posedge clk) begin
+	// Ensure all signals are resolved before evaluating.
+	#1;
+
 	// Decrement "cycle counter".
 	if (curState >= 0)
 		curState = curState - 1;
@@ -61,8 +64,8 @@ always @(posedge clk) begin
 	// Finish request when appropriate.
 	if (curState == 0) begin
 		// Set output data.
-		for(i = 0; i < 8; i++)
-			outDataLogic = {coreMem[reqAddr+i],outDataLogic[63:8]};
+		for(i = 0; i < 4; i++)
+			outDataLogic = {coreMem[reqAddr+(2*i)],coreMem[reqAddr+(2*i)+1],outDataLogic[63:16]};
 		if (reqWasRd == 0) outDataLogic = 0;
 		
 		// Set flag signal.
@@ -80,14 +83,14 @@ always @(posedge clk) begin
 		
 		// Serve write (won't be seen anyway).
 		if (reqWasRd == 0) begin
-			coreMem[reqAddr+0] = inData[7:0];
-			coreMem[reqAddr+1] = inData[15:8];
-			coreMem[reqAddr+2] = inData[23:16];
-			coreMem[reqAddr+3] = inData[31:24];
-			coreMem[reqAddr+4] = inData[39:32];
-			coreMem[reqAddr+5] = inData[47:40];
-			coreMem[reqAddr+6] = inData[55:48];
-			coreMem[reqAddr+7] = inData[63:56];
+			coreMem[reqAddr+1] = inData[7:0];
+			coreMem[reqAddr+0] = inData[15:8];
+			coreMem[reqAddr+3] = inData[23:16];
+			coreMem[reqAddr+2] = inData[31:24];
+			coreMem[reqAddr+5] = inData[39:32];
+			coreMem[reqAddr+4] = inData[47:40];
+			coreMem[reqAddr+7] = inData[55:48];
+			coreMem[reqAddr+6] = inData[63:56];
 		end
 	end
 end

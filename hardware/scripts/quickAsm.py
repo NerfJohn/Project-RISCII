@@ -77,7 +77,7 @@ if __name__ == "__main__":
         line = line.replace('\n','')
         
         # Match the string (brute force- simple and decently effective).
-        if (re.search(r'', line)): continue
+        if (len(line) == 0): continue
         elif (re.search(r';.*', line)): continue
         elif (re.search(r'(NOP|HLT)', line)): binArray.append(op(line[0:3]) + '000000000000')
         elif (re.search(r'BRC -[nzp\.]* -?[0-9]+', line)): binArray.append(op(line[0:3]) + flg(line[5:8]) + imm(line[9:], 9))

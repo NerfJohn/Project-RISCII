@@ -38,7 +38,7 @@ cache iCACHE (.inIndex(pAddr[7:3]), .inBlock(writeBlock), .inTag(pAddr[15:8]), .
 // Summary computation of cache search (ie Is there a Hit? Will a miss require an evict?)
 assign tagMismatch = (outTag[7] ^ pAddr[15]) | (outTag[6] ^ pAddr[14]) | (outTag[5] ^ pAddr[13]) | (outTag[4] ^ pAddr[12]) |
 						(outTag[3] ^ pAddr[11]) | (outTag[2] ^ pAddr[10]) | (outTag[1] ^ pAddr[9]) | (outTag[0] ^ pAddr[8]);
-assign cacheHit = outValid & tagMismatch;
+assign cacheHit = outValid & ~tagMismatch;
 assign cacheEvict = ~cacheHit & outDirty;
 
 // Muxed input block to cache (choose between cache output and memory- then update word if applicable).
@@ -61,13 +61,13 @@ assign mIsRd = ~useCacheAddr;
 ///////////////////////////////////////////////
 
 // State- 00 = Idle, 01 = Read/Miss, 10 = Write/Evict.
-dff_en iDFF0[1:0] (.D({^state & cacheEvict, (^state & ~cacheHit & ~cacheEvict) | state[1]}), 
-					.Q(state), .en((^state & pEn & ~cacheHit) | done), .clk(clk), .rstn(rstn));
+dff_en iDFF0[1:0] (.D({~(^state) & cacheEvict, (~(^state) & ~cacheHit & ~cacheEvict) | state[1]}), 
+					.Q(state), .en((~(^state) & pEn & ~cacheHit) | done), .clk(clk), .rstn(rstn));
 
 // Assign control signals their values.
-assign doStall = ~((^state & (~pEn | cacheHit)) | (state[0] & done));
+assign doStall = ~((~(^state) & (~pEn | cacheHit)) | (state[0] & done));
 assign useMemBlock = state[0] & done;
-assign useCacheAddr = ^state & cacheEvict;
-assign mEn = (^state & pEn & ~cacheHit) | (state[1] & done);
+assign useCacheAddr = ~(^state) & cacheEvict;
+assign mEn = (~(^state) & pEn & ~cacheHit) | (state[1] & done);
 
 endmodule

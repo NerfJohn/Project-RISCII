@@ -30,7 +30,7 @@ wire iStall;
 wire[15:0] pc, pc2F, instrF, instrFChecked, newPc;
 
 // DECODE Stage Intermediate Wires.
-wire hStall, fwdD, enFileD, haltD, useImmD, allowJmpD, forceJmpD, aluToPcD, enMemD, isRdD, aluToFileD;
+wire hStall, fwdD, enFileD, haltD, useImmD, allowJmpD, forceJmpD, aluToPcD, enMemD, isRdDC, aluToFileD, oldRst;
 wire[2:0] src1, src2, aluOpD;
 wire[3:0] clr, frz;
 wire[4:0] ensCheckedD;
@@ -57,7 +57,7 @@ wire[15:0] pc2W, aluResW, memResW, exResult, wbResult;
 /////////////////
 
 // PC register- determines fetched instruction.
-mux2 iMUX0[15:0] (.A(newPcResult), .B(pc2F), .sel(aluToPcE), .out(newPc));
+mux2 iMUX0[15:0] (.A(newPcResult), .B(pc2F), .sel(doJmp), .out(newPc));
 dff_en iPC[15:0] (.D(newPc), .Q(pc), .en(~(frz[3] | haltD) | doJmp), .clk(clk), .rstn(rstn));
 
 // PC incrementor- implements natural incrementing of PC.
@@ -70,8 +70,9 @@ cache_sys iIMEM (.pAddr(pc), .pData(/*NC*/), .pIsRd(1'b1), .pEn(1'b1), .doStall(
 
 // FETCH-DECODE Checkpoint.
 assign instrFChecked = {instrF[15:13] & ~{3{clr[3]}}, instrF[12] | clr[3], instrF[11:0]};
-dff_en iDFF0[15:0] (.D(instrFChecked), .Q(instrD), .en(~frz[2]), .clk(clk), .rstn(rstn)); // instruction
-dff_en iDFF1[15:0] (.D(pc2F), .Q(pc2D), .en(~frz[2]), .clk(clk), .rstn(rstn)); // PC+2
+dff_en iDFF0[15:0] (.D(instrFChecked), .Q(instrD), .en(~oldRst | ~(frz[2] | haltD)), .clk(clk), .rstn(rstn)); // instruction
+dff_en iDFF1[15:0] (.D(pc2F), .Q(pc2D), .en(~oldRst | ~(frz[2] | haltD)), .clk(clk), .rstn(rstn)); // PC+2
+dff iRSTDFF (.D(1'b1), .Q(oldRst), .clk(clk), .rstn(rstn)); // Detect reset 1 cycle after deassert (prevents phantom halt)
 
 //////////////////
 // DECODE Stage //
@@ -86,7 +87,7 @@ hazard_logic iHZRD (.src1(src1), .src2(src2), .wregEX(wRegE), .enFileEX(enFileE)
 // Control Logic- manages processor to execute instructions.
 control_logic iCTRL (.opcode(instrD[15:12]), .immFlag(instrD[5]), .enFile(enFileD), .doHalt(haltD),
 						.useImm(useImmD), .aluOp(aluOpD), .allowJmp(allowJmpD), .forceJmp(forceJmpD), 
-						.aluToPc(aluToPcD), .enMem(enMemD), .isRd(isRdD), .aluToFile(aluToFileD));
+						.aluToPc(aluToPcD), .enMem(enMemD), .isRd(isRdDC), .aluToFile(aluToFileD));
 
 // Register File- processor's "pallet".
 reg_file iFILE (.raddr1(src1), .raddr2(src2), .waddr(wRegW), .wdata(wbResult), .wr(enFileW), .rdata1(opnd1D), 
@@ -111,10 +112,10 @@ assign frz[0] = dStall;
 assign ensCheckedD = {aluToFileD, allowJmpD, forceJmpD, enMemD, enFileD} & ~{5{clr[2]}};
 dff_en iDFF2[4:0] (.D({fwdD, useImmD, aluOpD}), .Q({fwdE, useImmE, aluOpE}), .en(~frz[1]), .clk(clk), .rstn(rstn)); // ALU signals {fwdE, useImm, aluOp}
 dff_en iDFF3[3:0] (.D({aluToPcD, instrD[11:9]}), .Q({aluToPcE, brcCodeE}), .en(~frz[1]), .clk(clk), .rstn(rstn)); // Jump signals {aluToPc, brcCodes}
-dff_en iDFF4[3:0] (.D({isRdD, instrD[11:9]}), .Q({isRdE, wRegE}), .en(~frz[1]), .clk(clk), .rstn(rstn)); // MEM/WB signals {isRd, wReg}
+dff_en iDFF4[3:0] (.D({isRdDC, instrD[11:9]}), .Q({isRdE, wRegE}), .en(~frz[1]), .clk(clk), .rstn(rstn)); // MEM/WB signals {isRd, wReg}
 dff_en iDFF5[63:0] (.D({opnd1D, opnd2D, immD, pc2D}), .Q({opnd1E, opnd2E, immE, pc2E}), .en(~frz[1]), .clk(clk), .rstn(rstn)); // Operands {op1, op2, imm, PC+2}
 dff_en iDFF6[4:0] (.D(ensCheckedD), .Q({aluToFileE, allowJmpE, forceJmpE, enMemE, enFileE}), .en(~frz[1]), .clk(clk), .rstn(rstn)); // Enable signals {aluToFile, allowJmp, forceJmp, enMem, enFile}
-dff_en iDFF7 (.D(haltD & ~clr[2]), .Q(haltE), .en(~frz[1]), .clk(clk), .rstn(rstn)); // Passed halt signal
+dff_en iDFF7 (.D(haltD & ~clr[2] & oldRst), .Q(haltE), .en(~frz[1]), .clk(clk), .rstn(rstn)); // Passed halt signal
 
 ///////////////////
 // EXECUTE Stage //
@@ -124,8 +125,8 @@ dff_en iDFF7 (.D(haltD & ~clr[2]), .Q(haltE), .en(~frz[1]), .clk(clk), .rstn(rst
 add_16b iOFST (.src1(immE), .src2(pc2E), .cin(1'b0), .sum(offResult), .cout(/*NC*/));
 
 // ALU- main computational unit in the processor.
-mux2 iMUX3[15:0] (.A(/*MEM save*/), .B(opnd1E), .sel(fwdE), .out(selOp1));
-mux2 iMUX4[15:0] (.A(immE), .B(opnd2E), .sel(useImm), .out(selOp2));
+mux2 iMUX3[15:0] (.A(aluResM), .B(opnd1E), .sel(fwdE), .out(selOp1));
+mux2 iMUX4[15:0] (.A(immE), .B(opnd2E), .sel(useImmE), .out(selOp2));
 alu iALU (.src1(selOp1), .src2(selOp2), .op(aluOpE), .result(aluResult));
 
 // Determine jump signal.
@@ -156,7 +157,7 @@ cache_sys iDMEM (.pAddr(aluResM), .pData(opnd2M), .pIsRd(isRdM), .pEn(enMemM), .
 					.clk(clk), .rstn(rstn));
 
 // (For Simulator: Connect to first word in data cache.)
-assign sigFirstWord = iDMEM.iCACHE.iREGS0[0];
+assign sigFirstWord = iDMEM.iCACHE.iREGS0[0].Q[15:0];
 
 // MEMORY-WRITEBACK Stage Checkpoint.
 assign ensCheckedM = enFileM & ~clr[0];

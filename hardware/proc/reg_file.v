@@ -22,8 +22,8 @@ wire[127:0] regQs;
 reg_16b iREGS0[7:0] (.D(wdata), .Q(regQs), .en({en7, en6, en5, en4, en3, en2, en1, en0}), .clk(clk), .rstn(rstn));
 
 // Compute bypass logic.
-assign skipBypass1 = (raddr1[2] ^ waddr[2]) | (raddr1[1] ^ waddr[1]) | (raddr1[0] ^ waddr[0]);
-assign skipBypass2 = (raddr2[2] ^ waddr[2]) | (raddr2[1] ^ waddr[1]) | (raddr2[0] ^ waddr[0]);
+assign skipBypass1 = ~wr | (raddr1[2] ^ waddr[2]) | (raddr1[1] ^ waddr[1]) | (raddr1[0] ^ waddr[0]);
+assign skipBypass2 = ~wr | (raddr2[2] ^ waddr[2]) | (raddr2[1] ^ waddr[1]) | (raddr2[0] ^ waddr[0]);
 
 // Decode the write address into the enable logic.
 assign en0 = wr & ~waddr[2] & ~waddr[1] & ~waddr[0];

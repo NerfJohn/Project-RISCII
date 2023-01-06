@@ -28,7 +28,7 @@ output[2:0] aluOp;
 assign enFile = opcode[3] | (~opcode[0] & (opcode[2] | opcode[1])); 
 
 // Determine halt signal. (simply 0000).
-assign doHalt = ~(|opcode[3:0]);
+assign doHalt = ~(|opcode);
 
 // Determine use immediate signal (data w/ flag, control operation, or LBI).
 assign useImm = (~opcode[3] | immFlag) | (~opcode[2] & opcode[1] & ~opcode[0]);

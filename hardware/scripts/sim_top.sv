@@ -36,8 +36,8 @@ end
 
 // Main loop for testing/checking.
 always @(posedge clk) begin
-	// Delay to ensure all signals are resolved after clk.
-	#1;
+	// Delay to ensure all signals are resolved after clk (including memory at #1).
+	#2;
 	
 	// Increment clk counter.
 	clkCnt = clkCnt + 1;
@@ -52,7 +52,7 @@ always @(posedge clk) begin
 	// Run additional tests if requested (all exit before file creation).
 	if (IS_TEST) begin
 		// Check halt is asserted in time.
-		if ((haltDetected == 0) && (clkCnt > 10000)) begin
+		if ((haltDetected == 0) && (clkCnt > 500)) begin
 			$display("ERR: Halt not asserted in time!");
 			$finish;
 		end
