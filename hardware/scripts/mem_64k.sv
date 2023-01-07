@@ -95,6 +95,31 @@ always @(posedge clk) begin
 	end
 end
 
+// Quick Fix: Retry request start for propogated signal.
+always @(posedge startReq) begin
+	// Handle read when able to.
+	if ((curState == 0) && (startReq)) begin
+		// Record request data.
+		reqWasRd = isRd;
+		reqAddr = {inAddr[15:3], 3'b000};
+		
+		// Set curState.
+		curState = (reqWasRd) ? 2 : 4;
+		
+		// Serve write (won't be seen anyway).
+		if (reqWasRd == 0) begin
+			coreMem[reqAddr+1] = inData[7:0];
+			coreMem[reqAddr+0] = inData[15:8];
+			coreMem[reqAddr+3] = inData[23:16];
+			coreMem[reqAddr+2] = inData[31:24];
+			coreMem[reqAddr+5] = inData[39:32];
+			coreMem[reqAddr+4] = inData[47:40];
+			coreMem[reqAddr+7] = inData[55:48];
+			coreMem[reqAddr+6] = inData[63:56];
+		end
+	end
+end
+
 // Connect the "middle-men" to their signals.
 assign reqFinish = reqFinishLogic;
 assign outData = outDataLogic;

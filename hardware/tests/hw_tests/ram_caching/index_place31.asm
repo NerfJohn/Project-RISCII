@@ -5,7 +5,9 @@ STR r0 r1 0
 LBI r7 0
 LBI r7 -s 248
 
-LDR r6 r6 0
-LDR r6 r7 0
-LDR r6 r6 0
-LDR r6 r7 0
+LDR r5 r6 0
+LDR r5 r7 0
+LDR r5 r6 0
+LDR r5 r7 0
+
+LDR r0 r1 0

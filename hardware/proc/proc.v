@@ -58,7 +58,7 @@ wire[15:0] pc2W, aluResW, memResW, exResult, wbResult;
 
 // PC register- determines fetched instruction.
 mux2 iMUX0[15:0] (.A(newPcResult), .B(pc2F), .sel(doJmp), .out(newPc));
-dff_en iPC[15:0] (.D(newPc), .Q(pc), .en(~(frz[3] | haltD) | doJmp), .clk(clk), .rstn(rstn));
+dff_en iPC[15:0] (.D(newPc), .Q(pc), .en(~(frz[3] | haltD) | (doJmp & ~iStall)), .clk(clk), .rstn(rstn));
 
 // PC incrementor- implements natural incrementing of PC.
 add_16b iINC (.src1(pc), .src2(16'h2), .cin(1'b0), .sum(pc2F), .cout(/*NC*/));
@@ -70,7 +70,7 @@ cache_sys iIMEM (.pAddr(pc), .pData(/*NC*/), .pIsRd(1'b1), .pEn(1'b1), .doStall(
 
 // FETCH-DECODE Checkpoint.
 assign instrFChecked = {instrF[15:13] & ~{3{clr[3]}}, instrF[12] | clr[3], instrF[11:0]};
-dff_en iDFF0[15:0] (.D(instrFChecked), .Q(instrD), .en(~oldRst | ~(frz[2] | haltD)), .clk(clk), .rstn(rstn)); // instruction
+dff_en iDFF0[15:0] (.D(instrFChecked), .Q(instrD), .en(~oldRst | ~(frz[2] | haltD) | (doJmp & ~iStall)), .clk(clk), .rstn(rstn)); // instruction
 dff_en iDFF1[15:0] (.D(pc2F), .Q(pc2D), .en(~oldRst | ~(frz[2] | haltD)), .clk(clk), .rstn(rstn)); // PC+2
 dff iRSTDFF (.D(1'b1), .Q(oldRst), .clk(clk), .rstn(rstn)); // Detect reset 1 cycle after deassert (prevents phantom halt)
 
@@ -135,15 +135,15 @@ assign doJmp = forceJmpE | (allowJmpE & canJmp);
 mux2 iMUX5[15:0] (.A(aluResult), .B(offResult), .sel(aluToPcE), .out(newPcResult));
 
 // Determine condition codes ([2:0] = nzp).
-assign newCode[0] = ~aluResult[15];
+assign newCode[0] = ~aluResult[15] & ~newCode[1];
 assign newCode[1] = ~(|aluResult);
 assign newCode[2] = aluResult[15];
 
 // EXECUTE-MEMORY Checkpoint.
 assign ensCheckedE = {enMemE, enFileE} & ~{2{clr[1]}};
-dff_en iDFF8[2:0] (.D(newCode), .Q(savedCode), .en(~frz[0] & aluToFileE), .clk(clk), .rstn(rstn)); // Saved Condition Code
+dff_en iDFF8[2:0] (.D(newCode), .Q(savedCode), .en(~oldRst | (~frz[0] & aluToFileE)), .clk(clk), .rstn(rstn)); // Saved Condition Code
 dff_en iDFF9[4:0] (.D({aluToFileE, isRdE, wRegE}), .Q({aluToFileM, isRdM, wRegM}), .en(~frz[0]), .clk(clk), .rstn(rstn)); // MEM/WB signals {aluToFile, isRd, wReg}
-dff_en iDFF10[47:0] (.D({pc2E, aluResult, opnd2E}), .Q({pc2M, aluResM, opnd2M}), .en(~frz[0]), .clk(clk), .rstn(rstn)); // Operands {PC+2, aluResult, src2}
+dff_en iDFF10[47:0] (.D({pc2E, aluResult, opnd2E}), .Q({pc2M, aluResM, opnd2M}), .en(~frz[0] & ~clr[1]), .clk(clk), .rstn(rstn)); // Operands {PC+2, aluResult, src2}
 dff_en iDFF11[1:0] (.D(ensCheckedE), .Q({enMemM, enFileM}), .en(~frz[0]), .clk(clk), .rstn(rstn)); // Enable signals {enMem, enFile}
 dff_en iDFF12 (.D(haltE & ~clr[1]), .Q(haltM), .en(~frz[0]), .clk(clk), .rstn(rstn)); // Passed halt signal
 

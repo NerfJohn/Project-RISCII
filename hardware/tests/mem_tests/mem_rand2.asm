@@ -8,8 +8,6 @@ STR r4 r5 -20
 LDR r1 r7 50
 LDR r0 r5 -20
 SUB r0 r0 r1
-BRC -n.p 6
 LBI r1 0
-LBI r0 1
 STR r0 r1 0
 HLT 

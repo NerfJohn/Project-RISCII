@@ -7,3 +7,4 @@ LBI r7 8
 
 ; Cache write miss for address 0x8.
 STR r6 r7 0
+LDR r0 r1 0

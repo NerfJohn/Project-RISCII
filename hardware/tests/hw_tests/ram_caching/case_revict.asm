@@ -7,3 +7,4 @@ LBI r7 -s 0
 
 ; Cache read evict for address 0x100 (evicts address 0x0-0x3).
 LDR r6 r7 0
+LDR r0 r1 0

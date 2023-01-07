@@ -1,6 +1,6 @@
 ; Check JAL accurately jumps to the correct location.
 LBI r0 1
-JAL r0 16
+JAL r5 16
 HLT
 HLT
 HLT

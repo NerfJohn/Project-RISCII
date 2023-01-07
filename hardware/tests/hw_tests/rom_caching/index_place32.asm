@@ -15,7 +15,7 @@ STR r0 r1 0
 HLT
 NOP
 
-.blank 122
+.blank 116
 
 BRC -nzp -256
 BRC -nzp -256
