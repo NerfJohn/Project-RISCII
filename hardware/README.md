@@ -25,7 +25,7 @@ This folder contains the hardware's design, simulation/testing scripts, and test
 - Automatic instruction testing supported by tests setting cache value to 1 if successful.
 - Specific/automatic hardware testing is limited with the current solution.
   - Halt signal explicitly tested in terms of timing/preventing cache writing.
-  - Caching/pipelining implicitly semi-tested via automated tests (see /tests/hw_tests).
+  - Caching/pipelining implicitly semi-tested via automated tests (see [/tests/hw_tests](https://github.com/NerfJohn/Project-RISCII/tree/main/hardware/tests/hw_tests)).
 
 ## Toolchain Considerations
 Hardware design/tools/tests are known to use the following tools:
