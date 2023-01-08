@@ -4,6 +4,7 @@ This folder contains the hardware's design, simulation/testing scripts, and test
 ## Diagram of Top Level Design
 ![hw_top_level.jpg](https://github.com/NerfJohn/Project-RISCII/blob/main/hardware/hw_top_level.jpg)
 (Simplified version of [proc.v](https://github.com/NerfJohn/Project-RISCII/blob/main/hardware/proc/proc.v).)
+(Note: DCAC's "Stall" should be connected to SMGR's "DStall")
 
 ## Folder Stucture
 - /proc: Hardware design files (denoted by .v files).
@@ -31,3 +32,8 @@ Hardware design/tools/tests are known to use the following tools:
 - ModelSim (for compiling/simulating the hardware)
 - Git Bash (for running bash scripts on a Windows machine)
 - Python (for running the hardware test assembler)
+
+## Extra Documents
+- [ISA.txt](https://github.com/NerfJohn/Project-RISCII/blob/main/docs/ISA.txt)
+- [Requirements.txt](https://github.com/NerfJohn/Project-RISCII/blob/main/docs/Requirements.txt)
+- [hwRetrospective.txt](https://github.com/NerfJohn/Project-RISCII/blob/main/docs/hwRetrospective.txt)
