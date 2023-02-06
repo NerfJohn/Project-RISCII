@@ -1,0 +1,124 @@
+Project RISCII Software Testing Plan
+by John Eslinger
+================================================================================
+Table of Contents:
+	-> Testing Mechanisms and Strategies
+	-> Test Suite Roadmap
+	-> Effectiveness and Requirements
+================================================================================
+Testing Mechanisms and Strategies:
+	Mechanism- Compiler Output:
+		-> Compiler's exit code can infer compiling status (success vs. failure)
+		-> Creation of .hex file also infers compiling status
+		-> Both methods provide unique ways of checking features/error cases
+			(Exit code directly infers compiler's intended result)
+			(.hex file creation sanity checks intended behavior externally)
+	
+	Mechanism- Hardware Simulation:
+		-> Compiler output can be run as input to hardware test simulation
+		-> (Successful) Test simulation provides value of 0x0 in data cache
+		-> Test simulation provides method to check compiled .hex files
+			(Test is compiled, generating a .hex file)
+			(Test simulation is run, creating a .out file if successful)
+			(.out file provides value of 0x0 in data cache for checking)
+	
+	Strategy- Test by Correctness:
+		-> Tests written to compile and simulate successfully
+		-> "Compiler output" mech. checks status correctness (i.e. compiles)
+		-> "Hardware simulation" mech. checks result correctness
+			(Test is written to return 1 for main() if correctly compiled)
+			(Compiling with "-test" flag sets 0x0 of data cache to main())
+			(Successful test simulation yields main() in .out file for checking)
+	
+	Strategy- Test by Failure:
+		-> Tests written to intentionally fail to compile
+		-> "Compiler output" mech. checks compiler detected erroneous code
+		-> Compiling with "-Werror" flag detects warnings (i.e. odd code)
+
+================================================================================
+Test Suite Roadmap:
+	Feature Test Sub-Groups:
+		-> Feature Tests- test language features are implemented correctly
+			(Directly test features both compile and run correctly)
+			(Use "Test by Correctness" strategy)
+			(Return "1" from main() to imply correct behavior)
+		-> Sub-Groups:
+			File Level: Globals, Funcs
+			Statements: If, While, Return, Local, Assign, Expression
+			Expression:	Logical, Arithmetic, Boolean, Ordering
+		-> Common Checks across sub-groups/tests
+			(Ensure whitespace variants and comments are okay)
+			(Ensure usage of types and names are well checked)
+			(Ensure "flexible keywords" (params and braces) are well checked)
+		-> Notable Tests
+			(Booleans create "bool intermediate" rvalue data type)
+			(All lvalue/rvalue types can be implicitly cast in this language)
+			(Expressions can be a separate, valid statement)
+	
+	Failure Test Sub-Groups:
+		-> Failure Tests- test language violations are detected
+			(Directly test language violations do not compile)
+			(Use "Test by Failure" strategy)
+			("-Werror" flag used to also check warnings are detected)
+		-> Sub-Groups:
+			Parsing: Filename, Cmd line arguments, Tokens/characters, Ordering
+			Errors: Declarations, Function vs. Variable use, Function calling
+			Warnings: Unset variables, No guaranteed return, Bad conversions
+		-> Common Patterns across sub-groups/tests
+			(Ensure only one error/warning exists per test)
+			(Ensure it is clear if test should fail due to a warning or error)
+			(Ensure bad identifier names are well checked)
+		-> Notable Tests
+			(Unexpected character (ie 0xb) in file is checked)
+			(Return statement(s) aren't reachable by all branches)
+			(Operator types mismatch vs. downcast vs. other conversion tests)
+	
+	Detour Test Sub-Groups:
+		-> Detour Tests- test alternative program behavior
+			(Indirectly test optional cases work correctly)
+			(Use "Test by Correctness" strategy)
+			(Return "1" from main() to imply correct behavior)
+			("-O1" flag used to check optimization 'detours')
+		-> Sub-Groups:
+			Warnings: (Similar) warning tests from failure tests
+			Optimizer: Unused Functions/Expressions, Simple copy propagation
+			ISA Weaknesses: Offset limitations, SHR costs
+		-> Common Patterns across sub-groups/tests
+			(Ensure critical code can't be optimized (unless intended to be))
+			(Allow tests to be based on (but not copy) previous tests)
+		-> Notable Tests
+			(Roughly repeated failure tests focused on warnings)
+			(RAM access tests where SR+offset is not sufficient)
+			(ROM jump tests where PC+offset is not sufficient)
+
+================================================================================
+Effectiveness and Requirements:
+	Effectiveness of Testing Procedures:
+		-> Tested Portions of Compiler
+			(Language features- both for compile time and runtime)
+			(Effect of errors, warnings, and "-Werror" on compilation)
+			(Ideal/non-ideal, but correct, code compiles/runs correctly)
+			("Test by Correctness" doubles as end-to-end testing)
+		-> Untested Portions of Compiler
+			(Doesn't check exact error/warnings are being reported correctly)
+			(Doesn't check exact effect of ideal/non-ideal code compilation)
+			(Doesn't check exact correctness of all command line flags)
+			(Doesn't necessarily confirm compiler is subset of GCC)
+		-> Overall Effect
+			(Great at ensuring compiler understands/implements code correctness)
+			(Poor at confirming compiler creates well written code)
+			(Exercises ideal/non-ideal scenarios, but can't fully check them)
+			(Effectively manual/shallow confirmation of being a GCC subset)
+		
+	Implied Requirements/Recommendations
+		-> Testing requires accesss to hardware's "runSim" script/resources
+		-> Multiple setups required to conduct testing
+			(Feature tests: "Test by Correctness", no extra flags)
+			(Failure tests: "Test by Failure", add "-Werror" flag)
+			(Detour tests: "Test by Correctness", add "-O1" flag)
+		-> Additional information could improve test quality
+			(Syntax/parsing information could improve feature tests)
+			(List of errors/warnings could improve failure/detour tests)
+			(Optimizer and ISA information could improve detour tests)
+
+================================================================================
