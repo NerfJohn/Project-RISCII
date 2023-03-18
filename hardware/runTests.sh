@@ -7,7 +7,7 @@ if [ "$#" -gt 0 ] && [ "$1" == "-h" ]; then
 	exit 0
 fi
 
-# Ensure a .hex file is provided to run.
+# Ensure a directory is provided to run.
 if [ "$#" -lt 1 ] || [ ! -d "$1" ]; then
 	echo First argument not an existing directory! Exiting...
 	exit 1
