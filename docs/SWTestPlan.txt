@@ -16,18 +16,18 @@ Testing Mechanisms and Strategies:
 	
 	Mechanism- Hardware Simulation:
 		-> Compiler output can be run as input to hardware test simulation
-		-> (Successful) Test simulation provides value of 0x0 in data cache
+		-> (Successful) Test simulation provides address 0x0 value in data cache
 		-> Test simulation provides method to check compiled .hex files
 			(Test is compiled, generating a .hex file)
 			(Test simulation is run, creating a .out file if successful)
-			(.out file provides value of 0x0 in data cache for checking)
+			(.out file provides address 0x0 value in data cache for checking)
 	
 	Strategy- Test by Correctness:
 		-> Tests written to compile and simulate successfully
 		-> "Compiler output" mech. checks status correctness (i.e. compiles)
 		-> "Hardware simulation" mech. checks result correctness
 			(Test is written to return 1 for main() if correctly compiled)
-			(Compiling with "-test" flag sets 0x0 of data cache to main())
+			(Compiler sets address 0x0 of data cache to result of main())
 			(Successful test simulation yields main() in .out file for checking)
 	
 	Strategy- Test by Failure:
@@ -51,9 +51,9 @@ Test Suite Roadmap:
 			(Ensure usage of types and names are well checked)
 			(Ensure "flexible keywords" (params and braces) are well checked)
 		-> Notable Tests
-			(Booleans create "bool intermediate" rvalue data type)
+			(Boolean operations resolve as 1 or 0)
 			(All lvalue/rvalue types can be implicitly cast in this language)
-			(Expressions can be a separate, valid statement)
+			(Functions can be a separate, valid statement)
 	
 	Failure Test Sub-Groups:
 		-> Failure Tests- test language violations are detected
@@ -61,7 +61,7 @@ Test Suite Roadmap:
 			(Use "Test by Failure" strategy)
 			("-Werror" flag used to also check warnings are detected)
 		-> Sub-Groups:
-			Parsing: Filename, Cmd line arguments, Tokens/characters, Ordering
+			Parsing: Tokens/characters, Ordering of tokens
 			Errors: Declarations, Function vs. Variable use, Function calling
 			Warnings: Unset variables, No guaranteed return, Bad conversions
 		-> Common Patterns across sub-groups/tests
@@ -80,8 +80,8 @@ Test Suite Roadmap:
 			(Return "1" from main() to imply correct behavior)
 			("-O1" flag used to check optimization 'detours')
 		-> Sub-Groups:
-			Warnings: (Similar) warning tests from failure tests
-			Optimizer: Unused Functions/Expressions, Simple copy propagation
+			Warnings: (Similar) warning tests from failure test group
+			Optimizer: Unuseds, copy propagation, constant conditions
 			ISA Weaknesses: Offset limitations, SHR costs
 		-> Common Patterns across sub-groups/tests
 			(Ensure critical code can't be optimized (unless intended to be))
