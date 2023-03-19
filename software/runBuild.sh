@@ -16,6 +16,7 @@ fi
 # Check if caller wants to force a clean build (vs. checking if one's needed).
 IS_TEST=0
 if [ "$#" -gt 1 ] || [ "$1" == "-rebuild" ]; then
+	echo "Rebuild requested- rebuilding software..."
 	DO_REBUILD=1
 fi
 
