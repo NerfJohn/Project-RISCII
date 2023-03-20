@@ -66,21 +66,21 @@ for TEST in $TESTS; do
 	# Compilation procedure determined by location (ie infers test "type").
 	if [[ $TEST == *$FAIL_DIR* ]]; then
 		# Run test file with strict checking- check it failed as expected.
-		./$EXE_NAME -Werror $TEST
+		./$EXE_NAME -Werror $TEST > /dev/null
 		if [ $? -eq 0 ] || [ -f $TEST_HEX ]; then
 			echo "FAILED! ($TEST) Test compiled or software returned 0..."
 			continue
 		fi
 	elif [[ $TEST == *$DETR_DIR* ]]; then
 		# Run test file with optimizations- check it was successful.
-		./$EXE_NAME -O1 $TEST
+		./$EXE_NAME -O1 $TEST > /dev/null
 		if [ $? -ne 0 ] || [ ! -f $TEST_HEX ]; then
 			echo "FAILED! ($TEST) Test didn't compile or returned with error..."
 			continue
 		fi
 	else 								# Default to "feature test" procedure.
 		# Run test file- check it was successful.
-		./$EXE_NAME $TEST
+		./$EXE_NAME $TEST > /dev/null
 		if [ $? -ne 0 ] || [ ! -f $TEST_HEX ]; then
 			echo "FAILED! ($TEST) Test didn't compile or returned with error..."
 			continue
