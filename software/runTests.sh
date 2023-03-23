@@ -90,7 +90,7 @@ for TEST in $TESTS; do
 	# Check created .hex files work as expected (not reached by failure tests).
 	if [ -f $TEST_HEX ]; then
 		# Run result as hardware test.
-		(cat $TEST_HEX > $TO_SIM_DIR/temp.hex; cd $TO_SIM_DIR; ./runSim.sh temp.hex) > /dev/null
+		(cat $TEST_HEX > $TO_SIM_DIR/temp.hex; cd $TO_SIM_DIR; ./runSim.sh temp.hex -test) > /dev/null
 		if [ $? -ne 0 ]; then
 			echo FAILED! \($TEST\) runSim.sh failed...
 			rm -f $TO_SIM_DIR/temp.hex
