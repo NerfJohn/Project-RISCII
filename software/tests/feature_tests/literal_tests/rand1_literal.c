@@ -8,5 +8,5 @@ int main() {
 	charLit = '7';
 	hexLit = 0x37;
 	
-	return intLit + charLit + hexLit + -150 + -15;
+	return intLit + charLit + hexLit + -150 + -14;
 }
