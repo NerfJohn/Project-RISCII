@@ -4,7 +4,7 @@ char charLit;
 unsigned int hexLit;
 
 int main() {
-	intLit = 55;
+	intLit = 055;
 	charLit = '7';
 	hexLit = 0x37;
 	
