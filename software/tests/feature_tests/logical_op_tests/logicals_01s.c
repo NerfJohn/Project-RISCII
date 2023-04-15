@@ -16,9 +16,6 @@ int main() {
 	xor = 0x1 ^ 0x5555;
 	not = ~0x5555;
 	
-	// Shift Notes:
-	// Behavior undefined if 2nd operand doesn't fir in 4-bit unsigned value.
-	// GCC seems to treat hex/char literals as naturally unsigned and int literals as naturally signed.
 	shl0 = 0x1 << 0x5;
 	shl1 = 0x5555 << 0x1;
 	shr0 = 0x1 >> 0x5;

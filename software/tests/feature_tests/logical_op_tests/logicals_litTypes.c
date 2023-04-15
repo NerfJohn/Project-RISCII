@@ -15,10 +15,7 @@ int main() {
 	or = 'A' | 0x5555;
 	xor = 255 ^ '\n';
 	not = ~5;
-	
-	// Shift Notes:
-	// Behavior undefined if 2nd operand doesn't fir in 4-bit unsigned value.
-	// GCC seems to treat hex/char literals as naturally unsigned and int literals as naturally signed.
+
 	shl0 = -1 << 1;
 	shl1 = 0xab << 15;
 	shr0 = 't' >> 0xa;
