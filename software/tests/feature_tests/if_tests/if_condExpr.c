@@ -18,7 +18,7 @@ int main() {
 		res = res | 0x2;
 	}
 	
-	if (b + 100) {
+	if (b) {
 		res = res | 0x4;
 	}
 	
