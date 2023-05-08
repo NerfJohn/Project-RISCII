@@ -6,7 +6,7 @@
 // 3) Literals conform to other operand's type (regardless of value)
 // 4) Otherwise, operations assume uint > int > char/uchar for produced type
 //
-// Warning produced when lhs type != rhs type
+// Warning produced when lhs type != rhs type (and can't be upcasted).
 
 // (Almost certaintly different than C/GCC, but within a "subset" context.)
 // (Warnings demonstrate understanding of type checking more than harm it.)
