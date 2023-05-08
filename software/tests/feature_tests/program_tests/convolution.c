@@ -28,9 +28,11 @@ unsigned char conv(unsigned int image) {
 	return result;
 }
 
+// Made global to see vars can be declared before/after function definitions.
+int expected;
+
 int main() {
 	int actual;
-	int expected;
 	
 	actual = conv(0xbeef);
 	expected = 0x3B;
