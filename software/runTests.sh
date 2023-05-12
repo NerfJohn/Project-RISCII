@@ -4,7 +4,7 @@
 # Folder locations to determine procedure for testing.
 FEAT_DIR="./tests/feature_tests/"
 FAIL_DIR="./tests/failure_tests/"
-DETR_DIR="./tests/detour_tests/"
+OPT_DIR="./tests/optimized_tests/"
 
 # Name of the software executable.
 EXE_NAME="quaidcc.exe"
@@ -71,7 +71,7 @@ for TEST in $TESTS; do
 			echo "FAILED! ($TEST) Test compiled or software returned 0..."
 			continue
 		fi
-	elif [[ $TEST == *$DETR_DIR* ]]; then
+	elif [[ $TEST == *$OPT_DIR* ]]; then
 		# Run test file with optimizations- check it was successful.
 		./$EXE_NAME -O1 $TEST > /dev/null
 		if [ $? -ne 0 ] || [ ! -f $TEST_HEX ]; then
@@ -103,12 +103,11 @@ for TEST in $TESTS; do
 			echo FAILED! \($TEST\) .out file not created...
 			continue
 		fi
-		if [[ $(head -n 1 $TO_SIM_DIR/temp.out) -ne 1 ]]; then
-			echo FAILED! \($TEST\) Result was $(head -n 1 $TO_SIM_DIR/temp.out)... \(in $(head -n 2 $TO_SIM_DIR/temp.out | tail -n 1) cycles\)
-			rm -f $TO_SIM_DIR/temp.out
+		(cat $TO_SIM_DIR/temp.out > ${TEST%.c}.out; rm -f $TO_SIM_DIR/temp.out) > /dev/null
+		if [[ $(head -n 1 ${TEST%.c}.out) -ne 1 ]]; then
+			echo FAILED! \($TEST\) Result was $(head -n 1 ${TEST%.c}.out)... \(in $(head -n 2 ${TEST%.c}.out | tail -n 1) cycles\)
 			continue
 		fi
-		rm -f $TO_SIM_DIR/temp.out
 	fi
 	
 	# Test passed if this statement is reached!
