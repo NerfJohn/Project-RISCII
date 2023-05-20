@@ -1,0 +1,201 @@
+# Scan Table Script Ruleset
+# =========================
+# 1) Format: <cur_state>::<regex>::<new_state>
+# 2) Sub states use lower_snake_case, end states use UPPER_SNAKE_CASE
+# 3) Regexes match to string length of 1 (i.e. avoid ?, use [], etc)
+# 4) Append '*' to end states that shouldn't include last parsed char
+# 5) "start" and "SCAN_ERROR" states are built in
+# =========================
+# Note: Rules parsed in order- allows for "chaining" rules together
+# Note: End states denote token creation/action, NOT "regex match"
+
+# Circle back to start for whitespace/EOF- start is ideal final state #
+start::[\xFF \t\n]::start
+
+# 1 character tokens- determinate upon sight #
+start::[&]::SCAN_AND
+start::[|]::SCAN_OR
+start::[\^]::SCAN_XOR
+start::[~]::SCAN_LNOT
+start::[+]::SCAN_PLUS
+start::[-]::SCAN_MINUS
+start::[{]::SCAN_LCURLY
+start::[}]::SCAN_RCURLY
+start::[(]::SCAN_LPAREN
+start::[)]::SCAN_RPAREN
+start::[;]::SCAN_SEMICOLON
+start::[,]::SCAN_COMMA
+
+# 1-2 character tokens with common prefixes #
+start::[>]::grt
+grt::[>]::SCAN_RSHIFT
+grt::[=]::SCAN_GEQ
+grt::[^>=]::SCAN_GRT*
+
+start::[<]::lt
+lt::[<]::SCAN_LSHIFT
+lt::[=]::SCAN_LEQ
+lt::[^<=]::SCAN_LT*
+
+start::[=]::assign
+assign::[=]::SCAN_EQ
+assign::[^=]::SCAN_ASSIGN*
+
+start::[!]::bnot
+bnot::[=]::SCAN_NEQ
+bnot::[^=]::SCAN_BNOT*
+
+# Identifiers- variable amount of character and sink for keywords #
+start::[_a-zA-Z]::id
+id::[_a-zA-Z0-9]::id
+id::[^_a-zA-Z0-9]::SCAN_ID*
+
+# Int/Hex Literals- don't worry about negative int literals for now #
+start::[0]::zero
+start::[1-9]::intlit
+
+zero::[0-9]::intlit
+zero::[x]::hexprefix
+zero::[^x0-9]::SCAN_ILITERAL*
+
+intlit::[0-9]::intlit
+intlit::[^0-9]::SCAN_ILITERAL*
+
+hexprefix::[0-9a-fA-F]::hexlit
+hexlit::[0-9a-fA-F]::hexlit
+hexlit::[^0-9a-fA-F]::SCAN_HLITERAL*
+
+# Char literal- should identify \t, \n,, \\, \', and \0 #
+start::[']::chrprefix
+
+chrprefix::[ -~]::chrmid
+chrprefix::[']::SCAN_ERROR
+chrprefix::[\\]::chrslash
+
+chrslash::[tn\\'0]::chrmid
+chrmid::[']::SCAN_CLITERAL
+
+# Keywords: 'if' and 'int' #
+start::[i]::i
+
+i::[_a-zA-Z0-9]::id
+i::[n]::in
+i::[f]::if
+i::[^_a-zA-Z0-9]::SCAN_ID*
+
+in::[_a-zA-Z0-9]::id
+in::[t]::int
+in::[^_a-zA-Z0-9]::SCAN_ID*
+
+if::[_a-zA-Z0-9]::id
+if::[^_a-zA-Z0-9]::SCAN_IF*
+
+int::[_a-zA-Z0-9]::id
+int::[^_a-zA-Z0-9]::SCAN_INT*
+
+# Keyword char #
+start::[c]::c
+
+c::[_a-zA-Z0-9]::id
+c::[h]::ch
+c::[^_a-zA-Z0-9]::SCAN_ID*
+
+ch::[_a-zA-Z0-9]::id
+ch::[a]::cha
+ch::[^_a-zA-Z0-9]::SCAN_ID*
+
+cha::[_a-zA-Z0-9]::id
+cha::[r]::char
+cha::[^_a-zA-Z0-9]::SCAN_ID*
+
+char::[_a-zA-Z0-9]::id
+char::[^_a-zA-Z0-9]::SCAN_CHAR*
+
+# Keyword: while #
+start::[w]::w
+
+w::[_a-zA-Z0-9]::id
+w::[h]::wh
+w::[^_a-zA-Z0-9]::SCAN_ID*
+
+wh::[_a-zA-Z0-9]::id
+wh::[i]::whi
+wh::[^_a-zA-Z0-9]::SCAN_ID*
+
+whi::[_a-zA-Z0-9]::id
+whi::[l]::whil
+whi::[^_a-zA-Z0-9]::SCAN_ID*
+
+whil::[_a-zA-Z0-9]::id
+whil::[e]::while
+whil::[^_a-zA-Z0-9]::SCAN_ID*
+
+while::[_a-zA-Z0-9]::id
+while::[^_a-zA-Z0-9]::SCAN_WHILE*
+
+# Keyword return #
+start::[r]::r
+
+r::[_a-zA-Z0-9]::id
+r::[e]::re
+r::[^_a-zA-Z0-9]::SCAN_ID*
+
+re::[_a-zA-Z0-9]::id
+re::[t]::ret
+re::[^_a-zA-Z0-9]::SCAN_ID*
+
+ret::[_a-zA-Z0-9]::id
+ret::[u]::retu
+ret::[^_a-zA-Z0-9]::SCAN_ID*
+
+retu::[_a-zA-Z0-9]::id
+retu::[r]::retur
+retu::[^_a-zA-Z0-9]::SCAN_ID*
+
+retur::[_a-zA-Z0-9]::id
+retur::[n]::return
+retur::[^_a-zA-Z0-9]::SCAN_ID*
+
+return::[_a-zA-Z0-9]::id
+return::[^_a-zA-Z0-9]::SCAN_RETURN*
+
+# Keyword unsigned #
+start::[u]::u
+
+u::[_a-zA-Z0-9]::id
+u::[n]::un
+u::[^_a-zA-Z0-9]::SCAN_ID*
+
+un::[_a-zA-Z0-9]::id
+un::[s]::uns
+un::[^_a-zA-Z0-9]::SCAN_ID*
+
+uns::[_a-zA-Z0-9]::id
+uns::[i]::unsi
+uns::[^_a-zA-Z0-9]::SCAN_ID*
+
+unsi::[_a-zA-Z0-9]::id
+unsi::[g]::unsig
+unsi::[^_a-zA-Z0-9]::SCAN_ID*
+
+unsig::[_a-zA-Z0-9]::id
+unsig::[n]::unsign
+unsig::[^_a-zA-Z0-9]::SCAN_ID*
+
+unsign::[_a-zA-Z0-9]::id
+unsign::[e]::unsigne
+unsign::[^_a-zA-Z0-9]::SCAN_ID*
+
+unsigne::[_a-zA-Z0-9]::id
+unsigne::[d]::unsigned
+unsigne::[^_a-zA-Z0-9]::SCAN_ID*
+
+unsigned::[_a-zA-Z0-9]::id
+unsigned::[^_a-zA-Z0-9]::SCAN_UNSIGNED*
+
+# Comments- Broken off by newlines #
+start::[/]::cmtmid
+cmtmid::[/]::cmt
+
+cmt::[^\n\xFF]::cmt
+cmt::[\n\xFF]::SCAN_COMMENT

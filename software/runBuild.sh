@@ -5,6 +5,9 @@
 EXE_NAME="quaidcc.exe"
 BUILD_ARGS="-O1 -Wall"
 
+# Name of scan table mock-up.
+SCAN_MOCK="./scripts/scanTableMock.txt"
+
 # -- Flag Handling -- #
 
 # Respond to help flag.
@@ -22,10 +25,28 @@ fi
 
 # -- C++ Software Compilation -- #
 
-# Create directory for timestamping build/storing build data as needed.
+# Create .exe for timestamping build/storing build data as needed.
 if [ ! -f $EXE_NAME ]; then
 	echo "No previous build detected- building software..."
 	DO_REBUILD=1
+fi
+
+# Rebuild ScanTable.h using script if updated (or rebuild called for).
+if [ $DO_REBUILD ] || [ $SCAN_MOCK -nt $EXE_NAME ]; then
+	echo Rebuilding ScanTable.h from $SCAN_MOCK...
+	rm -rf ./src/ScanTable.h # Clear previous build of ScanTable.h
+	
+	# Generate ScanTable.h in current directory.
+	python ./scripts/genScanTable.py $SCAN_MOCK
+	if [ $? -ne 0 ]; then
+		echo Failed to create ScanTable.h! Exiting...
+		rm -f $EXE_NAME
+		exit 1
+	fi
+	
+	# Move ScanTable.h to src directory.
+	cp ScanTable.h ./src/
+	rm -rf ScanTable.h
 fi
 
 # Only perform these checks if unsure whether to rebuild software.
