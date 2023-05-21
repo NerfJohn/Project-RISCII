@@ -14,10 +14,10 @@
  * the message logger to determine actions to take (e.g. terminate after
  * logging).
  */
-enum MsgLog_t {
-	ERR,
-	WARN,
-	INFO
+enum MsgLogType {
+	MSG_ERR,
+	MSG_WARN,
+	MSG_INFO
 };
 
 /*
@@ -35,6 +35,8 @@ public:
 	 * The verbose flag (-v) allows INFO messages to be logged, while the
 	 * werror flag (-Werror) allows WARN messages to cause the program to
 	 * terminate (just like ERR messages).
+	 *
+	 * @param setFlag new boolean value for flag
 	 */
 	static void doVerbose(const bool setFlag) {MsgLog::m_doVerbose = setFlag;}
 	static void doWerror(const bool setFlag) {MsgLog::m_doWerror = setFlag;}
@@ -45,9 +47,13 @@ public:
 	 * Functions mostly handle formatting of log message for consistency across
 	 * the program (e.g. display of line numbers). The functions also handle
 	 * logging business logic (e.g. terminating after logging an error message).
+	 *
+	 * @param type type of message to log
+	 * @param lineNum line number to add to message (if applicable)
+	 * @param msg message to save to log
 	 */
-	static void logMsg(const MsgLog_t type, const std::string msg);
-	static void logMsg(const MsgLog_t type, const int lineNum, std::string msg);
+	static void logMsg(const MsgLogType type, const std::string msg);
+	static void logMsg(const MsgLogType type, const int lineNum, std::string msg);
 
 	/*
 	 * Std. Destructor.

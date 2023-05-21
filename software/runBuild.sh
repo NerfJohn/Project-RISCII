@@ -3,7 +3,7 @@
 
 # Build arguments + name of created executable
 EXE_NAME="quaidcc.exe"
-BUILD_ARGS="-O1 -Wall"
+BUILD_ARGS="-O0 -Wall"
 
 # Name of scan table mock-up.
 SCAN_MOCK="./scripts/scanTableMock.txt"
