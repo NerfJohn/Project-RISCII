@@ -67,6 +67,8 @@ fi
 
 # Rebuild software if needed/asked for.
 if [ $DO_REBUILD ]; then
+	echo Rebuilding main program...
+
 	# Get source files for building.
 	SRC_FILES=$(find . -name "*.cpp")
 	

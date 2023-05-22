@@ -35,7 +35,7 @@ FILE_TOP = '\n'.join([
             " *",
             " * Most states reflect \"end states\" that signal a specific token should be",
             " * created. A start state is provided for resetting state variables as needed,",
-            " * along with two \"sentinel enum states\" for easily distinguishing end states",
+            " * along with three \"sentinel enum states\" for easily distinguishing end states",
             " * and when the last read character should be part of the new token.",
             " */",
             "",
@@ -110,7 +110,6 @@ FILE_END = '\n'.join([
             "private:",
             "    // Private constructor to prevent instantiation.",
             "    ScanTable(void) {/* Empty ctor */}",
-            "",
             "};",
             "",
             "#endif /* SCANTABLE_H_ */",
@@ -121,6 +120,7 @@ SCAN_START = "start"
 SCAN_ERROR = "SCAN_ERROR"
 SCAN_END_MIN = "SCAN_END_MIN"
 SCAN_EXCLUDE_MIN = "SCAN_EXCLUDE_MIN*" # Added '*' to fit in with other "exclude" end states
+SCAN_END_MAX = "SCAN_END_MAX"
 
 # "Visible ASCII" characters: [space] through '~', plus \t,\n, and EOF = 98 characters in language.
 LANG_NUM_CHARS = 98
@@ -227,6 +227,7 @@ if __name__ == "__main__":
     for state in excStates:
         allStates[state] = num
         num += 1
+    allStates[SCAN_END_MAX] = num - 1 # Set equal to last state
     
     # Ensure solution is feasible (1-byte state preferred).
     if (len(allStates) > 256):

@@ -118,7 +118,6 @@ int main(int argc, char* argv[]) {
 
 	// Parse arguments.
 	if (argc <= 1) {MsgLog::logMsg(MSG_ERR, "Filename not provided");}
-	if (string(argv[1]) == "-h") {printInfo();}	// corner case: quaidcc.exe -h
 	for (int i = 1; i < (argc - 1); i++) { 		// skip program and file names
 		// Match/set flags (repeats allowed, but not unknown flags).
 		string flag(argv[i]);
@@ -129,6 +128,7 @@ int main(int argc, char* argv[]) {
 		else if (flag == "-Werror") {MsgLog::doWerror(true);}
 		else {MsgLog::logMsg(MSG_ERR, "\"" + flag + "\" is not a valid flag");}
 	}
+	if (string(argv[argc - 1]) == "-h") {printInfo();}
 	cFilename = argv[argc - 1];
 
 	MsgLog::logMsg(MSG_INFO, "C Filename: " + cFilename);
