@@ -8,19 +8,6 @@
 #include <string>
 
 /*
- * Defines log message types.
- *
- * Types reflect nature of the message being logged. They can also be used by
- * the message logger to determine actions to take (e.g. terminate after
- * logging).
- */
-enum MsgLogType {
-	MSG_ERR,
-	MSG_WARN,
-	MSG_INFO
-};
-
-/*
  * Static class to simplify business logic of log messages.
  *
  * Class provides simple interface for setting up input parameters for logging
@@ -30,30 +17,39 @@ enum MsgLogType {
 class MsgLog {
 public:
 	/*
-	 * Setter functions for pertinent logging paramters.
+	 * Setter functions for pertinent logging parameters.
 	 *
 	 * The verbose flag (-v) allows INFO messages to be logged, while the
-	 * werror flag (-Werror) allows WARN messages to cause the program to
-	 * terminate (just like ERR messages).
+	 * Werror flag (-Werror) allows WARN messages to cause the program to
+	 * terminate (similar to ERR and ASSERT messages).
+	 *
+	 * Both flags are FALSE by default.
 	 *
 	 * @param setFlag new boolean value for flag
 	 */
-	static void doVerbose(const bool setFlag) {MsgLog::m_doVerbose = setFlag;}
-	static void doWerror(const bool setFlag) {MsgLog::m_doWerror = setFlag;}
+	static void setVerbose(const bool setFlag) {MsgLog::m_doVerbose = setFlag;}
+	static void setWerror(const bool setFlag) {MsgLog::m_doWerror = setFlag;}
 
 	/*
 	 * Simplified formatters for logging messages.
 	 *
-	 * Functions mostly handle formatting of log message for consistency across
-	 * the program (e.g. display of line numbers). The functions also handle
-	 * logging business logic (e.g. terminating after logging an error message).
+	 * Functions handle formatting, printing, and business logic of messages. A
+	 * line number may be provided to be formatted into the message (but is left
+	 * out if not given or is less than 0).
 	 *
-	 * @param type type of message to log
-	 * @param lineNum line number to add to message (if applicable)
+	 * Nature of each message type:
+	 * 1) ERR- Error preventing compilation, exits after logging
+	 * 2) WARN- Warning complicating compilation, exits if "setWerror(true)"
+	 * 3) INFO- General compilation info, logged if "setVerbose(true)"
+	 * 4) ASSERT- Error in SOURCE CODE itself, exits after logging
+	 *
 	 * @param msg message to save to log
+	 * @param lineNum line number to add to message (if given and >= 0)
 	 */
-	static void logMsg(const MsgLogType type, const std::string msg);
-	static void logMsg(const MsgLogType type, const int lineNum, std::string msg);
+	static void logERR(std::string msg, int lineNum = -1);
+	static void logWARN(std::string msg, int lineNum = -1);
+	static void logINFO(std::string msg, int lineNum = -1);
+	static void logASSERT(std::string msg, int lineNum = -1);
 
 	/*
 	 * Std. Destructor.
@@ -63,6 +59,9 @@ public:
 private:
 	// Private constructor to prevent instantiation.
 	MsgLog(void) {/* Empty ctor */}
+
+	// Helper function encapsulating main logging/business logic.
+	static void logMsg(std::string type, int lineNum, std::string msg);
 
 	// Logging parameters- control behavior of different message types.
 	static bool m_doVerbose;

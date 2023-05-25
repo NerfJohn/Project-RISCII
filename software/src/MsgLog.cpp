@@ -13,32 +13,38 @@ using namespace std;
 bool MsgLog::m_doVerbose = false;
 bool MsgLog::m_doWerror = false;
 
-// Simplified formatter for logging messages.
-void MsgLog::logMsg(const MsgLogType type, const std::string msg) {
-	// Determine message prefix.
-	string prefix;
-	switch (type) {
-		case MSG_ERR:  prefix = "ERR";  break;
-		case MSG_WARN: prefix = "WARN"; break;
-		default:   prefix = "INFO"; break; // "otherwise, assume verbose..."
+// Helper function encapsulating main logging/business logic.
+void MsgLog::logMsg(std::string type, int lineNum, std::string msg) {
+	// Append line number if applicable (ie non-negative).
+	string prefix("! "); // Default to without line number
+	if (lineNum >= 0) {
+		prefix += "(Line " + to_string(lineNum) + ") ";
 	}
 
-	// Log message (INFO requires -v flag).
-	if ((type != MSG_INFO) || MsgLog::m_doVerbose) {
-		cout << prefix << "! " << msg << endl;
+	// Log message (INFO require verbose flag).
+	if ((type != "INFO") || MsgLog::m_doVerbose) {
+		cout << type << prefix << msg << endl;
 	}
 
-	// Terminate the program as needed (error or warning w/ -Werror flag).
-	if ((type == MSG_ERR) || ((type == MSG_WARN) && MsgLog::m_doWerror)) {
+	// Exit as needed (ERR/ASSERT always exit, WARN exits for Werror flag).
+	bool warnExits = (type == "WARN") && MsgLog::m_doWerror;
+	if ((type == "ERR") || warnExits || (type == "ASSERT")) {
 		cout << "Exiting..." << endl;
 		exit(1);
 	}
 }
 
-// Simplified formatter for logging messages. Adds line number to log.
-void MsgLog::logMsg(const MsgLogType type, const int lineNum, std::string msg) {
-	// Prepend line number to message to re-use other implementation.
-	ostringstream lineNumMsg;
-	lineNumMsg << "(Line " << lineNum << ") " << msg;
-	MsgLog::logMsg(type, lineNumMsg.str());
+// Simplified formatters for logging messages.
+void MsgLog::logERR(std::string msg, int lineNum) {
+	MsgLog::logMsg("ERR", lineNum, msg);
 }
+void MsgLog::logWARN(std::string msg, int lineNum) {
+	MsgLog::logMsg("WARN", lineNum, msg);
+}
+void MsgLog::logINFO(std::string msg, int lineNum) {
+	MsgLog::logMsg("INFO", lineNum, msg);
+}
+void MsgLog::logASSERT(std::string msg, int lineNum) {
+	MsgLog::logMsg("ASSERT", lineNum, msg);
+}
+

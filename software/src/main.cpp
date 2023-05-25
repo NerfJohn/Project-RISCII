@@ -34,11 +34,11 @@ void printInfo(void) {
 
 // TODO
 vector<ScanToken> scanFile(string cFilename) {
-	MsgLog::logMsg(MSG_INFO, "Scanning...");
+	MsgLog::logINFO("Scanning...");
 
 	// Prepare file to be read character by character.
 	FILE* fptr = fopen(cFilename.c_str(), "r");
-	if (!fptr) {MsgLog::logMsg(MSG_ERR, "Failed to open \"" + cFilename + "\"");}
+	if (!fptr) {MsgLog::logERR("Failed to open \"" + cFilename + "\"");}
 
 	// Preset important scanning variables.
 	uint8_t state = SCAN_START;	// Keep track of when/what to make a token
@@ -62,13 +62,13 @@ vector<ScanToken> scanFile(string cFilename) {
 		// Ensure char is part of scan table's accepted language.
 		if(!ScanTable::isValidChar(inChar)) {
 			string val = to_string((int)(inChar));	// Report as visible int
-			MsgLog::logMsg(MSG_ERR, lineNum, "Bad char =\"" + val + "\"");
+			MsgLog::logERR("Bad char =\"" + val + "\"", lineNum);
 		}
 
 		// Determine next state (reporting aggregate "token" if error is hit).
 		state = ScanTable::getNextState(state, inChar);
 		if (state == SCAN_ERROR) {
-			MsgLog::logMsg(MSG_ERR, lineNum, "Bad token \"" + buffer + "\"");
+			MsgLog::logERR("Bad token \"" + buffer + "\"", lineNum);
 		}
 
 		// Handle bookkeeping items of the scanner.
@@ -89,7 +89,7 @@ vector<ScanToken> scanFile(string cFilename) {
 				ScanToken newTkn((ScanTableStates)state, lineNum, buffer);
 				retTkns.push_back(newTkn);
 
-				MsgLog::logMsg(MSG_INFO, "Found " + newTkn.toString());
+				MsgLog::logINFO("Found " + newTkn.toString());
 			}
 
 			// Reset "state machine".
@@ -103,7 +103,7 @@ vector<ScanToken> scanFile(string cFilename) {
 	fclose(fptr);
 
 	string numTkns = to_string(retTkns.size());
-	MsgLog::logMsg(MSG_INFO, "Scan completed: " + numTkns + " tokens found");
+	MsgLog::logINFO("Scan completed: " + numTkns + " tokens found");
 
 	// Return scanned tokens.
 	return retTkns;
@@ -117,26 +117,28 @@ int main(int argc, char* argv[]) {
 	string cFilename;
 
 	// Parse arguments.
-	if (argc <= 1) {MsgLog::logMsg(MSG_ERR, "Filename not provided");}
+	if (argc <= 1) {MsgLog::logERR("Filename not provided");}
 	for (int i = 1; i < (argc - 1); i++) { 		// skip program and file names
 		// Match/set flags (repeats allowed, but not unknown flags).
 		string flag(argv[i]);
 		if 		(flag == "-h") 		{printInfo();}
 		else if (flag == "-O1") 	{optFlag = true;}
 		else if (flag == "-s")		{asmFlag = true;}
-		else if (flag == "-v")	   	{MsgLog::doVerbose(true);}
-		else if (flag == "-Werror") {MsgLog::doWerror(true);}
-		else {MsgLog::logMsg(MSG_ERR, "\"" + flag + "\" is not a valid flag");}
+		else if (flag == "-v")	   	{MsgLog::setVerbose(true);}
+		else if (flag == "-Werror") {MsgLog::setWerror(true);}
+		else {MsgLog::logERR("\"" + flag + "\" is not a valid flag");}
 	}
 	if (string(argv[argc - 1]) == "-h") {printInfo();}
 	cFilename = argv[argc - 1];
 
-	MsgLog::logMsg(MSG_INFO, "C Filename: " + cFilename);
-	MsgLog::logMsg(MSG_INFO, string("optFlag = ") + ((optFlag) ? "true" : "false"));
-	MsgLog::logMsg(MSG_INFO, string("asmFlag = ") + ((asmFlag) ? "true" : "false"));
+	MsgLog::logINFO("C Filename: " + cFilename);
+	MsgLog::logINFO(string("optFlag = ") + ((optFlag) ? "true" : "false"));
+	MsgLog::logINFO(string("asmFlag = ") + ((asmFlag) ? "true" : "false"));
 
 	// Scan and tokenize the file.
 	vector<ScanToken> scanTkns = scanFile(cFilename);
+
+	MsgLog::logINFO("Current Progress: " + to_string(scanTkns.size()) + " tokens found");
 
 	return 0;
 }

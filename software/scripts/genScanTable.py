@@ -125,6 +125,10 @@ SCAN_END_MAX = "SCAN_END_MAX"
 # "Visible ASCII" characters: [space] through '~', plus \t,\n, and EOF = 98 characters in language.
 LANG_NUM_CHARS = 98
 
+# Files to create.
+TABLE_FILE = "ScanTable.h"
+TOKEN_FILE = "tokensGenerated.txt"
+
 # Quick converter to account for odd character/index relationship.
 def colIdxToChar(colIdx):
     # Apply general rules of indices.
@@ -136,10 +140,10 @@ def colIdxToChar(colIdx):
     # Return as character.
     return chr(retChar)
 
-# Function to generate the resulting header file.
-def genFile(table, states):
-    # Create/overwrite cpp file.
-    file = open("ScanTable.h", "w")
+# Function to generate the resulting header file (for source code).
+def genTableFile(table, states):
+    # Create/overwrite header file.
+    file = open(TABLE_FILE, "w")
     
     # Write the top portion of the file.
     file.write(FILE_TOP)
@@ -171,12 +175,35 @@ def genFile(table, states):
     # Close finished file.
     file.close()
 
+# Function to generate the resulting "token" file (for parse table creation).
+def genTknFile(states):
+    # Create/overwrite text file.
+    file = open(TOKEN_FILE, "w")
+    
+    # Remove unneeded states for parse table generation.
+    tkns = {}
+    for state in states:
+        if (states[state] >= states[SCAN_END_MIN]): tkns[state] = states[state]
+    tkns.pop(SCAN_ERROR)
+    tkns.pop(SCAN_END_MIN)
+    tkns.pop(SCAN_END_MAX)
+    tkns.pop(SCAN_EXCLUDE_MIN)
+    
+    # Print each token with its value.
+    for tkn in tkns:
+        name = tkn.replace('*', '') # Remove undesired asterisks
+        name = name.replace("SCAN_", "") # Remove prefix- helps parse mock-up
+        file.write("%s,%s\n"%(name,tkns[tkn]))
+    
+    # Close finished file.
+    file.close()
+
 # Main Execution.
 if __name__ == "__main__":
     # Serve help flag.
-    if (len(sys.argv) < 2) and (sys.argv == "-h"):
+    if (len(sys.argv) == 2) and (sys.argv[1] == '-h'):
         print("python genScanTable.py [-h] <input file>")
-        sys.exit(1)
+        sys.exit(0)
 
     # Check file is provided.
     if (len(sys.argv) < 2) or not os.path.isfile(sys.argv[1]):
@@ -249,5 +276,6 @@ if __name__ == "__main__":
             if (re.fullmatch(colRegex, colIdxToChar(colIdx))):
                 table[rowIdx][colIdx] = value
     
-    # Generate file.
-    genFile(table, allStates)
+    # Generate files.
+    genTableFile(table, allStates)
+    genTknFile(allStates)
