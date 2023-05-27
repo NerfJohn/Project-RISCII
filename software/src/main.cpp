@@ -6,11 +6,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "MsgLog.h"
+#include "ScanToken.h"
 #include "ScanTable.h"
 
-#include "ScanToken.h"
-
-#include "MsgLog.h"
+#include "ParseTable.h"
 
 using namespace std;
 
@@ -139,6 +139,15 @@ int main(int argc, char* argv[]) {
 	vector<ScanToken> scanTkns = scanFile(cFilename);
 
 	MsgLog::logINFO("Current Progress: " + to_string(scanTkns.size()) + " tokens found");
+
+	vector<uint8_t> foo;
+	switch(scanTkns.size()) {
+		case 12: foo = {1,2,3}; break;
+		case 13: foo = {4,5,6}; break;
+		default: foo = {7,8,9};
+	}
+
+	MsgLog::logINFO(to_string((int)foo[0]));
 
 	return 0;
 }

@@ -36,11 +36,21 @@ public:
 	std::string getValue(void)			{return m_value;}
 
 	/*
+	 * Static public function for string-ifying a scan table state.
+	 *
+	 * Simple way to string-ify a scan table end state for various uses (eg
+	 * logging verbose info or errors). Note that this function is intended
+	 * to string-ify "concrete" tokens ONLY.
+	 *
+	 * @return string version of given type
+	 */
+	static std::string typeToString(ScanTableStates type);
+
+	/*
 	 * Creates string version of ScanToken object.
 	 *
 	 * String specifies object's type, line number, and, if applicable, value.
-	 * For readability, type is converted into a readable ASCII string
-	 * using a privately saved conversion function.
+	 * For readability, type is converted into a readable ASCII string.
 	 *
 	 * @return string version of the ScanToken object
 	 */
@@ -52,9 +62,6 @@ public:
 	virtual ~ScanToken() {/* Empty dtor */}
 
 private:
-	// Helper function for string-ifying the type.
-	std::string typeToString(void);
-
 	// Key token data to track.
 	ScanTableStates m_type;	// Type of token being represented
 	int m_lineNum;			// Line number of token for warnings/errors

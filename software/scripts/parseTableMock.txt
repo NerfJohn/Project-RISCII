@@ -1,0 +1,10 @@
+# Parse Table Script Ruleset
+# ==========================
+# 1) Format: <cur_state>::<token>::<new_states>
+# 2) Sub states use lower_snake_case, tokens use UPPER_SNAKE_CASE
+# 3) New states specified via CSV format (in order of expansion)
+# 4) Prefix '#' to indicate actions, use UPPER_SNAKE_CASE
+# 5) "prgm" state and "EOF" token are built-in
+# ==========================
+# Note: Tokens based off enum created in ScanTable.h
+# Note: Leave new states blank to indicate an epsilon

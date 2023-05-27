@@ -5,8 +5,9 @@
 EXE_NAME="quaidcc.exe"
 BUILD_ARGS="-O0 -Wall"
 
-# Name of scan table mock-up.
+# Name of table mock-ups.
 SCAN_MOCK="./scripts/scanTableMock.txt"
+PARSE_MOCK="./scripts/ParseTableMock.txt"
 
 # -- Flag Handling -- #
 
@@ -47,6 +48,24 @@ if [ $DO_REBUILD ] || [ $SCAN_MOCK -nt $EXE_NAME ]; then
 	# Move ScanTable.h to src directory.
 	cp ScanTable.h ./src/
 	rm -rf ScanTable.h
+fi
+
+# Rebuild ParseTable.h using script if updated (or rebuild called for).
+if [ $DO_REBUILD ] || [ $PARSE_MOCK -nt $EXE_NAME ]; then
+	echo Rebuilding ParseTable.h from $PARSE_MOCK...
+	rm -rf ./src/ParseTable.h # Clear previous build of ParseTable.h
+	
+	# Generate ParseTable.h in current directory.
+	python ./scripts/genParseTable.py $PARSE_MOCK
+	if [ $? -ne 0 ]; then
+		echo Failed to create ParseTable.h! Exiting...
+		rm -f $EXE_NAME
+		exit 1
+	fi
+	
+	# Move ParseTable.h to src directory.
+	cp ParseTable.h ./src/
+	rm -rf ParseTable.h
 fi
 
 # Only perform these checks if unsure whether to rebuild software.

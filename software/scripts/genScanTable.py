@@ -127,7 +127,6 @@ LANG_NUM_CHARS = 98
 
 # Files to create.
 TABLE_FILE = "ScanTable.h"
-TOKEN_FILE = "tokensGenerated.txt"
 
 # Quick converter to account for odd character/index relationship.
 def colIdxToChar(colIdx):
@@ -171,29 +170,6 @@ def genTableFile(table, states):
     
     # Write end portion of the file.
     file.write(FILE_END)
-    
-    # Close finished file.
-    file.close()
-
-# Function to generate the resulting "token" file (for parse table creation).
-def genTknFile(states):
-    # Create/overwrite text file.
-    file = open(TOKEN_FILE, "w")
-    
-    # Remove unneeded states for parse table generation.
-    tkns = {}
-    for state in states:
-        if (states[state] >= states[SCAN_END_MIN]): tkns[state] = states[state]
-    tkns.pop(SCAN_ERROR)
-    tkns.pop(SCAN_END_MIN)
-    tkns.pop(SCAN_END_MAX)
-    tkns.pop(SCAN_EXCLUDE_MIN)
-    
-    # Print each token with its value.
-    for tkn in tkns:
-        name = tkn.replace('*', '') # Remove undesired asterisks
-        name = name.replace("SCAN_", "") # Remove prefix- helps parse mock-up
-        file.write("%s,%s\n"%(name,tkns[tkn]))
     
     # Close finished file.
     file.close()
@@ -246,7 +222,11 @@ if __name__ == "__main__":
     for state in subStates:     # Ensure subStates < endStates < excStates
         allStates[state] = num
         num += 1
-    allStates[SCAN_END_MIN] = num
+    if (num >= 100):            # Ensure 100-199 is unique to end/exc states
+        print("Too many substates for scheme! Refactor design and/or generator!")
+        sys.exit(1)
+    allStates[SCAN_END_MIN] = 100
+    num = 100
     for state in endStates:
         allStates[state] = num
         num += 1
@@ -255,6 +235,9 @@ if __name__ == "__main__":
         allStates[state] = num
         num += 1
     allStates[SCAN_END_MAX] = num - 1 # Set equal to last state
+    if (num >= 200):            # Ensure 100-199 is unique to end/exc states
+        print("Too many endstates for scheme! Refactor design and/or generator!")
+        sys.exit(1)
     
     # Ensure solution is feasible (1-byte state preferred).
     if (len(allStates) > 256):
@@ -278,4 +261,3 @@ if __name__ == "__main__":
     
     # Generate files.
     genTableFile(table, allStates)
-    genTknFile(allStates)
