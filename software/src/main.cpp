@@ -4,13 +4,13 @@
 
 #include <iostream>
 #include <sstream>
+#include <stack>
 #include <string>
-#include <vector>
+#include <queue>
 #include "MsgLog.h"
+#include "ParseTable.h"
 #include "ScanToken.h"
 #include "ScanTable.h"
-
-#include "ParseTable.h"
 
 using namespace std;
 
@@ -33,7 +33,118 @@ void printInfo(void) {
 }
 
 // TODO
-vector<ScanToken> scanFile(string cFilename) {
+string actionToString(ParseActions action) {
+	// Return string-ified action.
+	switch (action) {
+		case PARSE_PRGM_NODE: return "PRGM_NODE";
+		case PARSE_VDECL_NODE: return "VDECL_NODE";
+		case PARSE_FDEF_NODE: return "FDEF_NODE";
+		case PARSE_ID_NODE: return "ID_NODE";
+		case PARSE_IF_NODE: return "IF_NODE";
+		case PARSE_WHILE_NODE: return "WHILE_NODE";
+		case PARSE_RETURN_NODE: return "RETURN_NODE";
+		case PARSE_ASSIGN_NODE: return "ASSIGN_NODE";
+		case PARSE_CALL_NODE: return "CALL_NODE";
+		case PARSE_LNOT_NODE: return "LNOT_NODE";
+		case PARSE_BNOT_NODE: return "BNOT_NODE";
+		case PARSE_MINUS_NODE: return "MINUS_NODE";
+		case PARSE_LIT_NODE: return "LIT_NODE";
+		case PARSE_PLUS_NODE: return "PLUS_NODE";
+		case PARSE_LSHIFT_NODE: return "LSHIFT_NODE";
+		case PARSE_RSHIFT_NODE: return "RSHIFT_NODE";
+		case PARSE_GRT_NODE: return "GRT_NODE";
+		case PARSE_LT_NODE: return "LT_NODE";
+		case PARSE_GEQ_NODE: return "GEQ_NODE";
+		case PARSE_LEQ_NODE: return "LEQ_NODE";
+		case PARSE_EQ_NODE: return "EQ_NODE";
+		case PARSE_NEQ_NODE: return "NEQ_NODE";
+		case PARSE_AND_NODE: return "AND_NODE";
+		case PARSE_XOR_NODE: return "XOR_NODE";
+		case PARSE_OR_NODE: return "OR_NODE";
+		default: MsgLog::logASSERT("Bad Node print");
+	}
+	return "";
+}
+
+// TODO
+void parseTokens(queue<ScanToken> tokens) {
+	// (INFO Checkpoint: Parsing started.)
+	MsgLog::logINFO("Parsing...");
+	int numNodes = 0;				// Info statistics
+
+	// Stacks used to conduct parsing/building.
+	stack<uint8_t> parseStack;		// for parsing tokens
+	stack<ScanToken> buildStack;	// for building AST
+
+	// Initialize parse stack.
+	constexpr uint8_t EOF_TKN = 0xff; // "-1" equivalent
+	parseStack.push(EOF_TKN);
+	parseStack.push(PARSE_START);
+
+	// Work until parse stack has been cleared.
+	while (parseStack.size()) {
+		// Get current state...
+		uint8_t state = parseStack.top();
+		parseStack.pop();
+
+		// ...and current token details (or "EOF" if unavailable).
+		constexpr int NO_LINE_NUM = -1;
+		ScanTableStates tknType = (tokens.size()) ? tokens.front().getType() :
+				(ScanTableStates)(EOF_TKN);
+		int tknLineNum = (tokens.size()) ? tokens.front().getLineNum() :
+				NO_LINE_NUM;
+
+		// Handle based on "grouping" (action vs. token vs. sub-state).
+		if ((PARSE_NODE_MIN <= state) && (state <= PARSE_NODE_MAX)) {
+			// TODO: Perform action- just print for now.
+			MsgLog::logINFO("TODO- Create " +
+					actionToString((ParseActions)state));
+
+			// Info statistics bookkeeping.
+			numNodes++;
+		}
+		else if (((SCAN_END_MIN <= state) && (state <= SCAN_END_MAX)) ||
+				  (EOF_TKN == state)) {
+			// Check expected/actual token (or hit fatal error).
+			if (state != tknType) {
+				string exp = (EOF_TKN == state) ?
+						"EOF" : ScanToken::typeToString((ScanTableStates)state);
+				string act = (EOF_TKN == state) ?
+						"EOF" : ScanToken::typeToString(tknType);
+				MsgLog::logERR("Expected " + exp + ", found " + act,
+						tknLineNum);
+			}
+
+			// Token parsed, pop from queue to build stack (as applicable).
+			if (EOF_TKN != state) {
+				buildStack.push(tokens.front());
+				tokens.pop();
+			}
+		}
+		else { // Otherwise, a sub-state
+			// Use parse table to get new states (or hit fatal error).
+			vector<uint8_t>* newStates =
+					ParseTable::getNextStates(state, tknType);
+			if (newStates == nullptr) {
+				MsgLog::logERR("Unexpected " + ScanToken::typeToString(tknType),
+							   tknLineNum);
+			}
+
+			// Push new states to parse stack (in reverse- LIFO stack).
+			for (uint8_t i = newStates->size(); i > 0; i--) {
+				parseStack.push(newStates->at(i - 1));
+			}
+		}
+	}
+
+	// (INFO Checkpoint: Parsing started.)
+	string nodeCnt = to_string(numNodes);
+	MsgLog::logINFO("Parse Completed- " + nodeCnt + " nodes created");
+}
+
+// TODO
+queue<ScanToken> scanFile(string cFilename) {
+	// (INFO Checkpoint: Scanning started.)
 	MsgLog::logINFO("Scanning...");
 
 	// Prepare file to be read character by character.
@@ -44,7 +155,7 @@ vector<ScanToken> scanFile(string cFilename) {
 	uint8_t state = SCAN_START;	// Keep track of when/what to make a token
 	string buffer;				// Record scanned chars for tokens
 	uint32_t lineNum = 1;		// Record lines for warnings/errors
-	vector<ScanToken> retTkns;	// List of tokens scanned in
+	queue<ScanToken> retTkns;	// List of tokens scanned in
 
 	// Process every character (including the EOF character).
 	char inChar;
@@ -86,9 +197,11 @@ vector<ScanToken> scanFile(string cFilename) {
 
 			// Create/record new token (throw out comments).
 			if (state != SCAN_COMMENT) {
+				// Create/save the token.
 				ScanToken newTkn((ScanTableStates)state, lineNum, buffer);
-				retTkns.push_back(newTkn);
+				retTkns.push(newTkn);
 
+				// (INFO Update: New token created.)
 				MsgLog::logINFO("Found " + newTkn.toString());
 			}
 
@@ -102,8 +215,9 @@ vector<ScanToken> scanFile(string cFilename) {
 	// Finished scanning- close the source file.
 	fclose(fptr);
 
+	// (INFO Checkpoint: Scan finished.)
 	string numTkns = to_string(retTkns.size());
-	MsgLog::logINFO("Scan completed: " + numTkns + " tokens found");
+	MsgLog::logINFO("Scan completed- " + numTkns + " tokens found");
 
 	// Return scanned tokens.
 	return retTkns;
@@ -131,23 +245,22 @@ int main(int argc, char* argv[]) {
 	if (string(argv[argc - 1]) == "-h") {printInfo();}
 	cFilename = argv[argc - 1];
 
+	// (INFO Checkpoint: Beginning options handled.)
 	MsgLog::logINFO("C Filename: " + cFilename);
 	MsgLog::logINFO(string("optFlag = ") + ((optFlag) ? "true" : "false"));
 	MsgLog::logINFO(string("asmFlag = ") + ((asmFlag) ? "true" : "false"));
 
+	////////////////////////////////
+	// Main Compilation Procedure //
+	////////////////////////////////
+
 	// Scan and tokenize the file.
-	vector<ScanToken> scanTkns = scanFile(cFilename);
+	queue<ScanToken> scanTkns = scanFile(cFilename);
 
-	MsgLog::logINFO("Current Progress: " + to_string(scanTkns.size()) + " tokens found");
+	// Parse file into Abstract Syntax Tree (AST).
+	parseTokens(scanTkns);
 
-	vector<uint8_t> foo;
-	switch(scanTkns.size()) {
-		case 12: foo = {1,2,3}; break;
-		case 13: foo = {4,5,6}; break;
-		default: foo = {7,8,9};
-	}
-
-	MsgLog::logINFO(to_string((int)foo[0]));
+	MsgLog::logINFO("Current end of program reached");
 
 	return 0;
 }

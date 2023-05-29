@@ -77,7 +77,7 @@ FILE_MIDDLE = '\n'.join([
                 "        const uint8_t tknEOF = -1;",
                 "",
                 "        // Assume we'll return our (emptied) state buffer for now.",
-                "        s_nextStates.empty();",
+                "        static std::vector<uint8_t> s_nextStates = {};",
                 "        std::vector<uint8_t>* retPtr = &s_nextStates;",
                 "",
                 "        // Use unique \"identifier\" to determine next states.",
@@ -104,9 +104,6 @@ FILE_END = '\n'.join([
             "private:",
             "    // Private constructor to prevent instantiation.",
             "    ParseTable(void) {/* Empty ctor */}",
-            "",
-            "    // Static buffer for class to share new state information.",
-            "    static std::vector<uint8_t> s_nextStates;",
             "};",
             "",
             "#endif /* SRC_PARSETABLE_H_ */",
@@ -176,7 +173,7 @@ if __name__ == "__main__":
         if (len(line) == 0 or line[0] == '#'): continue
         
         # Ensure rule matches expected format.
-        if (not re.fullmatch(r'[_a-z]+::[_A-Z]+::[#,_a-zA-Z]*', line)):
+        if (not re.fullmatch(r'[_a-z]+::[_A-Z]+::([#,_a-zA-Z]*|--)', line)):
             print("Unrecognized format: %s"%line)
             sys.exit(1)
         
@@ -219,15 +216,17 @@ if __name__ == "__main__":
         key = "(" + parts[0] + " << 8) | (0xff & " + parts[1] + ")"
         
         # Next determine the rule's outcome- a list of tokens.
-        outcome = "{"
+        outcome = "{" + parts[1]
         parts = rules[rule].split(",")
         for part in parts:
+            if (len(part) > 0): outcome += ","
             if part in subStates: outcome += ''.join("0x{:02x}".format(allStates[part]))
             elif part in actStates: outcome += part[1:] # Remove leading hashtag
             else: outcome += part
+        outcome = outcome + "}"
         
-            outcome += ","
-        outcome = outcome[:-1] + "}"
+        # Clear out epsilons that are intended to be completely clear.
+        if len(parts) == 1 and parts[0] == "--": outcome = "{}"
         
         # Add to table.
         table[key] = outcome
