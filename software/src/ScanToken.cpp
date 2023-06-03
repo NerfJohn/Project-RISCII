@@ -88,7 +88,7 @@ std::string ScanToken::typeToString(ScanTableStates type) {
 		default:
 			// Implies type is corrupted- assert source code is faulty.
 			string msg("ScanToken::typeToString() called when type = ");
-			MsgLog::logASSERT( msg + to_string((int)(type)));
+			MsgLog::logASSERT(msg + to_string((int)(type)));
 	}
 
 	// (Never reached, but satisfy compiler warning.)

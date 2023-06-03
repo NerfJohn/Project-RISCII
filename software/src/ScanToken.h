@@ -3,6 +3,7 @@
  */
 
 #include <string>
+#include "IBuildItem.h"
 #include "ScanTable.h"
 
 #ifndef SCANTOKEN_H_
@@ -15,7 +16,7 @@
  * of a scanned token. The object acts as an immutable object that can be
  * read and string-ified as needed for logic and reporting.
  */
-class ScanToken {
+class ScanToken: public IBuildItem {
 public:
 	/*
 	 * "Initialize" constructor for ScanToken object.
@@ -30,9 +31,11 @@ public:
 
 	/*
 	 * Typical getters for ScanToken's data.
+	 *
+	 * @return requested raw (ie non-ptr) information
 	 */
 	ScanTableStates getType(void) 		{return m_type;}
-	int getLineNum(void) 				{return m_lineNum;}
+	int getLineNum(void)				{return m_lineNum;}
 	std::string getValue(void)			{return m_value;}
 
 	/*
@@ -55,6 +58,19 @@ public:
 	 * @return string version of the ScanToken object
 	 */
 	std::string toString(void);
+
+	/*
+	 * Implementations of IBuildItem interface.
+	 *
+	 * Implements required function for IBuildItem concrete class. Some
+	 * functions have already been implemented as is and therefore have NOT been
+	 * redefined here.
+	 *
+	 * @return requested raw (ie non-ptr) information
+	 */
+	uint8_t getBuildType(void) 		{return m_type; /* build type = token */}
+	// int getLineNum(void)			{return m_lineNum;}
+	// std::string getValue(void)	{return m_value;}
 
 	/*
 	 * Std. Destructor.

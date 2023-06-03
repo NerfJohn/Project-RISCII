@@ -12,6 +12,10 @@
 #include "ScanToken.h"
 #include "ScanTable.h"
 
+#include "IBuildItem.h"
+#include "NodeAbstracts.h"
+#include "NodeConcretes.h"
+
 using namespace std;
 
 // TODO
@@ -33,48 +37,55 @@ void printInfo(void) {
 }
 
 // TODO
-string actionToString(ParseActions action) {
-	// Return string-ified action.
-	switch (action) {
-		case PARSE_PRGM_NODE: return "PRGM_NODE";
-		case PARSE_VDECL_NODE: return "VDECL_NODE";
-		case PARSE_FDEF_NODE: return "FDEF_NODE";
-		case PARSE_ID_NODE: return "ID_NODE";
-		case PARSE_IF_NODE: return "IF_NODE";
-		case PARSE_WHILE_NODE: return "WHILE_NODE";
-		case PARSE_RETURN_NODE: return "RETURN_NODE";
-		case PARSE_ASSIGN_NODE: return "ASSIGN_NODE";
-		case PARSE_CALL_NODE: return "CALL_NODE";
-		case PARSE_LNOT_NODE: return "LNOT_NODE";
-		case PARSE_BNOT_NODE: return "BNOT_NODE";
-		case PARSE_MINUS_NODE: return "MINUS_NODE";
-		case PARSE_LIT_NODE: return "LIT_NODE";
-		case PARSE_PLUS_NODE: return "PLUS_NODE";
-		case PARSE_LSHIFT_NODE: return "LSHIFT_NODE";
-		case PARSE_RSHIFT_NODE: return "RSHIFT_NODE";
-		case PARSE_GRT_NODE: return "GRT_NODE";
-		case PARSE_LT_NODE: return "LT_NODE";
-		case PARSE_GEQ_NODE: return "GEQ_NODE";
-		case PARSE_LEQ_NODE: return "LEQ_NODE";
-		case PARSE_EQ_NODE: return "EQ_NODE";
-		case PARSE_NEQ_NODE: return "NEQ_NODE";
-		case PARSE_AND_NODE: return "AND_NODE";
-		case PARSE_XOR_NODE: return "XOR_NODE";
-		case PARSE_OR_NODE: return "OR_NODE";
-		default: MsgLog::logASSERT("Bad Node print");
+void buildNode(stack<IBuildItem*>* buildStack, uint8_t nodeToBuild) {
+	// Build specified node (note: ctor's alter portion of build stack).
+	IASTNode* newNode;
+	switch(nodeToBuild) {
+		case PARSE_ID_NODE: newNode = new IDNode(buildStack); break;
+		case PARSE_LIT_NODE: newNode = new LITNode(buildStack); break;
+		case PARSE_AND_NODE: newNode = new AndNode(buildStack); break;
+		case PARSE_OR_NODE: newNode = new OrNode(buildStack); break;
+		case PARSE_XOR_NODE: newNode = new XorNode(buildStack); break;
+		case PARSE_LNOT_NODE: newNode = new LNotNode(buildStack); break;
+		case PARSE_RSHIFT_NODE: newNode = new RShiftNode(buildStack); break;
+		case PARSE_LSHIFT_NODE: newNode = new LShiftNode(buildStack); break;
+		case PARSE_PLUS_NODE: newNode = new PlusNode(buildStack); break;
+		case PARSE_MINUS_NODE: newNode = new MinusNode(buildStack); break;
+		case PARSE_GRT_NODE: newNode = new GrtNode(buildStack); break;
+		case PARSE_LT_NODE: newNode = new LtNode(buildStack); break;
+		case PARSE_GEQ_NODE: newNode = new GeqNode(buildStack); break;
+		case PARSE_LEQ_NODE: newNode = new LeqNode(buildStack); break;
+		case PARSE_EQ_NODE: newNode = new EqNode(buildStack); break;
+		case PARSE_NEQ_NODE: newNode = new NeqNode(buildStack); break;
+		case PARSE_BNOT_NODE: newNode = new BNotNode(buildStack); break;
+		case PARSE_ASSIGN_NODE: newNode = new AssignNode(buildStack); break;
+		case PARSE_RETURN_NODE: newNode = new RetNode(buildStack); break;
+		case PARSE_IF_NODE: newNode = new IfNode(buildStack); break;
+		case PARSE_WHILE_NODE: newNode = new WhileNode(buildStack); break;
+		case PARSE_CALL_NODE: newNode = new CallNode(buildStack); break;
+		case PARSE_VDECL_NODE: newNode = new VarDeclNode(buildStack); break;
+		case PARSE_FDEF_NODE: newNode = new FuncDefNode(buildStack); break;
+		case PARSE_PRGM_NODE: newNode = new PrgmNode(buildStack); break;
+		default:
+			MsgLog::logASSERT("Couldn't build node = " +
+					to_string((int)nodeToBuild));
 	}
-	return "";
+
+	MsgLog::logINFO("Created " + newNode->toString());
+
+	// Push new node back to stack (for use in larger nodes).
+	buildStack->push(newNode);
 }
 
 // TODO
-void parseTokens(queue<ScanToken> tokens) {
+PrgmNode* parseTokens(queue<ScanToken> tokens) {
 	// (INFO Checkpoint: Parsing started.)
 	MsgLog::logINFO("Parsing...");
 	int numNodes = 0;				// Info statistics
 
 	// Stacks used to conduct parsing/building.
 	stack<uint8_t> parseStack;		// for parsing tokens
-	stack<ScanToken> buildStack;	// for building AST
+	stack<IBuildItem*> buildStack;	// for building AST
 
 	// Initialize parse stack.
 	constexpr uint8_t EOF_TKN = 0xff; // "-1" equivalent
@@ -96,9 +107,8 @@ void parseTokens(queue<ScanToken> tokens) {
 
 		// Handle based on "grouping" (action vs. token vs. sub-state).
 		if ((PARSE_NODE_MIN <= state) && (state <= PARSE_NODE_MAX)) {
-			// TODO: Perform action- just print for now.
-			MsgLog::logINFO("TODO- Create " +
-					actionToString((ParseActions)state));
+			// Perform action by building the specified node.
+			buildNode(&buildStack, state);
 
 			// Info statistics bookkeeping.
 			numNodes++;
@@ -117,7 +127,8 @@ void parseTokens(queue<ScanToken> tokens) {
 
 			// Token parsed, pop from queue to build stack (as applicable).
 			if (EOF_TKN != state) {
-				buildStack.push(tokens.front());
+				ScanToken* tkn = new ScanToken(tokens.front());
+				buildStack.push(tkn);
 				tokens.pop();
 			}
 		}
@@ -140,6 +151,11 @@ void parseTokens(queue<ScanToken> tokens) {
 	// (INFO Checkpoint: Parsing started.)
 	string nodeCnt = to_string(numNodes);
 	MsgLog::logINFO("Parse Completed- " + nodeCnt + " nodes created");
+
+	// Return the finished AST via root node (ie a PrgmNode).
+	PrgmNode* retPtr = dynamic_cast<PrgmNode*>(buildStack.top());
+	if (retPtr == nullptr) {MsgLog::logASSERT("AST parsed incorrectly");}
+	return retPtr;
 }
 
 // TODO
@@ -215,6 +231,9 @@ queue<ScanToken> scanFile(string cFilename) {
 	// Finished scanning- close the source file.
 	fclose(fptr);
 
+	// Sanity check: Did we actually scan anything?
+	if (retTkns.size() == 0) {MsgLog::logERR("No tokens found");}
+
 	// (INFO Checkpoint: Scan finished.)
 	string numTkns = to_string(retTkns.size());
 	MsgLog::logINFO("Scan completed- " + numTkns + " tokens found");
@@ -258,7 +277,7 @@ int main(int argc, char* argv[]) {
 	queue<ScanToken> scanTkns = scanFile(cFilename);
 
 	// Parse file into Abstract Syntax Tree (AST).
-	parseTokens(scanTkns);
+	PrgmNode* ast = parseTokens(scanTkns);
 
 	MsgLog::logINFO("Current end of program reached");
 
