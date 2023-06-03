@@ -81,6 +81,7 @@ int IExpNode::initFromStack(std::stack<IBuildItem*>* buildStack) {
 		if (type == SCAN_RPAREN) {parenCnt++;}
 		else if ((type == SCAN_LPAREN) && (parenCnt > 0)) {
 			parenCnt--;
+			delete item;
 			continue;
 		}
 
@@ -109,6 +110,7 @@ int IExpNode::initFromStack(std::stack<IBuildItem*>* buildStack) {
 		if (type == SCAN_RPAREN) {parenCnt++;}
 		else if ((type == SCAN_LPAREN) && (parenCnt > 0)) {
 			parenCnt--;
+			delete item;
 			continue;
 		}
 
