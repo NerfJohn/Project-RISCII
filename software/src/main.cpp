@@ -8,13 +8,12 @@
 #include <string>
 #include <queue>
 #include "MsgLog.h"
+#include "NodeAbstracts.h"
+#include "NodeConcretes.h"
 #include "ParseTable.h"
 #include "ScanToken.h"
 #include "ScanTable.h"
-
-#include "IBuildItem.h"
-#include "NodeAbstracts.h"
-#include "NodeConcretes.h"
+#include "SymbolTable.h"
 
 using namespace std;
 
@@ -273,11 +272,22 @@ int main(int argc, char* argv[]) {
 	// Main Compilation Procedure //
 	////////////////////////////////
 
+	MsgLog::logINFO("===== Scanning Stage =====");
+
 	// Scan and tokenize the file.
 	queue<ScanToken> scanTkns = scanFile(cFilename);
 
+	MsgLog::logINFO("===== Parsing Stage =====");
+
 	// Parse file into Abstract Syntax Tree (AST).
 	PrgmNode* ast = parseTokens(scanTkns);
+
+	MsgLog::logINFO("===== Semantic Check Stage =====");
+
+	// Semantic Checking- capture created symbols.
+	SymbolTable symTable;
+	vector<Symbol*> symbols;
+	ast->checkSemantics(&symTable, &symbols);
 
 	MsgLog::logINFO("Current end of program reached");
 

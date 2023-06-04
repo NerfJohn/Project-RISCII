@@ -8,7 +8,7 @@
 
 using namespace std;
 
-// TODO
+// Static function to string-ify a var type enum.
 std::string VarType::toString(VarType_e type) {
 	// Return string-ified variable type.
 	switch (type) {

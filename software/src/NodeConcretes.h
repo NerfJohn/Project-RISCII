@@ -39,6 +39,9 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
 private:
 	// TODO
 	std::vector<IDeclNode*> m_declList;
@@ -49,7 +52,7 @@ private:
 /////////////////////////
 
 // TODO
-class VarDeclNode: public IASTNode, public IDeclNode, public IStmtNode {
+class VarDeclNode: public IDeclNode, public IStmtNode {
 public:
 	// TODO
 	VarDeclNode(std::stack<IBuildItem*>* buildStack);
@@ -61,6 +64,16 @@ public:
 
 	// TODO
 	std::string toString(void);
+
+	// TODO
+	void initParam(void) {m_isParam = true;}
+
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
+private:
+	// TODO
+	bool m_isParam = false;
 };
 
 /////////////////////////
@@ -68,7 +81,7 @@ public:
 /////////////////////////
 
 // TODO
-class FuncDefNode: public IASTNode, public IDeclNode {
+class FuncDefNode: public IDeclNode {
 public:
 	// TODO
 	FuncDefNode(std::stack<IBuildItem*>* buildStack);
@@ -81,9 +94,12 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
 private:
 	// TODO
-	std::vector<IDeclNode*> m_paramList;
+	std::vector<VarDeclNode*> m_paramList;
 	std::vector<IStmtNode*> m_stmtList;
 };
 
@@ -92,7 +108,7 @@ private:
 ////////////////////
 
 // TODO
-class IDNode: public IASTNode, public IExpNode {
+class IDNode: public IExpNode {
 public:
 	// TODO
 	IDNode(std::stack<IBuildItem*>* buildStack);
@@ -105,9 +121,21 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void initID(void) {m_isInit = true;}
+
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
 private:
 	// TODO
 	std::string m_id;
+
+	// TODO
+	bool m_isInit = false;
+
+	// TODO
+	Symbol* m_sym;
 
 };
 
@@ -116,7 +144,7 @@ private:
 /////////////////////
 
 // TODO
-class LITNode: public IASTNode, public IExpNode {
+class LITNode: public IExpNode {
 public:
 	// TODO
 	LITNode(std::stack<IBuildItem*>* buildStack);
@@ -129,6 +157,11 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList) {
+		/* no work to do */
+	}
+
 private:
 	// TODO
 	std::string m_strValue;
@@ -139,7 +172,7 @@ private:
 ////////////////////////
 
 // TODO
-class AssignNode: public IASTNode, public IStmtNode {
+class AssignNode: public IStmtNode {
 public:
 	// TODO
 	AssignNode(std::stack<IBuildItem*>* buildStack);
@@ -152,6 +185,9 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
 private:
 	// TODO
 	IDNode* m_lhs;
@@ -163,7 +199,7 @@ private:
 /////////////////////
 
 // TODO
-class RetNode: public IASTNode, public IStmtNode {
+class RetNode: public IStmtNode {
 public:
 	// TODO
 	RetNode(std::stack<IBuildItem*>* buildStack);
@@ -176,6 +212,9 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
 private:
 	// TODO
 	IExpNode* m_exp;
@@ -186,7 +225,7 @@ private:
 ////////////////////
 
 // TODO
-class IfNode: public IASTNode, public IStmtNode {
+class IfNode: public IStmtNode {
 public:
 	// TODO
 	IfNode(std::stack<IBuildItem*>* buildStack);
@@ -199,6 +238,9 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
 private:
 	// TODO
 	IExpNode* m_cond;
@@ -210,7 +252,7 @@ private:
 ///////////////////////
 
 // TODO
-class WhileNode: public IASTNode, public IStmtNode {
+class WhileNode: public IStmtNode {
 public:
 	// TODO
 	WhileNode(std::stack<IBuildItem*>* buildStack);
@@ -223,6 +265,9 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
 private:
 	// TODO
 	IExpNode* m_cond;
@@ -234,7 +279,7 @@ private:
 //////////////////////
 
 // TODO
-class CallNode: public IASTNode, public IStmtNode, public IExpNode {
+class CallNode: public IStmtNode, public IExpNode {
 public:
 	// TODO
 	CallNode(std::stack<IBuildItem*>* buildStack);
@@ -247,10 +292,16 @@ public:
 	// TODO
 	std::string toString(void);
 
+	// TODO
+	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
 private:
 	// TODO
 	IDNode* m_id;
 	std::vector<IExpNode*> m_argList;
+
+	// TODO
+	Symbol* m_sym;
 };
 
 ///////////////////////////
@@ -258,7 +309,7 @@ private:
 ///////////////////////////
 
 // TODO
-class AndNode: public IASTNode, public IExpNode {
+class AndNode: public IExpNode {
 public:
 	// TODO
 	AndNode(std::stack<IBuildItem*>* buildStack) {
@@ -275,7 +326,7 @@ public:
 };
 
 // TODO
-class OrNode: public IASTNode, public IExpNode {
+class OrNode: public IExpNode {
 public:
 	// TODO
 	OrNode(std::stack<IBuildItem*>* buildStack) {
@@ -292,7 +343,7 @@ public:
 };
 
 // TODO
-class XorNode: public IASTNode, public IExpNode {
+class XorNode: public IExpNode {
 public:
 	// TODO
 	XorNode(std::stack<IBuildItem*>* buildStack) {
@@ -309,7 +360,7 @@ public:
 };
 
 // TODO
-class LNotNode: public IASTNode, public IExpNode {
+class LNotNode: public IExpNode {
 public:
 	// TODO
 	LNotNode(std::stack<IBuildItem*>* buildStack) {
@@ -326,7 +377,7 @@ public:
 };
 
 // TODO
-class RShiftNode: public IASTNode, public IExpNode {
+class RShiftNode: public IExpNode {
 public:
 	// TODO
 	RShiftNode(std::stack<IBuildItem*>* buildStack) {
@@ -343,7 +394,7 @@ public:
 };
 
 // TODO
-class LShiftNode: public IASTNode, public IExpNode {
+class LShiftNode: public IExpNode {
 public:
 	// TODO
 	LShiftNode(std::stack<IBuildItem*>* buildStack) {
@@ -364,7 +415,7 @@ public:
 //////////////////////////////
 
 // TODO
-class PlusNode: public IASTNode, public IExpNode {
+class PlusNode: public IExpNode {
 public:
 	// TODO
 	PlusNode(std::stack<IBuildItem*>* buildStack) {
@@ -381,7 +432,7 @@ public:
 };
 
 // TODO
-class MinusNode: public IASTNode, public IExpNode {
+class MinusNode: public IExpNode {
 public:
 	// TODO
 	MinusNode(std::stack<IBuildItem*>* buildStack) {
@@ -402,7 +453,7 @@ public:
 ///////////////////////////
 
 // TODO
-class GrtNode: public IASTNode, public IExpNode {
+class GrtNode: public IExpNode {
 public:
 	// TODO
 	GrtNode(std::stack<IBuildItem*>* buildStack) {
@@ -419,7 +470,7 @@ public:
 };
 
 // TODO
-class LtNode: public IASTNode, public IExpNode {
+class LtNode: public IExpNode {
 public:
 	// TODO
 	LtNode(std::stack<IBuildItem*>* buildStack) {
@@ -436,7 +487,7 @@ public:
 };
 
 // TODO
-class GeqNode: public IASTNode, public IExpNode {
+class GeqNode: public IExpNode {
 public:
 	// TODO
 	GeqNode(std::stack<IBuildItem*>* buildStack) {
@@ -453,7 +504,7 @@ public:
 };
 
 // TODO
-class LeqNode: public IASTNode, public IExpNode {
+class LeqNode: public IExpNode {
 public:
 	// TODO
 	LeqNode(std::stack<IBuildItem*>* buildStack) {
@@ -470,7 +521,7 @@ public:
 };
 
 // TODO
-class EqNode: public IASTNode, public IExpNode {
+class EqNode: public IExpNode {
 public:
 	// TODO
 	EqNode(std::stack<IBuildItem*>* buildStack) {
@@ -487,7 +538,7 @@ public:
 };
 
 // TODO
-class NeqNode: public IASTNode, public IExpNode {
+class NeqNode: public IExpNode {
 public:
 	// TODO
 	NeqNode(std::stack<IBuildItem*>* buildStack) {
@@ -504,7 +555,7 @@ public:
 };
 
 // TODO
-class BNotNode: public IASTNode, public IExpNode {
+class BNotNode: public IExpNode {
 public:
 	// TODO
 	BNotNode(std::stack<IBuildItem*>* buildStack) {

@@ -158,3 +158,11 @@ std::string IExpNode::toExpString(uint8_t type) {
 	// Finish punctuation and return.
 	return tknStr + "}";
 }
+
+// TODO
+void IExpNode::checkSemantics(SymbolTable* symTable,
+							  std::vector<Symbol*>* symList) {
+	// Pass to children (as available).
+	if (m_lhs != nullptr) {m_lhs->checkSemantics(symTable, symList);}
+	if (m_rhs != nullptr) {m_rhs->checkSemantics(symTable, symList);}
+}

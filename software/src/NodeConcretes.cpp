@@ -13,9 +13,9 @@
  * better reflect the purpose of the file.
  */
 
-#include "NodeConcretes.h"
-
 #include "MsgLog.h"
+
+#include "NodeConcretes.h"
 
 using namespace std;
 
@@ -59,6 +59,37 @@ std::string PrgmNode::toString(void) {
 
 	// Finish punctuation and return.
 	return tknStr + "}";
+}
+
+// TODO
+void PrgmNode::checkSemantics(SymbolTable* symTable,
+							  std::vector<Symbol*>* symList) {
+	MsgLog::logINFO("Performing semantic checks...");
+
+	// Pass on check to every decl/def.
+	for (IDeclNode* decl : m_declList) {
+		decl->checkSemantics(symTable, symList);
+	}
+
+	// Ensure an "int main()" exists.
+	Symbol* mainSym = symTable->getLocal("main");
+	if ((mainSym == nullptr) ||
+		(mainSym->m_numArgs != 0) ||
+		(mainSym->m_type != TYPE_INT)) {
+		MsgLog::logERR("\"int main()\" does not exist");
+	}
+
+	// Warn if any symbols haven't been used.
+	mainSym->m_isUsed = true; // Corner case: main() is used w/o calling
+	for (Symbol* sym: *symList) {
+		if (!sym->m_isUsed) {
+			MsgLog::logWARN("\"" + sym->m_id + "\" is unused",
+							sym->m_declLineNum);
+		}
+	}
+
+	MsgLog::logINFO("Finished semantic checks- " +
+			to_string(symList->size()) + " symbols created");
 }
 
 /////////////////////////
@@ -113,6 +144,25 @@ std::string VarDeclNode::toString(void) {
 	return tknStr + "}";
 }
 
+// TODO
+void VarDeclNode::checkSemantics(SymbolTable* symTable,
+								 std::vector<Symbol*>* symList) {
+	// Declaration- add new name/symbol pair.
+	Symbol* newSym = symTable->addSym(m_id);
+	if (newSym == nullptr) {
+		// Symbol already exists- log error.
+		MsgLog::logERR("\"" + m_id + "\" multiply declared", m_lineNum);
+	}
+	newSym->m_numArgs = -1; // Var- no "arguments" to speak of
+	newSym->m_type = m_varType;
+	newSym->m_declLineNum = m_lineNum;
+	newSym->m_id = m_id;
+	newSym->m_isInit |= m_isParam; // Params are always initialized
+	symList->push_back(newSym);
+
+	MsgLog::logINFO("New Symbol " + newSym->toName());
+}
+
 /////////////////////////
 // === FuncDefNode === //
 /////////////////////////
@@ -120,7 +170,7 @@ std::string VarDeclNode::toString(void) {
 // TODO
 FuncDefNode::FuncDefNode(std::stack<IBuildItem*>* buildStack) {
 	// Temporary buffers to hold popped params/stmts.
-	vector<IDeclNode*> paramBuffer;
+	vector<VarDeclNode*> paramBuffer;
 	vector<IStmtNode*> stmtBuffer;
 
 	// Phase 1: Process "body" tokens until un-related token is found.
@@ -146,7 +196,7 @@ FuncDefNode::FuncDefNode(std::stack<IBuildItem*>* buildStack) {
 		buildStack->pop(); // "Inclusive" consumption of parens.
 
 		// Pop "stmts" into buffer.
-		IDeclNode* declPtr = dynamic_cast<IDeclNode*>(item);
+		VarDeclNode* declPtr = dynamic_cast<VarDeclNode*>(item);
 		if (declPtr != nullptr) {paramBuffer.push_back(declPtr);}
 
 		// Otherwise, process commas/parens.
@@ -213,6 +263,37 @@ std::string FuncDefNode::toString(void) {
 	return tknStr + "}";
 }
 
+// TODO
+void FuncDefNode::checkSemantics(SymbolTable* symTable,
+								 std::vector<Symbol*>* symList) {
+	// Declaration- add new name/symbol pair.
+	Symbol* newSym = symTable->addSym(m_id);
+	if (newSym == nullptr) {
+		// Symbol already exists- log error.
+		MsgLog::logERR("\"" + m_id + "\" multiply declared", m_lineNum);
+	}
+	newSym->m_numArgs = m_paramList.size();
+	newSym->m_type = m_varType;
+	newSym->m_declLineNum = m_lineNum;
+	newSym->m_id = m_id;
+	symList->push_back(newSym);
+
+	MsgLog::logINFO("New Symbol " + newSym->toName());
+
+	// Process params/stmts in new, lower scope.
+	symTable->pushScope();
+	MsgLog::logINFO("Pushing scope " + to_string(symTable->getScopeNum()));
+	for (VarDeclNode* decl : m_paramList) {
+		decl->initParam();
+		decl->checkSemantics(symTable, symList);
+	}
+	for (IStmtNode* stmt : m_stmtList) {
+		stmt->checkSemantics(symTable, symList);
+	}
+	MsgLog::logINFO("Popping scope " + to_string(symTable->getScopeNum()));
+	symTable->popScope();
+}
+
 ////////////////////
 // === IDNode === //
 ////////////////////
@@ -227,6 +308,9 @@ IDNode::IDNode(std::stack<IBuildItem*>* buildStack) {
 	// Consume/free token.
 	buildStack->pop();
 	delete item;
+
+	// (Symbol will be set later).
+	m_sym = nullptr;
 }
 
 // TODO
@@ -242,6 +326,28 @@ std::string IDNode::toString(void) {
 
 	// Finish punctuation and return.
 	return tknStr + "}";
+}
+
+// TODO
+void IDNode::checkSemantics(SymbolTable* symTable,
+							std::vector<Symbol*>* symList) {
+	// Find symbol to link to.
+	m_sym = symTable->getGlobal(m_id);
+	if (m_sym == nullptr) {
+		// ID is undeclared.
+		MsgLog::logERR("\"" + m_id + "\" is undeclared", m_lineNum);
+	}
+
+	MsgLog::logINFO("Ref to " + m_sym->toName());
+
+	// Fill in semantic information.
+	m_sym->m_isInit |= m_isInit;
+	m_sym->m_isUsed = true; // Counting writes- didn't prep my code for this...
+
+	// Warn user if ID is being used before init.
+	if (!m_sym->m_isInit) {
+		MsgLog::logWARN("\"" + m_id + "\" is uninitialized", m_lineNum);
+	}
 }
 
 /////////////////////
@@ -326,6 +432,17 @@ std::string AssignNode::toString(void) {
 	return tknStr + "}";
 }
 
+// TODO
+void AssignNode::checkSemantics(SymbolTable* symTable,
+								std::vector<Symbol*>* symList) {
+	// Mark lhs as initialized (before lhs call checks itself for init).
+	m_lhs->initID();
+
+	// Pass to children (following assign's right->left assoc.).
+	m_rhs->checkSemantics(symTable, symList);
+	m_lhs->checkSemantics(symTable, symList);
+}
+
 /////////////////////
 // === RetNode === //
 /////////////////////
@@ -367,6 +484,13 @@ std::string RetNode::toString(void) {
 
 	// Finish punctuation and return.
 	return tknStr + "}";
+}
+
+// TODO
+void RetNode::checkSemantics(SymbolTable* symTable,
+							 std::vector<Symbol*>* symList) {
+	// Pass to child.
+	m_exp->checkSemantics(symTable, symList);
 }
 
 ////////////////////
@@ -439,6 +563,22 @@ std::string IfNode::toString(void) {
 	return tknStr + "}";
 }
 
+// TODO
+void IfNode::checkSemantics(SymbolTable* symTable,
+							std::vector<Symbol*>* symList) {
+	// First check the condition.
+	m_cond->checkSemantics(symTable, symList);
+
+	// Then check the block within new scope.
+	symTable->pushScope();
+	MsgLog::logINFO("Pushing scope " + to_string(symTable->getScopeNum()));
+	for (IStmtNode* stmt: m_stmtList) {
+		stmt->checkSemantics(symTable, symList);
+	}
+	MsgLog::logINFO("Popping scope " + to_string(symTable->getScopeNum()));
+	symTable->popScope();
+}
+
 ///////////////////////
 // === WhileNode === //
 ///////////////////////
@@ -509,6 +649,22 @@ std::string WhileNode::toString(void) {
 	return tknStr + "}";
 }
 
+// TODO
+void WhileNode::checkSemantics(SymbolTable* symTable,
+							   std::vector<Symbol*>* symList) {
+	// First check the condition.
+	m_cond->checkSemantics(symTable, symList);
+
+	// Then check the block within new scope.
+	symTable->pushScope();
+	MsgLog::logINFO("Pushing scope " + to_string(symTable->getScopeNum()));
+	for (IStmtNode* stmt: m_stmtList) {
+		stmt->checkSemantics(symTable, symList);
+	}
+	MsgLog::logINFO("Popping scope " + to_string(symTable->getScopeNum()));
+	symTable->popScope();
+}
+
 //////////////////////
 // === CallNode === //
 //////////////////////
@@ -550,6 +706,9 @@ CallNode::CallNode(std::stack<IBuildItem*>* buildStack) {
 	for (int i = expBuffer.size(); i > 0; i--) {
 		m_argList.push_back(expBuffer.at(i - 1));
 	}
+
+	// (Symbol will be linked later.)
+	m_sym = nullptr;
 }
 
 // TODO
@@ -568,4 +727,20 @@ std::string CallNode::toString(void) {
 
 	// Finish punctuation and return.
 	return tknStr + "}";
+}
+
+// TODO
+void CallNode::checkSemantics(SymbolTable* symTable,
+							  std::vector<Symbol*>* symList) {
+	// Use id's info to link to symbol from call.
+	m_sym = symTable->getGlobal(m_id->getValue());
+	if (m_sym == nullptr) {
+		// ID is undeclared.
+		MsgLog::logERR("\"" + m_id->getValue() + "\" is undeclared", m_lineNum);
+	}
+
+	MsgLog::logINFO("Ref to " + m_sym->toName());
+
+	// Fill in semantic information.
+	m_sym->m_isUsed = true; // Counting writes- didn't prep my code for this...
 }

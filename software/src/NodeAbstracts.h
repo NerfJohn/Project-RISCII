@@ -19,6 +19,7 @@
 #include <stack>
 #include "IBuildItem.h"
 #include "ParseTable.h"
+#include "SymbolTable.h"
 #include "VarType.h"
 
 //////////////////////
@@ -40,6 +41,10 @@ public:
 	virtual std::string toString(void) = 0;
 
 	// TODO
+	virtual void checkSemantics(SymbolTable* symTable,
+								std::vector<Symbol*>* symList) = 0;
+
+	// TODO
 	virtual ~IASTNode(void) {/* Empty dtor */}
 
 protected:
@@ -52,7 +57,7 @@ protected:
 ///////////////////////
 
 // TODO
-class IDeclNode {
+class IDeclNode: public virtual IASTNode {
 public:
 	//TODO
 	IASTNode* asASTNode(void) {return (IASTNode*)(this);}
@@ -68,14 +73,14 @@ protected:
 ///////////////////////
 
 // TODO
-class IStmtNode {};
+class IStmtNode: public virtual IASTNode {};
 
 //////////////////////
 // === IExpNode === //
 //////////////////////
 
 // TODO
-class IExpNode {
+class IExpNode: public virtual IASTNode {
 public:
 	// TODO
 	int initFromStack(std::stack<IBuildItem*>* buildStack);
@@ -84,6 +89,10 @@ public:
 	// TODO
 	bool isUnary(void) {return (m_lhs == nullptr) && (m_rhs != nullptr);}
 	bool isUnit(void) {return (m_lhs == nullptr) && (m_rhs == nullptr);}
+
+	// TODO
+	virtual void checkSemantics(SymbolTable* symTable,
+								std::vector<Symbol*>* symList);
 
 protected:
 	// TODO
