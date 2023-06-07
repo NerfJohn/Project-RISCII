@@ -13,6 +13,7 @@
  * better reflect the purpose of the file.
  */
 
+#include <stdlib.h>
 #include "MsgLog.h"
 
 #include "NodeConcretes.h"
@@ -69,12 +70,15 @@ void PrgmNode::checkSemantics(SymbolTable* symTable,
 	// Pass on check to every decl/def.
 	for (IDeclNode* decl : m_declList) {
 		decl->checkSemantics(symTable, symList);
+
+		// Set decl's symbol to "global".
+		symTable->getLocal(decl->getValue())->m_isGlobal = true;
 	}
 
 	// Ensure an "int main()" exists.
 	Symbol* mainSym = symTable->getLocal("main");
 	if ((mainSym == nullptr) ||
-		(mainSym->m_numArgs != 0) ||
+		(mainSym->m_argList.size() != 0) ||
 		(mainSym->m_type != TYPE_INT)) {
 		MsgLog::logERR("\"int main()\" does not exist");
 	}
@@ -90,6 +94,21 @@ void PrgmNode::checkSemantics(SymbolTable* symTable,
 
 	MsgLog::logINFO("Finished semantic checks- " +
 			to_string(symList->size()) + " symbols created");
+}
+
+// TODO
+VarType_e PrgmNode::checkTyping(void) {
+	MsgLog::logINFO("Performing type checks...");
+
+	// Pass check to all children.
+	for (IDeclNode* decl: m_declList) {
+		decl->checkTyping(); // Returned typing unimportant at this level
+	}
+
+	MsgLog::logINFO("Finished type checks- all primary error checks passed");
+
+	// Return value unimportant.
+	return (VarType_e)(-1);
 }
 
 /////////////////////////
@@ -153,7 +172,7 @@ void VarDeclNode::checkSemantics(SymbolTable* symTable,
 		// Symbol already exists- log error.
 		MsgLog::logERR("\"" + m_id + "\" multiply declared", m_lineNum);
 	}
-	newSym->m_numArgs = -1; // Var- no "arguments" to speak of
+	newSym->m_isFunc = false;
 	newSym->m_type = m_varType;
 	newSym->m_declLineNum = m_lineNum;
 	newSym->m_id = m_id;
@@ -272,10 +291,13 @@ void FuncDefNode::checkSemantics(SymbolTable* symTable,
 		// Symbol already exists- log error.
 		MsgLog::logERR("\"" + m_id + "\" multiply declared", m_lineNum);
 	}
-	newSym->m_numArgs = m_paramList.size();
+	newSym->m_isFunc = true;
 	newSym->m_type = m_varType;
 	newSym->m_declLineNum = m_lineNum;
 	newSym->m_id = m_id;
+	for (VarDeclNode* type: m_paramList) {
+		newSym->m_argList.push_back(type->getType());
+	}
 	symList->push_back(newSym);
 
 	MsgLog::logINFO("New Symbol " + newSym->toName());
@@ -292,6 +314,39 @@ void FuncDefNode::checkSemantics(SymbolTable* symTable,
 	}
 	MsgLog::logINFO("Popping scope " + to_string(symTable->getScopeNum()));
 	symTable->popScope();
+}
+
+// TODO
+VarType_e FuncDefNode::checkTyping(void) {
+	// Claim "current function" title.
+	IASTNode::m_curFunc = this;
+
+	// Pass check to statements (params don't need check).
+	for (uint32_t i = 0; i < m_stmtList.size(); i++) {
+		// Get node in question.
+		IStmtNode* stmt = m_stmtList[i];
+
+		// Pass down check.
+		stmt->checkTyping();
+
+		// Warn if unreachable lines exist in function's top scope.
+		if (dynamic_cast<RetNode*>(stmt) != nullptr &&
+			(i+1) < m_stmtList.size() &&
+			!m_unreachTriggered) {
+			MsgLog::logWARN("Lines past return are unreachable",
+					stmt->getLineNum());
+			m_unreachTriggered = true;
+		}
+	}
+
+	// Warn if function has no obvious return paths.
+	if (!m_hasRet) {
+		MsgLog::logWARN("Function \"" + m_id + "\" has no obvious return",
+				m_lineNum);
+	}
+
+	// Return typing is unimportant.
+	return (VarType_e)(-1);
 }
 
 ////////////////////
@@ -338,7 +393,8 @@ void IDNode::checkSemantics(SymbolTable* symTable,
 		MsgLog::logERR("\"" + m_id + "\" is undeclared", m_lineNum);
 	}
 
-	MsgLog::logINFO("Ref to " + m_sym->toName());
+	MsgLog::logINFO("Ref to " + m_sym->toName() +
+			" from " + to_string(m_lineNum));
 
 	// Fill in semantic information.
 	m_sym->m_isInit |= m_isInit;
@@ -348,6 +404,17 @@ void IDNode::checkSemantics(SymbolTable* symTable,
 	if (!m_sym->m_isInit) {
 		MsgLog::logWARN("\"" + m_id + "\" is uninitialized", m_lineNum);
 	}
+}
+
+// TODO
+VarType_e IDNode::checkTyping(void) {
+	// IDs represent variables- ensure this is true.
+	if (m_sym->m_isFunc) {
+		MsgLog::logERR("\"" + m_id + "\" is not a variable", m_lineNum);
+	}
+
+	// Return type being represented.
+	return m_sym->m_type;
 }
 
 /////////////////////
@@ -360,6 +427,7 @@ LITNode::LITNode(std::stack<IBuildItem*>* buildStack) {
 	IBuildItem* item = buildStack->top();
 	m_lineNum = item->getLineNum();
 	m_strValue = item->getValue();
+	m_intValue = 0;
 
 	// Consume/free token.
 	buildStack->pop();
@@ -379,6 +447,73 @@ std::string LITNode::toString(void) {
 
 	// Finish punctuation and return.
 	return tknStr + "}";
+}
+
+// TODO
+VarType_e LITNode::checkTyping(void) {
+	// Process based on type of literal.
+	bool tooLarge = false;
+	if (m_strValue[0] == '\'') { // Char literal
+		// Handle (most) chars.
+		m_intValue = m_strValue[1];
+
+		// Handle escaped chars.
+		if (m_intValue == '\\') {
+			switch (m_strValue[2]) {
+				case '0': m_intValue = '\0'; break;
+				case 't': m_intValue = '\t'; break;
+				case 'n': m_intValue = '\n'; break;
+				case '\\': m_intValue = '\\'; break;
+				case '\'': m_intValue = '\''; break;
+			}
+		}
+	}
+	else if (m_strValue.find('x') != string::npos) { // Hex literal
+		// Parse in each value-related char.
+		m_intValue = 0;
+		int multiplier = 1;
+		for (int i = m_strValue.size(); i > 2; i--) {
+			// Get the value of the character.
+			int val = m_strValue[i-1];
+			if (val <= '9') {val -= '0';}
+			else if (val <= 'F') {val -= 'A' - 10;}
+			else {val -= 'a' - 10;}
+
+			// Add it to the sum value.
+			m_intValue += (val * multiplier);
+
+			// Adjust variables.
+			if (m_intValue > 65535) {tooLarge = true;}
+			multiplier *= 16;
+		}
+	}
+	else { // Int literal
+		// Parse in each value-related char.
+		m_intValue = 0;
+		int multiplier = 1;
+		for (int i = m_strValue.size(); i > 0; i--) {
+			// Get the value of the character.
+			int val = m_strValue[i-1] - '0';
+
+			// Add it to the sum value.
+			val *= multiplier;
+			m_intValue = (m_negateInt) ? m_intValue - val: m_intValue + val;
+
+			// Adjust variables.
+			if (m_intValue > 32767) {tooLarge = true;}
+			if (m_intValue < -32768) {tooLarge = true;}
+			multiplier *= 10;
+		}
+	}
+
+	// Warn if literal couldn't fit/be properly represented.
+	if (tooLarge) {
+		MsgLog::logWARN("\"" + m_strValue + "\" does not fit within an INT-" +
+				"defaulted to UINT for translation", m_lineNum);
+	}
+
+	// Return our general type.
+	return TYPE_LITERAL;
 }
 
 ////////////////////////
@@ -443,6 +578,27 @@ void AssignNode::checkSemantics(SymbolTable* symTable,
 	m_lhs->checkSemantics(symTable, symList);
 }
 
+// TODO
+VarType_e AssignNode::checkTyping(void) {
+	// Pass check down (following assign's right->left assoc.).
+	VarType_e rhsType = m_rhs->checkTyping();
+	VarType_e lhsType = m_lhs->checkTyping();
+
+	// Warn if assignment may be lossy.
+	string rhsStr = VarType::toString(rhsType);
+	string lhsStr = VarType::toString(lhsType);
+	if (!IASTNode::canAssignTyping(lhsType, rhsType)) {
+		MsgLog::logWARN("Assigning a " + rhsStr + " to a "
+				+ lhsStr + " may be lossy", m_lineNum);
+	}
+
+	MsgLog::logINFO(rhsStr + " assigned to " + lhsStr +
+			" at " + to_string(m_lineNum));
+
+	// Return is unimportant.
+	return (VarType_e)(-1);
+}
+
 /////////////////////
 // === RetNode === //
 /////////////////////
@@ -491,6 +647,30 @@ void RetNode::checkSemantics(SymbolTable* symTable,
 							 std::vector<Symbol*>* symList) {
 	// Pass to child.
 	m_exp->checkSemantics(symTable, symList);
+}
+
+// TODO
+VarType_e RetNode::checkTyping(void) {
+	// Pass down.
+	VarType_e expType =  m_exp->checkTyping();
+
+	// Warn if return is lossy.
+	VarType_e retType = IASTNode::m_curFunc->getType();
+	string expStr = VarType::toString(expType);
+	string retStr = VarType::toString(retType);
+	if (!IASTNode::canAssignTyping(retType, expType)) {
+		MsgLog::logWARN("Returning a " + expStr + " as a " +
+				retStr + " may be lossy", m_lineNum);
+	}
+
+	MsgLog::logINFO(expStr + " returned from " + retStr +
+					" function at " + to_string(m_lineNum));
+
+	// Return present- set function's return flag.
+	m_curFunc->setReturn(true);
+
+	// Return original value.
+	return expType;
 }
 
 ////////////////////
@@ -579,6 +759,45 @@ void IfNode::checkSemantics(SymbolTable* symTable,
 	symTable->popScope();
 }
 
+// TODO
+VarType_e IfNode::checkTyping(void) {
+	// Pass check to condition.
+	m_cond->checkTyping();
+
+	// Warn if conditional is obviously going to always/never trigger.
+	LITNode* litPtr = dynamic_cast<LITNode*>(m_cond);
+	if (litPtr != nullptr) {
+		MsgLog::logWARN("Condition is constant \"" +
+				m_cond->getValue() + "\"", m_lineNum);
+	}
+
+	// Pass check to statements (params don't need check).
+	for (uint32_t i = 0; i < m_stmtList.size(); i++) {
+		// Get node in question.
+		IStmtNode* stmt = m_stmtList[i];
+
+		// Pass down check.
+		stmt->checkTyping();
+
+		// Warn if unreachable lines exist in function's top scope.
+		if (dynamic_cast<RetNode*>(stmt) != nullptr &&
+			(i+1) < m_stmtList.size() &&
+			!m_unreachTriggered) {
+			MsgLog::logWARN("Lines past return are unreachable",
+					stmt->getLineNum());
+			m_unreachTriggered = true;
+		}
+	}
+
+	// Override function's "return search" if block will not run.
+	if ((litPtr == nullptr) || (litPtr->getIntValue() == 0)) {
+		m_curFunc->setReturn(false);
+	}
+
+	// Return is unimportant.
+	return (VarType_e)(-1);
+}
+
 ///////////////////////
 // === WhileNode === //
 ///////////////////////
@@ -665,6 +884,45 @@ void WhileNode::checkSemantics(SymbolTable* symTable,
 	symTable->popScope();
 }
 
+// TODO
+VarType_e WhileNode::checkTyping(void) {
+	// Pass check to condition.
+	m_cond->checkTyping();
+
+	// Warn if conditional is obviously going to always/never trigger.
+	LITNode* litPtr = dynamic_cast<LITNode*>(m_cond);
+	if (litPtr != nullptr) {
+		MsgLog::logWARN("Condition is constant \"" +
+				m_cond->getValue() + "\"", m_lineNum);
+	}
+
+	// Pass check to statements (params don't need check).
+	for (uint32_t i = 0; i < m_stmtList.size(); i++) {
+		// Get node in question.
+		IStmtNode* stmt = m_stmtList[i];
+
+		// Pass down check.
+		stmt->checkTyping();
+
+		// Warn if unreachable lines exist in function's top scope.
+		if (dynamic_cast<RetNode*>(stmt) != nullptr &&
+			(i+1) < m_stmtList.size() &&
+			!m_unreachTriggered) {
+			MsgLog::logWARN("Lines past return are unreachable",
+					stmt->getLineNum());
+			m_unreachTriggered = true;
+		}
+	}
+
+	// Override function's "return search" if block will not run.
+	if ((litPtr != nullptr) && (litPtr->getIntValue() == 0)) {
+		m_curFunc->setReturn(false);
+	}
+
+	// Return is unimportant.
+	return (VarType_e)(-1);
+}
+
 //////////////////////
 // === CallNode === //
 //////////////////////
@@ -739,8 +997,82 @@ void CallNode::checkSemantics(SymbolTable* symTable,
 		MsgLog::logERR("\"" + m_id->getValue() + "\" is undeclared", m_lineNum);
 	}
 
-	MsgLog::logINFO("Ref to " + m_sym->toName());
+	MsgLog::logINFO("Ref to " + m_sym->toName() +
+			" from " + to_string(m_lineNum));
 
 	// Fill in semantic information.
 	m_sym->m_isUsed = true; // Counting writes- didn't prep my code for this...
+
+	// Pass check to arguments.
+	for (IExpNode* arg: m_argList) {
+		arg->checkSemantics(symTable, symList);
+	}
+}
+
+// TODO
+VarType_e CallNode::checkTyping(void) {
+	// Calls represent functions- ensure ID is to a function.
+	if (!m_sym->m_isFunc) {
+		MsgLog::logERR("\"" + m_id->getValue() +
+				"\" is not a function", m_lineNum);
+	}
+
+	// Ensure number of arguments is correct.
+	if (m_argList.size() != m_sym->m_argList.size()) {
+		string numArgs = to_string(m_argList.size());
+		string numParams = to_string(m_sym->m_argList.size());
+		string funcName = m_sym->m_id;
+		MsgLog::logERR("\"" + funcName + "\" has " + numParams +
+				" params- " + numArgs + " args given", m_lineNum);
+	}
+
+	// Pass check down.
+	for (uint32_t i = 0; i < m_argList.size(); i++) {
+		// Pass down check.
+		VarType_e argType = m_argList[i]->checkTyping();
+
+		// Warn if param/arg typing may result in loss.
+		string paramStr = VarType::toString(m_sym->m_argList[i]);
+		string argStr = VarType::toString(argType);
+		if (!IASTNode::canAssignTyping(m_sym->m_argList[i], argType)) {
+			MsgLog::logWARN("Using a " + argStr + " for a " +
+					paramStr + " param may be lossy", m_lineNum);
+		}
+
+		MsgLog::logINFO(argStr + " passed to " + paramStr +
+				" param at " + to_string(m_lineNum));
+	}
+
+	// Return expected return type.
+	return m_sym->m_type;
+}
+
+///////////////////////
+// === MinusNode === //
+///////////////////////
+
+// TODO
+VarType_e MinusNode::checkTyping(void) {
+	// Negate literal if acting as unary minus for int literal.
+	LITNode* litPtr = dynamic_cast<LITNode*>(m_rhs);
+	if (isUnary() && (litPtr != nullptr)) {litPtr->negateInt();}
+
+	// Pass to children (as available).
+	VarType_e lhsType= TYPE_LITERAL;
+	VarType_e rhsType = TYPE_LITERAL;
+	if (m_lhs != nullptr) {lhsType = m_lhs->checkTyping();}
+	if (m_rhs != nullptr) {rhsType = m_rhs->checkTyping();}
+
+	// Determine new typing to pass up.
+	VarType_e newType = IASTNode::getNewTyping(lhsType, rhsType, m_lineNum);
+
+	string lhsStr = (m_lhs != nullptr) ? VarType::toString(lhsType) + "," : "";
+	string rhsStr = VarType::toString(rhsType);
+	string newStr = VarType::toString(newType);
+	string nodeStr = IASTNode::nodeToString((ParseActions)getBuildType());
+	MsgLog::logINFO("(" + lhsStr + rhsStr + ") -> " + nodeStr +
+			" = " + newStr + " at " + to_string(m_lineNum));
+
+	// Pass accumulated type.
+	return newType;
 }

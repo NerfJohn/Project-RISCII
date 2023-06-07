@@ -16,6 +16,7 @@ std::string VarType::toString(VarType_e type) {
 		case TYPE_CHAR: return "CHAR";
 		case TYPE_UINT: return "UINT";
 		case TYPE_UCHAR: return "UCHAR";
+		case TYPE_LITERAL: return "LITERAL";
 		default:
 			// Implies type is corrupted- assert source code is faulty.
 			string msg("VarType::toString() called when type = ");

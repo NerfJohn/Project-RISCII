@@ -6,6 +6,7 @@
 #define SYMBOL_H_
 
 #include <string>
+#include <vector>
 #include "VarType.h"
 
 // TODO
@@ -15,17 +16,16 @@ public:
 	std::string m_id;
 	int m_declLineNum = -1;
 	VarType_e m_type;
-	int m_numArgs;
+	bool m_isFunc;
+	std::vector<VarType_e> m_argList;
+	bool m_isGlobal;
 
 	// TODO
 	bool m_isInit = false;
 	bool m_isUsed = false;
 
 	// TODO
-	bool isFunc(void) {return m_numArgs >= 0;}
-
-	// TODO
-	std::string toName(void){return "{" + m_id + " at " +
+	std::string toName(void){return "{\"" + m_id + "\" at " +
 			std::to_string(m_declLineNum) + "}";}
 };
 

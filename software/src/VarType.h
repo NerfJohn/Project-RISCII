@@ -18,7 +18,8 @@ enum VarType_e {
 	TYPE_INT,
 	TYPE_CHAR,
 	TYPE_UINT,
-	TYPE_UCHAR
+	TYPE_UCHAR,
+	TYPE_LITERAL
 };
 
 /*

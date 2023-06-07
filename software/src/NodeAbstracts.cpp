@@ -24,6 +24,9 @@ using namespace std;
 //////////////////////
 
 // TODO
+IDeclNode* IASTNode::m_curFunc = nullptr;
+
+// TODO
 std::string IASTNode::nodeToString(ParseActions node) {
 	// String-ify the parse action/node specifier.
 	switch (node) {
@@ -60,6 +63,51 @@ std::string IASTNode::nodeToString(ParseActions node) {
 
 	// (Not reached, but to appease the compiler...)
 	return "";
+}
+
+// TODO
+VarType_e IASTNode::getNewTyping(VarType_e lhs, VarType_e rhs, int lineNum) {
+	// "TYPE_LITERAL" short-circuits to other option.
+	if (lhs == TYPE_LITERAL) {return rhs;}
+	if (rhs == TYPE_LITERAL) {return lhs;}
+
+	// Homogeneous types produce same type.
+	if (lhs == rhs) {return lhs; /* or rhs, arbitrary decision */}
+
+	// Uints supercedes all.
+	if ((lhs == TYPE_UINT) || (rhs == TYPE_UINT)) {
+		// Report potential loss if other side is signed.
+		VarType_e otherType = (lhs == TYPE_UINT) ? rhs : lhs;
+		if ((otherType == TYPE_INT) || (otherType == TYPE_CHAR)) {
+			MsgLog::logWARN(VarType::toString(lhs) + " and " +
+					VarType::toString(rhs) + " creates a UINT- may be lossy",
+					lineNum);
+		}
+
+		// Otherwise, typing will be UINT.
+		return TYPE_UINT;
+	}
+
+	// All remaining cases between INT, CHAR, and UCHAR result in INT.
+	return TYPE_INT;
+}
+
+// TODO
+bool IASTNode::canAssignTyping(VarType_e goal, VarType_e start) {
+	// Literals and same-same scenarios always work.
+	if ((goal == TYPE_LITERAL) ||
+		(start == TYPE_LITERAL) ||
+		(goal == start)) {
+		return true;
+	}
+
+	// Process each remaining possibility.
+	switch (goal) {
+		case TYPE_UINT: return start == TYPE_UCHAR;
+		case TYPE_INT:	return start != TYPE_UINT; // ie char/uchar are good
+		default: // CHAR and UCHAR
+			return false; // Not same or literal = will require a warning
+	}
 }
 
 //////////////////////
@@ -165,4 +213,26 @@ void IExpNode::checkSemantics(SymbolTable* symTable,
 	// Pass to children (as available).
 	if (m_lhs != nullptr) {m_lhs->checkSemantics(symTable, symList);}
 	if (m_rhs != nullptr) {m_rhs->checkSemantics(symTable, symList);}
+}
+
+// TODO
+VarType_e IExpNode::checkTyping(void) {
+	// Pass to children (as available).
+	VarType_e lhsType= TYPE_LITERAL;
+	VarType_e rhsType = TYPE_LITERAL;
+	if (m_lhs != nullptr) {lhsType = m_lhs->checkTyping();}
+	if (m_rhs != nullptr) {rhsType = m_rhs->checkTyping();}
+
+	// Determine new typing to pass up.
+	VarType_e newType = IASTNode::getNewTyping(lhsType, rhsType, m_lineNum);
+
+	string lhsStr = (m_lhs != nullptr) ? VarType::toString(lhsType) + "," : "";
+	string rhsStr = VarType::toString(rhsType);
+	string newStr = VarType::toString(newType);
+	string nodeStr = IASTNode::nodeToString((ParseActions)getBuildType());
+	MsgLog::logINFO("(" + lhsStr + rhsStr + ") -> " + nodeStr +
+			" = " + newStr + " at " + to_string(m_lineNum));
+
+	// Pass accumulated type.
+	return newType;
 }

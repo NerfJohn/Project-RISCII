@@ -289,6 +289,11 @@ int main(int argc, char* argv[]) {
 	vector<Symbol*> symbols;
 	ast->checkSemantics(&symTable, &symbols);
 
+	MsgLog::logINFO("===== Type Check Stage =====");
+
+	// Type Checking- analyze AST for remaining warnings/errors.
+	ast->checkTyping();
+
 	MsgLog::logINFO("Current end of program reached");
 
 	return 0;

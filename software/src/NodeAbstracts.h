@@ -22,6 +22,9 @@
 #include "SymbolTable.h"
 #include "VarType.h"
 
+// TODO
+class IDeclNode;
+
 //////////////////////
 // === IASTNode === //
 //////////////////////
@@ -29,6 +32,9 @@
 // TODO
 class IASTNode: public IBuildItem {
 public:
+	// TODO
+	static IDeclNode* m_curFunc;
+
 	// TODO
 	virtual uint8_t getBuildType(void) 	= 0;				// Node defined
 	virtual int getLineNum(void)		{return m_lineNum;}
@@ -45,6 +51,13 @@ public:
 								std::vector<Symbol*>* symList) = 0;
 
 	// TODO
+	virtual VarType_e checkTyping(void) = 0;
+
+	// TODO
+	static VarType_e getNewTyping(VarType_e lhs, VarType_e rhs, int lineNum);
+	static bool canAssignTyping(VarType_e goal, VarType_e start);
+
+	// TODO
 	virtual ~IASTNode(void) {/* Empty dtor */}
 
 protected:
@@ -59,13 +72,19 @@ protected:
 // TODO
 class IDeclNode: public virtual IASTNode {
 public:
-	//TODO
-	IASTNode* asASTNode(void) {return (IASTNode*)(this);}
+	// TODO
+	VarType_e getType(void) {return m_varType;}
+
+	// TODO
+	void setReturn(bool hasRet) {m_hasRet = hasRet;}
 
 protected:
 	// TODO
 	VarType_e m_varType;
 	std::string m_id;
+
+	// TODO
+	bool m_hasRet = false;
 };
 
 ///////////////////////
@@ -93,6 +112,9 @@ public:
 	// TODO
 	virtual void checkSemantics(SymbolTable* symTable,
 								std::vector<Symbol*>* symList);
+
+	// TODO
+	VarType_e checkTyping(void);
 
 protected:
 	// TODO

@@ -42,6 +42,9 @@ public:
 	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
 
+	// TODO
+	VarType_e checkTyping(void);
+
 private:
 	// TODO
 	std::vector<IDeclNode*> m_declList;
@@ -69,7 +72,13 @@ public:
 	void initParam(void) {m_isParam = true;}
 
 	// TODO
+	VarType_e getType(void) {return m_varType;}
+
+	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
+	// TODO
+	VarType_e checkTyping(void) {/* no actions */ return (VarType_e)(-1);}
 
 private:
 	// TODO
@@ -97,10 +106,16 @@ public:
 	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
 
+	// TODO
+	VarType_e checkTyping(void);
+
 private:
 	// TODO
 	std::vector<VarDeclNode*> m_paramList;
 	std::vector<IStmtNode*> m_stmtList;
+
+	// TODO
+	bool m_unreachTriggered = false;
 };
 
 ////////////////////
@@ -126,6 +141,9 @@ public:
 
 	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
+	// TODO
+	VarType_e checkTyping(void);
 
 private:
 	// TODO
@@ -162,9 +180,22 @@ public:
 		/* no work to do */
 	}
 
+	// TODO
+	VarType_e checkTyping(void);
+
+	// TODO
+	void negateInt(void) {m_negateInt = true;}
+
+	// TODO
+	int getIntValue(void) {return m_intValue;}
+
 private:
 	// TODO
 	std::string m_strValue;
+	int m_intValue;
+
+	// TODO
+	bool m_negateInt = false;
 };
 
 ////////////////////////
@@ -187,6 +218,9 @@ public:
 
 	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
+	// TODO
+	VarType_e checkTyping(void);
 
 private:
 	// TODO
@@ -215,6 +249,9 @@ public:
 	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
 
+	// TODO
+	VarType_e checkTyping(void);
+
 private:
 	// TODO
 	IExpNode* m_exp;
@@ -241,10 +278,16 @@ public:
 	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
 
+	// TODO
+	VarType_e checkTyping(void);
+
 private:
 	// TODO
 	IExpNode* m_cond;
 	std::vector<IStmtNode*> m_stmtList;
+
+	// TODO
+	bool m_unreachTriggered = false;
 };
 
 ///////////////////////
@@ -268,10 +311,16 @@ public:
 	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
 
+	// TODO
+	VarType_e checkTyping(void);
+
 private:
 	// TODO
 	IExpNode* m_cond;
 	std::vector<IStmtNode*> m_stmtList;
+
+	// TODO
+	bool m_unreachTriggered = false;
 };
 
 //////////////////////
@@ -294,6 +343,9 @@ public:
 
 	// TODO
 	void checkSemantics(SymbolTable* symTable, std::vector<Symbol*>* symList);
+
+	// TODO
+	VarType_e checkTyping(void);
 
 private:
 	// TODO
@@ -446,6 +498,9 @@ public:
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
+
+	// TODO
+	VarType_e checkTyping(void);
 };
 
 ///////////////////////////
