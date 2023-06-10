@@ -27,6 +27,9 @@ using namespace std;
 IDeclNode* IASTNode::m_curFunc = nullptr;
 
 // TODO
+int IASTNode::m_numDeletes = 0;
+
+// TODO
 std::string IASTNode::nodeToString(ParseActions node) {
 	// String-ify the parse action/node specifier.
 	switch (node) {
@@ -224,15 +227,53 @@ VarType_e IExpNode::checkTyping(void) {
 	if (m_rhs != nullptr) {rhsType = m_rhs->checkTyping();}
 
 	// Determine new typing to pass up.
-	VarType_e newType = IASTNode::getNewTyping(lhsType, rhsType, m_lineNum);
+	m_varType = IASTNode::getNewTyping(lhsType, rhsType, m_lineNum);
 
 	string lhsStr = (m_lhs != nullptr) ? VarType::toString(lhsType) + "," : "";
 	string rhsStr = VarType::toString(rhsType);
-	string newStr = VarType::toString(newType);
+	string newStr = VarType::toString(m_varType);
 	string nodeStr = IASTNode::nodeToString((ParseActions)getBuildType());
 	MsgLog::logINFO("(" + lhsStr + rhsStr + ") -> " + nodeStr +
 			" = " + newStr + " at " + to_string(m_lineNum));
 
 	// Pass accumulated type.
-	return newType;
+	return m_varType;
+}
+
+// TODO
+int IExpNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Optimize children (treat nullptrs as "constant nothings").
+	int lhsValue = OPT_CONST_MAX;
+	int rhsValue = OPT_CONST_MAX;
+	if (m_lhs != nullptr) {lhsValue = m_lhs->optimizeAST(constList);}
+	if (m_rhs != nullptr) {rhsValue = m_rhs->optimizeAST(constList);}
+
+	// Set/return as constant if children are constant.
+	if (lhsValue <= OPT_CONST_MAX &&
+		rhsValue <= OPT_CONST_MAX) {
+		// Computer constant.
+		this->computeConst();
+
+		string type =
+				IASTNode::nodeToString((ParseActions)this->getBuildType());
+		MsgLog::logINFO(type + " at " + to_string(m_lineNum)
+				+ " now a const " + to_string(m_constVal));
+
+		// Prune children.
+		if (m_lhs != nullptr) {delete m_lhs; m_lhs = nullptr;}
+		if (m_rhs != nullptr) {delete m_rhs; m_rhs = nullptr;}
+
+		// Return computed value.
+		return m_constVal;
+	}
+
+	// Can't be optimized- keep expression.
+	return OPT_VAL_UNKNOWN;
+}
+
+// TODO
+IExpNode::~IExpNode(void) {
+	// Delete children.
+	if (m_lhs != nullptr) {delete m_lhs; m_lhs = nullptr;}
+	if (m_rhs != nullptr) {delete m_rhs; m_rhs = nullptr;}
 }

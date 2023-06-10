@@ -45,6 +45,9 @@ public:
 	// TODO
 	VarType_e checkTyping(void);
 
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
 private:
 	// TODO
 	std::vector<IDeclNode*> m_declList;
@@ -80,6 +83,9 @@ public:
 	// TODO
 	VarType_e checkTyping(void) {/* no actions */ return (VarType_e)(-1);}
 
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
 private:
 	// TODO
 	bool m_isParam = false;
@@ -108,6 +114,12 @@ public:
 
 	// TODO
 	VarType_e checkTyping(void);
+
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	~FuncDefNode(void);
 
 private:
 	// TODO
@@ -145,6 +157,13 @@ public:
 	// TODO
 	VarType_e checkTyping(void);
 
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+	void computeConst(void) {/* No actions */}
+
+	// TODO
+	Symbol* getSym(void) {return m_sym;}
+
 private:
 	// TODO
 	std::string m_id;
@@ -154,7 +173,6 @@ private:
 
 	// TODO
 	Symbol* m_sym;
-
 };
 
 /////////////////////
@@ -184,15 +202,15 @@ public:
 	VarType_e checkTyping(void);
 
 	// TODO
-	void negateInt(void) {m_negateInt = true;}
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+	void computeConst(void) {/* No actions */}
 
 	// TODO
-	int getIntValue(void) {return m_intValue;}
+	void negateInt(void) {m_negateInt = true;}
 
 private:
 	// TODO
 	std::string m_strValue;
-	int m_intValue;
 
 	// TODO
 	bool m_negateInt = false;
@@ -221,6 +239,12 @@ public:
 
 	// TODO
 	VarType_e checkTyping(void);
+
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	~AssignNode(void);
 
 private:
 	// TODO
@@ -252,6 +276,12 @@ public:
 	// TODO
 	VarType_e checkTyping(void);
 
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	~RetNode(void);
+
 private:
 	// TODO
 	IExpNode* m_exp;
@@ -280,6 +310,12 @@ public:
 
 	// TODO
 	VarType_e checkTyping(void);
+
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	~IfNode(void);
 
 private:
 	// TODO
@@ -314,6 +350,12 @@ public:
 	// TODO
 	VarType_e checkTyping(void);
 
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	~WhileNode(void);
+
 private:
 	// TODO
 	IExpNode* m_cond;
@@ -347,6 +389,13 @@ public:
 	// TODO
 	VarType_e checkTyping(void);
 
+	// TODO
+	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+	void computeConst(void) {/* No actions */}
+
+	// TODO
+	~CallNode(void);
+
 private:
 	// TODO
 	IDNode* m_id;
@@ -372,6 +421,9 @@ public:
 	uint8_t getBuildType(void) {return PARSE_AND_NODE;}
 
 	// TODO
+	void computeConst(void);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -387,6 +439,9 @@ public:
 
 	// TODO
 	uint8_t getBuildType(void) {return PARSE_OR_NODE;}
+
+	// TODO
+	void computeConst(void);
 
 	// TODO
 	std::string toString(void) {
@@ -406,6 +461,9 @@ public:
 	uint8_t getBuildType(void) {return PARSE_XOR_NODE;}
 
 	// TODO
+	void computeConst(void);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -421,6 +479,9 @@ public:
 
 	// TODO
 	uint8_t getBuildType(void) {return PARSE_LNOT_NODE;}
+
+	// TODO
+	void computeConst(void);
 
 	// TODO
 	std::string toString(void) {
@@ -440,6 +501,9 @@ public:
 	uint8_t getBuildType(void) {return PARSE_RSHIFT_NODE;}
 
 	// TODO
+	void computeConst(void);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -455,6 +519,9 @@ public:
 
 	// TODO
 	uint8_t getBuildType(void) {return PARSE_LSHIFT_NODE;}
+
+	// TODO
+	void computeConst(void);
 
 	// TODO
 	std::string toString(void) {
@@ -478,6 +545,9 @@ public:
 	uint8_t getBuildType(void) {return PARSE_PLUS_NODE;}
 
 	// TODO
+	void computeConst(void);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -493,6 +563,9 @@ public:
 
 	// TODO
 	uint8_t getBuildType(void) {return PARSE_MINUS_NODE;}
+
+	// TODO
+	void computeConst(void);
 
 	// TODO
 	std::string toString(void) {
@@ -519,6 +592,9 @@ public:
 	uint8_t getBuildType(void) {return PARSE_GRT_NODE;}
 
 	// TODO
+	void computeConst(void);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -534,6 +610,9 @@ public:
 
 	// TODO
 	uint8_t getBuildType(void) {return PARSE_LT_NODE;}
+
+	// TODO
+	void computeConst(void);
 
 	// TODO
 	std::string toString(void) {
@@ -553,6 +632,9 @@ public:
 	uint8_t getBuildType(void) {return PARSE_GEQ_NODE;}
 
 	// TODO
+	void computeConst(void);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -568,6 +650,9 @@ public:
 
 	// TODO
 	uint8_t getBuildType(void) {return PARSE_LEQ_NODE;}
+
+	// TODO
+	void computeConst(void);
 
 	// TODO
 	std::string toString(void) {
@@ -587,6 +672,9 @@ public:
 	uint8_t getBuildType(void) {return PARSE_EQ_NODE;}
 
 	// TODO
+	void computeConst(void);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -604,6 +692,9 @@ public:
 	uint8_t getBuildType(void) {return PARSE_NEQ_NODE;}
 
 	// TODO
+	void computeConst(void);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -619,6 +710,9 @@ public:
 
 	// TODO
 	uint8_t getBuildType(void) {return PARSE_BNOT_NODE;}
+
+	// TODO
+	void computeConst(void);
 
 	// TODO
 	std::string toString(void) {

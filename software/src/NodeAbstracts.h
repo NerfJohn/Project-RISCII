@@ -25,6 +25,16 @@
 // TODO
 class IDeclNode;
 
+// TODO
+enum OptResult_e {
+	OPT_CONST_MAX 		= 0x0ffff,
+	OPT_VAL_UNKNOWN 	= 0x10000,
+	OPT_KEEP			= 0x10001,
+	OPT_DEL_THIS		= 0x10002,
+	OPT_BURN_INCLUDE	= 0x10003,
+	OPT_BURN_EXCLUDE	= 0x10004
+};
+
 //////////////////////
 // === IASTNode === //
 //////////////////////
@@ -34,6 +44,9 @@ class IASTNode: public IBuildItem {
 public:
 	// TODO
 	static IDeclNode* m_curFunc;
+
+	// TODO
+	static int m_numDeletes;
 
 	// TODO
 	virtual uint8_t getBuildType(void) 	= 0;				// Node defined
@@ -54,11 +67,14 @@ public:
 	virtual VarType_e checkTyping(void) = 0;
 
 	// TODO
+	virtual int optimizeAST(std::unordered_map<Symbol*,int>* constList) = 0;
+
+	// TODO
 	static VarType_e getNewTyping(VarType_e lhs, VarType_e rhs, int lineNum);
 	static bool canAssignTyping(VarType_e goal, VarType_e start);
 
 	// TODO
-	virtual ~IASTNode(void) {/* Empty dtor */}
+	virtual ~IASTNode(void) {/* count optimized nodes */ m_numDeletes++;}
 
 protected:
 	// TODO
@@ -78,10 +94,16 @@ public:
 	// TODO
 	void setReturn(bool hasRet) {m_hasRet = hasRet;}
 
+	// TODO
+	virtual ~IDeclNode(void) {/* Symbol owner */ delete m_sym;}
+
 protected:
 	// TODO
 	VarType_e m_varType;
 	std::string m_id;
+
+	// TODO
+	Symbol* m_sym;
 
 	// TODO
 	bool m_hasRet = false;
@@ -116,10 +138,30 @@ public:
 	// TODO
 	VarType_e checkTyping(void);
 
+	// TODO
+	virtual int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	bool isConstVal(void) {return m_constVal <= OPT_CONST_MAX;}
+	int getConstVal(void) {return m_constVal;}
+	virtual void computeConst(void) = 0;
+
+	// TODO
+	VarType_e getType(void) {return m_varType;}
+
+	// TODO
+	virtual ~IExpNode(void);
+
 protected:
 	// TODO
 	IExpNode* m_lhs = nullptr;
 	IExpNode* m_rhs = nullptr;
+
+	// TODO
+	VarType_e m_varType;
+
+	// TODO
+	int m_constVal = OPT_VAL_UNKNOWN;
 };
 
 #endif /* NODEABSTRACTS_H_ */

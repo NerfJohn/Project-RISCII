@@ -294,6 +294,16 @@ int main(int argc, char* argv[]) {
 	// Type Checking- analyze AST for remaining warnings/errors.
 	ast->checkTyping();
 
+	MsgLog::logINFO("===== Optimization Stage =====");
+
+	// Optimizer- runs implicit/explicitly requested optimizations on AST.
+	unordered_map<Symbol*, int> constList;
+	if (optFlag) { // Pass helping data structure for better optimization
+		MsgLog::logINFO("O1 flag given- enabling constant propagation");
+		ast->optimizeAST(&constList);
+	}
+	else {ast->optimizeAST(nullptr);}
+
 	MsgLog::logINFO("Current end of program reached");
 
 	return 0;

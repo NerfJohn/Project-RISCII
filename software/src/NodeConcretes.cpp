@@ -111,6 +111,35 @@ VarType_e PrgmNode::checkTyping(void) {
 	return (VarType_e)(-1);
 }
 
+// TODO
+int PrgmNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	MsgLog::logINFO("Performing optimizations...");
+
+	// Pass down optimization to children.
+	vector<IDeclNode*> goodDecls;
+	for (IDeclNode* decl: m_declList) {
+		// Pass down.
+		int action = decl->optimizeAST(constList);
+
+		// Prune if requested.
+		if (action == OPT_DEL_THIS) {
+			string type =
+					IASTNode::nodeToString((ParseActions)decl->getBuildType());
+			MsgLog::logINFO(type + " named \""
+					+ decl->getValue() + "\" deleted");
+			delete decl;
+		}
+		else {goodDecls.push_back(decl);}
+	}
+
+	MsgLog::logINFO("Optimizations complete- " +
+			to_string(m_numDeletes) + " nodes pruned");
+
+	// Return value unimportant.
+	m_declList = goodDecls;
+	return OPT_KEEP;
+}
+
 /////////////////////////
 // === VarDeclNode === //
 /////////////////////////
@@ -178,8 +207,20 @@ void VarDeclNode::checkSemantics(SymbolTable* symTable,
 	newSym->m_id = m_id;
 	newSym->m_isInit |= m_isParam; // Params are always initialized
 	symList->push_back(newSym);
+	m_sym = newSym;
 
 	MsgLog::logINFO("New Symbol " + newSym->toName());
+}
+
+// TODO
+int VarDeclNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Request deletion if unused.
+	if (!m_sym->m_isUsed) {
+		return OPT_DEL_THIS;
+	}
+
+	// Otherwise- cannot optimize a decl.
+	return OPT_KEEP;
 }
 
 /////////////////////////
@@ -299,6 +340,7 @@ void FuncDefNode::checkSemantics(SymbolTable* symTable,
 		newSym->m_argList.push_back(type->getType());
 	}
 	symList->push_back(newSym);
+	m_sym = newSym;
 
 	MsgLog::logINFO("New Symbol " + newSym->toName());
 
@@ -347,6 +389,49 @@ VarType_e FuncDefNode::checkTyping(void) {
 
 	// Return typing is unimportant.
 	return (VarType_e)(-1);
+}
+
+// TODO
+int FuncDefNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Request deletion if unused.
+	if (!m_sym->m_isUsed) {
+		return OPT_DEL_THIS;
+	}
+
+	// Otherwise, pass down to stmts (with new const list if applicable).
+	bool burnEmAll = false;
+	vector<IStmtNode*> goodStmts;
+	if (constList != nullptr) {constList->clear();}
+	for (IStmtNode* stmt: m_stmtList) {
+		// Pass down (if applicable).
+		int stmtValue = OPT_KEEP;
+		if (!burnEmAll) {stmtValue = stmt->optimizeAST(constList);}
+
+		// Handle deletions.
+		if (stmtValue == OPT_DEL_THIS ||
+			stmtValue == OPT_BURN_INCLUDE ||
+			burnEmAll) {
+			string type =
+					IASTNode::nodeToString((ParseActions)stmt->getBuildType());
+			MsgLog::logINFO(type + " at " + to_string(stmt->getLineNum())
+					+ " deleted");
+			delete stmt;
+		}
+		else if (stmtValue == OPT_BURN_EXCLUDE ||
+				 stmtValue == OPT_BURN_INCLUDE) {burnEmAll = true;}
+		else {goodStmts.push_back(stmt);}
+	}
+
+	// Cannot optimize a function def.
+	m_stmtList = goodStmts;
+	return OPT_KEEP;
+}
+
+// TODO
+FuncDefNode::~FuncDefNode(void) {
+	// Prune connected nodes.
+	for (IStmtNode* stmt: m_stmtList) {delete stmt;}
+	for (VarDeclNode* param: m_paramList) {delete param;}
 }
 
 ////////////////////
@@ -417,6 +502,23 @@ VarType_e IDNode::checkTyping(void) {
 	return m_sym->m_type;
 }
 
+// TODO
+int IDNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Save constant value if available (translator decides ID vs. LIT).
+	if (constList != nullptr &&
+		constList->find(m_sym) != constList->end()) {
+		m_constVal = (*constList)[m_sym];
+
+		MsgLog::logINFO("\"" + m_id + "\" at " + to_string(m_lineNum)
+				+ " marked as const " + to_string(m_constVal));
+
+		return m_constVal;
+	}
+
+	// Always save IDs.
+	return OPT_KEEP;
+}
+
 /////////////////////
 // === LITNode === //
 /////////////////////
@@ -427,7 +529,7 @@ LITNode::LITNode(std::stack<IBuildItem*>* buildStack) {
 	IBuildItem* item = buildStack->top();
 	m_lineNum = item->getLineNum();
 	m_strValue = item->getValue();
-	m_intValue = 0;
+	m_constVal = 0;
 
 	// Consume/free token.
 	buildStack->pop();
@@ -455,22 +557,22 @@ VarType_e LITNode::checkTyping(void) {
 	bool tooLarge = false;
 	if (m_strValue[0] == '\'') { // Char literal
 		// Handle (most) chars.
-		m_intValue = m_strValue[1];
+		m_constVal = m_strValue[1];
 
 		// Handle escaped chars.
-		if (m_intValue == '\\') {
+		if (m_constVal == '\\') {
 			switch (m_strValue[2]) {
-				case '0': m_intValue = '\0'; break;
-				case 't': m_intValue = '\t'; break;
-				case 'n': m_intValue = '\n'; break;
-				case '\\': m_intValue = '\\'; break;
-				case '\'': m_intValue = '\''; break;
+				case '0': m_constVal = '\0'; break;
+				case 't': m_constVal = '\t'; break;
+				case 'n': m_constVal = '\n'; break;
+				case '\\': m_constVal = '\\'; break;
+				case '\'': m_constVal = '\''; break;
 			}
 		}
 	}
 	else if (m_strValue.find('x') != string::npos) { // Hex literal
 		// Parse in each value-related char.
-		m_intValue = 0;
+		m_constVal = 0;
 		int multiplier = 1;
 		for (int i = m_strValue.size(); i > 2; i--) {
 			// Get the value of the character.
@@ -480,16 +582,16 @@ VarType_e LITNode::checkTyping(void) {
 			else {val -= 'a' - 10;}
 
 			// Add it to the sum value.
-			m_intValue += (val * multiplier);
+			m_constVal += (val * multiplier);
 
 			// Adjust variables.
-			if (m_intValue > 65535) {tooLarge = true;}
+			if (m_constVal > 65535) {tooLarge = true;}
 			multiplier *= 16;
 		}
 	}
 	else { // Int literal
 		// Parse in each value-related char.
-		m_intValue = 0;
+		m_constVal = 0;
 		int multiplier = 1;
 		for (int i = m_strValue.size(); i > 0; i--) {
 			// Get the value of the character.
@@ -497,13 +599,16 @@ VarType_e LITNode::checkTyping(void) {
 
 			// Add it to the sum value.
 			val *= multiplier;
-			m_intValue = (m_negateInt) ? m_intValue - val: m_intValue + val;
+			m_constVal = (m_negateInt) ? m_constVal - val: m_constVal + val;
 
 			// Adjust variables.
-			if (m_intValue > 32767) {tooLarge = true;}
-			if (m_intValue < -32768) {tooLarge = true;}
+			if (m_constVal > 32767) {tooLarge = true;}
+			if (m_constVal < -32768) {tooLarge = true;}
 			multiplier *= 10;
 		}
+
+		// (Undo negation- just needed it for sizing check).
+		if (m_negateInt) {m_constVal = -m_constVal;}
 	}
 
 	// Warn if literal couldn't fit/be properly represented.
@@ -514,6 +619,12 @@ VarType_e LITNode::checkTyping(void) {
 
 	// Return our general type.
 	return TYPE_LITERAL;
+}
+
+// TODO
+int LITNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Parent prunes pairs of lits.
+	return m_constVal;
 }
 
 ////////////////////////
@@ -599,6 +710,32 @@ VarType_e AssignNode::checkTyping(void) {
 	return (VarType_e)(-1);
 }
 
+// TODO
+int AssignNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Pass down to expression (IDNode lives/dies with the statement).
+	int rhsValue = m_rhs->optimizeAST(constList);
+
+	// Add/modify the constant list if a "const propagation" to local.
+	if (constList != nullptr &&
+		rhsValue <= OPT_CONST_MAX &&
+		!m_lhs->getSym()->m_isGlobal) {
+		MsgLog::logINFO("Assigning \"" + m_lhs->getValue() + "\" at "
+				+ to_string(m_lineNum) + " as const "
+				+ to_string(rhsValue));
+		(*constList)[m_lhs->getSym()] = rhsValue;
+	}
+
+	// Generally keep- parent decides fate.
+	return OPT_KEEP;
+}
+
+// TODO
+AssignNode::~AssignNode(void) {
+	// Prune children.
+	delete m_lhs;
+	delete m_rhs;
+}
+
 /////////////////////
 // === RetNode === //
 /////////////////////
@@ -671,6 +808,21 @@ VarType_e RetNode::checkTyping(void) {
 
 	// Return original value.
 	return expType;
+}
+
+// TODO
+int RetNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Pass down to expression.
+	m_exp->optimizeAST(constList);
+
+	// Anything past return (in scope) isn't run.
+	return OPT_BURN_EXCLUDE;
+}
+
+// TODO
+RetNode::~RetNode(void) {
+	// Delete expression.
+	delete m_exp;
 }
 
 ////////////////////
@@ -790,12 +942,64 @@ VarType_e IfNode::checkTyping(void) {
 	}
 
 	// Override function's "return search" if block will not run.
-	if ((litPtr == nullptr) || (litPtr->getIntValue() == 0)) {
+	if ((litPtr == nullptr) || (litPtr->getConstVal() == 0)) {
 		m_curFunc->setReturn(false);
 	}
 
 	// Return is unimportant.
 	return (VarType_e)(-1);
+}
+
+// TODO
+int IfNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Resolve condition- may be constant.
+	int condVal = m_cond->optimizeAST(constList);
+
+	// Delete if condition prevents block from running.
+	if (condVal == 0) {return OPT_DEL_THIS;}
+
+	// Save constants for "jump over block" case.
+	unordered_map<Symbol*, int> saveList;
+	if (constList != nullptr) {saveList = *constList;}
+
+	// Otherwise, pass down to stmts (with new const list if applicable).
+	bool burnEmAll = false;
+	vector<IStmtNode*> goodStmts;
+	for (IStmtNode* stmt: m_stmtList) {
+		// Pass down (if applicable).
+		int stmtValue = OPT_KEEP;
+		if (!burnEmAll) {stmtValue = stmt->optimizeAST(constList);}
+
+		// Handle deletions.
+		if (stmtValue == OPT_DEL_THIS ||
+			stmtValue == OPT_BURN_INCLUDE ||
+			burnEmAll) {
+			string type =
+					IASTNode::nodeToString((ParseActions)stmt->getBuildType());
+			MsgLog::logINFO(type + " at " + to_string(stmt->getLineNum())
+					+ " deleted");
+			delete stmt;
+		}
+		else if (stmtValue == OPT_BURN_EXCLUDE ||
+				 stmtValue == OPT_BURN_INCLUDE) {burnEmAll = true;}
+		else {goodStmts.push_back(stmt);}
+	}
+
+	// Restore list if block won't always run.
+	if (constList != nullptr &&
+		(condVal > OPT_CONST_MAX ||
+		condVal == 0)) {*constList = saveList;}
+
+	// Parent generally decides statements fate.
+	m_stmtList = goodStmts;
+	return OPT_KEEP;
+}
+
+// TODO
+IfNode::~IfNode(void) {
+	// Delete stored stmts/condition.
+	delete m_cond;
+	for (IStmtNode* stmt: m_stmtList) {delete stmt;}
 }
 
 ///////////////////////
@@ -915,12 +1119,59 @@ VarType_e WhileNode::checkTyping(void) {
 	}
 
 	// Override function's "return search" if block will not run.
-	if ((litPtr != nullptr) && (litPtr->getIntValue() == 0)) {
+	if ((litPtr != nullptr) && (litPtr->getConstVal() == 0)) {
 		m_curFunc->setReturn(false);
 	}
 
 	// Return is unimportant.
 	return (VarType_e)(-1);
+}
+
+// TODO
+int WhileNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Resolve condition- may be constant.
+	if (constList != nullptr) {constList->clear();}
+	int condVal = m_cond->optimizeAST(constList);
+
+	// Delete if condition prevents block from running.
+	if (condVal == 0) {return OPT_DEL_THIS;}
+
+	// Otherwise, pass down to stmts (with new const list if applicable).
+	bool burnEmAll = false;
+	vector<IStmtNode*> goodStmts;
+	for (IStmtNode* stmt: m_stmtList) {
+		// Pass down (if applicable).
+		int stmtValue = OPT_KEEP;
+		if (!burnEmAll) {stmtValue = stmt->optimizeAST(constList);}
+
+		// Handle deletions.
+		if (stmtValue == OPT_DEL_THIS ||
+			stmtValue == OPT_BURN_INCLUDE ||
+			burnEmAll) {
+			string type =
+					IASTNode::nodeToString((ParseActions)stmt->getBuildType());
+			MsgLog::logINFO(type + " at " + to_string(stmt->getLineNum())
+					+ " deleted");
+			delete stmt;
+		}
+		else if (stmtValue == OPT_BURN_EXCLUDE ||
+				 stmtValue == OPT_BURN_INCLUDE) {burnEmAll = true;}
+		else {goodStmts.push_back(stmt);}
+	}
+
+	// Prune following statements if loop never ends.
+	if (condVal <= OPT_CONST_MAX && condVal != 0) {return OPT_BURN_EXCLUDE;}
+
+	// Parent generally decides statements fate.
+	m_stmtList = goodStmts;
+	return OPT_KEEP;
+}
+
+// TODO
+WhileNode::~WhileNode(void) {
+	// Delete stored stmts/condition.
+	delete m_cond;
+	for (IStmtNode* stmt: m_stmtList) {delete stmt;}
 }
 
 //////////////////////
@@ -1047,9 +1298,27 @@ VarType_e CallNode::checkTyping(void) {
 	return m_sym->m_type;
 }
 
-///////////////////////
-// === MinusNode === //
-///////////////////////
+// TODO
+int CallNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
+	// Pass to arguments.
+	for (IExpNode* arg: m_argList) {
+		arg->optimizeAST(constList);
+	}
+
+	// Generally up to scope to delete.
+	return OPT_KEEP;
+}
+
+// TODO
+CallNode::~CallNode(void) {
+	// Delete children (doesn't own symbol- do not delete).
+	delete m_id;
+	for (IExpNode* arg: m_argList) {delete arg;}
+}
+
+//////////////////////
+// === Op Nodes === //
+//////////////////////
 
 // TODO
 VarType_e MinusNode::checkTyping(void) {
@@ -1075,4 +1344,158 @@ VarType_e MinusNode::checkTyping(void) {
 
 	// Pass accumulated type.
 	return newType;
+}
+
+// TODO
+void AndNode::computeConst() {
+	m_constVal = m_lhs->getConstVal() & m_rhs->getConstVal();
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void OrNode::computeConst() {
+	m_constVal = m_lhs->getConstVal() | m_rhs->getConstVal();
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void XorNode::computeConst() {
+	m_constVal = m_lhs->getConstVal() ^ m_rhs->getConstVal();
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void LNotNode::computeConst() {
+	m_constVal = ~m_rhs->getConstVal();
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void RShiftNode::computeConst() {
+	// Lhs determines Determine logical vs. arithmetic.
+	if (m_lhs->getType() == TYPE_UINT ||
+		m_lhs->getType() == TYPE_UINT) { // Unsigned- logical
+		m_constVal = (uint16_t)(m_lhs->getConstVal()) >>
+				(uint16_t)(m_rhs->getConstVal());
+	}
+	else { // Signed- arithmetic
+		m_constVal = (int16_t)(m_lhs->getConstVal()) >>
+				(int16_t)(m_rhs->getConstVal());
+	}
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void LShiftNode::computeConst() {
+	m_constVal = m_lhs->getConstVal() << m_rhs->getConstVal();
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void PlusNode::computeConst() {
+	m_constVal = m_lhs->getConstVal() + m_rhs->getConstVal();
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void MinusNode::computeConst() {
+	int lhsVal = (m_lhs == nullptr) ? 0 : m_lhs->getConstVal();
+	m_constVal = lhsVal - m_rhs->getConstVal();
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void GrtNode::computeConst() {
+	// Signed vs. Unsigned comparison.
+	if (m_lhs->getType() == TYPE_UINT ||
+		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+		m_constVal = (uint16_t)(m_lhs->getConstVal()) >
+			(uint16_t)(m_rhs->getConstVal());
+	}
+	else { // Signed comparison
+		m_constVal = (int16_t)(m_lhs->getConstVal()) >
+			(int16_t)(m_rhs->getConstVal());
+	}
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void LtNode::computeConst() {
+	// Signed vs. Unsigned comparison.
+	if (m_lhs->getType() == TYPE_UINT ||
+		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+		m_constVal = (uint16_t)(m_lhs->getConstVal()) <
+			(uint16_t)(m_rhs->getConstVal());
+	}
+	else { // Signed comparison
+		m_constVal = (int16_t)(m_lhs->getConstVal()) <
+			(int16_t)(m_rhs->getConstVal());
+	}
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void GeqNode::computeConst() {
+	// Signed vs. Unsigned comparison.
+	if (m_lhs->getType() == TYPE_UINT ||
+		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+		m_constVal = (uint16_t)(m_lhs->getConstVal()) >=
+			(uint16_t)(m_rhs->getConstVal());
+	}
+	else { // Signed comparison
+		m_constVal = (int16_t)(m_lhs->getConstVal()) >=
+			(int16_t)(m_rhs->getConstVal());
+	}
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void LeqNode::computeConst() {
+	// Signed vs. Unsigned comparison.
+	if (m_lhs->getType() == TYPE_UINT ||
+		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+		m_constVal = (uint16_t)(m_lhs->getConstVal()) <=
+			(uint16_t)(m_rhs->getConstVal());
+	}
+	else { // Signed comparison
+		m_constVal = (int16_t)(m_lhs->getConstVal()) <=
+			(int16_t)(m_rhs->getConstVal());
+	}
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void EqNode::computeConst() {
+	// Signed vs. Unsigned comparison.
+	if (m_lhs->getType() == TYPE_UINT ||
+		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+		m_constVal = (uint16_t)(m_lhs->getConstVal()) ==
+			(uint16_t)(m_rhs->getConstVal());
+	}
+	else { // Signed comparison
+		m_constVal = (int16_t)(m_lhs->getConstVal()) ==
+			(int16_t)(m_rhs->getConstVal());
+	}
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void NeqNode::computeConst() {
+	// Signed vs. Unsigned comparison.
+	if (m_lhs->getType() == TYPE_UINT ||
+		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+		m_constVal = (uint16_t)(m_lhs->getConstVal()) !=
+			(uint16_t)(m_rhs->getConstVal());
+	}
+	else { // Signed comparison
+		m_constVal = (int16_t)(m_lhs->getConstVal()) !=
+			(int16_t)(m_rhs->getConstVal());
+	}
+	m_constVal &= 0xffff;
+}
+
+// TODO
+void BNotNode::computeConst() {
+	m_constVal = !m_rhs->getConstVal();
+	m_constVal &= 0xffff;
 }
