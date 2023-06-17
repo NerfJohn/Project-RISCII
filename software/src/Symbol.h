@@ -19,6 +19,8 @@ public:
 	bool m_isFunc;
 	std::vector<VarType_e> m_argList;
 	bool m_isGlobal;
+	int m_memValue;
+	int m_constVal;
 
 	// TODO
 	bool m_isInit = false;

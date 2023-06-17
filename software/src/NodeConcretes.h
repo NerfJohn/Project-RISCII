@@ -48,6 +48,9 @@ public:
 	// TODO
 	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
 
+	// TODO
+	genValue_t translate(AsmMaker* asmGen);
+
 private:
 	// TODO
 	std::vector<IDeclNode*> m_declList;
@@ -86,6 +89,9 @@ public:
 	// TODO
 	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
 
+	// TODO
+	genValue_t translate(AsmMaker* asmGen) {/* irrelevant */ return {};}
+
 private:
 	// TODO
 	bool m_isParam = false;
@@ -98,6 +104,9 @@ private:
 // TODO
 class FuncDefNode: public IDeclNode {
 public:
+	// TODO
+	int m_nextLocalAddr = -2; // Locals start just under the FP
+
 	// TODO
 	FuncDefNode(std::stack<IBuildItem*>* buildStack);
 
@@ -117,6 +126,12 @@ public:
 
 	// TODO
 	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	genValue_t translate(AsmMaker* asmGen);
+
+	// TODO
+	bool isLastStmt(IStmtNode* stmt);
 
 	// TODO
 	~FuncDefNode(void);
@@ -162,6 +177,10 @@ public:
 	void computeConst(void) {/* No actions */}
 
 	// TODO
+	genValue_t translate(AsmMaker* asmGen);
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs) {return;}
+
+	// TODO
 	Symbol* getSym(void) {return m_sym;}
 
 private:
@@ -186,6 +205,9 @@ public:
 	LITNode(std::stack<IBuildItem*>* buildStack);
 
 	// TODO
+	LITNode(int value);
+
+	// TODO
 	uint8_t getBuildType(void) {return PARSE_LIT_NODE;}
 	//int getLineNum(void);
 	std::string getValue(void) {return m_strValue;}
@@ -204,6 +226,10 @@ public:
 	// TODO
 	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
 	void computeConst(void) {/* No actions */}
+
+	// TODO
+	genValue_t translate(AsmMaker* asmGen);
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs) {return;}
 
 	// TODO
 	void negateInt(void) {m_negateInt = true;}
@@ -244,6 +270,9 @@ public:
 	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
 
 	// TODO
+	genValue_t translate(AsmMaker* asmGen);
+
+	// TODO
 	~AssignNode(void);
 
 private:
@@ -280,6 +309,9 @@ public:
 	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
 
 	// TODO
+	genValue_t translate(AsmMaker* asmGen);
+
+	// TODO
 	~RetNode(void);
 
 private:
@@ -313,6 +345,9 @@ public:
 
 	// TODO
 	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	genValue_t translate(AsmMaker* asmGen);
 
 	// TODO
 	~IfNode(void);
@@ -352,6 +387,9 @@ public:
 
 	// TODO
 	int optimizeAST(std::unordered_map<Symbol*,int>* constList);
+
+	// TODO
+	genValue_t translate(AsmMaker* asmGen);
 
 	// TODO
 	~WhileNode(void);
@@ -394,6 +432,10 @@ public:
 	void computeConst(void) {/* No actions */}
 
 	// TODO
+	genValue_t translate(AsmMaker* asmGen);
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs) {return;}
+
+	// TODO
 	~CallNode(void);
 
 private:
@@ -424,6 +466,9 @@ public:
 	void computeConst(void);
 
 	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -442,6 +487,9 @@ public:
 
 	// TODO
 	void computeConst(void);
+
+	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
 
 	// TODO
 	std::string toString(void) {
@@ -464,6 +512,9 @@ public:
 	void computeConst(void);
 
 	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -482,6 +533,9 @@ public:
 
 	// TODO
 	void computeConst(void);
+
+	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
 
 	// TODO
 	std::string toString(void) {
@@ -504,6 +558,9 @@ public:
 	void computeConst(void);
 
 	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -522,6 +579,9 @@ public:
 
 	// TODO
 	void computeConst(void);
+
+	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
 
 	// TODO
 	std::string toString(void) {
@@ -548,6 +608,9 @@ public:
 	void computeConst(void);
 
 	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -566,6 +629,9 @@ public:
 
 	// TODO
 	void computeConst(void);
+
+	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
 
 	// TODO
 	std::string toString(void) {
@@ -595,6 +661,9 @@ public:
 	void computeConst(void);
 
 	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -613,6 +682,9 @@ public:
 
 	// TODO
 	void computeConst(void);
+
+	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
 
 	// TODO
 	std::string toString(void) {
@@ -635,6 +707,9 @@ public:
 	void computeConst(void);
 
 	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -653,6 +728,9 @@ public:
 
 	// TODO
 	void computeConst(void);
+
+	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
 
 	// TODO
 	std::string toString(void) {
@@ -675,6 +753,9 @@ public:
 	void computeConst(void);
 
 	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -695,6 +776,9 @@ public:
 	void computeConst(void);
 
 	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
+
+	// TODO
 	std::string toString(void) {
 		return this->toExpString(getBuildType());
 	}
@@ -713,6 +797,9 @@ public:
 
 	// TODO
 	void computeConst(void);
+
+	// TODO
+	void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs);
 
 	// TODO
 	std::string toString(void) {

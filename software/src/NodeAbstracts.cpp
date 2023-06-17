@@ -30,6 +30,12 @@ IDeclNode* IASTNode::m_curFunc = nullptr;
 int IASTNode::m_numDeletes = 0;
 
 // TODO
+int IASTNode::m_nextDataAddr = 0; // .data (in this case) starts at 0x0
+
+// TODO
+bool IASTNode::s_accumIsInter = false;
+
+// TODO
 std::string IASTNode::nodeToString(ParseActions node) {
 	// String-ify the parse action/node specifier.
 	switch (node) {
@@ -253,6 +259,7 @@ int IExpNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 		rhsValue <= OPT_CONST_MAX) {
 		// Computer constant.
 		this->computeConst();
+		m_constVal = (int16_t)(m_constVal); // Correct for sign/etc
 
 		string type =
 				IASTNode::nodeToString((ParseActions)this->getBuildType());
@@ -269,6 +276,58 @@ int IExpNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 
 	// Can't be optimized- keep expression.
 	return OPT_VAL_UNKNOWN;
+}
+
+// TODO
+genValue_t IExpNode::translate(AsmMaker* asmGen) {
+	// Short-circuit to "LITNode" response if a constant.
+	if (m_constVal <= OPT_CONST_MAX) {
+		genValue_t retVal = {.type=KEY_LITERAL, .data=m_constVal};
+		return retVal;
+	}
+
+	// Base procedure on numbers of operators.
+	if (this->isUnary()) {
+		// Generate/load child.
+		genValue_t val = m_rhs->translate(asmGen);
+		RegName_e reg = MemHandler::load(asmGen, val);
+
+		// Push intermediate to stack if not using.
+		if (s_accumIsInter &&
+			reg != REG_AC) {
+			genValue dummyInter = {.type=KEY_INTERMEDIATE};
+			MemHandler::store(asmGen, REG_AC, dummyInter);
+		}
+
+		// Generate this node's code.
+		this->genExp(asmGen, BAD_REG, reg);
+	}
+	else {
+		// Generate/load children.
+		genValue_t lhsVal = m_lhs->translate(asmGen);
+		genValue_t rhsVal = m_rhs->translate(asmGen);
+		RegName_e lhsReg = MemHandler::load(asmGen, lhsVal);
+		RegName_e rhsReg = MemHandler::load(asmGen, rhsVal);
+
+		// Push intermediate to stack if not using.
+		if (s_accumIsInter &&
+			lhsReg != REG_AC &&
+			rhsReg != REG_AC) {
+			genValue dummyInter = {.type=KEY_INTERMEDIATE};
+			MemHandler::store(asmGen, REG_AC, dummyInter);
+		}
+
+		// Generate this node's code.
+		this->genExp(asmGen, lhsReg, rhsReg);
+	}
+
+	// Update register file map for potential re-use.
+	genValue_t retVal = {.type=KEY_INTERMEDIATE, .data=(int)(this)};
+	MemHandler::updateReg(REG_AC, retVal);
+	s_accumIsInter = true;
+
+	// Return ID of generated value.
+	return retVal;
 }
 
 // TODO

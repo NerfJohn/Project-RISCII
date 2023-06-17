@@ -304,6 +304,12 @@ int main(int argc, char* argv[]) {
 	}
 	else {ast->optimizeAST(nullptr);}
 
+	MsgLog::logINFO("===== Translation Stage =====");
+
+	// Translation- translate tree into vector of assembly instructions.
+	AsmMaker asmGen;
+	ast->translate(&asmGen);
+
 	MsgLog::logINFO("Current end of program reached");
 
 	return 0;

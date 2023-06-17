@@ -17,7 +17,9 @@
 #define NODEABSTRACTS_H_
 
 #include <stack>
+#include "AsmMaker.h"
 #include "IBuildItem.h"
+#include "MemHandler.h"
 #include "ParseTable.h"
 #include "SymbolTable.h"
 #include "VarType.h"
@@ -49,6 +51,12 @@ public:
 	static int m_numDeletes;
 
 	// TODO
+	static int m_nextDataAddr;
+
+	// TODO
+	static bool s_accumIsInter;
+
+	// TODO
 	virtual uint8_t getBuildType(void) 	= 0;				// Node defined
 	virtual int getLineNum(void)		{return m_lineNum;}
 	virtual std::string getValue(void)	{return "";}		// "no value"
@@ -68,6 +76,9 @@ public:
 
 	// TODO
 	virtual int optimizeAST(std::unordered_map<Symbol*,int>* constList) = 0;
+
+	// TODO
+	virtual genValue_t translate(AsmMaker* asmGen) = 0;
 
 	// TODO
 	static VarType_e getNewTyping(VarType_e lhs, VarType_e rhs, int lineNum);
@@ -145,6 +156,10 @@ public:
 	bool isConstVal(void) {return m_constVal <= OPT_CONST_MAX;}
 	int getConstVal(void) {return m_constVal;}
 	virtual void computeConst(void) = 0;
+
+	// TODO
+	virtual genValue_t translate(AsmMaker* asmGen);
+	virtual void genExp(AsmMaker*, RegName_e lhs, RegName_e rhs) = 0;
 
 	// TODO
 	VarType_e getType(void) {return m_varType;}
