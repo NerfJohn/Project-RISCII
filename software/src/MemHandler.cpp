@@ -141,6 +141,9 @@ RegName_e MemHandler::load(AsmMaker* asmGen, genValue_t key) {
 			// Symbol has easy constant value.
 			MemHandler::loadLitToReg(asmGen,
 					(RegName_e)loadReg, sym->m_constVal);
+
+			MsgLog::logINFO("OPT- replacing load of \"" + sym->m_id +
+					"\" with " + to_string(sym->m_constVal));
 		}
 		else {
 			// Memory value is offset from frame pointer.

@@ -310,7 +310,35 @@ int main(int argc, char* argv[]) {
 	AsmMaker asmGen;
 	ast->translate(&asmGen);
 
-	MsgLog::logINFO("Current end of program reached");
+	MsgLog::logINFO("===== Assembly Stage =====");
 
+	// (Get filename without extension).
+	int charIdx;
+	for (charIdx = cFilename.size() - 1; charIdx >= 0; charIdx--) {
+		if (cFilename[charIdx] == '.') {break;}
+	}
+	if (charIdx > 0) {cFilename = cFilename.substr(0,charIdx);}
+
+	// Assembler- create assembly/hex files as needed/requested.
+	if (asmFlag) {
+		// Create assembly file.
+		MsgLog::logINFO("Assembly flag given- creating " + cFilename + ".asm");
+		asmGen.createAsmFile(cFilename);
+		MsgLog::logINFO("Created " + cFilename + ".asm");
+	}
+	else {
+		// Create hex file.
+		MsgLog::logINFO("Assembly flag NOT given- creating " +
+				cFilename + ".hex");
+		asmGen.createHexFile(cFilename);
+		MsgLog::logINFO("Created " + cFilename + ".hex");
+
+		// Report image size.
+		uint32_t imageSize = (asmGen.numInstrs() +
+				(3 * asmGen.numMacros())) << 1;
+		MsgLog::logINFO("Image size: " + to_string(imageSize) + "/65536 bytes");
+	}
+
+	// Return for a successfully compiled program.
 	return 0;
 }

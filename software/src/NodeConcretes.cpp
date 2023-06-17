@@ -1735,8 +1735,8 @@ void LNotNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 // TODO
 void RShiftNode::computeConst() {
 	// Lhs determines Determine logical vs. arithmetic.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_lhs->getType() == TYPE_UINT) { // Unsigned- logical
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		m_constVal = (uint16_t)(m_lhs->getConstVal()) >>
 				(uint16_t)(m_rhs->getConstVal());
 	}
@@ -1750,14 +1750,18 @@ void RShiftNode::computeConst() {
 // TODO
 void RShiftNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Lhs determines Determine logical vs. arithmetic.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_lhs->getType() == TYPE_UINT) { // Unsigned- logical
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned- logical
+		asmGen->genInstr({.type=INSTR_AND, .r1=REG_RA,
+			.r2=rhs, .imm=0xf});
 		asmGen->genInstr({.type=INSTR_SHR, .flg=FLAG_NONE,
-			.r1=REG_AC, .r2=lhs, .r3=rhs});
+			.r1=REG_AC, .r2=lhs, .r3=REG_RA});
 	}
 	else { // Signed- arithmetic
+		asmGen->genInstr({.type=INSTR_ORR, .r1=REG_RA,
+			.r2=rhs, .imm=-16});
 		asmGen->genInstr({.type=INSTR_SHR, .flg=FLAG_ARITH,
-			.r1=REG_AC, .r2=lhs, .r3=rhs});
+			.r1=REG_AC, .r2=lhs, .r3=REG_RA});
 	}
 }
 
@@ -1818,15 +1822,19 @@ void MinusNode::computeConst() {
 
 // TODO
 void MinusNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
-	// Set both r3 and imm- if lhs = BAD_REG, assembler should use imm.
-	asmGen->genInstr({.type=INSTR_SUB, .r1=REG_AC, .r2=rhs, .r3=lhs, .imm=0});
+	if (lhs == BAD_REG) {
+		asmGen->genInstr({.type=INSTR_SUB, .r1=REG_AC, .r2=rhs, .imm=0});
+	}
+	else {
+		asmGen->genInstr({.type=INSTR_SUB, .r1=REG_AC, .r2=rhs, .r3=lhs});
+	}
 }
 
 // TODO
 void GrtNode::computeConst() {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		m_constVal = (uint16_t)(m_lhs->getConstVal()) >
 			(uint16_t)(m_rhs->getConstVal());
 	}
@@ -1840,8 +1848,8 @@ void GrtNode::computeConst() {
 // TODO
 void GrtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		// Generate unsigned check.
 		asmGen->genInstr({.type=INSTR_XOR, .r1=REG_AC, .r2=lhs, .r3=rhs});
 		asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_N, .imm=10});
@@ -1865,8 +1873,8 @@ void GrtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 // TODO
 void LtNode::computeConst() {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		m_constVal = (uint16_t)(m_lhs->getConstVal()) <
 			(uint16_t)(m_rhs->getConstVal());
 	}
@@ -1880,8 +1888,8 @@ void LtNode::computeConst() {
 // TODO
 void LtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		// Generate unsigned check.
 		asmGen->genInstr({.type=INSTR_XOR, .r1=REG_AC, .r2=lhs, .r3=rhs});
 		asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_N, .imm=10});
@@ -1905,8 +1913,8 @@ void LtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 // TODO
 void GeqNode::computeConst() {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		m_constVal = (uint16_t)(m_lhs->getConstVal()) >=
 			(uint16_t)(m_rhs->getConstVal());
 	}
@@ -1920,8 +1928,8 @@ void GeqNode::computeConst() {
 // TODO
 void GeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		// Generate unsigned check.
 		asmGen->genInstr({.type=INSTR_XOR, .r1=REG_AC, .r2=lhs, .r3=rhs});
 		asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_N, .imm=10});
@@ -1945,8 +1953,8 @@ void GeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 // TODO
 void LeqNode::computeConst() {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		m_constVal = (uint16_t)(m_lhs->getConstVal()) <=
 			(uint16_t)(m_rhs->getConstVal());
 	}
@@ -1960,8 +1968,8 @@ void LeqNode::computeConst() {
 // TODO
 void LeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		// Generate unsigned check.
 		asmGen->genInstr({.type=INSTR_XOR, .r1=REG_AC, .r2=lhs, .r3=rhs});
 		asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_N, .imm=10});
@@ -1985,8 +1993,8 @@ void LeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 // TODO
 void EqNode::computeConst() {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		m_constVal = (uint16_t)(m_lhs->getConstVal()) ==
 			(uint16_t)(m_rhs->getConstVal());
 	}
@@ -2008,8 +2016,8 @@ void EqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 // TODO
 void NeqNode::computeConst() {
 	// Signed vs. Unsigned comparison.
-	if (m_lhs->getType() == TYPE_UINT ||
-		m_rhs->getType() == TYPE_UINT) { // Unsigned comparison
+	if (m_varType == TYPE_UINT ||
+		m_varType == TYPE_UCHAR) { // Unsigned comparison
 		m_constVal = (uint16_t)(m_lhs->getConstVal()) !=
 			(uint16_t)(m_rhs->getConstVal());
 	}
