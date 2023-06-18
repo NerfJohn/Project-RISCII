@@ -10,7 +10,7 @@ int main() {
 	vChar = -129; // Becomes 127
 	
 	vUint = -1; // Becomes 65535
-	vUChar = -1; // Becomes 255
+	vUchar = -1; // Becomes 255
 	
-	return vInt + vChar + vUint + vUChar + -33147; // Added lit underflows "int" type
-	
+	return vInt + vChar + vUint + vUchar + -33147; // Added lit underflows "int" type
+}

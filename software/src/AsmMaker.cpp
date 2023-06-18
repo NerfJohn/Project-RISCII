@@ -306,10 +306,12 @@ void AsmMaker::createHexFile(std::string filename) {
 					}
 					break;
 				case INSTR_LBI:
-				case INSTR_JAL:
 					flag = entry.flg << 8;
 					hexInstrs.push_back(instrI(type, entry.r1,
-							flag + entry.imm));
+							flag + (entry.imm & 0xff)));
+					break;
+				case INSTR_JAL:
+					hexInstrs.push_back(instrI(type, entry.r1, entry.imm));
 					break;
 				case INSTR_LDR:
 				case INSTR_STR:

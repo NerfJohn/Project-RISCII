@@ -10,7 +10,7 @@ int main() {
 	vChar = 128; // Becomes -128
 	
 	vUint = 65536; // Becomes 0
-	vUChar = 256; // Becomes 0
+	vUchar = 256; // Becomes 0
 	
-	return vInt + vChar + vUint + vUChar + 32897; // Added lit overflows "int" type
-	
+	return vInt + vChar + vUint + vUchar + 32897; // Added lit overflows "int" type
+}

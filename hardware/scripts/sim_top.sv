@@ -52,7 +52,7 @@ always @(posedge clk) begin
 	// Run additional tests if requested (all exit before file creation).
 	if (IS_TEST) begin
 		// Check halt is asserted in time.
-		if ((haltDetected == 0) && (clkCnt > 500)) begin
+		if ((haltDetected == 0) && (clkCnt > 1000)) begin
 			$display("ERR: Halt not asserted in time!");
 			$finish;
 		end

@@ -3,6 +3,7 @@ int expected;
 
 int main() {
 	int measured;
+	int actual;
 	
 	expected = 5;
 	actual = 5;

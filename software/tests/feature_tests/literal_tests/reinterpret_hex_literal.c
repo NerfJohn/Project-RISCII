@@ -15,3 +15,4 @@ int main() {
 	alsoCutTop = 0xFFFF;
 	
 	return highBitNegative + highBitPositive + cutOffTop + alsoCutTop + 0xff02;
+}

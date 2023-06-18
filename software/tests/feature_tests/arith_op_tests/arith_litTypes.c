@@ -17,6 +17,6 @@ int main() {
 	minus1 = -0x12;
 	minus2 = -'Z';
 	
-	// 30 + 3 + 98 + -86 + -12 + -90 = -57;
-	return add1 + add2 + sub1 + sub2 + minus1 + minus2 + 58;
+	// 30 + 3 + 98 + -86 + -18 + -90 = -63;
+	return add1 + add2 + sub1 + sub2 + minus1 + minus2 + 64;
 }

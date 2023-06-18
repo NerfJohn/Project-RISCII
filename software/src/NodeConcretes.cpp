@@ -538,10 +538,10 @@ genValue_t FuncDefNode::translate(AsmMaker* asmGen) {
 	// Generate function's "return"- starting with callee restores...
 	asmGen->addLabel(AsmMaker::RET_PREFIX + m_id);
 	asmGen->addComment("Callee restore load registers");
-	asmGen->genInstr({.type=INSTR_STR, .r1=REG_0, .r2=REG_SP, .imm=6});
-	asmGen->genInstr({.type=INSTR_STR, .r1=REG_1, .r2=REG_SP, .imm=4});
-	asmGen->genInstr({.type=INSTR_STR, .r1=REG_2, .r2=REG_SP, .imm=2});
-	asmGen->genInstr({.type=INSTR_STR, .r1=REG_3, .r2=REG_SP, .imm=0});
+	asmGen->genInstr({.type=INSTR_LDR, .r1=REG_0, .r2=REG_SP, .imm=6});
+	asmGen->genInstr({.type=INSTR_LDR, .r1=REG_1, .r2=REG_SP, .imm=4});
+	asmGen->genInstr({.type=INSTR_LDR, .r1=REG_2, .r2=REG_SP, .imm=2});
+	asmGen->genInstr({.type=INSTR_LDR, .r1=REG_3, .r2=REG_SP, .imm=0});
 	asmGen->addSpacer();
 
 	// .. followed by framing/returning.
@@ -1945,7 +1945,7 @@ void GeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 		// Generate signed check.
 		asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=1});
 		asmGen->genInstr({.type=INSTR_SUB, .r1=REG_RA, .r2=lhs, .r3=rhs});
-		asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_N, .imm=2});
+		asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_NZ, .imm=2});
 		asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=0});
 	}
 }
@@ -1985,7 +1985,7 @@ void LeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 		// Generate signed check.
 		asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=1});
 		asmGen->genInstr({.type=INSTR_SUB, .r1=REG_RA, .r2=rhs, .r3=lhs});
-		asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_N, .imm=2});
+		asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_NZ, .imm=2});
 		asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=0});
 	}
 }

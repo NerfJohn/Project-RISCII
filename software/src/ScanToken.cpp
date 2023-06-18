@@ -86,7 +86,6 @@ std::string ScanToken::typeToString(ScanTableStates type) {
 		case SCAN_RETURN: return "RETURN";
 		case SCAN_UNSIGNED: return "UNSIGNED";
 		default:
-			// Implies type is corrupted- assert source code is faulty.
 			string msg("ScanToken::typeToString() called when type = ");
 			MsgLog::logASSERT(msg + to_string((int)(type)));
 	}

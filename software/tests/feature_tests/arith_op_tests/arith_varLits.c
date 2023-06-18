@@ -24,6 +24,6 @@ int main() {
 	minus1 = -'\0';
 	minus2 = -i;
 	
-	// 58 + 4105 + -27 + 61439 + 0 + -25 = 65536 + 14
-	return add1 + add2 + sub1 + sub2 + minus1 + minus2 + -13;
+	// 63 + 4105 + -27 + 61439 + 0 + -25 = 65536 + 19
+	return add1 + add2 + sub1 + sub2 + minus1 + minus2 + -18;
 }

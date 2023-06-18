@@ -136,8 +136,9 @@ PrgmNode* parseTokens(queue<ScanToken> tokens) {
 			vector<uint8_t>* newStates =
 					ParseTable::getNextStates(state, tknType);
 			if (newStates == nullptr) {
-				MsgLog::logERR("Unexpected " + ScanToken::typeToString(tknType),
-							   tknLineNum);
+				string tkn = (EOF_TKN == tknType) ?
+						"EOF" : ScanToken::typeToString(tknType);
+				MsgLog::logERR("Unexpected " + tkn, tknLineNum);
 			}
 
 			// Push new states to parse stack (in reverse- LIFO stack).

@@ -4,7 +4,7 @@ int main() {
 	int sub;
 	
 	add = -5 + 5;
-	sub = 14 - -14;
+	sub = 14 - 14;
 	
 	return add + sub + 1;
 }
