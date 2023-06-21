@@ -6,7 +6,7 @@ int helper() {
 	numCalls = numCalls + 1;
 	callsLeft = callsLeft - 1;
 	if (callsLeft) {helper();}
-	return;
+	return 0;
 }
 
 int kickoff(int i) {

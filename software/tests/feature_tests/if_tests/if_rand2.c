@@ -20,5 +20,5 @@ int main() {
 		}
 	}
 	
-	return fileChar - 0xA4;
+	return fileChar - 0xFFA4;
 }

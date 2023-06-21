@@ -7,10 +7,10 @@ int main() {
 	int result;
 	
 	byteInArray = 34;
-	charMask = 0x2f;
+	charMask = 0xef;
 	
 	shiftedChar = byteInArray << 0x3;
 	result = charMask & shiftedChar;
 	
-	return result;
+	return result + 1;
 }

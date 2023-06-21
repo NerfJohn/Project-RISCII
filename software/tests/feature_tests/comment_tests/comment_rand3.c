@@ -13,10 +13,10 @@ int main() {
 	int res;
 	
 	// Some check on order of operations- its been a while since writing this test.
-	res = ((myReg & 0xf) 	// Build me up
+	res = ((myReg & 0xf)) 	// Build me up
 	== 						// Buttercup
-	(myReg >> 8 & 0xf)) 	// (Baby)
-	^ 0x1;
+	((myReg >> 8 & 0xf) 	// (Baby)
+	^ 0x1);
 					//   ||
 	return ! // i.e. NOT \/
 						res;

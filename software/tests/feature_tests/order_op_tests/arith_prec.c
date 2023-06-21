@@ -6,7 +6,7 @@ int main() {
 	
 	// 12 - (-result) + 3 - 30;
 	result = 5;
-	result 12 - -result + 3 - 30;
+	result = 12 - -result + 3 - 30;
 	
-	return result + -9;
+	return result + 11;
 }

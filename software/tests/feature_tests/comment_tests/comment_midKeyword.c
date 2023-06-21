@@ -4,7 +4,7 @@ int main() {
 	int 	// Twice!
 	i;
 	
-	i = 0;
+	i = 1;
 	
 	return i;
 }

@@ -6,7 +6,7 @@ int main() {
 	
 	// 1 != (1 >= 0 > (!result) < 1 <= 1) == 0;
 	result = 1;
-	result 1 != 1 >= 0 > !result < 1 <= 1 == 0;
+	result = 1 != 1 >= 0 > !result < 1 <= 1 == 0;
 	
 	return result;
 }

@@ -515,7 +515,7 @@ genValue_t FuncDefNode::translate(AsmMaker* asmGen) {
 	asmGen->addComment("Setup new frame");
 	asmGen->genInstr({.type=INSTR_ADD, .r1=REG_FP, .r2=REG_SP, .imm=-4});
 	MemHandler::loadLitToReg(asmGen, REG_RA, frameSize);
-	asmGen->genInstr({.type=INSTR_ADD, .r1=REG_SP, .r2=REG_RA, .imm=0});
+	asmGen->genInstr({.type=INSTR_SUB, .r1=REG_SP, .r2=REG_RA, .r3=REG_SP});
 	asmGen->addSpacer();
 
 	// ... followed by callee saves.
@@ -772,6 +772,7 @@ VarType_e LITNode::checkTyping(void) {
 	if (tooLarge) {
 		MsgLog::logWARN("\"" + m_strValue + "\" does not fit within an INT-" +
 				" defaulted to UINT for translation", m_lineNum);
+		return TYPE_UINT;
 	}
 
 	// Return our general type.
@@ -1034,15 +1035,15 @@ genValue_t RetNode::translate(AsmMaker* asmGen) {
 	if ((resType == TYPE_CHAR) ||
 		(resType == TYPE_UCHAR)) {
 		InstrFlag_e resFlg = (resType == TYPE_CHAR) ? FLAG_ARITH : FLAG_NONE;
-		asmGen->genInstr({.type=INSTR_SHL, .r1=REG_RA,
-			.r2=REG_RA, .imm=8, .cmt="Assigning 8-bit value"});
-		asmGen->genInstr({.type=INSTR_SHR, .flg=resFlg, .r1=REG_RA,
-			.r2=REG_RA, .imm=8});
+		asmGen->genInstr({.type=INSTR_SHL, .r1=REG_AC,
+			.r2=REG_AC, .imm=8, .cmt="Assigning 8-bit value"});
+		asmGen->genInstr({.type=INSTR_SHR, .flg=resFlg, .r1=REG_AC,
+			.r2=REG_AC, .imm=8});
 	}
 
 	// Jump to function return (if not already at the end).
 	if (!dynamic_cast<FuncDefNode*>(m_curFunc)->isLastStmt(this)) {
-		asmGen->genCall(m_curFunc->getValue());
+		asmGen->genToRet(m_curFunc->getValue());
 	}
 	asmGen->addSpacer();
 
@@ -1238,9 +1239,10 @@ genValue_t IfNode::translate(AsmMaker* asmGen) {
 
 	// Generate conditional jump to label.
 	string ifLabel = "if_" + asmGen->getNewLabel();
+	string cmt = "(skip 3-instruction macro)";
 	asmGen->genInstr({.type=INSTR_ADD, .r1=condReg, .r2=condReg,
 		.imm=0, .cmt="Prep condition check"});
-	asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_NP, .imm=2});
+	asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_NP, .imm=6, .cmt=cmt});
 	asmGen->genToLabel(ifLabel);
 	asmGen->addSpacer();
 
@@ -1256,6 +1258,10 @@ genValue_t IfNode::translate(AsmMaker* asmGen) {
 	// Generate label for jumping over if block.
 	asmGen->addLabel(ifLabel);
 	asmGen->addSpacer();
+
+	// Can't be sure if run- clear register file records.
+	MemHandler::clearLoads();
+	MemHandler::clearAccum();
 
 	// Irrelevant return.
 	return {};
@@ -1443,15 +1449,20 @@ genValue_t WhileNode::translate(AsmMaker* asmGen) {
 	string loopLabel = "loop_" + asmGen->getNewLabel();
 	asmGen->addLabel(loopLabel);
 
+	// Can't be sure if looped- clear register file records.
+	MemHandler::clearLoads();
+	MemHandler::clearAccum();
+
 	// Generate/load condition.
 	genValue_t condVal = m_cond->translate(asmGen);
 	RegName_e condReg = MemHandler::load(asmGen, condVal);
 
 	// Generate conditional jump to label.
 	string whileLabel = "while_" + asmGen->getNewLabel();
+	string cmt = "(skip 3-instruction macro)";
 	asmGen->genInstr({.type=INSTR_ADD, .r1=condReg, .r2=condReg,
 		.imm=0, .cmt="Prep condition check"});
-	asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_NP, .imm=2});
+	asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_NP, .imm=6, .cmt=cmt});
 	asmGen->genToLabel(whileLabel);
 	asmGen->addSpacer();
 
@@ -1471,6 +1482,10 @@ genValue_t WhileNode::translate(AsmMaker* asmGen) {
 	// Generate label for jumping over while block.
 	asmGen->addLabel(whileLabel);
 	asmGen->addSpacer();
+
+	// Can't be sure if run- clear register file records.
+	MemHandler::clearLoads();
+	MemHandler::clearAccum();
 
 	// Irrelevant return.
 	return {};
@@ -1637,7 +1652,7 @@ genValue_t CallNode::translate(AsmMaker* asmGen) {
 		RegName_e argReg = MemHandler::load(asmGen, argVal);
 
 		// Truncate result if lhs is shorter than word size.
-		VarType_e resType = m_sym->m_type;
+		VarType_e resType = m_sym->m_argList[i-1];
 		if ((resType == TYPE_CHAR) ||
 			(resType == TYPE_UCHAR)) {
 			InstrFlag_e resFlg = (resType == TYPE_CHAR) ?
@@ -1649,11 +1664,7 @@ genValue_t CallNode::translate(AsmMaker* asmGen) {
 		}
 
 		// Push value on top of stack (Hack: use sym to re-use store logic).
-		Symbol tempSym;
-		tempSym.m_isGlobal = false;
-		tempSym.m_memValue = argOffset;
-		MemHandler::store(asmGen, argReg,
-				{.type=KEY_SYMBOL, .data=(int)(&tempSym)});
+		MemHandler::pushArg(asmGen, argReg, argOffset);
 		asmGen->addSpacer();
 
 		// Use next available slot for next arg.
@@ -1729,7 +1740,29 @@ void LNotNode::computeConst() {
 
 // TODO
 void LNotNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
-	asmGen->genInstr({.type=INSTR_SUB, .r1=REG_AC, .r2=rhs, .imm=0});
+	asmGen->genInstr({.type=INSTR_XOR, .r1=REG_AC, .r2=rhs, .imm=-1});
+}
+
+// TODO
+VarType_e RShiftNode::checkTyping(void) {
+	// Pass to children (as available).
+	VarType_e lhsType= TYPE_LITERAL;
+	VarType_e rhsType = TYPE_LITERAL;
+	if (m_lhs != nullptr) {lhsType = m_lhs->checkTyping();}
+	if (m_rhs != nullptr) {rhsType = m_rhs->checkTyping();}
+
+	// Type is based on left hand side ONLY.
+	m_varType = lhsType;
+
+	string lhsStr = (m_lhs != nullptr) ? VarType::toString(lhsType) + "," : "";
+	string rhsStr = VarType::toString(rhsType);
+	string newStr = VarType::toString(m_varType);
+	string nodeStr = IASTNode::nodeToString((ParseActions)getBuildType());
+	MsgLog::logINFO("(" + lhsStr + rhsStr + ") -> " + nodeStr +
+			" = " + newStr + " at " + to_string(m_lineNum));
+
+	// Pass accumulated type.
+	return m_varType;
 }
 
 // TODO
@@ -1847,6 +1880,19 @@ void GrtNode::computeConst() {
 
 // TODO
 void GrtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
+	// Move current result as needed to generate new one.
+	string cmt = "Move operand for result processing";
+	if (lhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=lhs, .imm=0, .cmt=cmt});
+		lhs = REG_RA;
+	}
+	else if (rhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=rhs, .imm=0, .cmt=cmt});
+		rhs = REG_RA;
+	}
+
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
 		m_varType == TYPE_UCHAR) { // Unsigned comparison
@@ -1887,6 +1933,19 @@ void LtNode::computeConst() {
 
 // TODO
 void LtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
+	// Move current result as needed to generate new one.
+	string cmt = "Move operand for result processing";
+	if (lhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=lhs, .imm=0, .cmt=cmt});
+		lhs = REG_RA;
+	}
+	else if (rhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=rhs, .imm=0, .cmt=cmt});
+		rhs = REG_RA;
+	}
+
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
 		m_varType == TYPE_UCHAR) { // Unsigned comparison
@@ -1927,6 +1986,19 @@ void GeqNode::computeConst() {
 
 // TODO
 void GeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
+	// Move current result as needed to generate new one.
+	string cmt = "Move operand for result processing";
+	if (lhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=lhs, .imm=0, .cmt=cmt});
+		lhs = REG_RA;
+	}
+	else if (rhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=rhs, .imm=0, .cmt=cmt});
+		rhs = REG_RA;
+	}
+
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
 		m_varType == TYPE_UCHAR) { // Unsigned comparison
@@ -1967,6 +2039,19 @@ void LeqNode::computeConst() {
 
 // TODO
 void LeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
+	// Move current result as needed to generate new one.
+	string cmt = "Move operand for result processing";
+	if (lhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=lhs, .imm=0, .cmt=cmt});
+		lhs = REG_RA;
+	}
+	else if (rhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=rhs, .imm=0, .cmt=cmt});
+		rhs = REG_RA;
+	}
+
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
 		m_varType == TYPE_UCHAR) { // Unsigned comparison
@@ -2007,6 +2092,19 @@ void EqNode::computeConst() {
 
 // TODO
 void EqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
+	// Move current result as needed to generate new one.
+	string cmt = "Move operand for result processing";
+	if (lhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=lhs, .imm=0, .cmt=cmt});
+		lhs = REG_RA;
+	}
+	else if (rhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=rhs, .imm=0, .cmt=cmt});
+		rhs = REG_RA;
+	}
+
 	asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=1});
 	asmGen->genInstr({.type=INSTR_SUB, .r1=REG_RA, .r2=lhs, .r3=rhs});
 	asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_Z, .imm=2});
@@ -2043,8 +2141,23 @@ void BNotNode::computeConst() {
 
 // TODO
 void BNotNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
+	// Move current result as needed to generate new one.
+	string cmt = "Move operand for result processing";
+	if (lhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=lhs, .imm=0, .cmt=cmt});
+		lhs = REG_RA;
+	}
+	else if (rhs == REG_AC) {
+		asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+			.r2=rhs, .imm=0, .cmt=cmt});
+		rhs = REG_RA;
+	}
+
+	string ccCmt = "Get condition codes";
 	asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=0});
-	asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA, .r2=rhs, .imm=0});
+	asmGen->genInstr({.type=INSTR_ADD, .r1=REG_RA,
+		.r2=rhs, .imm=0, .cmt=ccCmt});
 	asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_NP, .imm=2});
 	asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=1});
 }

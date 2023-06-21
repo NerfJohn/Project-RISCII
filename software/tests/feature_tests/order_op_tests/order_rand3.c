@@ -6,7 +6,7 @@ int main() {
 	
 	int res;
 	
-	res = ((myReg & 0xf) == (myReg >> 8 & 0xf)) ^ 0x1;
+	res = (myReg & 0xf) == ((myReg >> 8 & 0xf) ^ 0x1);
 	
 	return !res;
 }

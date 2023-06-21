@@ -38,8 +38,12 @@ public:
 	static void store(AsmMaker* asmGen, RegName_e reg, genValue_t key);
 
 	// TODO
+	static void pushArg(AsmMaker* asmGen, RegName_e reg, int offset);
+
+	// TODO
 	static void updateReg(RegName_e reg, genValue_t key);
 	static void clearLoads(void);
+	static void clearAccum(void);
 
 private:
 	// Private constructor to prevent instantiation.

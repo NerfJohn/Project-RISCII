@@ -21,7 +21,7 @@ int main() {
 	res = 0;
 	
 	res = intLit();
-	res = hexLit();
+	res = res + hexLit();
 	
 	return res - 1;
 }

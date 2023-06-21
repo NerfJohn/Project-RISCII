@@ -3,7 +3,7 @@ int main() {
 	unsigned int bitStream;
 	int bitCnt;
 	
-	bitStream = 0xA50E;
+	bitStream = 0x0A5E;
 	bitCnt = 0;
 	
 	while (bitStream != 0x0) {

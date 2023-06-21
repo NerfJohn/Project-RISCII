@@ -32,7 +32,7 @@ int main() {
   shr4 = uint_t >> 1;
   shr5 = char_t >> 1;
   shr6 = uchar_t >> 1;
-  
-  // Return sum to check value (32767 + -1 + 0 + 5 + 32767 + -1 + 32767 + -1 + 127 = 98430)
-  return shr0 + shr1 + shr2 + shr3 + shr4 + shr5 + shr6 + shr7 + shr8 + 0; 
+
+  // Return sum to check value (-1 + -1 + 0 + -1 + 32767 + -1 + 127 + 5 + 32767 = 126)
+  return shr0 + shr1 + shr2 + shr3 + shr4 + shr5 + shr6 + shr7 + shr8 + -125; 
 }

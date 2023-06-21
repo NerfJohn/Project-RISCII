@@ -14,7 +14,7 @@ int helper() {
 	{ // Not a fan of "newline brace" format...
 		helper();
 	} // ...but I needed something to test with comments.
-	return;
+	return 0;
 }
 
 // Kickoff function- recursive functions often need them

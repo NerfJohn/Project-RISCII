@@ -12,3 +12,4 @@ int main() {
 	name = 1;
 	res = foo(2);
 	return name + res;
+}

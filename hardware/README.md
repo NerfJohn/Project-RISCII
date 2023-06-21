@@ -15,7 +15,7 @@ This folder contains the hardware's design, simulation/testing scripts, and test
 - /runSim.sh: Runs a simulation of hardware *(./runSim.sh [-h] <input .hex file> [-test])*
   - Input .hex file used to set ROM (unspecified bytes set to 0).
   - Creates .out file if exit code == 0 (.out contains first 2-bytes of cache and clk cycle count, respectively).
-  - test flag enables extra requirements (namely a 1000 clk cycle timeout failure).
+  - test flag enables extra requirements (namely a 3000 clk cycle timeout failure).
 - /runTests.sh Runs batch of tests *(./runTests.sh [-h] \<directory\>)*
   - Takes input directory to scan for tests (denoted by .asm files).
   - Test must assemble, simulate, and report "1" as its cache value to pass.

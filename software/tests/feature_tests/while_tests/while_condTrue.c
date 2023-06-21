@@ -29,8 +29,8 @@ int main() {
 	res = 0;
 	
 	res = two();
-	res = negOne();
-	res = q();
+	res = res + negOne();
+	res = res + q();
 	
 	return res - 2;
 }

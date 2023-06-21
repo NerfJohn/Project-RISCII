@@ -7,7 +7,8 @@ int main() {
 	err = 0;
 	
 	if (!trig) {
-		char c = 'a';
+		char c;
+		c = 'a';
 		if (c == 'c') {
 			trig = 1;
 		}
@@ -17,7 +18,8 @@ int main() {
 	}
 	
 	if (!trig) {
-		char c = 'b';
+		char c;
+		c = 'b';
 		if (c == 'c') {
 			trig = 1;
 		}
@@ -27,7 +29,8 @@ int main() {
 	}
 	
 	if (!trig) {
-		char c = 'c';
+		char c; 
+		c = 'c';
 		if (c == 'c') {
 			trig = 1;
 		}

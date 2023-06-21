@@ -53,7 +53,6 @@ int main() {
 		b = (a | b) + 3;
 		c = 1 + a + 10 + b - 40 + c;
 		
-		int d;
 		d = a | b | c | 0x0;
 		d = foo();
 		a = foo();
@@ -67,8 +66,7 @@ int main() {
 		a = a + b - c;
 		b = (a | b) + 3;
 		c = 1 + a + 10 + b - 40 + c;
-		
-		int d;
+
 		d = a | b | c | 0x0;
 		d = foo();
 		a = foo();

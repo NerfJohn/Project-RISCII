@@ -21,6 +21,6 @@ int main() {
 	shr0 = 0x1 >> 0xf;
 	shr1 = 0xffff >> 0x1;
 	
-	// Return sum to check results (1 + -1 + -2 + 0 + -32768 + -2 + 0 + 32767 = -4).
-	return and + or + xor + not + shl0 + shl1 + shr0 + shr1 + 5;
+	// Return sum to check results (1 + -1 + -2 + 0 + -32768 + -2 + 0 + -1 = -32773).
+	return and + or + xor + not + shl0 + shl1 + shr0 + shr1 + -32762;
 }

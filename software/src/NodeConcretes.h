@@ -555,6 +555,7 @@ public:
 	uint8_t getBuildType(void) {return PARSE_RSHIFT_NODE;}
 
 	// TODO
+	VarType_e checkTyping(void);
 	void computeConst(void);
 
 	// TODO

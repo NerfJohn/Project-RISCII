@@ -9,15 +9,15 @@ int main() {
 	// Check each logical operator.
 	temp = 0xdead & 0xbeef;
 	and = 0xbeef & 0xdead;
-	and = and + temp;
+	and = and - temp;
 	
 	temp = 0xdead | 0xbeef;
 	or = 0xbeef | 0xdead;
-	or = or + temp;
+	or = or - temp;
 	
 	temp = 0xdead ^ 0xbeef;
 	xor = 0xbeef ^ 0xdead;
-	xor = xor + temp;
+	xor = xor - temp;
 	
 	// Return sum to check results (0 + 0 + 0 = 0).
 	return and + or + xor + 1;

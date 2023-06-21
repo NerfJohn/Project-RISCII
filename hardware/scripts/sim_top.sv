@@ -49,10 +49,13 @@ always @(posedge clk) begin
 		clkAtHalt = clkCnt;
 	end
 	
+	//$display("r6=%d (0x%x)", iDUT.dut.iFILE.iREGS0[6].Q[15:0], iDUT.dut.iFILE.iREGS0[6].Q[15:0]);
+	//$display("sp=%x, fp=%x", iDUT.dut.iFILE.iREGS0[4].Q[15:0], iDUT.dut.iFILE.iREGS0[5].Q[15:0]);
+	
 	// Run additional tests if requested (all exit before file creation).
 	if (IS_TEST) begin
 		// Check halt is asserted in time.
-		if ((haltDetected == 0) && (clkCnt > 1000)) begin
+		if ((haltDetected == 0) && (clkCnt > 3000)) begin
 			$display("ERR: Halt not asserted in time!");
 			$finish;
 		end

@@ -228,7 +228,37 @@ void MemHandler::store(AsmMaker* asmGen, RegName_e reg, genValue_t key) {
 }
 
 // TODO
+void MemHandler::pushArg(AsmMaker* asmGen, RegName_e reg, int offset) {
+	// Memory value is offset from frame pointer.
+	if ((-32 <= offset) && (offset <= 30)) {
+		// Directly store.
+		asmGen->genInstr({.type=INSTR_STR,.r1=(RegName_e)reg,
+			.r2=REG_SP,.imm=offset});
+	}
+	else {
+		// Otherwise, use indirect pointer to access.
+		MemHandler::loadLitToReg(asmGen, REG_RA, offset);
+		asmGen->genInstr({.type=INSTR_ADD,.r1=REG_RA,
+			.r2=REG_RA,.r3=REG_SP});
+		asmGen->genInstr({.type=INSTR_STR,.r1=(RegName_e)reg,
+			.r2=REG_RA,.imm=0});
+	}
+}
+
+// TODO
 void MemHandler::updateReg(RegName_e reg, genValue_t key) {
+	// First- invalid any stale references (namely stale symbol values).
+	if (key.type == KEY_SYMBOL) {
+		for (int i = 0; i < REG_FILE_SIZE; i++) {
+			genValue_t oldReg = m_regFile[i];
+			if ((oldReg.type == key.type) && (oldReg.data == key.data)) {
+				// Value found- mark register as empty.
+				oldReg.type = EMPTY_REG;
+				m_regFile[i] = oldReg;
+			}
+		}
+	}
+
 	// Overwrite register with given contents.
 	m_regFile[reg] = key;
 }
@@ -242,4 +272,11 @@ void MemHandler::clearLoads(void) {
 	m_regFile[2] = emptyReg;
 	m_regFile[3] = emptyReg;
 
+}
+
+// TODO
+void MemHandler::clearAccum(void) {
+	// Reset accumulator.
+	genValue_t emptyReg = {.type=EMPTY_REG};
+	m_regFile[REG_AC] = emptyReg;
 }

@@ -28,7 +28,7 @@ int main() {
 	
 	// Shift Notes:
 	// Behavior undefined if 2nd operand doesn't fir in 4-bit unsigned value.
-	// GCC seems to treat hex/char literals as naturally unsigned and int literals as naturally signed.
+	// GCC seems to treat literals as naturally signed unless value exceeds int boundaries- then unsigned.
 	shl0 = int_t << 14;
 	shl1 = '\\' << uchar_t;
 	shr0 = char_t >> 0x3;

@@ -7,7 +7,7 @@ int main() {
 	unsigned int bitStream;	// Stream of bits
 	int bitCnt;				// Counter of number of 1s in stream
 	
-	bitStream = 0xA50E;		// Preset value: 0xA50E (7 1s present).
+	bitStream = 0x05AE;		// Preset value: 0x05AE (7 1s present).
 	bitCnt = 0;
 	
 	// Keep counting until no 1s remain (also- soft check of uints and right shifting).

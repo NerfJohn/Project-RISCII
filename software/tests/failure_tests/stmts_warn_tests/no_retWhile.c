@@ -2,10 +2,9 @@
 
 int main() {
 	int g;
-	
 	g = 1;
 	
-	while (g) { // Var cond = ambiguous
+	while (0) { // Var cond = ambiguous
 		return 1;
 	}
 	

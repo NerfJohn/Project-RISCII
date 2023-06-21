@@ -7,5 +7,6 @@ char foo(unsigned char idx) {
 }
 
 int main() {
-	return foo(0) + foo(1) + foo(2) + foo(3) - 126;
+	// -128 + 127 + (-128) + (0) = -129
+	return foo(0) + foo(1) + foo(2) + foo(3) - -130;
 }

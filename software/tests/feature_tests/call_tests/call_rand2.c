@@ -8,7 +8,7 @@ int sumAB(int dummyA, int dummyB) {
 	return result;
 }
 
-int diffAB(int dummyA, dummyB) {
+int diffAB(int dummyA, int dummyB) {
 	return A - B;
 }
 
@@ -16,3 +16,4 @@ int main() {
 	A = 12;
 	B = 3;
 	return sumAB(1,1) + diffAB(1,2) - 23;
+}

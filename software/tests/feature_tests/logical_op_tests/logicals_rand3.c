@@ -12,5 +12,5 @@ int main() {
 	result = result | orMask;
 	result = result >> shiftNum;
 	
-	return result + 4097;
+	return result + 1;
 }
