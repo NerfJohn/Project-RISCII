@@ -10,7 +10,7 @@ int main() {
 	res = 0;
 	
 	res = res | basicRet();
-	res = res | manyRet();
+	res = res | manyRet(0);
 	res = res | cutRet();
 	
 	return res == 0x7;

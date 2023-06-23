@@ -647,7 +647,8 @@ VarType_e IDNode::checkTyping(void) {
 int IDNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Save constant value if available (translator decides ID vs. LIT).
 	if (constList != nullptr &&
-		constList->find(m_sym) != constList->end()) {
+		constList->find(m_sym) != constList->end() &&
+		(*constList)[m_sym] <= OPT_CONST_MAX) {
 		m_constVal = (*constList)[m_sym];
 
 		MsgLog::logINFO("\"" + m_id + "\" at " + to_string(m_lineNum)
@@ -664,6 +665,8 @@ int IDNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 genValue_t IDNode::translate(AsmMaker* asmGen) {
 	// Prep ID to be loaded by parent.
 	if (m_constVal != OPT_VAL_UNKNOWN) {m_sym->m_constVal = m_constVal;}
+	else {m_sym->m_constVal = OPT_VAL_UNKNOWN;}
+
 
 	// Return ID's symbol info for loading.
 	genValue_t retVal = {.type=KEY_SYMBOL, .data=(int)(m_sym)};
@@ -880,14 +883,25 @@ int AssignNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Pass down to expression (IDNode lives/dies with the statement).
 	int rhsValue = m_rhs->optimizeAST(constList);
 
-	// Add/modify the constant list if a "const propagation" to local.
+	// Modify the const list based on expression (and if applicable).
 	if (constList != nullptr &&
 		rhsValue <= OPT_CONST_MAX &&
 		!m_lhs->getSym()->m_isGlobal) {
+		// Adjust number for size/signedness.
+		VarType_e resType = m_lhs->getSym()->m_type;
+		if (resType == TYPE_CHAR) {rhsValue = (int8_t)(rhsValue);}
+		else if (resType == TYPE_UCHAR) {rhsValue = (uint8_t)(rhsValue);}
+
 		MsgLog::logINFO("Assigning \"" + m_lhs->getValue() + "\" at "
 				+ to_string(m_lineNum) + " as const "
 				+ to_string(rhsValue));
+
+		// Save to const list.
 		(*constList)[m_lhs->getSym()] = rhsValue;
+	}
+	else if (constList != nullptr) {
+		// Ensure assigned variable isn't considered const.
+		(*constList)[m_lhs->getSym()] = OPT_VAL_UNKNOWN;
 	}
 
 	// Generally keep- parent decides fate.
@@ -914,7 +928,7 @@ genValue_t AssignNode::translate(AsmMaker* asmGen) {
 			.r2=resReg, .imm=8});
 	}
 
-	// Store value to its stop in RAM.
+	// Store value to its place in RAM.
 	genValue_t lhsVal = m_lhs->translate(asmGen);
 	MemHandler::store(asmGen, resReg, lhsVal);
 	asmGen->addSpacer();
@@ -1642,6 +1656,7 @@ genValue_t CallNode::translate(AsmMaker* asmGen) {
 	if (s_accumIsInter) {
 		genValue dummyInter = {.type=KEY_INTERMEDIATE};
 		MemHandler::store(asmGen, REG_AC, dummyInter);
+		s_accumIsInter = false; // AC is now free
 	}
 
 	// Generate/push each argument in reverse (LIFO call setup).

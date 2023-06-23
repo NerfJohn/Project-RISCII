@@ -11,8 +11,8 @@ int main() {
 		int a;
 		int b;
 		
-		a = limit << 3 	// OPT: a = 40
-		b = a + 8; 		// OPT: b = 48
+		a = limit << 3; 	// OPT: a = 40
+		b = a + 8; 			// OPT: b = 48
 		
 		i = i + 1;
 	}

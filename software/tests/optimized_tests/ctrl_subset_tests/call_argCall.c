@@ -3,3 +3,4 @@ int foo(int i) {return 1;}
 
 int main() {
 	return foo(foo(foo(3)));
+}

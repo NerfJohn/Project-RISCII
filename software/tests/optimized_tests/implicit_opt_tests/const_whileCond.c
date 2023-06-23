@@ -45,5 +45,5 @@ int main() {
 	ret = ret | (whileChar() << 2);
 	ret = ret | (whileHex() << 3);
 	
-	return ret == 0xA;
+	return ret == 0xF;
 }

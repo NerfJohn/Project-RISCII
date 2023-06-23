@@ -3,7 +3,7 @@ int numCalls;
 
 int recurse() {
 	numCalls = numCalls + 1;
-	if (numCalls < 3) {numCalls();}
+	if (numCalls < 3) {recurse();}
 	return 1;
 }
 

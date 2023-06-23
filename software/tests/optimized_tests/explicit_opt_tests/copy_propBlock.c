@@ -17,7 +17,7 @@ int main() {
 	
 	int constInt;
 	constInt = 0x4;
-	if (result) {
+	if (result != 1) {
 		value = 0;
 	}
 	

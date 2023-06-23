@@ -3,7 +3,7 @@
 int a;
 int b;
 
-int a() {
+int aa() {
 	while(a + -15) {
 		return 1;
 	}
@@ -11,7 +11,7 @@ int a() {
 	return 0;
 }
 
-int b() {
+int bb() {
 	while(b) {
 		return 1;
 	}
@@ -34,8 +34,8 @@ int main() {
 	a = 15;
 	b = 23;
 	
-	res = res | a();
-	res = res | (b() << 1);
+	res = res | aa();
+	res = res | (bb() << 1);
 	res = res | (ab() << 2);
 	
 	// 0 + (1 << 1) + (1 << 2) = 6.
