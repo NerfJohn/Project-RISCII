@@ -11,17 +11,17 @@
 
 using namespace std;
 
-// TODO
+// Internal definitions for ease of processing instructions.
 constexpr InstrType_e IS_SPACER 	= (InstrType_e)(-1);
 constexpr InstrType_e IS_COMMENT	= (InstrType_e)(-2);
 constexpr InstrType_e IS_MACRO 		= (InstrType_e)(-3);
 constexpr InstrType_e IS_LABEL 		= (InstrType_e)(-4);
 
-// TODO
+// Common prefixes used for labels in an assembly file.
 std::string AsmMaker::FUNC_PREFIX = "f_";
 std::string AsmMaker::RET_PREFIX = "ret_";
 
-// TODO
+// Helper functions to generate hexadecimal values for the output.
 uint16_t andShl(int val, int msk, int off) {
 	return (uint16_t)((val & msk) << off);
 }
@@ -44,7 +44,7 @@ uint16_t instrO(int op, int r1, int r2, int of) {
 		   andShl(of, 0x3f, 0);
 }
 
-// TODO
+// String-ifier for ease of use of instruction type enum in printed messages.
 std::string AsmMaker::instrToString(InstrType_e instr) {
 	// Return string-ified version of instruction.
 	switch (instr) {
@@ -73,7 +73,7 @@ std::string AsmMaker::instrToString(InstrType_e instr) {
 	return "";
 }
 
-// TODO
+// String-ifier for ease of use of condition codes in printed messages.
 std::string AsmMaker::ccToString(InstrFlag_e flag) {
 	// String to return.
 	string retStr;
@@ -87,7 +87,7 @@ std::string AsmMaker::ccToString(InstrFlag_e flag) {
 	return retStr;
 }
 
-// TODO
+// String-ifier for ease of use of register enum in printed messages.
 std::string AsmMaker::regToString(RegName_e reg) {
 	// Return string-ified version of register.
 	switch(reg) {
@@ -108,7 +108,7 @@ std::string AsmMaker::regToString(RegName_e reg) {
 	return "";
 }
 
-// TODO
+// Saves given instruction (via appending) for later translation.
 void AsmMaker::genInstr(instr_t instrData) {
 	// Record instruction.
 	m_instrList.push_back(instrData);
@@ -117,32 +117,32 @@ void AsmMaker::genInstr(instr_t instrData) {
 	m_numInstrs++;
 }
 
-// TODO
+// Helper function to add formatting/labels to the assembly/hex.
 void AsmMaker::addSpacer(void) {
 	m_instrList.push_back({.type=IS_SPACER});
 }
 
-// TODO
+// Helper function to add formatting/labels to the assembly/hex.
 void AsmMaker::addLabel(std::string label) {
 	m_instrList.push_back({.type=IS_LABEL, .cmt=label + ":"});
 }
 
-// TODO
+// Helper function to add formatting/labels to the assembly/hex.
 void AsmMaker::addComment(std::string cmt) {
 	m_instrList.push_back({.type=IS_COMMENT, .cmt = "; " + cmt});
 }
 
-// TODO
+// Helper function to generate special code cases in the assembly/hex.
 void AsmMaker::genCall(std::string funcName) {
 	this->genToLabel(AsmMaker::FUNC_PREFIX + funcName);
 }
 
-// TODO
+// Helper function to generate special code cases in the assembly/hex.
 void AsmMaker::genToRet(std::string funcName) {
 	this->genToLabel(AsmMaker::RET_PREFIX + funcName);
 }
 
-// TODO
+// Helper function to generate special code cases in the assembly/hex.
 void AsmMaker::genToLabel(std::string labelName) {
 	// Record macro.
 	m_instrList.push_back({.type=IS_MACRO,
@@ -152,7 +152,7 @@ void AsmMaker::genToLabel(std::string labelName) {
 	m_numMacros++;
 }
 
-// TODO
+// Helper function to get a new, unique label.
 std::string AsmMaker::getNewLabel(void) {
 	// Ensure we're not repeating numbers/outputting bad ones.
 	if (m_nextLabelNum < 0) {
@@ -164,7 +164,7 @@ std::string AsmMaker::getNewLabel(void) {
 	return "L" + to_string(m_nextLabelNum - 1);
 }
 
-// TODO
+// Function to create the assembly file version of the generated input.
 void AsmMaker::createAsmFile(std::string filename) {
 	// Prepare file to be written.
 	FILE* fptr = fopen((filename + ".asm").c_str(), "w");
@@ -234,7 +234,7 @@ void AsmMaker::createAsmFile(std::string filename) {
 	fclose(fptr);
 }
 
-// TODO
+// Function to create the hex file version of the generated input.
 void AsmMaker::createHexFile(std::string filename) {
 
 	// Phase 1: Label Address Realization //

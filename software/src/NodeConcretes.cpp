@@ -2,17 +2,6 @@
  * NodeConcretes.cpp
  */
 
-/*
- * Note:
- * This is a TEMPORARY file to hold any concrete classes related to the Abstract
- * Syntax Tree (AST) as the compiler is implemented. Classes should be removed
- * and given their own files as appropriate over time.
- *
- * Should 2+ of the classes be too small to warrant their own files (or it makes
- * better sense to keep the classes together), this file should be renamed to
- * better reflect the purpose of the file.
- */
-
 #include <stdlib.h>
 #include "MsgLog.h"
 
@@ -24,7 +13,7 @@ using namespace std;
 // === PrgmNode === //
 //////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 PrgmNode::PrgmNode(std::stack<IBuildItem*>* buildStack) {
 	// Temporary buffer to hold popped decls.
 	vector<IDeclNode*> buffer;
@@ -47,7 +36,7 @@ PrgmNode::PrgmNode(std::stack<IBuildItem*>* buildStack) {
 	}
 }
 
-// TODO
+// Required form of toString().
 std::string PrgmNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -62,7 +51,7 @@ std::string PrgmNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void PrgmNode::checkSemantics(SymbolTable* symTable,
 							  std::vector<Symbol*>* symList) {
 	MsgLog::logINFO("Performing semantic checks...");
@@ -103,7 +92,7 @@ void PrgmNode::checkSemantics(SymbolTable* symTable,
 			to_string(symList->size()) + " symbols created");
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e PrgmNode::checkTyping(void) {
 	MsgLog::logINFO("Performing type checks...");
 
@@ -118,7 +107,7 @@ VarType_e PrgmNode::checkTyping(void) {
 	return (VarType_e)(-1);
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int PrgmNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	MsgLog::logINFO("Performing optimizations...");
 
@@ -147,7 +136,7 @@ int PrgmNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_KEEP;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t PrgmNode::translate(AsmMaker* asmGen) {
 	MsgLog::logINFO("Translating to assembly...");
 
@@ -184,7 +173,7 @@ genValue_t PrgmNode::translate(AsmMaker* asmGen) {
 // === VarDeclNode === //
 /////////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 VarDeclNode::VarDeclNode(std::stack<IBuildItem*>* buildStack) {
 	// Process tokens until un-related token is found (or stack is empty).
 	while (buildStack->size()) {
@@ -214,7 +203,7 @@ VarDeclNode::VarDeclNode(std::stack<IBuildItem*>* buildStack) {
 	}
 }
 
-// TODO
+// Required form of toString().
 std::string VarDeclNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -232,7 +221,7 @@ std::string VarDeclNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void VarDeclNode::checkSemantics(SymbolTable* symTable,
 								 std::vector<Symbol*>* symList) {
 	// Declaration- add new name/symbol pair.
@@ -260,7 +249,7 @@ void VarDeclNode::checkSemantics(SymbolTable* symTable,
 	MsgLog::logINFO("New Symbol " + newSym->toName());
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int VarDeclNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Request deletion if unused.
 	if (!m_sym->m_isUsed) {
@@ -275,7 +264,7 @@ int VarDeclNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 // === FuncDefNode === //
 /////////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 FuncDefNode::FuncDefNode(std::stack<IBuildItem*>* buildStack) {
 	// Temporary buffers to hold popped params/stmts.
 	vector<VarDeclNode*> paramBuffer;
@@ -352,7 +341,7 @@ FuncDefNode::FuncDefNode(std::stack<IBuildItem*>* buildStack) {
 	s_accumIsInter = false;
 }
 
-// TODO
+// Required form of toString().
 std::string FuncDefNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -374,7 +363,7 @@ std::string FuncDefNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void FuncDefNode::checkSemantics(SymbolTable* symTable,
 								 std::vector<Symbol*>* symList) {
 	// Claim "current function" title.
@@ -421,7 +410,7 @@ void FuncDefNode::checkSemantics(SymbolTable* symTable,
 	IASTNode::m_curFunc = nullptr;
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e FuncDefNode::checkTyping(void) {
 	// Claim "current function" title.
 	IASTNode::m_curFunc = this;
@@ -454,7 +443,7 @@ VarType_e FuncDefNode::checkTyping(void) {
 	return (VarType_e)(-1);
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int FuncDefNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Request deletion if unused.
 	if (!m_sym->m_isUsed) {
@@ -493,7 +482,7 @@ int FuncDefNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_KEEP;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t FuncDefNode::translate(AsmMaker* asmGen) {
 	// Claim "current function" title.
 	IASTNode::m_curFunc = this;
@@ -563,12 +552,12 @@ genValue_t FuncDefNode::translate(AsmMaker* asmGen) {
 	return {};
 }
 
-// TODO
+// Function to check is a given statement is the last one in the function.
 bool FuncDefNode::isLastStmt(IStmtNode* stmt) {
 	return stmt == m_stmtList[m_stmtList.size() - 1];
 }
 
-// TODO
+// Destructor to delete children.
 FuncDefNode::~FuncDefNode(void) {
 	// Prune connected nodes.
 	for (IStmtNode* stmt: m_stmtList) {delete stmt;}
@@ -579,7 +568,7 @@ FuncDefNode::~FuncDefNode(void) {
 // === IDNode === //
 ////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 IDNode::IDNode(std::stack<IBuildItem*>* buildStack) {
 	// Always the top token on the stack- simple process.
 	IBuildItem* item = buildStack->top();
@@ -594,7 +583,7 @@ IDNode::IDNode(std::stack<IBuildItem*>* buildStack) {
 	m_sym = nullptr;
 }
 
-// TODO
+// Required form of toString().
 std::string IDNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -609,7 +598,7 @@ std::string IDNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void IDNode::checkSemantics(SymbolTable* symTable,
 							std::vector<Symbol*>* symList) {
 	// Find symbol to link to.
@@ -632,7 +621,7 @@ void IDNode::checkSemantics(SymbolTable* symTable,
 	}
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e IDNode::checkTyping(void) {
 	// IDs represent variables- ensure this is true.
 	if (m_sym->m_isFunc) {
@@ -643,7 +632,7 @@ VarType_e IDNode::checkTyping(void) {
 	return m_sym->m_type;
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int IDNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Save constant value if available (translator decides ID vs. LIT).
 	if (constList != nullptr &&
@@ -661,7 +650,7 @@ int IDNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_KEEP;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t IDNode::translate(AsmMaker* asmGen) {
 	// Prep ID to be loaded by parent.
 	if (m_constVal != OPT_VAL_UNKNOWN) {m_sym->m_constVal = m_constVal;}
@@ -677,7 +666,7 @@ genValue_t IDNode::translate(AsmMaker* asmGen) {
 // === LITNode === //
 /////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 LITNode::LITNode(std::stack<IBuildItem*>* buildStack) {
 	// Always the top token on the stack- simple process.
 	IBuildItem* item = buildStack->top();
@@ -690,13 +679,13 @@ LITNode::LITNode(std::stack<IBuildItem*>* buildStack) {
 	delete item;
 }
 
-// TODO
+// Constructor- builds node from a provided literal value.
 LITNode::LITNode(int value) {
 	// Set constant value- only used part at this point.
 	m_constVal = value;
 }
 
-// TODO
+// Required form of toString().
 std::string LITNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -711,7 +700,7 @@ std::string LITNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e LITNode::checkTyping(void) {
 	// Process based on type of literal.
 	bool tooLarge = false;
@@ -782,13 +771,13 @@ VarType_e LITNode::checkTyping(void) {
 	return TYPE_LITERAL;
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int LITNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Parent prunes pairs of lits.
 	return m_constVal;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t LITNode::translate(AsmMaker* asmGen) {
 	// Return packaged value for loading.
 	genValue_t retGen = {.type=KEY_LITERAL, .data=m_constVal};
@@ -799,7 +788,7 @@ genValue_t LITNode::translate(AsmMaker* asmGen) {
 // === AssignNode === //
 ////////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 AssignNode::AssignNode(std::stack<IBuildItem*>* buildStack) {
 	// Process tokens until un-related token is found.
 	IBuildItem* item;
@@ -827,7 +816,7 @@ AssignNode::AssignNode(std::stack<IBuildItem*>* buildStack) {
 	buildStack->pop();
 }
 
-// TODO
+// Required form of toString().
 std::string AssignNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -846,7 +835,7 @@ std::string AssignNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void AssignNode::checkSemantics(SymbolTable* symTable,
 								std::vector<Symbol*>* symList) {
 	// Mark lhs as initialized (before lhs call checks itself for init).
@@ -857,7 +846,7 @@ void AssignNode::checkSemantics(SymbolTable* symTable,
 	m_lhs->checkSemantics(symTable, symList);
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e AssignNode::checkTyping(void) {
 	// Pass check down (following assign's right->left assoc.).
 	VarType_e rhsType = m_rhs->checkTyping();
@@ -878,7 +867,7 @@ VarType_e AssignNode::checkTyping(void) {
 	return (VarType_e)(-1);
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int AssignNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Pass down to expression (IDNode lives/dies with the statement).
 	int rhsValue = m_rhs->optimizeAST(constList);
@@ -908,7 +897,7 @@ int AssignNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_KEEP;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t AssignNode::translate(AsmMaker* asmGen) {
 	// Generate expression's code.
 	asmGen->addComment("Assignment statement");
@@ -940,7 +929,7 @@ genValue_t AssignNode::translate(AsmMaker* asmGen) {
 	return {};
 }
 
-// TODO
+// Destructor to delete children.
 AssignNode::~AssignNode(void) {
 	// Prune children.
 	delete m_lhs;
@@ -951,7 +940,7 @@ AssignNode::~AssignNode(void) {
 // === RetNode === //
 /////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 RetNode::RetNode(std::stack<IBuildItem*>* buildStack) {
 	// Process tokens until un-related token is found.
 	IBuildItem* item;
@@ -974,7 +963,7 @@ RetNode::RetNode(std::stack<IBuildItem*>* buildStack) {
 	delete item;
 }
 
-// TODO
+// Required form of toString().
 std::string RetNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -990,14 +979,14 @@ std::string RetNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void RetNode::checkSemantics(SymbolTable* symTable,
 							 std::vector<Symbol*>* symList) {
 	// Pass to child.
 	m_exp->checkSemantics(symTable, symList);
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e RetNode::checkTyping(void) {
 	// Pass down.
 	VarType_e expType =  m_exp->checkTyping();
@@ -1021,7 +1010,7 @@ VarType_e RetNode::checkTyping(void) {
 	return expType;
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int RetNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Pass down to expression.
 	m_exp->optimizeAST(constList);
@@ -1030,7 +1019,7 @@ int RetNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_BURN_EXCLUDE;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t RetNode::translate(AsmMaker* asmGen) {
 	// Generate expression code.
 	asmGen->addComment("Return statement");
@@ -1065,7 +1054,7 @@ genValue_t RetNode::translate(AsmMaker* asmGen) {
 	return {};
 }
 
-// TODO
+// Destructor to delete children.
 RetNode::~RetNode(void) {
 	// Delete expression.
 	delete m_exp;
@@ -1075,7 +1064,7 @@ RetNode::~RetNode(void) {
 // === IfNode === //
 ////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 IfNode::IfNode(std::stack<IBuildItem*>* buildStack) {
 	// Temporary buffer to hold popped stmts.
 	vector<IStmtNode*> stmtBuffer;
@@ -1122,7 +1111,7 @@ IfNode::IfNode(std::stack<IBuildItem*>* buildStack) {
 	}
 }
 
-// TODO
+// Required form of toString().
 std::string IfNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -1141,7 +1130,7 @@ std::string IfNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void IfNode::checkSemantics(SymbolTable* symTable,
 							std::vector<Symbol*>* symList) {
 	// First check the condition.
@@ -1157,7 +1146,7 @@ void IfNode::checkSemantics(SymbolTable* symTable,
 	symTable->popScope();
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e IfNode::checkTyping(void) {
 	// Pass check to condition.
 	m_cond->checkTyping();
@@ -1196,7 +1185,7 @@ VarType_e IfNode::checkTyping(void) {
 	return (VarType_e)(-1);
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int IfNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Resolve condition- may be constant.
 	int condVal = m_cond->optimizeAST(constList);
@@ -1244,7 +1233,7 @@ int IfNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_KEEP;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t IfNode::translate(AsmMaker* asmGen) {
 	// Generate/load condition.
 	asmGen->addComment("If statement");
@@ -1281,7 +1270,7 @@ genValue_t IfNode::translate(AsmMaker* asmGen) {
 	return {};
 }
 
-// TODO
+// Destructor to delete children.
 IfNode::~IfNode(void) {
 	// Delete stored stmts/condition.
 	delete m_cond;
@@ -1292,7 +1281,7 @@ IfNode::~IfNode(void) {
 // === WhileNode === //
 ///////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 WhileNode::WhileNode(std::stack<IBuildItem*>* buildStack) {
 	// Temporary buffer to hold popped stmts.
 	vector<IStmtNode*> stmtBuffer;
@@ -1339,7 +1328,7 @@ WhileNode::WhileNode(std::stack<IBuildItem*>* buildStack) {
 	}
 }
 
-// TODO
+// Required form of toString().
 std::string WhileNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -1358,7 +1347,7 @@ std::string WhileNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void WhileNode::checkSemantics(SymbolTable* symTable,
 							   std::vector<Symbol*>* symList) {
 	// First check the condition.
@@ -1374,7 +1363,7 @@ void WhileNode::checkSemantics(SymbolTable* symTable,
 	symTable->popScope();
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e WhileNode::checkTyping(void) {
 	// Pass check to condition.
 	m_cond->checkTyping();
@@ -1413,7 +1402,7 @@ VarType_e WhileNode::checkTyping(void) {
 	return (VarType_e)(-1);
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int WhileNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Resolve condition- may be constant.
 	if (constList != nullptr) {constList->clear();}
@@ -1456,7 +1445,7 @@ int WhileNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_KEEP;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t WhileNode::translate(AsmMaker* asmGen) {
 	// Generate label allowing for looping.
 	asmGen->addComment("While statement");
@@ -1505,7 +1494,7 @@ genValue_t WhileNode::translate(AsmMaker* asmGen) {
 	return {};
 }
 
-// TODO
+// Destructor to delete children.
 WhileNode::~WhileNode(void) {
 	// Delete stored stmts/condition.
 	delete m_cond;
@@ -1516,7 +1505,7 @@ WhileNode::~WhileNode(void) {
 // === CallNode === //
 //////////////////////
 
-// TODO
+// Constructor- builds node from build stack during parsing.
 CallNode::CallNode(std::stack<IBuildItem*>* buildStack) {
 	// Temporary buffer to hold popped exps.
 	vector<IExpNode*> expBuffer;
@@ -1558,7 +1547,7 @@ CallNode::CallNode(std::stack<IBuildItem*>* buildStack) {
 	m_sym = nullptr;
 }
 
-// TODO
+// Required form of toString().
 std::string CallNode::toString(void) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -1576,7 +1565,7 @@ std::string CallNode::toString(void) {
 	return tknStr + "}";
 }
 
-// TODO
+// Required implementation to conduct semantic analysis on the AST.
 void CallNode::checkSemantics(SymbolTable* symTable,
 							  std::vector<Symbol*>* symList) {
 	// Use id's info to link to symbol from call.
@@ -1598,7 +1587,7 @@ void CallNode::checkSemantics(SymbolTable* symTable,
 	}
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e CallNode::checkTyping(void) {
 	// Calls represent functions- ensure ID is to a function.
 	if (!m_sym->m_isFunc) {
@@ -1636,7 +1625,7 @@ VarType_e CallNode::checkTyping(void) {
 	return m_sym->m_type;
 }
 
-// TODO
+// Required implementation to conduct optimizations of the AST.
 int CallNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Pass to arguments.
 	for (IExpNode* arg: m_argList) {
@@ -1647,7 +1636,7 @@ int CallNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_KEEP;
 }
 
-// TODO
+// Required implementation to conduct translation of the AST.
 genValue_t CallNode::translate(AsmMaker* asmGen) {
 	// Outline call for ease of reading.
 	asmGen->addComment("Function call to " + m_id->getValue());
@@ -1703,7 +1692,7 @@ genValue_t CallNode::translate(AsmMaker* asmGen) {
 	return retVal;
 }
 
-// TODO
+// Destructor to delete children.
 CallNode::~CallNode(void) {
 	// Delete children (doesn't own symbol- do not delete).
 	delete m_id;
@@ -1714,51 +1703,51 @@ CallNode::~CallNode(void) {
 // === Op Nodes === //
 //////////////////////
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void AndNode::computeConst() {
 	m_constVal = m_lhs->getConstVal() & m_rhs->getConstVal();
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void AndNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	asmGen->genInstr({.type=INSTR_AND, .r1=REG_AC, .r2=lhs, .r3=rhs});
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void OrNode::computeConst() {
 	m_constVal = m_lhs->getConstVal() | m_rhs->getConstVal();
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void OrNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	asmGen->genInstr({.type=INSTR_ORR, .r1=REG_AC, .r2=lhs, .r3=rhs});
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void XorNode::computeConst() {
 	m_constVal = m_lhs->getConstVal() ^ m_rhs->getConstVal();
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void XorNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	asmGen->genInstr({.type=INSTR_XOR, .r1=REG_AC, .r2=lhs, .r3=rhs});
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void LNotNode::computeConst() {
 	m_constVal = ~m_rhs->getConstVal();
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void LNotNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	asmGen->genInstr({.type=INSTR_XOR, .r1=REG_AC, .r2=rhs, .imm=-1});
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e RShiftNode::checkTyping(void) {
 	// Pass to children (as available).
 	VarType_e lhsType= TYPE_LITERAL;
@@ -1780,7 +1769,7 @@ VarType_e RShiftNode::checkTyping(void) {
 	return m_varType;
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void RShiftNode::computeConst() {
 	// Lhs determines Determine logical vs. arithmetic.
 	if (m_varType == TYPE_UINT ||
@@ -1795,7 +1784,7 @@ void RShiftNode::computeConst() {
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void RShiftNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Lhs determines Determine logical vs. arithmetic.
 	if (m_varType == TYPE_UINT ||
@@ -1813,29 +1802,29 @@ void RShiftNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	}
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void LShiftNode::computeConst() {
 	m_constVal = m_lhs->getConstVal() << m_rhs->getConstVal();
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void LShiftNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	asmGen->genInstr({.type=INSTR_SHL, .r1=REG_AC, .r2=lhs, .r3=rhs});
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void PlusNode::computeConst() {
 	m_constVal = m_lhs->getConstVal() + m_rhs->getConstVal();
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void PlusNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	asmGen->genInstr({.type=INSTR_ADD, .r1=REG_AC, .r2=lhs, .r3=rhs});
 }
 
-// TODO
+// Required implementation to conduct type checking on the AST.
 VarType_e MinusNode::checkTyping(void) {
 	// Negate literal if acting as unary minus for int literal.
 	LITNode* litPtr = dynamic_cast<LITNode*>(m_rhs);
@@ -1861,14 +1850,14 @@ VarType_e MinusNode::checkTyping(void) {
 	return newType;
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void MinusNode::computeConst() {
 	int lhsVal = (m_lhs == nullptr) ? 0 : m_lhs->getConstVal();
 	m_constVal = lhsVal - m_rhs->getConstVal();
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void MinusNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	if (lhs == BAD_REG) {
 		asmGen->genInstr({.type=INSTR_SUB, .r1=REG_AC, .r2=rhs, .imm=0});
@@ -1878,7 +1867,7 @@ void MinusNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	}
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void GrtNode::computeConst() {
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
@@ -1893,7 +1882,7 @@ void GrtNode::computeConst() {
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void GrtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Move current result as needed to generate new one.
 	string cmt = "Move operand for result processing";
@@ -1931,7 +1920,7 @@ void GrtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	}
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void LtNode::computeConst() {
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
@@ -1946,7 +1935,7 @@ void LtNode::computeConst() {
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void LtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Move current result as needed to generate new one.
 	string cmt = "Move operand for result processing";
@@ -1984,7 +1973,7 @@ void LtNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	}
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void GeqNode::computeConst() {
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
@@ -1999,7 +1988,7 @@ void GeqNode::computeConst() {
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void GeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Move current result as needed to generate new one.
 	string cmt = "Move operand for result processing";
@@ -2037,7 +2026,7 @@ void GeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	}
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void LeqNode::computeConst() {
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
@@ -2052,7 +2041,7 @@ void LeqNode::computeConst() {
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void LeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Move current result as needed to generate new one.
 	string cmt = "Move operand for result processing";
@@ -2090,7 +2079,7 @@ void LeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	}
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void EqNode::computeConst() {
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
@@ -2105,7 +2094,7 @@ void EqNode::computeConst() {
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void EqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Move current result as needed to generate new one.
 	string cmt = "Move operand for result processing";
@@ -2126,7 +2115,7 @@ void EqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=0});
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void NeqNode::computeConst() {
 	// Signed vs. Unsigned comparison.
 	if (m_varType == TYPE_UINT ||
@@ -2141,20 +2130,20 @@ void NeqNode::computeConst() {
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void NeqNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	asmGen->genInstr({.type=INSTR_SUB, .r1=REG_AC, .r2=lhs, .r3=rhs});
 	asmGen->genInstr({.type=INSTR_BRC, .flg=FLAG_Z, .imm=2});
 	asmGen->genInstr({.type=INSTR_LBI, .r1=REG_AC, .imm=1});
 }
 
-// TODO
+// Required implementation to compute an ExpNode's specific constant.
 void BNotNode::computeConst() {
 	m_constVal = !m_rhs->getConstVal();
 	m_constVal &= 0xffff;
 }
 
-// TODO
+// Required implementation to translate an ExpNode's specific kind.
 void BNotNode::genExp(AsmMaker* asmGen, RegName_e lhs, RegName_e rhs) {
 	// Move current result as needed to generate new one.
 	string cmt = "Move operand for result processing";

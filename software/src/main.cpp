@@ -17,7 +17,7 @@
 
 using namespace std;
 
-// TODO
+// Function to print std. "-h(elp)" infomation. Exits after printing.
 void printInfo(void) {
 	// Print directly to stdout to avoid MsgLog's rules/formatting.
 	cout << "./quaidcc [options] <filename>" << endl;
@@ -35,7 +35,7 @@ void printInfo(void) {
 	exit(0);
 }
 
-// TODO
+// Helper function to create nodes from build stack items.
 void buildNode(stack<IBuildItem*>* buildStack, uint8_t nodeToBuild) {
 	// Build specified node (note: ctor's alter portion of build stack).
 	IASTNode* newNode;
@@ -76,7 +76,7 @@ void buildNode(stack<IBuildItem*>* buildStack, uint8_t nodeToBuild) {
 	buildStack->push(newNode);
 }
 
-// TODO
+// Function to conduct core logic of the compiler's parsing stage.
 PrgmNode* parseTokens(queue<ScanToken> tokens) {
 	// (INFO Checkpoint: Parsing started.)
 	MsgLog::logINFO("Parsing...");
@@ -158,7 +158,7 @@ PrgmNode* parseTokens(queue<ScanToken> tokens) {
 	return retPtr;
 }
 
-// TODO
+// Function to conduct core logic of the compiler's scanning stage.
 queue<ScanToken> scanFile(string cFilename) {
 	// (INFO Checkpoint: Scanning started.)
 	MsgLog::logINFO("Scanning...");
@@ -242,7 +242,7 @@ queue<ScanToken> scanFile(string cFilename) {
 	return retTkns;
 }
 
-// TODO
+// Main program: Simple C Compiler (written in C++).
 int main(int argc, char* argv[]) {
 	// Long-term arguments.
 	bool optFlag = false; // defaults to "optimizations off"

@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-// TODO
+// Enum defining available instructions (with their opcode value).
 enum InstrType_e {
 	BAD_INSTR = -1,
 	INSTR_HLT = 0,
@@ -29,7 +29,7 @@ enum InstrType_e {
 	INSTR_AND = 15,
 };
 
-// TODO
+// Enum defining register in register file (with their field value).
 enum RegName_e {
 	BAD_REG	= -1,
 	REG_0 	= 0,
@@ -42,7 +42,7 @@ enum RegName_e {
 	REG_RA 	= 7, // Return Address/Spare Register
 };
 
-// TODO
+// Enum defining valid instruction flags (with their field value).
 enum InstrFlag_e {
 	FLAG_NONE	= 0x0,
 	FLAG_ARITH 	= 0x1,
@@ -56,7 +56,7 @@ enum InstrFlag_e {
 	FLAG_NZP	= 0x7,
 };
 
-// TODO
+// Struct defining possible fields of an assembly instruction.
 typedef struct instr {
 	InstrType_e type	= BAD_INSTR;
 	InstrFlag_e flg		= FLAG_NONE;
@@ -67,53 +67,53 @@ typedef struct instr {
 	std::string cmt;
 } instr_t;
 
-// TODO
+// Class to handle translation of instructions into assembly or hexadecimal.
 class AsmMaker {
 public:
-	// TODO
+	// Common prefixes used for labels in an assembly file.
 	static std::string FUNC_PREFIX;
 	static std::string RET_PREFIX;
 
-	// TODO
+	// Saves given instruction (via appending) for later translation.
 	void genInstr(instr_t instrData);
 
-	// TODO
+	// Helper functions to add formatting/labels to the assembly/hex.
 	void addSpacer(void);
 	void addComment(std::string cmt);
 	void addLabel(std::string label);
 
-	// TODO
+	// Helper functions to generate special code cases in the assembly/hex.
 	void genCall(std::string funcName);
 	void genToRet(std::string funcName);
 	void genToLabel(std::string labelName);
 
-	// TODO
+	// Helper function to get a new, unique label.
 	std::string getNewLabel(void);
 
-	// TODO
+	// Functions to create the desired file based on the generated input.
 	void createAsmFile(std::string filename);
 	void createHexFile(std::string filename);
 
-	// TODO
+	// Getter for the number of instructions/labels/etc currently stored.
 	int numLines(void) {return m_instrList.size();}
 
-	// TODO
+	// String-ifiers for ease of use of enums in printed messages.
 	std::string instrToString(InstrType_e instr);
 	std::string ccToString(InstrFlag_e flag);
 	std::string regToString(RegName_e reg);
 
-	// TODO
+	// Getters for the number of instructions/macros currently stored.
 	std::uint32_t numInstrs(void) {return m_numInstrs;}
 	std::uint32_t numMacros(void) {return m_numMacros;}
 
 private:
-	// TODO
+	// Next number available for use in generating unique labels.
 	int m_nextLabelNum = 0;
 
-	// TODO
+	// Ordered list of instructions/labels/etc to be translated.
 	std::vector<instr_t> m_instrList;
 
-	// TODO
+	// Counters for valuable/pertinent data.
 	std::uint32_t m_numInstrs = 0;
 	std::uint32_t m_numMacros = 0;
 };

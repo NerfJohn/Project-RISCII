@@ -2,17 +2,6 @@
  * NodeAbstracts.cpp
  */
 
-/*
- * Note:
- * This is a TEMPORARY file to hold any abstract/interface classes related to
- * the Abstract Syntax Tree (AST) as the compiler is implemented. Classes should
- * be removed and given their own files as appropriate over time.
- *
- * Should 2+ of the classes be too small to warrant their own files (or it makes
- * better sense to keep the classes together), this file should be renamed to
- * better reflect the purpose of the file.
- */
-
 #include "MsgLog.h"
 
 #include "NodeAbstracts.h"
@@ -23,19 +12,19 @@ using namespace std;
 // === IASTNode === //
 //////////////////////
 
-// TODO
+// Access point to current function being processed.
 IDeclNode* IASTNode::m_curFunc = nullptr;
 
-// TODO
+// Number of nodes delted/pruned from the tree.
 int IASTNode::m_numDeletes = 0;
 
-// TODO
+// Next available address in the .data section of RAM.
 int IASTNode::m_nextDataAddr = 0; // .data (in this case) starts at 0x0
 
-// TODO
+// True if accumulator currently holds an intermediate value, else false.
 bool IASTNode::s_accumIsInter = false;
 
-// TODO
+// toString() function for node names (as provided by ParseActions).
 std::string IASTNode::nodeToString(ParseActions node) {
 	// String-ify the parse action/node specifier.
 	switch (node) {
@@ -74,7 +63,7 @@ std::string IASTNode::nodeToString(ParseActions node) {
 	return "";
 }
 
-// TODO
+// Static helper to encapsulate typing rules (for a generic new typing).
 VarType_e IASTNode::getNewTyping(VarType_e lhs, VarType_e rhs, int lineNum) {
 	// "TYPE_LITERAL" short-circuits to other option.
 	if (lhs == TYPE_LITERAL) {return rhs;}
@@ -101,7 +90,7 @@ VarType_e IASTNode::getNewTyping(VarType_e lhs, VarType_e rhs, int lineNum) {
 	return TYPE_INT;
 }
 
-// TODO
+// Static helper to encapsulate typing rules (for assignment typing).
 bool IASTNode::canAssignTyping(VarType_e goal, VarType_e start) {
 	// Literals and same-same scenarios always work.
 	if ((goal == TYPE_LITERAL) ||
@@ -123,7 +112,7 @@ bool IASTNode::canAssignTyping(VarType_e goal, VarType_e start) {
 // === IExpNode === //
 //////////////////////
 
-// TODO
+// Common function for initializing an ExpNode during parsing.
 int IExpNode::initFromStack(std::stack<IBuildItem*>* buildStack) {
 	// Process tokens related to right hand expression.
 	IBuildItem* item;
@@ -186,7 +175,7 @@ int IExpNode::initFromStack(std::stack<IBuildItem*>* buildStack) {
 	return retNum;
 }
 
-// TODO
+// Common function for string-ifying an ExpNode.
 std::string IExpNode::toExpString(uint8_t type) {
 	// Prepare string (with punctuation).
 	string tknStr = "{";
@@ -216,7 +205,7 @@ std::string IExpNode::toExpString(uint8_t type) {
 	return tknStr + "}";
 }
 
-// TODO
+// Common function for semantically analyzing an ExpNode.
 void IExpNode::checkSemantics(SymbolTable* symTable,
 							  std::vector<Symbol*>* symList) {
 	// Pass to children (as available).
@@ -224,7 +213,7 @@ void IExpNode::checkSemantics(SymbolTable* symTable,
 	if (m_rhs != nullptr) {m_rhs->checkSemantics(symTable, symList);}
 }
 
-// TODO
+// Common function for type checking an ExpNode.
 VarType_e IExpNode::checkTyping(void) {
 	// Pass to children (as available).
 	VarType_e lhsType= TYPE_LITERAL;
@@ -246,7 +235,7 @@ VarType_e IExpNode::checkTyping(void) {
 	return m_varType;
 }
 
-// TODO
+// Common function for optimizing an ExpNode.
 int IExpNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	// Optimize children (treat nullptrs as "constant nothings").
 	int lhsValue = OPT_CONST_MAX;
@@ -278,7 +267,7 @@ int IExpNode::optimizeAST(std::unordered_map<Symbol*,int>* constList) {
 	return OPT_VAL_UNKNOWN;
 }
 
-// TODO
+// Common function for translating an ExpNode.
 genValue_t IExpNode::translate(AsmMaker* asmGen) {
 	// Short-circuit to "LITNode" response if a constant.
 	if (m_constVal <= OPT_CONST_MAX) {
@@ -330,7 +319,7 @@ genValue_t IExpNode::translate(AsmMaker* asmGen) {
 	return retVal;
 }
 
-// TODO
+// Common destructor for ExpNodes.
 IExpNode::~IExpNode(void) {
 	// Delete children.
 	if (m_lhs != nullptr) {delete m_lhs; m_lhs = nullptr;}
