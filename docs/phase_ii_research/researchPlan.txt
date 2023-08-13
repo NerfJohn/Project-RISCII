@@ -1,0 +1,42 @@
+Project RISCII Phase II Research ("Logistics of Robust Design")
+by John Eslinger
+================================================================================
+Table of Contents:
+	-> General Overview
+	-> Additional Detailed Thoughts
+================================================================================
+General Overview:
+	Goals of Research:
+		-> Learn more about the design of processors/compilers
+		-> Determine solutions to anticipated logistical problems
+			(Problems may be rooted in design or in testing/devloping)
+			(Solutions should ease constraints or bolster abilities/quality)
+		-> Be able to trace/apply research learnings to phase ii designs
+
+	Main Research Approaches:
+		-> Conduct self-studying on main topics (videos, books, etc)
+			(Self-studying can include online videos/aticles and physical books)
+			("Case study" compilers/processors are a form of self study)
+			(Studying will likely be interdependent with other approaches)
+		-> "Interview" seasoned engineers for insight, advice, and direction
+		-> Put together smaller models to gain "hands-on" knowledge
+
+================================================================================
+Additional Detailed Thoughts:
+	Software Research:
+		-> Compiler is based on C and GCC standards- good starting point
+			(Pick a C and GCC version to officially mimic for consistency)
+			(Open source GCC versions exist as living case studies)
+			(Other compilers like clang or XC8 would help round out ideas)
+		-> Break components down by functionality and rate by necessity
+		-> Check with seasoned colleagues about testing/developing logistics
+	
+	Hardware Research:
+		-> FPGA selection/logistics are crucial- invest time into this topic
+		-> Given no "base" processor, design research should include breadth
+			(Consider used/owned dev kits for processor case studies)
+			(ISA case studies include x86, ARM, RISC, PIC, etc)
+			(Keep size/goals of RISCII processor in mind when choosing studies)
+		-> Consider future ambitions while standards (eg ISA) are defined
+
+================================================================================
