@@ -3,78 +3,78 @@ Project RISCII: Processor Design Notes and Interfaces
 ("Notes regarding processor/interface design and FPGA implications")
 ================================================================================
 Table of Contents:
-	-> Envisioned Processor Pinout
-	-> Processor Blocks/Pieces
+    -> Envisioned Processor Pinout
+    -> Processor Blocks/Pieces
 ================================================================================
 Envisioned Processor Pinout:
-	Processor GPIOs- 16 pins:
-		-> 2 pins with jumpers to UART-USB IC
-		-> 2 pins with jumpers to on-board I2C network
-		-> 2 pins with jumpers to two (piezo) buzzers
-		-> 2 pins with jumpers to buttons
-		-> 8 pins open for development
-			(potentially (two) jumpered buttons)
-			(potentially (two) jumpered LEDs)
-			(potentially (four) fully standalone GPIOs)
-	
-	External Memories- SPI Flash and Parallel RAM:
-		-> SPI Flash used for persistent executable storage
-			(4  pins for SPI control- MISO, MOSI, SEL, CS_n)
-			(~2 pins for additional IC controls)
-		-> Parallel RAM port for live executable and data storage
-			(16 pins for address- 128 KB access two bytes at a time)
-			(16 pins for data transfer- two bytes per access)
-			(~4 pins for IC controls)
-	
-	Additional Processor Connections:
-		-> 4-5 pins for JTAG connection to processor
-		-> 2-3 pins for primary and secondary clock sources
-		-> 1   pin for resetting processor
-		-> 1-3 pins for hardwired status/debug signals (eg internal halt signal)
-	
-	Total Pinout (ie FPGA Requirements)- ~66-70 pins:
-		-> 16  pins for processor GPIOs
-		-> ~6  pins for processor SPI Flash
-		-> ~36 pins for processor RAM
-		-> 4-5 pins for processor JTAG
-		-> 2-3 pins for processor clock sources
-		-> 2-4 pins for hardwired processor IO (eg reset, halt signals)
-			
+    Processor GPIOs- 16 pins:
+        -> 2 pins with jumpers to UART-USB IC
+        -> 2 pins with jumpers to on-board I2C network
+        -> 2 pins with jumpers to two (piezo) buzzers
+        -> 2 pins with jumpers to buttons
+        -> 8 pins open for development
+            (potentially (two) jumpered buttons)
+            (potentially (two) jumpered LEDs)
+            (potentially (four) fully standalone GPIOs)
+    
+    External Memories- SPI Flash and Parallel RAM:
+        -> SPI Flash used for persistent executable storage
+            (4  pins for SPI control- MISO, MOSI, SEL, CS_n)
+            (~2 pins for additional IC controls)
+        -> Parallel RAM port for live executable and data storage
+            (16 pins for address- 128 KB access two bytes at a time)
+            (16 pins for data transfer- two bytes per access)
+            (~4 pins for IC controls)
+    
+    Additional Processor Connections:
+        -> 4-5 pins for JTAG connection to processor
+        -> 2-3 pins for primary and secondary clock sources
+        -> 1   pin for resetting processor
+        -> 1-3 pins for hardwired status/debug signals (eg internal halt signal)
+    
+    Total Pinout (ie FPGA Requirements)- ~66-70 pins:
+        -> 16  pins for processor GPIOs
+        -> ~6  pins for processor SPI Flash
+        -> ~36 pins for processor RAM
+        -> 4-5 pins for processor JTAG
+        -> 2-3 pins for processor clock sources
+        -> 2-4 pins for hardwired processor IO (eg reset, halt signals)
+            
 ================================================================================
 Processor Blocks/Pieces:
-	Processor Overview:
-		-> CPU   16-bit core
-		-> INT   12 priotized interrupts
-		-> GPIO  16 GPIO pins
-		-> TMR   4 timers
-		-> UART  UART controller
-		-> I2C   I2C controller (master/controller only)
-		-> WDT   Watchdog Timer
-		-> JTAG  JTAG access port (and related logic)
-		-> SPI   SPI controller (connected to SPI Flash only)
-		-> BOOT  Power-up/Reset logic
-		-> MEM   Memory (bus) management logic
-		-> OSC   Oscillator/Clock management logic
-	
-	Interrupt (INT) Block Overview:
-		-> 12 individual interrupts/sources
-			(4x for Timers (TMR)- one per timer)
-			(2x for UART controller (UART)- TX and RX)
-			(2x for I2C controller (I2C)- TX and Error)
-			(2x for GPIOs (GPIO)- one per two pins)
-			(1x for Flash controller (SPI)- TX complete)
-			(1x for Stack Overflow Detector (part of CPU, accessed by MEM))
-		-> Goals/Intentions
-			(Allows to dynamic/event- driven code execution)
-			(Useful for RTOS operations- scheduling, stack management, timing)
-			(Priority levels establish deterministic execution order)
-		-> Priority Order (from high to low)
-			(Stack Overflow Detector)   - (Functional Error- Highest Priority)
-			(I2C Controller- Error)     - (External Error- Higher Priority)
-			(GPIO External Interrupts)  - (Quicker User Input)
-			(UART Controller)           - (Quick User Input, Processor Output)
-			(I2C Controller- TX)        - (Processor Output)
-			(SPI Controller)            - (Effective Internal Source)
-			(Timers)                    - (Internal Source)
-	
+    Processor Overview:
+        -> CPU   16-bit core
+        -> INT   12 priotized interrupts
+        -> GPIO  16 GPIO pins
+        -> TMR   4 timers
+        -> UART  UART controller
+        -> I2C   I2C controller (master/controller only)
+        -> WDT   Watchdog Timer
+        -> JTAG  JTAG access port (and related logic)
+        -> SPI   SPI controller (connected to SPI Flash only)
+        -> BOOT  Power-up/Reset logic
+        -> MEM   Memory (bus) management logic
+        -> OSC   Oscillator/Clock management logic
+    
+    Interrupt (INT) Block Overview:
+        -> 12 individual interrupts/sources
+            (4x for Timers (TMR)- one per timer)
+            (2x for UART controller (UART)- TX and RX)
+            (2x for I2C controller (I2C)- TX and Error)
+            (2x for GPIOs (GPIO)- one per two pins)
+            (1x for Flash controller (SPI)- TX complete)
+            (1x for Stack Overflow Detector (part of CPU, accessed by MEM))
+        -> Goals/Intentions
+            (Allows to dynamic/event- driven code execution)
+            (Useful for RTOS operations- scheduling, stack management, timing)
+            (Priority levels establish deterministic execution order)
+        -> Priority Order (from high to low)
+            (Stack Overflow Detector)   - (Functional Error- Highest Priority)
+            (I2C Controller- Error)     - (External Error- Higher Priority)
+            (GPIO External Interrupts)  - (Quicker User Input)
+            (UART Controller)           - (Quick User Input, Processor Output)
+            (I2C Controller- TX)        - (Processor Output)
+            (SPI Controller)            - (Effective Internal Source)
+            (Timers)                    - (Internal Source)
+    
 ================================================================================
