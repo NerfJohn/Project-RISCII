@@ -77,4 +77,75 @@ Processor Blocks/Pieces:
             (SPI Controller)            - (Effective Internal Source)
             (Timers)                    - (Internal Source)
     
+    General Purpose Pin (GPIO) Block Overview:
+        -> 16 individual pins
+            (Memory mapped access point for reading and writing)
+            (Configurable direction (and value as output), always readable)
+            (Overridden by JTAG, peripherals may override output value)
+        -> Goals/Intentions
+            (Provide simplest form of user/processor communication)
+            (Configurable access point for peripherals, debugging, and firmware)
+            (Allow for external devices to communicate with processor internals)
+        -> Alternate Functions (controlled by peripherals)
+            (2x pins for UART controller (UART)- TX and RX)
+            (2x pins for I2C controller (I2C)- SCL and SDA)
+            (2x pins for timers (TMR)- one each, PWM0 and PWM1)
+            (2x pins for pin interrupts (INT)- INT0 and INT1)
+    
+    Timer (TMR) Block Overview:
+        -> 4 counters/timers
+            (Memory mapped IC to track relative time)
+            (Configurable clock source, pre-scalars/limits, and functions)
+            (Allow for internal timing and external PWM signals)
+        -> Goals/Intentions
+            (2x timers geared for 'real time' counting/actions (eg 1 ms timer))
+            (2x timers geared for PWM generation (eg simple digital audio))
+            (All timers capable of simple relative time tracking)
+        -> Special Functions
+            (Interrupts triggered by an implicit set of timer to 0)
+            (PWM timers can override GPIO pins to output signal to board)
+            (Settings for starting/stopping, precision, and interrupt enabling)
+    
+    Serial Controllers (UART, I2C) Blocks Overview:
+        -> UART and I2C controllers
+            (Memory mapped ICs for common serial protocols)
+            (Configurable speeds and status/control data (I2C is master only)
+            (Semi-independent ICs to handle bit banging on processor's behalf)
+        -> Goals/Intentions
+            (Communication with Host PC (ie UART to UART/USB IC on board))
+            (Additional sensor/input data (ie I2C to I2C network on board))
+            (Flashing application over UART (ie from PC to bootloader))
+        -> Additional Resources
+            (4x pins reserved for serial controllers- 2 pins per IC)
+            (UART interrupts- TX byte complete and RX byte complete)
+            (I2C interrupts- TX byte complete and TX byte error)
+    
+    Watchdog and Oscillator (WDT, OSC) Blocks Overview:
+        -> Semi-configurable ICs
+            (Memory mapped ICs to handle clocking/hardware stability)
+            (Minor configurations to select clock source and watchdog mode)
+            (Partially hardwired specs for simplicity (eg watchdog timeout))
+        -> Goals/Intentions
+            (Select between external clocks (ie provided by IC on board))
+            (Select between disabling watchdog or providing heartbeat)
+            (Default to reset or slow internal clock for timeout/clock issues)
+        -> Additional Considerations
+            (Clock selection requires safe switching logic)
+            (Hardwired watchdog timeout doesn't require programming/fuse bits)
+            (FPGA limitations may affect oscillator abilities)
+    
+    Memory (SPI, MEM) Blocks Overview:
+        -> Memory Architecture
+            (Memory mapped SPI Flash used for program storage- not execution)
+            (RAM stores executed code and data- one port ONLY)
+            (Logic to manage bus tying external RAM and peripherals)
+        -> Goals/Intentions
+            (Provide access to SPI Flash for programming and loading to RAM)
+            (Manage instruction vs data vs peripheral accesses for processor)
+            (Allow processor to control SPI Flash (ie bootloader flashing)
+        -> Additinal Considerations
+            (SPI can be tailored for SPI Flash explicitly)
+            (JTAG may require more direct access than memory mapped SPI)
+            (Memory bus shares internal signals, though some should be explict)
+    
 ================================================================================
