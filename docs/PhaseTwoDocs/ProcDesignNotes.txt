@@ -147,24 +147,24 @@ Processor Blocks/Pieces:
             (SPI interrupt- TX complete)
             (JTAG may require more direct access than memory mapped SPI)
             (Memory bus shares internal signals, though some should be explict)
-	
-	JTAG Port (JTAG) Block Overview:
-		-> Hardware access point
-			(Provides way to override pins and access internal registers)
-			(Independent IC from the processor- intended for Host PC use)
-			(Few configurable registers for hardware breakpoints)
-		-> Goals/Intentions
-			(Allow for boundary scan for hardware/board debugging)
-			(Can program device by writing SPI Flash)
-			(Can read/write to RAM and set hardware breakpoints)
-		-> Features/Considerations
-			(JTAG has special access to hardware breakpoints and CPU registers)
-			(JTAG instruction interface should include RAM read/write commands)
-			(Commands for flashing SPI Flash vs RAM accessing SPI Flash)
-	
-	Hardware Booting (BOOT) Block Overview:
-		-> "First" logic to run upon power-up and/or reset
-		-> Manages resetting processor and loading code from SPI Flash
-		-> Sets a memory mapped register with reason of last reset
+    
+    JTAG Port (JTAG) Block Overview:
+        -> Hardware access point
+            (Provides way to override pins and access internal registers)
+            (Independent IC from the processor- intended for Host PC use)
+            (Few configurable registers for hardware breakpoints)
+        -> Goals/Intentions
+            (Allow for boundary scan for hardware/board debugging)
+            (Can program device by writing SPI Flash)
+            (Can read/write to RAM and set hardware breakpoints)
+        -> Features/Considerations
+            (JTAG has special access to hardware breakpoints and CPU registers)
+            (JTAG instruction interface should include RAM read/write commands)
+            (Commands for flashing SPI Flash vs RAM accessing SPI Flash)
+    
+    Hardware Booting (BOOT) Block Overview:
+        -> "First" logic to run upon power-up and/or reset
+        -> Manages resetting processor and loading code from SPI Flash
+        -> Sets a memory mapped register with reason of last reset
     
 ================================================================================
