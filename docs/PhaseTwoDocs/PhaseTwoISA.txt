@@ -1,0 +1,67 @@
+Project RISCII: Revised Instruction Set Architecture
+---
+("Interface between processor and compiler")
+================================================================================
+Table of Contents:
+    -> Instruction Set Overview
+================================================================================
+Instruction Set Overview:
+    ================
+    AND: Bitwise AND               (DST <- SR1 & {SR2, 5bImm})
+    [1111][DST][SR1][000][SR2]     *Register format
+    [1111][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+    ================
+    ORR: Bitwise OR                (DST <- SR1 | {SR2, 5bImm})
+    [1110][DST][SR1][000][SR2]     *Register format
+    [1110][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+    ================
+    XOR: Bitwise XOR               (DST <- SR1 ^ {SR2, 5bImm})
+    [1011][DST][SR1][000][SR2]     *Register format
+    [1011][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+    ================
+    SHL: Shift Left                (DST <- SR1 <<l {SR2, 5bImm})
+    [1100][DST][SR1][000][SR2]     *Register format
+    [1100][DST][SR1][10][4bIm]     *4-bit, unsigned immediate format
+    ================
+    SHR: Shift Right               (DST <- SR1 >>{l,a} {SR2, 5bImm})
+    [1101][DST][SR1][0][a][0][SR2] *Register format
+    [1101][DST][SR1][1][a][4bIm]   *4-bit, unsigned immediate format
+    ================
+    ADD: Arithmetic Addition       (DST <- SR1 + {SR2, 5bImm})
+    [1000][DST][SR1][000][SR2]     *Register format
+    [1000][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+    ================
+    SUB: Arithmetic Subtraction    (DST <- {SR2, 5bImm} - SR1)
+    [1001][DST][SR1][000][SR2]     *Register format
+    [1001][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+    ================
+    LBI: Load Byte Immediate       (DST <- {8bImmVal, (DST << 8) | 8bImmVal})
+    [1010][DST][0][8bImmVal]       *8-bit, sign extended immediate format
+    [1010][DST][1][8bImmVal]       *Register shift format
+    ================
+    LDR: Load Register Offset      (DST <- MEM[SR1 + (6bOfst << 1)])
+    [0101][DST][SR1][6bOfst]       *6-bit, signed extended offset format
+    ================
+    STR: Store Register Offset     (MEM[SR1 + (6bOfst << 1)] <- SRC)
+    [0100][SRC][SR1][6bOfst]       *6-bit, signed extended offset format
+    ================
+    BRC: Branch Conditional        (PC <- PC + 2 + (conds met) ? 8bImmVal : 0)
+    [0010][nzps][8bImmVal]         *8-bit, signed extended immediate format
+    ================
+    JPR: Jump Register Offset      (PC <- SR1 + (5bImm << 1))
+    [0110][000][SR1][0][5bImm]     *5-bit, signed extended offset format
+    ================
+    JLR: Jump/Link Register Offset (LNK <- PC + 2; PC <- SR1 + (5bImm << 1))
+    [0111][LNK][SR1][0][5bImm]     *5-bit, signed extended offset format
+    ================
+    SWP: Swap Register Offset      (DST <- MEM[SR1 + (6bOfst << 1)] <- DST)
+    [0001][DST][SR1][6bOfst]       *6-bit, signed extended offset format
+    ================
+    NOP: No Operation              (---)
+    [0011][000000000000]           *Command format
+    ================
+    HLT: Halt Opetation            (---)
+    [0000][000000000000]           *Command format
+    ================
+
+================================================================================
