@@ -49,7 +49,7 @@ Instruction Set Overview:
     [0100][SRC][SR1][6bOfst]       *6-bit, signed extended offset format
     ================
     BRC: Branch Conditional        (PC <- PC + 2 + (conds met) ? 8bImmVal : 0)
-    [0010][nzps][8bImmVal]         *8-bit, signed extended immediate format
+    [0010][nzpc][8bImmVal]         *8-bit, signed extended immediate format
     ================
     JPR: Jump Register Offset      (PC <- SR1 + (5bImm << 1))
     [0110][000][SR1][0][5bImm]     *5-bit, signed extended offset format
@@ -142,7 +142,7 @@ Instruction Set Details:
         by 1 and sign extended, prior to adding, for better range.
     
     == BRC: Branch Conditional ==
-        [0010][nzps][8bImmVal]         *8-bit, signed extended immediate format
+        [0010][nzpc][8bImmVal]         *8-bit, signed extended immediate format
         
         Sets PC to PC + 2 + 8bImmVal if conditions flags are met (see below).
         Since instructions are always 2 bytes, 8bImmVal is left shifted by 1 and
@@ -150,13 +150,13 @@ Instruction Set Details:
         
         Sets PC only if the all the following conditions are met:
             1) at least of of the 'nzp' flags, if set, is matched by the ALU.
-            2) the last flag (ie 's'), if set, is matched by the ALU.
+            2) the last flag (ie 'c'), if set, is matched by the ALU.
         
         Setting the flags implies/requires the following:
             n: the last ALU operation result was signed negative.
             z: the last ALU operation result was zero.
             p: the last ALU operation result was signed positive.
-            s: the last ALU operation result did not overflow (ie was "s"afe).
+            c: the last ALU operation result produced carry-out/overflow.
         
         ALU flags are updated for {AND, ORR, XOR, SHL, SHR, ADD, SUB, LBI}.
     
@@ -227,13 +227,13 @@ Hardware Related Notes:
 ================================================================================
 Software Related Notes:
     Branch Flag Combinations:
-        -> A > B : (signed) [n]  for B - A, (unsigned) [nzpc] for B - A
-        -> A < B : (signed) [p]  for B - A, (unsigned) [nzpc] for A - B
-        -> A >= B: (signed) [nz] for B - A, (unsigned) [npc] for B - A
-        -> A <= B: (signed) [zp] for B - A, (unsigned) [npc] for A - B
+        -> A > B : (signed) [n]  for B - A, (unsigned) [npc] for A - B
+        -> A < B : (signed) [p]  for B - A, (unsigned) [npc] for B - A
+        -> A >= B: (signed) [nz] for B - A, (unsigned) [nzpc] for A - B
+        -> A <= B: (signed) [zp] for B - A, (unsigned) [nzpc] for B - A
         -> A == B: (either) [z]  for B - A
         -> A != B: (either) [np] for B - A
-        -> No carry-out: [nzpc] for any operation
+        -> Carry-out   : [nzpc] for any operation
         -> Always jump : [nzp] for any operation
         -> Never jump  : [] for any operation
         
