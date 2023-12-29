@@ -4,6 +4,9 @@ Project RISCII: Revised Instruction Set Architecture
 ================================================================================
 Table of Contents:
     -> Instruction Set Overview
+    -> Instruction Set Details
+    -> Hardware Related Notes
+    -> Software Related Notes
 ================================================================================
 Instruction Set Overview:
     ================
@@ -52,7 +55,7 @@ Instruction Set Overview:
     [0110][000][SR1][0][5bImm]     *5-bit, signed extended offset format
     ================
     JLR: Jump/Link Register Offset (LNK <- PC + 2; PC <- SR1 + (5bImm << 1))
-    [0111][LNK][SR1][0][5bImm]     *5-bit, signed extended offset format
+    [0111][DST][SR1][0][5bImm]     *5-bit, signed extended offset format
     ================
     SWP: Swap Register Offset      (DST <- MEM[SR1 + (6bOfst << 1)] <- DST)
     [0001][DST][SR1][6bOfst]       *6-bit, signed extended offset format
@@ -63,5 +66,188 @@ Instruction Set Overview:
     HLT: Halt Opetation            (---)
     [0000][000000000000]           *Command format
     ================
+
+================================================================================
+Instruction Set Details:
+    == AND: Bitwise AND ==
+        [1111][DST][SR1][000][SR2]     *Register format
+        [1111][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+    
+        Performs bitwise AND between SR1 and either SR2 or 5bImm. Immediate is
+        sign extended.
+    
+    == ORR: Bitwise OR ==
+        [1111][DST][SR1][000][SR2]     *Register format
+        [1111][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+    
+        Performs bitwise OR between SR1 and either SR2 or 5bImm. Immediate is
+        sign extended.
+    
+    == XOR: Bitwise XOR ==
+        [1111][DST][SR1][000][SR2]     *Register format
+        [1111][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+    
+        Performs bitwise XOR between SR1 and either SR2 or 5bImm. Immediate is
+        sign extended.
+    
+    == SHL: Shift Left ==
+        [1100][DST][SR1][000][SR2]     *Register format
+        [1100][DST][SR1][10][4bIm]     *4-bit, unsigned immediate format
+        
+        Performs left logical shift on SR1 by either SR2 or 4bIm. Immediate is
+        treated as an unsigned number between 0 and 15.
+    
+    == SHR: Shift Right ==
+        [1101][DST][SR1][0][a][0][SR2] *Register format
+        [1101][DST][SR1][1][a][4bIm]   *4-bit, unsigned immediate format
+        
+        Performs right shift (logical if 'a' flag is cleared, arithmetic if set)
+        on SR1 by either SR2 or 4bIm. Immediate is treated as an unsigned number
+        between 0 and 15.
+    
+    == ADD: Arithmetic Addition ==
+        [1000][DST][SR1][000][SR2]     *Register format
+        [1000][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+        
+        Performs an arithmetic add between SR1 and either SR2 or 5bImm.
+        Immediate is sign extended.
+    
+    == SUB: Arithmetic Subtraction ==
+        [1000][DST][SR1][000][SR2]     *Register format
+        [1000][DST][SR1][1][5bImm]     *5-bit, sign extended immediate format
+        
+        Performs an arithmetic subtract between SR1 and either SR2 or 5bImm.
+        Immediate is sign extended. SR1 is the value subtracted from SR2/5bImm.
+    
+    == LBI: Load Byte Immediate ==
+        [1010][DST][0][8bImmVal]       *8-bit, sign extended immediate format
+        [1010][DST][1][8bImmVal]       *Register shift format
+        
+        Sets DST register using 8bImmVal. If in register shift format, 8bImmVal
+        will be left shifted in (setting the upper byte to the original lower
+        byte). Otherwise, 8bImmVal is sign extended into a 16-bit value.
+    
+    == LDR: Load Register Offset ==
+        [0101][DST][SR1][6bOfst]       *6-bit, signed extended offset format
+        
+        Reads memory address SR1 + 6bOfst, storing it in DST. Always reads two
+        bytes (ignoring the lowest bit in the 16-bit address). 6bOfst is left
+        shifted by 1 and sign extended, prior to adding, for better range.
+        
+    == STR: Store Register Offset ==
+        [0100][DST][SR1][6bOfst]       *6-bit, signed extended offset format
+        
+        Writes memory address SR1 + 6bOfst with DST. Always reads two bytes
+        (ignoring the lowest bit in the 16-bit address). 6bOfst is left shifted
+        by 1 and sign extended, prior to adding, for better range.
+    
+    == BRC: Branch Conditional ==
+        [0010][nzps][8bImmVal]         *8-bit, signed extended immediate format
+        
+        Sets PC to PC + 2 + 8bImmVal if conditions flags are met (see below).
+        Since instructions are always 2 bytes, 8bImmVal is left shifted by 1 and
+        sign extended, prior to adding, for better range.
+        
+        Sets PC only if the all the following conditions are met:
+            1) at least of of the 'nzp' flags, if set, is matched by the ALU.
+            2) the last flag (ie 's'), if set, is matched by the ALU.
+        
+        Setting the flags implies/requires the following:
+            n: the last ALU operation result was signed negative.
+            z: the last ALU operation result was zero.
+            p: the last ALU operation result was signed positive.
+            s: the last ALU operation result did not overflow (ie was "s"afe).
+        
+        ALU flags are updated for {AND, ORR, XOR, SHL, SHR, ADD, SUB, LBI}.
+    
+    == JPR: Jump Register Offset ==
+        [0110][000][SR1][0][5bImm]     *5-bit, signed extended offset format
+        
+        Sets PC to SR1 + 5bImm. Since instructions are always 2 bytes, 5bImm is
+        left shifted by 1 and sign extended, prior to adding, for better range.
+    
+    == JLR: Jump/Link Register Offset ==
+        [0111][DST][SR1][0][5bImm]     *5-bit, signed extended offset format
+        
+        Sets PC to SR1 + 5bImm while storing the current PC + 2 to DST. Since
+        instructions are always 2 bytes, 5bImm is left shifted by 1 and sign
+        extended, prior to adding, for better range.
+    
+    == SWP: Swap Register Offset ==
+        [0001][DST][SR1][6bOfst]       *6-bit, signed extended offset format
+        
+        Swaps the values of memory address SR1 + 6bOfst and DST. Always reads
+        two bytes (ignoring the lowest bit in the 16-bit address). 6bOfst is
+        left shifted by 1 and sign extended, prior to adding, for better range.
+    
+    == NOP: No Operation ==
+        [0011][000000000000]           *Command format
+        
+        Performs no operations and does not update any registers. Acts as
+        "filler" instruction for explicit/implicit stalling.
+    
+    == HLT: Halt Opetation ==
+        [0000][000000000000]           *Command format
+        
+        Halts the processor's direct execution of code. Stops PC from being
+        updated by software or interrupts (though may be changed by external
+        means, such as JTAG control).
+
+================================================================================
+Hardware Related Notes:
+    Register ID Locations:
+        -> Source Register 1 (always passed to ALU)
+            (Bits [11:9] for LBI)
+            (Bits [8:6] for all other instuctions (that use SR1))
+        -> Source Register 2 (always passed to memory, may pass to ALU)
+            (Bits [11:9] for STR and SWP))
+            (Bits [2:0] for all other instructions (that use SR2))
+        -> Destination Register (when used) is always at bit [11:9]
+    
+    Notable Opcode Patterns:
+        -> If bit [15] is set:
+            (Immediate use requires a specific format (except for LBI))
+            (ALU flags are always updated)
+        -> If bit [15] is clear:
+            (Immediates are always used over registers (and left shifted by 1))
+            (ALU flags are never updated)
+            (ALU operations are always "arithmetic add")
+        -> Opcodes 0xx0 | 0011 do not write to the register file
+            (0xx0 = HLT, JPR, BRC, and STR; 0011 = NOP)
+        -> Opcode indicate length of immediate
+            (opcode x010 indicates an 8-bit signed immediate)
+            (opcode 0x0x indicates a 6-bit signed immediate)
+            (other opcodes indicate a 5-bit signed/4-bit unsigned immediate)
+    
+    Additional Notes:
+        -> LBI and SHR each correspond to two ALU operations (vs just one)
+        -> Some signals correspond to only 1-2 instructions
+        -> Signals may/can overlap to simplify decode logic
+    
+================================================================================
+Software Related Notes:
+    Branch Flag Combinations:
+        -> A > B : (signed) [n]  for B - A, (unsigned) [nzpc] for B - A
+        -> A < B : (signed) [p]  for B - A, (unsigned) [nzpc] for A - B
+        -> A >= B: (signed) [nz] for B - A, (unsigned) [npc] for B - A
+        -> A <= B: (signed) [zp] for B - A, (unsigned) [npc] for A - B
+        -> A == B: (either) [z]  for B - A
+        -> A != B: (either) [np] for B - A
+        -> No carry-out: [nzpc] for any operation
+        -> Always jump : [nzp] for any operation
+        -> Never jump  : [] for any operation
+        
+    Missing Operation Substitutions:
+        -> Bitwise NOT      : Do bitwise XOR with immediate 0x1F
+        -> Arithmetic NOT   : Do SUB with immediate 0x0
+        -> Jump by PC offset: Do BRC with flags [nzp]
+        -> Load PC address  : Do JLR to function that simply returns link
+    
+    Additional Notes:
+        -> Most 8/16-bit operations can be done within 5 instructions
+            (Loading a value from memory counts as an operation)
+            (Casting a value counts as an operation)
+        -> Writing an 8-bit value within 16-bits costs ~10 instructions
+            (Common operation for string/char array operations)
 
 ================================================================================
