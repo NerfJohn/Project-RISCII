@@ -54,7 +54,7 @@ Instruction Set Overview:
     JPR: Jump Register Offset      (PC <- SR1 + (5bImm << 1))
     [0110][000][SR1][0][5bImm]     *5-bit, signed extended offset format
     ================
-    JLR: Jump/Link Register Offset (LNK <- PC + 2; PC <- SR1 + (5bImm << 1))
+    JLR: Jump/Link Register Offset (DST <- PC + 2; PC <- SR1 + (5bImm << 1))
     [0111][DST][SR1][0][5bImm]     *5-bit, signed extended offset format
     ================
     SWP: Swap Register Offset      (DST <- MEM[SR1 + (6bOfst << 1)] <- DST)

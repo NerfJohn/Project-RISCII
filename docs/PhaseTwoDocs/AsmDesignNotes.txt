@@ -1,0 +1,206 @@
+Project RISCII: Assembler/Linker Design Notes and Interfaces
+---
+("Notes regarding assembler/linker program- lowest program of the compiler")
+================================================================================
+Table of Contents:
+    -> Cmd Line Usage/Behavior
+    -> File Syntax/Structure
+    -> Instruction Line Keywords/Syntax
+================================================================================
+Cmd Line Usage/Behavior:
+    General Purpose/Usage:
+        -> Assembles assembly files into one executable (if successful)
+            (Can assemble multiple files at once)
+            (Acts as a combined assembler and linker)
+            (Executable targets RISCII processor)
+        -> Uses command line for invoking and inputs
+            (Expects files, assumed assembly, as the default input)
+            (Additional arguments may be passed using '-' arguments)
+    
+    Command Line Arguments:
+        "-h"        : show help menu and immediately exit successfully
+        "-o <name>" : set name/location of output file to <name>
+        "-v [level]": set stdout output to [level], or "debug" by default
+            (level "error"  : only report errors)
+            (level "warning": report errors/warnings- default without flag)
+            (level "info"   : report errors/warnings/info)
+            (level "debug"  : report everything- default with flag)
+        "-O<level>" : set optimization level to [level]
+            (O0: Perform no optimizations- default without flag)
+            (O1: Perform safer optimizations- macro-related optimizations)
+            (O2: Perform all optimizations- filter unused, labelled data)
+        "-wError"   : treat warnings as errors- preventing executable creation
+        
+    Errors and Warnings
+        -> Errors prevent executable from being created
+            (Cannot use unknown syntax or grammar)
+            (Cannot reference undefined labels)
+            (Cannot create executables over 64 KB (ie RISCII flash size))
+        -> Warnings are, by default, reported, but still creates executable
+            (Should not have unused labels)
+            (Should not "double label" any addresses)
+            (Should not attempt to store immediates into too-small buffers)
+        -> Errors in argument parsing should report it and show the "help" menu
+    
+================================================================================
+File Syntax/Structure:
+    General Line Syntax
+        -> Lines divided into different categories/functions
+            (Instructions lines translate to instructions- 1:1 ratio)
+            (Macros translates to various numbers of instructions)
+            (Directives set data memory or assembler/linker meta-data)
+        -> Lines can include an optional label declaration and/or comment
+            (Labels are prefixed- tying the name to an address)
+            (Comments are suffixed- adding no value to the output file)
+        -> Additional Notes
+            (Lines can also be empty or only contain comments)
+            (Use '\' before a newline to continue "line" on a new row)
+    
+    Instruction Line Syntax
+        -> Instruction line include a mnemonic and operands/arguments
+            (Mnemonics based on instructions from ISA)
+            (Valid operand combinations based on mnemonic used)
+        -> Valid Mnemonics:
+            AND    ORR    XOR    SHL
+            SHR    ADD    SUB    LBI
+            LDR    STR    BRC    JPR
+            JLR    SWP    NOP    HLT
+        -> Operand Syntax
+            (register: '$' followed by number or special name)
+            (immediate: decimal or hexadecimal number)
+            (flag: lowercase character appended to mnemonic)
+    
+    Macro Line Syntax
+        -> Macros abstract one or more instructions
+            (Allows use of labels for more readable assembly)
+            (Label type, instruction or data, must match macro purpose)
+            (Assembler generates instructions for macro)
+        -> Four macros supported (using labels and DST registers)
+            (_ld [DST] [label]: Loads value of data address 'label' to DST)
+            (_st [DST] [label]: Stores DST to data address 'label')
+            (_ds [DST]        : Loads highest used data address to DST)
+            (_to [DST] [label]: Jumps to instruction address 'label')
+                - Optional DST to link to PC + 2 upon jumping
+        -> Additional Notes
+            (Macros, at worst, take 3 instructions)
+            (Macros may used register 5 (ie $5 or $bx)- affects following code)
+            (Optimization may improve macro instruction usage/translation)
+    
+    Directive Line Syntax
+        -> Directives control instruction and data section layouts
+            (Can be used to add initialized/uninitialized data)
+            (Can specify address requirements of instructions/data)
+        -> Three directives supported
+            (.word [num]: Reserve 16-bits, initialize to value of "num")
+            (.bytes [value]: Reserve and/or initialize array of bytes)
+                - [value] as a string literal initializes bytes of string length
+                - [value] as a decimal/hexadecimal number reserves [value] bytes
+            (.addr [addr]: Sets starting instruction address for code block)
+                - [addr] is decimal/hexadecimal number or '-' for "undefined")
+        -> Additional Notes
+            (Data initialized to 0 sent to bss (except within string literal))
+            (String literal stored using little endian)
+            (Code considered contiguous until next file or .addr call)
+                - Data initializations are always contiguous
+                - Files implictly begin with an undefined address
+    
+    Additional Syntax/Structure Notes
+        -> Labels are declared using name followed by colon
+            (Label names may be the same as keywords- colon defines difference)
+            (Labels may be declared after being used)
+        -> Labels, by default, refer to instruction addresses
+            (Label tied to address of next/following instruction)
+            (Labels on ".word" or ".bytes" line refer to data address)
+        -> "Undefined address" code blocks use arbitrary placement
+            (".addr 0x0" should be used to set starting instructions)
+            (Optmization may affect/improve placement of code blocks)
+            
+================================================================================
+Instruction Line Keywords/Syntax:
+    Token Syntax
+        -> Instruction Mnemonic: Three uppercase letters (eg ADD)
+        -> Registers: '$' followed special number of name
+            (Load Register 0-3     : $r0-$r7 (or $0-$3)
+            (AX Register           : $ax     (or $4)
+            (BX Register           : $bx     (or $5)
+            (Frame Pointer Register: $fp     (or $6)
+            (Stack Pointer Register: $sp     (or $7)
+        -> Immediate: decimal or hexadecimal number (eg -2, 0xa5)
+
+    == (Legend) ==
+        UPPERCASE          : Mnemonic
+        [bracket_lowercase]: Register
+        [BRACKET_UPPERCASE]: Immediate
+        - (ie hyphen)      : Flag
+    
+    == AND Instruction ==
+        AND     [dst] [sr1] [sr2] *Register format
+        AND     [dst] [sr1] [IMM] *5-bit, sign extended immediate format
+    
+    == ORR Instruction ==
+        ORR     [dst] [sr1] [sr2] *Register format
+        ORR     [dst] [sr1] [IMM] *5-bit, sign extended immediate format
+
+    == XOR Instruction ==
+        XOR     [dst] [sr1] [sr2] *Register format
+        XOR     [dst] [sr1] [IMM] *5-bit, sign extended immediate format
+
+    == SHL Instruction ==
+        SHL     [dst] [sr1] [sr2] *Register format
+        SHL     [dst] [sr1] [IMM] *4-bit, unsigned immediate format
+
+    == SHR Instruction ==
+        SHR-    [dst] [sr1] [sr2] *Register format
+        SHR-    [dst] [sr1] [IMM] *4-bit, unsigned immediate format
+        
+        '-' can be replaced with flag:
+            'a': Perform arithmetic shift
+            ' ': Perform logical shift
+    
+    == ADD Instruction ==
+        ADD     [dst] [sr1] [sr2] *Register format
+        ADD     [dst] [sr1] [IMM] *5-bit, sign extended immediate format
+    
+    == SUB Instruction ==
+        SUB     [dst] [sr1] [sr2] *Register format
+        SUB     [dst] [sr1] [IMM] *5-bit, sign extended immediate format
+
+    == LBI Instruction ==
+        LBI-    [dst] [IMM]       *8-bit, sign extended immediate format
+        LBI-    [dst] [IMM]       *Register shift format
+        
+        '-' can be replaced with flag:
+            'f': Perform register shift
+            ' ': Perform sign extension
+    
+    == LDR Instruction ==
+        LDR     [dst] [sr1] [IMM] *6-bit, signed extended offset format
+        
+    == STR Instruction ==
+        STR     [src] [sr1] [IMM] *6-bit, signed extended offset format
+    
+    == BRC Instruction ==
+        BRC---- [IMM]             *8-bit, signed extended immediate format
+        
+        '-' can be replaced with one flag each (or replaced with a space):
+            'n': Jump if last ALU result was signed negative
+            'z': Jump if last ALU result was zero
+            'p': Jump if last ALU result was signed positive
+            'c': Jump if last ALU result had carry-out
+    
+    == JPR Instruction ==
+        JPR     [sr1] [IMM]       *5-bit, signed extended offset format
+    
+    == JLR Instruction ==
+        JLR     [dst] [sr1] [IMM] *5-bit, signed extended offset format
+            
+    == SWP Instruction ==
+        SWP     [dst] [sr1] [IMM] *6-bit, signed extended offset format
+    
+    == NOP Instruction ==
+        NOP                       *Command format
+    
+    == HLT Instruction ==
+        HLT                       *Command format
+    
+================================================================================
