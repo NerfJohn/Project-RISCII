@@ -31,7 +31,7 @@ Cmd Line Usage/Behavior:
             (O2: Perform all optimizations- filter unused, labelled data)
         "-wError"   : treat warnings as errors- preventing executable creation
         
-    Errors and Warnings
+    Errors and Warnings:
         -> Errors prevent executable from being created
             (Cannot use unknown syntax or grammar)
             (Cannot reference undefined labels)
@@ -44,7 +44,7 @@ Cmd Line Usage/Behavior:
     
 ================================================================================
 File Syntax/Structure:
-    General Line Syntax
+    General Line Syntax:
         -> Lines divided into different categories/functions
             (Instructions lines translate to instructions- 1:1 ratio)
             (Macros translates to various numbers of instructions)
@@ -56,7 +56,7 @@ File Syntax/Structure:
             (Lines can also be empty or only contain comments)
             (Use '\' before a newline to continue "line" on a new row)
     
-    Instruction Line Syntax
+    Instruction Line Syntax:
         -> Instruction line include a mnemonic and operands/arguments
             (Mnemonics based on instructions from ISA)
             (Valid operand combinations based on mnemonic used)
@@ -70,7 +70,7 @@ File Syntax/Structure:
             (immediate: decimal or hexadecimal number)
             (flag: lowercase character appended to mnemonic)
     
-    Macro Line Syntax
+    Macro Line Syntax:
         -> Macros abstract one or more instructions
             (Allows use of labels for more readable assembly)
             (Label type, instruction or data, must match macro purpose)
@@ -86,7 +86,7 @@ File Syntax/Structure:
             (Macros may used register 5 (ie $5 or $bx)- affects following code)
             (Optimization may improve macro instruction usage/translation)
     
-    Directive Line Syntax
+    Directive Line Syntax:
         -> Directives control instruction and data section layouts
             (Can be used to add initialized/uninitialized data)
             (Can specify address requirements of instructions/data)
@@ -104,7 +104,7 @@ File Syntax/Structure:
                 - Data initializations are always contiguous
                 - Files implictly begin with an undefined address
     
-    Additional Syntax/Structure Notes
+    Additional Syntax/Structure Notes:
         -> Labels are declared using name followed by colon
             (Label names may be the same as keywords- colon defines difference)
             (Labels may be declared after being used)
