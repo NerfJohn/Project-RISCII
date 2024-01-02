@@ -1,0 +1,7 @@
+module AlteraProject();
+
+reg A, B, C;
+
+A = B | C;
+
+endmodule
