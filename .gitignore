@@ -6,6 +6,9 @@ software/src/ParseTable.h
 processor/alteraProject/db
 processor/alteraProject/incremental_db
 processor/alteraProject/output_files
+processor/alteraProject/AlteraProject.qws
+processor/alteraProject/*.bak
+processor/alteraProject/src/*.bak
 
 compiler/asmProject/.settings
 compiler/asmProject/Debug
