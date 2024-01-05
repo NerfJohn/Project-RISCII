@@ -10,7 +10,11 @@
 
 using namespace std;
 
-int main() {
-	cout << "RISCII Assembler" << endl;
+int main(int argc, char* argv[]) {
+	// Print out passed arguments.
+	cout << "Arguments:" << endl;
+	for (int i = 1; i < argc; i++) {
+		cout << argv[i] << endl;
+	}
 }
 
