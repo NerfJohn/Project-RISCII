@@ -3,6 +3,8 @@ software/quaidcc.exe
 software/src/ScanTable.h
 software/src/ParseTable.h
 
+*.out
+
 processor/alteraProject/db
 processor/alteraProject/incremental_db
 processor/alteraProject/output_files

@@ -1,0 +1,36 @@
+; Example Assembly Syntax File
+AND ORR XOR SHL
+	SHR	ADD	SUB	LBI
+LDR
+	STR
+		BRC
+			JPR
+			JLR
+		SWP
+	NOP
+HLT
+
+_ld _st _ds _to
+.word
+.arry
+.addr
+
+LD LDRR
+_ld_myWay
+
+$0 $7
+$r0 $r3
+$ax $bx $fp $sp
+
+a
+s
+n
+nz
+np
+nzpc
+
+"foo\r\n\t\0\"\xa\xB0  		"
+
+:
+
+0xA 0 -1 +4
