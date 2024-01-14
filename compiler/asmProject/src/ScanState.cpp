@@ -5,8 +5,6 @@
  *      Author: John
  */
 
-#include <iostream>
-
 #include "ScanState.h"
 
 using namespace std;

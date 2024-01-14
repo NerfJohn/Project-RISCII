@@ -1,36 +1,31 @@
-; Example Assembly Syntax File
-AND ORR XOR SHL
-	SHR	ADD	SUB	LBI
-LDR
-	STR
-		BRC
-			JPR
-			JLR
-		SWP
-	NOP
+; Examples of assemblt lines
+AND	$0	$1	$2
+AND	$ax	$bx	0xA
+
+SHL	$r0	$r3	$7
+SHL	$sp	$fp	3
+SHR	$0	$2	0x3
+SHR	a	$2	$2	$ax
+
 HLT
+NOP
 
-_ld _st _ds _to
-.word
-.arry
-.addr
+BRC c 2
+BRC nzpc 1
 
-LD LDRR
-_ld_myWay
 
-$0 $7
-$r0 $r3
-$ax $bx $fp $sp
+.word 40
+.arry 20
+.arry "foobar\n"
+.addr 0x2000
 
-a
-s
-n
-nz
-np
-nzpc
+_ld $bx myLabel
+_st $ax myFoo
+_ds $bx
+_to retPtr
+_to $6	callPtrs
 
-"foo\r\n\t\0\"\xa\xB0  		"
-
-:
-
-0xA 0 -1 +4
+ADD
+$ax
+$bx
+5
