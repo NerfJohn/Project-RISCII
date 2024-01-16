@@ -49,7 +49,6 @@ set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name SYSTEMVERILOG_FILE src/AlteraProject.sv
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_location_assignment PIN_D13 -to CLOCK_27
 set_location_assignment PIN_N9 -to HEX[55]
@@ -124,8 +123,19 @@ set_location_assignment PIN_AE14 -to SW[3]
 set_location_assignment PIN_P25 -to SW[2]
 set_location_assignment PIN_N26 -to SW[1]
 set_location_assignment PIN_N25 -to SW[0]
+set_location_assignment PIN_N2 -to CLOCK_50
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name VERILOG_FILE src/mux4.v
+set_global_assignment -name VERILOG_FILE src/myDff.v
+set_global_assignment -name VERILOG_FILE src/reg_16b.v
+set_global_assignment -name VERILOG_FILE src/mux2.v
+set_global_assignment -name VERILOG_FILE src/dff_en.v
+set_global_assignment -name SYSTEMVERILOG_FILE src/AlteraProject.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/SegDisplay.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/LazyPll.sv
 set_global_assignment -name SDC_FILE alteraProjectSDC.sdc
-set_location_assignment PIN_N2 -to CLOCK_50
+set_global_assignment -name VERILOG_FILE src/add_1b.v
+set_global_assignment -name VERILOG_FILE src/add_16b.v
+set_global_assignment -name VERILOG_FILE src/timer_16b.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
