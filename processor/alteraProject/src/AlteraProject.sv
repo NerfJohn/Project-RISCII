@@ -24,27 +24,43 @@ assign LEDR = SW;
 assign LEDG = {4{clkSignal}} & KEY;
 */
 
+logic[1:0] state;
+
+initial begin
+	state = 0;
+end
+
+always @(posedge SW[3]) begin
+	state = state + 1;
+	if (state > 2) begin
+		state = 0;
+	end
+end
+
 // Intermediate signals.
 logic dataEn, dataWr, myRstn;
-wire[15:0] dataBus, _testCnt;
+wire[15:0] dataBus, disData, _testVal, _testCtl, _testMax;
 
 // 50 Hz clk signal.
-LazyPll #(.DIVIDER(100000)) iClk (.inClk(CLOCK_50), .outClk(clkSignal));
+LazyPll #(.DIVIDER(1000000)) iClk (.inClk(CLOCK_50), .outClk(clkSignal));
 
 // Example timer.
-timer_16b iTMR (.busAddr(2'b0), .busData(dataBus), .busEn(dataEn), .busWr(dataWr), 
-					 .sigIntr(/*NC*/), .clk2(1'b0), .clk(clkSignal), .rstn(myRstn),
-					 .TEST_cnt(_testCnt), .TEST_ctrl(/*NC*/));
+Timer16 iTMR (.busAddr(state), .busData(dataBus), .busEn(dataEn), .busWr(dataWr), 
+					 .sigIntr(LEDR[3]), .clk(clkSignal), .rstn(myRstn),
+					 .TEST_val(_testVal), .TEST_ctrl(_testCtl), .TEST_max(_testMax));
 					 
 // Human input.
 assign myRstn = KEY[0];
 assign dataEn = ~KEY[1];
 assign dataWr = ~KEY[2];
-assign dataBus = (dataEn & ~dataWr) ? 16'bz : {4{SW}};
+assign dataBus = (dataEn & ~dataWr) ? 16'bz : {10'b0,SW[2:1], 3'b0, SW[0]};
 
 // Human feedback.
-assign LEDR = SW;
+assign LEDR[1:0] = state;
+assign LEDR[2] = 0;
 assign LEDG = ~KEY;
-SegDisplay iDisplay[7:0] (.inNibble({dataBus, _testCnt}), .outSegs(HEX));
+assign disData = (state == 0) ? _testVal :
+					  (state == 1) ? _testCtl : _testMax;
+SegDisplay iDisplay[7:0] (.inNibble({_testVal, disData}), .outSegs(HEX));
 
 endmodule
