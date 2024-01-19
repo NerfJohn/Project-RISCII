@@ -1,22 +1,11 @@
 module Timer16(busAddr, busData, busEn, busWr,	// Bus Signals
 					sigIntr,									// Special Signals
-					clk, rstn,								// Common Signals
-					TEST_val, TEST_ctrl, TEST_max		// Test Signals (TODO- Remove)
+					clk, rstn								// Common Signals
 );
 
-/*
-	Timer16: Basic 16-bit timer with enable, scaling, and bus access.
-	
-	Features:
-		-> Value Register (16b): Timer value, r/w at 0x0, reset to 0x0
-		-> Control Register (8b): Timer controls, r/w at 0x1, reset to 0x0
-			[0]: Enable bit- 1 = enable, 0 = disable
-			[7:4]: Prescalar- 0 = 1:1, 1 = 2:1, 2 = 3:1, ... , 15 = 0xF
-		-> Max Register (16b): Max timer value, r/w at 0x2, reset to 0xFFFF
-		-> Interrupt Signal: High for MAX -> 0 (on tick where VAL = 0)
-*/
-
-// -- Signals/Wires -- //
+//////////////////////////
+// -- Inputs/Outputs -- //
+//////////////////////////
 
 // Bus Signals.
 input 		busEn;		// Enable-  signals r/w of timer register
@@ -30,84 +19,93 @@ output sigIntr;			// Interrupt signal (for overflow)
 // Common Signals.
 input clk, rstn;			// Common clock and active-low reset
 
-// TEST signals, TODO- remove
-output[15:0] TEST_val, TEST_max, TEST_ctrl;
+/////////////////////////
+// -- Signals/Wires -- //
+/////////////////////////
 
-// Bus-Accessible Register Wires.
+// Bus-Accessible Register Wires (Value, Control, Max Count).
 wire[15:0] valD, valQ;
-wire[7:0]  ctlD, ctlQ;
+wire[4:0]  ctlD, ctlQ;          // 16-bit register, ranges [7:4] and [0]
 wire[15:0] maxD, maxQ;
-wire wrVal;
-wire wrCtl;
-wire wrMax;
-wire[15:0] valInc;
+wire       valEn, ctlEn, maxEn;
 
-// Value Compare Wires.
-wire maxMatch;
+// Hidden Register Wires (Interrupt and Prescale).
+wire[3:0]  psD, psQ;
+wire       intD, intQ;
 
-// Prescale Logic Wires.
-wire      psMatch;
-wire[3:0] psNew;
-wire[3:0] psD, psQ;
+// Incrementor Wires (for Value and Prescale).
+wire[15:0] inc16A, inc16Y;
+wire[3:0]  inc4A, inc4Y;
 
-// Incrementor logic.
-wire[15:0] incQ;
+// Tristate Wires (for data line during read).
+wire[15:0] triA, triY;
+wire       triEn;
+wire[15:0] valCtl;			     // Mid-mux value (val vs ctl mux)
 
-// Bus Data Control/Tristate Wires.
-wire[15:0] mux0;
-wire[15:0] triA;
-wire		  triEn;
-wire[15:0] triY;
+// Additional signals.
+wire psMatch, maxMatch;         // Status of Value/Prescale comparisons
+wire valAddr, ctlAddr, maxAddr; // Status of address being input
+wire valWr;                     // Status of Value being directly written
+wire regWr;                     // Status of bus writing a register
+wire[15:0] ctlSW;				     // Control register in "SW" view format
 
-// -- Circuits/Instances -- //
-
-// Interrupt- remember/assert on edges.
-myDff INTR (.D(maxMatch & ctlQ[0]), .Q(sigIntr), .clk(clk), .rstn(rstn));
+////////////////////////////
+// -- Blocks/Instances -- //
+////////////////////////////
 
 // Bus-Accessible Registers.
-dff_en VALR[15:0] (.D(valD), .Q(valQ), .en(wrVal), .clk(clk), .rstn(rstn));
-dff_en CTLR[7:0]  (.D(ctlD), .Q(ctlQ), .en(wrCtl), .clk(clk), .rstn(rstn));
-dff_en MAXR[15:0] (.D(maxD), .Q(maxQ), .en(wrMax), .clk(clk), .rstn(rstn));
+dff_en VAL[15:0] (.D(valD), .Q(valQ), .en(valEn), .clk(clk), .rstn(rstn));
+dff_en CTL[4:0]  (.D(ctlD), .Q(ctlQ), .en(ctlEn), .clk(clk), .rstn(rstn));
+dff_en MAX[15:0] (.D(maxD), .Q(maxQ), .en(maxEn), .clk(clk), .rstn(rstn));
 
-// Prescale Logic.
-add_4b INCP      (.A(psQ), .B(4'b0), .Cin(1'b1), .S(psNew), .Cout(/*NC*/));
-myDff  PSCL[3:0] (.D(psD), .Q(psQ), .clk(clk), .rstn(rstn));
+// Hidden Registers.
+myDff PS[3:0] (.D(psD), .Q(psQ), .clk(clk), .rstn(rstn));
+myDff INT     (.D(intD), .Q(intQ), .clk(clk), .rstn(rstn));
 
-// Incrementor.
-add_16b INCT (.src1(valQ), .src2(16'b0), .cin(1'b1), .sum(incQ), .cout(/*NC*/));
+// Incrementors.
+add_16b INC16 (.src1(inc16A), .src2(16'b0), .cin(1'b1), .sum(inc16Y), .cout(/*NC*/));
+add_4b  INC4  (.A(inc4A), .B(4'b0), .Cin(1'b1), .S(inc4Y), .Cout(/*NC*/));
 
-// Bus Data Line Control.
-Tristate TRIS[15:0] (.A(triA), .en(triEn), .Y(triY));
+// Tristate.
+Tristate TRI[15:0] (.A(triA), .en(triEn), .Y(triY));
 
-// -- Raw Logic -- //
+//////////////////////////
+// -- Connects/Logic -- //
+//////////////////////////
 
-// Value compare- match current value to max register.
-assign maxMatch = ~(|(valQ ^ maxQ));
+// Resolve additional signals (ease of reading logic).
+assign psMatch = ~(|(psQ ^ ctlQ[4:1]));
+assign maxMatch = ~(|(maxQ ^ valQ));
+assign valAddr = ~busAddr[0] & ~busAddr[1];	// Value Addr = 0x00
+assign ctlAddr = busAddr[0] & ~busAddr[1];	// Control Addr = 0x01
+assign maxAddr = busAddr[1];						// Max Addr = 0x10, or simply 0x1X
+assign valWr = regWr & valAddr;
+assign regWr = busEn & busWr;
+assign ctlSW = {8'b0,ctlQ[4:1], 3'b0, ctlQ[0]};
 
-// Prescale compare- count resets for match or bus write.
-assign psMatch = ~(|(ctlQ[7:4] ^ psQ));
-assign psD = psNew & {4{~(psMatch | (busEn & busWr))}};
-
-// Set up data heading into registers- value comes from bus or internal logic.
-assign valInc[15:0] = incQ & {16{~maxMatch}};
-mux2 iMUX2[15:0] (.A(busData), .B(valInc), .sel(busEn & busWr & ~busAddr[1] & ~busAddr[0]), .out(valD));
-assign ctlD = busData;
+// Bus-Accessible Registers (value chooses between inc/roll and write).
+mux2 iMUX0[15:0] (.A(busData), .B(inc16Y & {16{~maxMatch}}), .sel(valWr), .out(valD));
+assign ctlD = {busData[7:4], busData[0]};
 assign maxD = busData;
+assign valEn = (ctlQ[0] & psMatch) | valWr;
+assign ctlEn = regWr & ctlAddr;
+assign maxEn = regWr & maxAddr;
 
-// Update registers as needed (bus write or incrementing).
-assign wrVal = (ctlQ[0] & psMatch) | (busEn & busWr & ~busAddr[1] & ~busAddr[0]);
-assign wrCtl = (busEn & busWr & ~busAddr[1] & busAddr[0]);
-assign wrMax = (busEn & busWr & busAddr[1]);
+// Interrupt/Prescale Registers.
+assign psD = inc4Y & {4{~(psMatch | regWr)}};
+assign intD = ctlQ[0] & maxMatch & psMatch;
 
-// Control data line when reading timer registers.
-mux2 iMUX0[15:0] (.A({8'b0,ctlQ}), .B(valQ), .sel(busAddr[0]), .out(mux0));
-mux2 iMUX1[15:0] (.A(maxQ), .B(mux0), .sel(busAddr[1]), .out(triA));
+// Incrementors.
+assign inc16A = valQ;
+assign inc4A = psQ;
+
+// Tristate.
+mux2 iMUX1[15:0] (.A(ctlSW), .B(valQ), .sel(busAddr[0]), .out(valCtl));
+mux2 iMUX2[15:0] (.A(maxQ), .B(valCtl), .sel(busAddr[1]), .out(triA));
 assign triEn = busEn & ~busWr;
-assign busData = triY;
 
-// TEST signals- to remove.
-assign TEST_val = valQ; //{psD, psNew, 5'b0, psMatch, busEn, busWr};
-assign TEST_ctrl = ctlQ;
-assign TEST_max = maxQ;
+// Drive outputs.
+assign busData = triY;
+assign sigIntr = intQ;
 
 endmodule
