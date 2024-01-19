@@ -29,13 +29,15 @@ logic[1:0] state;
 // Intermediate signals.
 logic dataEn, dataWr, myRstn;
 wire[15:0] dataBus;
+wire[15:0] T_data, T_val, T_ctl, T_max, T_cmp;
 
 // 50 Hz clk signal.
 LazyPll #(.DIVIDER(1000000)) iClk (.inClk(CLOCK_50), .outClk(clkSignal));
 
 // Example timer.
-Timer16 iTMR (.busAddr(state), .busData(dataBus), .busEn(dataEn), .busWr(dataWr), 
-					 .sigIntr(LEDR[3]), .clk(clkSignal), .rstn(myRstn)
+LongTimer16 iTMR (.busAddr(state), .busData(dataBus), .busEn(dataEn), .busWr(dataWr), 
+					 .sigIntr(LEDR[3]), .clk(clkSignal), .rstn(myRstn),
+					 .T_val(T_val), .T_ctl(T_ctl), .T_max(T_max), .T_cnt(T_cmp)
 );
 					 
 // Human input.
@@ -49,6 +51,10 @@ assign state = SW[7:6];
 assign LEDR[1:0] = state;
 assign LEDR[2] = 0;
 assign LEDG = ~KEY;
-SegDisplay iDisplay[7:0] (.inNibble({10'b0, SW[5:0], dataBus}), .outSegs(HEX));
+assign T_data = (state == 0) ? T_val :
+                (state == 1) ? T_ctl :
+					 (state == 2) ? T_max :
+					 T_cmp;
+SegDisplay iDisplay[7:0] (.inNibble({dataBus, T_data}), .outSegs(HEX));
 
 endmodule
