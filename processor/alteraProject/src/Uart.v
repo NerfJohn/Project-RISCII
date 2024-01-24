@@ -110,9 +110,9 @@ mux2 iMUX0[9:0] (.A({1'b1, busData[7:0], 1'b0}),
 						.sel(regWr & txrAddr), 
 						.out(txrD_HW)
 );
-assign ctlQ_SW = {14'b0, ctlQ};              // to 16-bit "SW" view of enable
-assign txrQ_SW = {8'b0, txrQ[8:1]};          // to 16-bit "SW" view of send byte
-assign rxrQ_SW = {8'b0, rxrQ[8:1]};          // to 16-bit "SW" view of read byte
+assign ctlQ_SW = {11'b0, txStateQ, 3'b0, ctlQ}; // to 16-bit "SW" view of enable
+assign txrQ_SW = {8'b0, txrQ[8:1]};             // to 16-bit "SW" view of send byte
+assign rxrQ_SW = {8'b0, rxrQ[8:1]};             // to 16-bit "SW" view of read byte
 
 assign brgD = busData;
 assign ctlD = busData[0];
