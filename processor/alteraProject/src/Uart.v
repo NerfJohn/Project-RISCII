@@ -41,10 +41,20 @@ wire[9:0] txrD_HW;							// HW formatting for writes
 wire txStateD, txStateQ;
 wire txBeginXmit;
 
+// State Machine (RX).
+wire rxStateD, rxStateQ;
+wire rxBeginReceive;
+
 // Baud rate tracker (TX) wires.
 wire[15:0] txBaudD, txBaudQ;
 wire[15:0] txBaudIncA, txBaudIncY;
 wire txBaudMatch;
+
+// Baud rate tracker (RX) wires.
+wire[15:0] rxBaudD, rxBaudQ;
+wire[15:0] rxBaudIncA, rxBaudIncY;
+wire rxBaudMatch;
+wire rxTakeSample;
 
 // Bits sent tracker (TX) wires.
 wire[3:0] txBitsD, txBitsQ;
@@ -52,9 +62,19 @@ wire[3:0] txBitsIncA, txBitsIncY;
 wire txBitsEn;
 wire txLastBit;
 
+// Bits received tracker (RX) wires.
+wire[3:0] rxBitsD, rxBitsQ;
+wire[3:0] rxBitsIncA, rxBitsIncY;
+wire rxBitsEn;
+wire rxLastBit;
+
 // Output/Status bits (TX).
 wire txOutD, txOutQ;
 wire txDoneD, txDoneQ;
+
+// Output/Statis bits (RX).
+wire rxDoneD, rxDoneQ;
+wire rxNewD, rxNewQ;
 
 // Tristate Wires (for data line during read).
 wire[15:0] triA, triY;
@@ -78,17 +98,32 @@ dff_en RXR[9:0]  (.D(rxrD), .Q(rxrQ), .en(rxrEn), .clk(clk), .rstn(rstn));
 // State machine (TX).
 myDff TX_STATE (.D(txStateD), .Q(txStateQ), .clk(clk), .rstn(rstn));
 
+// State machine (RX).
+myDff RX_STATE (.D(rxStateD), .Q(rxStateQ), .clk(clk), .rstn(rstn));
+
 // Baud rate tracker (TX).
 myDff TX_BAUD[15:0] (.D(txBaudD), .Q(txBaudQ), .clk(clk), .rstn(rstn));
 add_16b TX_BAUD_INC (.src1(txBaudIncA), .src2(1'b0), .cin(1'b1), .sum(txBaudIncY), .cout(/*NC*/));
+
+// Baud rate tracker (RX).
+myDff RX_BAUD[15:0] (.D(rxBaudD), .Q(rxBaudQ), .clk(clk), .rstn(rstn));
+add_16b RX_BAUD_INC (.src1(rxBaudIncA), .src2(1'b0), .cin(1'b1), .sum(rxBaudIncY), .cout(/*NC*/));
 
 // Bits sent tracker (TX).
 dff_en TX_BITS[3:0] (.D(txBitsD), .Q(txBitsQ), .en(txBitsEn), .clk(clk), .rstn(rstn));
 add_4b TX_BITS_INC (.A(txBitsIncA), .B(1'b0), .Cin(1'b1), .S(txBitsIncY), .Cout(/*NC*/));
 
+// Bits received tracker (RX).
+dff_en RX_BITS[3:0] (.D(rxBitsD), .Q(rxBitsQ), .en(rxBitsEn), .clk(clk), .rstn(rstn));
+add_4b RX_BITS_INC  (.A(rxBitsIncA), .B(1'b0), .Cin(1'b1), .S(rxBitsIncY), .Cout(/*NC*/));
+
 // Output/Status bits (TX).
 myDff TX_INTR (.D(txDoneD), .Q(txDoneQ), .clk(clk), .rstn(rstn));
 myDff TX_OUT  (.D(txOutD), .Q(txOutQ), .clk(clk), .rstn(rstn));
+
+// Output/Status bits (RX).
+myDff RX_INTR (.D(rxDoneD), .Q(rxDoneQ), .clk(clk), .rstn(rstn));
+myDff RX_NEW (.D(rxNewD), .Q(rxNewQ), .clk(clk), .rstn(rstn));
 
 // Tristate.
 Tristate TRI[15:0] (.A(triA), .en(triEn), .Y(triY));
@@ -110,28 +145,38 @@ mux2 iMUX0[9:0] (.A({1'b1, busData[7:0], 1'b0}),
 						.sel(regWr & txrAddr), 
 						.out(txrD_HW)
 );
-assign ctlQ_SW = {11'b0, txStateQ, 3'b0, ctlQ}; // to 16-bit "SW" view of enable
+assign ctlQ_SW = {10'b0, rxNewQ, txStateQ, 3'b0, ctlQ}; // to 16-bit "SW" view of enable
 assign txrQ_SW = {8'b0, txrQ[8:1]};             // to 16-bit "SW" view of send byte
 assign rxrQ_SW = {8'b0, rxrQ[8:1]};             // to 16-bit "SW" view of read byte
 
 assign brgD = busData;
 assign ctlD = busData[0];
 assign txrD = txrD_HW;
-assign rxrD = rxrQ;			// RXR cannot be directly written
+assign rxrD = {rxIn, rxrQ[9:1]};
 
 assign brgEn = regWr & brgAddr;
 assign ctlEn = regWr & ctlAddr;
 assign txrEn = txBaudMatch | (regWr & txrAddr);
-assign rxrEn = 0;          // RXR cannot be directly written
+assign rxrEn = rxTakeSample & rxStateQ;
 
 // State Machine (TX).
 assign txBeginXmit = ~txStateQ & ctlQ & (regWr & txrAddr);
 assign txStateD = txBeginXmit | (txStateQ & ~(txLastBit & txBaudMatch));
 
+// State machine (RX).
+assign rxBeginReceive = ~rxStateQ & ~rxIn;
+assign rxStateD = rxBeginReceive | (rxStateQ & ~(rxLastBit & rxBaudMatch));
+
 // Baud rate tracking (TX).
 assign txBaudMatch = ~(|(txBaudQ ^ brgQ));
 assign txBaudIncA = txBaudQ;
 assign txBaudD = txBaudIncY & ~({16{txBeginXmit | txBaudMatch | ~ctlQ}});
+
+// Baud rate tracking (RX).
+assign rxBaudMatch = ~(|(rxBaudQ ^ brgQ));
+assign rxTakeSample = ~(|(rxBaudQ[14:0] ^ brgQ[15:1]));
+assign rxBaudIncA = rxBaudQ;
+assign rxBaudD = rxBaudIncY & ~({16{rxBeginReceive | rxBaudMatch | ~ctlQ}});
 
 // Bits sent tracking (TX).
 assign txBitsD = txBitsIncY & ~{4{txBeginXmit | ~ctlQ}};	// ctlQ == 0 when uart disabled
@@ -139,9 +184,19 @@ assign txBitsEn = txBaudMatch | txBeginXmit;
 assign txBitsIncA = txBitsQ;
 assign txLastBit = txBitsQ[3] & ~txBitsQ[2] & ~txBitsQ[1] & txBitsQ[0]; // 9 bits sent (and on 10th)
 
+// Bits received tracking (RX).
+assign rxBitsD = rxBitsIncY & ~{4{rxBeginReceive | ~ctlQ}};	// ctlQ == 0 when uart disabled
+assign rxBitsEn = rxBaudMatch | rxBeginReceive;
+assign rxBitsIncA = rxBitsQ;
+assign rxLastBit = rxBitsQ[3] & ~rxBitsQ[2] & ~rxBitsQ[1] & rxBitsQ[0]; // 9 bits sent (and on 10th)
+
 // Output/Status bits (TX).
 assign txDoneD = txStateQ & txLastBit & txBaudMatch;
 assign txOutD = (txrQ[0] | ~txStateD) & ctlQ;
+
+// Output/Status bits (RX).
+assign rxDoneD = rxStateQ & rxLastBit & rxBaudMatch;
+assign rxNewD = rxStateQ & ~rxStateD;
 
 // Tristate to bus line.
 mux2 iMUX1[15:0] (.A(ctlQ_SW), .B(brgQ), .sel(busAddr[0]), .out(brgCtl));
@@ -153,12 +208,12 @@ assign triEn = busEn & ~busWr;
 assign busData = triY;
 assign txOut = txOutQ;
 assign sigTxInt = txDoneQ;
-assign sigRxInt = 0;
+assign sigRxInt = rxDoneQ;
 
 // TODO- test signals, remove
 assign T_a0 = brgQ;
 assign T_a1 = {15'b0, ctlQ};
-assign T_a2 = {8'b0, txBitsQ, 3'b0, txStateQ}; //{6'b0, txrQ};
+assign T_a2 = {8'b0, rxBitsQ, 3'b0, rxStateQ}; //{6'b0, txrQ};
 assign T_a3 = {6'b0, rxrQ};
 
 endmodule

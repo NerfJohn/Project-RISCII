@@ -36,7 +36,7 @@ LazyPll #(.DIVIDER(10000000)) iClk (.inClk(CLOCK_50), .outClk(clkSignal));
 
 // Example timer.
 Uart iTMR (.busAddr(state), .busData(dataBus), .busEn(dataEn), .busWr(dataWr), 
-					 .sigTxInt(LEDR[3]), .sigRxInt(/*NC*/), .txOut(LEDR[2]), .rxIn(/*NC*/),
+					 .sigTxInt(LEDR[3]), .sigRxInt(/*NC*/), .txOut(LEDR[2]), .rxIn(KEY[3]),
 					 .clk(clkSignal), .rstn(myRstn),
 					 .T_a0(T_val), .T_a1(T_ctl), .T_a2(T_max), .T_a3(T_cmp)
 );
