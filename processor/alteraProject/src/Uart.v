@@ -182,7 +182,7 @@ assign rxBaudD = rxBaudIncY & ~({16{rxBeginReceive | rxBaudMatch | ~ctlQ}});
 assign txBitsD = txBitsIncY & ~{4{txBeginXmit | ~ctlQ}};	// ctlQ == 0 when uart disabled
 assign txBitsEn = txBaudMatch | txBeginXmit;
 assign txBitsIncA = txBitsQ;
-assign txLastBit = txBitsQ[3] & ~txBitsQ[2] & ~txBitsQ[1] & txBitsQ[0]; // 9 bits sent (and on 10th)
+assign txLastBit = txBitsQ[3] & ~txBitsQ[2] & ~txBitsQ[1] & ~txBitsQ[0]; // 9 bits sent (and on 10th)
 
 // Bits received tracking (RX).
 assign rxBitsD = rxBitsIncY & ~{4{rxBeginReceive | ~ctlQ}};	// ctlQ == 0 when uart disabled
@@ -192,7 +192,7 @@ assign rxLastBit = rxBitsQ[3] & ~rxBitsQ[2] & ~rxBitsQ[1] & rxBitsQ[0]; // 9 bit
 
 // Output/Status bits (TX).
 assign txDoneD = txStateQ & txLastBit & txBaudMatch;
-assign txOutD = (txrQ[0] | ~txStateD) & ctlQ;
+assign txOutD = (txrQ[0] | ~txStateQ) & ctlQ;
 
 // Output/Status bits (RX).
 assign rxDoneD = rxStateQ & rxLastBit & rxBaudMatch;
@@ -213,7 +213,7 @@ assign sigRxInt = rxDoneQ;
 // TODO- test signals, remove
 assign T_a0 = brgQ;
 assign T_a1 = {15'b0, ctlQ};
-assign T_a2 = {8'b0, rxBitsQ, 3'b0, rxStateQ}; //{6'b0, txrQ};
+assign T_a2 = {6'b0, txrQ};
 assign T_a3 = {6'b0, rxrQ};
 
 endmodule

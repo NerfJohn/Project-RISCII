@@ -25,7 +25,7 @@ always @(posedge inClk) begin
     divCnt = divCnt + 1;
     
     // Toggle outputs as applicable.
-    if (divCnt == DIVIDER) begin
+    if (divCnt == (DIVIDER / 2)) begin
         outClk = ~outClk;
         divCnt = 0;          // Reset internal counter as well
     end
