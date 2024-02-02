@@ -8,7 +8,7 @@ import re
 import sys
 
 # Details about switch's environment.
-ENV_STATE_BASE = 49
+ENV_STATE_BASE = 50
 ENV_SPACE_BASE = 12
 
 # Cmd line argument pertinent infomation.

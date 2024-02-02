@@ -19,17 +19,17 @@ static constexpr int _SUB_START   = STATE_BASE + 1;
 
 // TODO- "compressed" array of different patterns (separated by "nulls").
 static int PARSE_PATTERNS[] = {
-	50,51,TOKEN_REGISTER,TOKEN_REGISTER,49,50,52,TOKEN_REGISTER,TOKEN_REGISTER,
-	49,50,52,TOKEN_REGISTER,53,49,50,ACTION_INSTR_RI8,TOKEN_IMMEDIATE,53,49,50,
-	ACTION_INSTR_I8,54,49,50,ACTION_INSTR_RRI6,TOKEN_IMMEDIATE,TOKEN_REGISTER,
-	TOKEN_REGISTER,49,50,ACTION_INSTR_RI5,TOKEN_IMMEDIATE,TOKEN_REGISTER,49,50,
-	ACTION_INSTR_RRI5,TOKEN_IMMEDIATE,TOKEN_REGISTER,TOKEN_REGISTER,49,50,
-	ACTION_INSTR_CMD,49,50,ACTION_MACRO_LD,TOKEN_LABEL,TOKEN_REGISTER,49,50,
-	ACTION_MACRO_ST,TOKEN_LABEL,TOKEN_REGISTER,49,50,ACTION_MACRO_DS,
-	TOKEN_REGISTER,49,50,ACTION_MACRO_TO,55,49,50,ACTION_WORD,TOKEN_IMMEDIATE,
-	49,50,ACTION_ARRY,56,49,50,ACTION_ADDR,TOKEN_IMMEDIATE,49,50,
-	ACTION_LABEL_DECL,TOKEN_COLON,49,49,ACTION_INSTR_RRR,49,ACTION_INSTR_RRI5,
-	49,ACTION_INSTR_RRI4,49,TOKEN_REGISTER,49,TOKEN_IMMEDIATE,49,TOKEN_LABEL,49,
+	51,52,TOKEN_REGISTER,TOKEN_REGISTER,50,51,53,TOKEN_REGISTER,TOKEN_REGISTER,
+	50,51,53,TOKEN_REGISTER,54,50,51,ACTION_INSTR_RI8,TOKEN_IMMEDIATE,54,50,51,
+	ACTION_INSTR_I8,55,50,51,ACTION_INSTR_RRI6,TOKEN_IMMEDIATE,TOKEN_REGISTER,
+	TOKEN_REGISTER,50,51,ACTION_INSTR_RI5,TOKEN_IMMEDIATE,TOKEN_REGISTER,50,51,
+	ACTION_INSTR_RRI5,TOKEN_IMMEDIATE,TOKEN_REGISTER,TOKEN_REGISTER,50,51,
+	ACTION_INSTR_CMD,50,51,ACTION_MACRO_LD,TOKEN_LABEL,TOKEN_REGISTER,50,51,
+	ACTION_MACRO_ST,TOKEN_LABEL,TOKEN_REGISTER,50,51,ACTION_MACRO_DS,
+	TOKEN_REGISTER,50,51,ACTION_MACRO_TO,56,50,51,ACTION_WORD,TOKEN_IMMEDIATE,
+	50,51,ACTION_ARRY,57,50,51,ACTION_ADDR,58,50,51,ACTION_LABEL_DECL,
+	TOKEN_COLON,50,50,ACTION_INSTR_RRR,50,ACTION_INSTR_RRI5,50,
+	ACTION_INSTR_RRI4,50,TOKEN_REGISTER,50,TOKEN_IMMEDIATE,50,TOKEN_LABEL,50,
 };
 
 // TODO- constructor; resets value of parse state.
@@ -115,29 +115,33 @@ ParseStateType_e ParseState::nextState(SyntaxToken_e popTkn) {
         if (popTkn == TOKEN_LABEL) {nextIdx = 74; break;}
         if (popTkn == TOKEN_EOF) {nextIdx = 78; break;}
         nextIdx = -1; break;
-    case 51:
+    case 52:
         if (popTkn == TOKEN_REGISTER) {nextIdx = 79; break;}
         if (popTkn == TOKEN_IMMEDIATE) {nextIdx = 81; break;}
         nextIdx = -1; break;
-    case 52:
+    case 53:
         if (popTkn == TOKEN_REGISTER) {nextIdx = 79; break;}
         if (popTkn == TOKEN_IMMEDIATE) {nextIdx = 83; break;}
         nextIdx = -1; break;
-    case 53:
+    case 54:
         if (popTkn == TOKEN_FLAG) {nextIdx = 85; break;}
         if (popTkn == TOKEN_REGISTER) {nextIdx = 78; break;}
         nextIdx = -1; break;
-    case 54:
+    case 55:
         if (popTkn == TOKEN_FLAG) {nextIdx = 87; break;}
         if (popTkn == TOKEN_IMMEDIATE) {nextIdx = 78; break;}
         nextIdx = -1; break;
-    case 55:
+    case 56:
         if (popTkn == TOKEN_REGISTER) {nextIdx = 89; break;}
         if (popTkn == TOKEN_LABEL) {nextIdx = 78; break;}
         nextIdx = -1; break;
-    case 56:
+    case 57:
         if (popTkn == TOKEN_STRING) {nextIdx = 78; break;}
         if (popTkn == TOKEN_IMMEDIATE) {nextIdx = 78; break;}
+        nextIdx = -1; break;
+    case 58:
+        if (popTkn == TOKEN_IMMEDIATE) {nextIdx = 78; break;}
+        if (popTkn == TOKEN_QUESTION) {nextIdx = 78; break;}
         nextIdx = -1; break;
 	default: // Non-transition state- already set to error...
 		break;

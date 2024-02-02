@@ -30,6 +30,9 @@ _SUB_START:
 	# General colon (for declaring labels).
 	IS	:		_colon
 	
+	# General Question mark (for ambiguous addresses).
+	IS	?		_qmark
+	
 	# Start of flags (a,s,nzpc)
 	IS	a		_flgValid
 	IS	s		_flgValid
@@ -475,3 +478,6 @@ _strValid:
 
 _colon:
 	ELSE		TOKEN_COLON
+
+_qmark:
+	ELSE		TOKEN_QUESTION 
