@@ -9,6 +9,7 @@
 #include <iostream>
 #include <stack>
 #include <queue>
+#include "AsmToken.h"
 #include "SyntaxToken_e.h"
 #include "ScanState.h"
 #include "ParseState.h"
@@ -28,7 +29,7 @@ void syntaxMain(int argc, char* argv[]) {
 	// General Scanning Loop.
 	string buffer;
 	ScanState state;
-	queue<SyntaxToken_e> tokens;
+	queue<AsmToken*> tokens;
 	do {
 		// Reset per new start to tokenizing.
 		buffer = "";
@@ -56,7 +57,8 @@ void syntaxMain(int argc, char* argv[]) {
 		// Record token (except comments).
 		cout << "TOKEN: buf=" << buffer << ", tkn=" << state.asToken() << endl;
 		if (state.asToken() != TOKEN_COMMENT) {
-			tokens.push(state.asToken());
+			AsmToken* newTkn = new AsmToken(state.asToken(), buffer);
+			tokens.push(newTkn);
 		}
 	} while(state.asToken() != TOKEN_EOF);
 
@@ -66,7 +68,7 @@ void syntaxMain(int argc, char* argv[]) {
 	parser.reset();
 	while((parser.asType() != PARSE_STATE_EMPTY) && tokens.size()) {
 		// Advance next state.
-		SyntaxToken_e tkn = tokens.front(); tokens.pop();
+		SyntaxToken_e tkn = tokens.front()->getType(); tokens.pop();
 		actStack.push(tkn);
 		parser.nextState(tkn);
 
