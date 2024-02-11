@@ -91,7 +91,7 @@ SCAN_REGEX_DEST    = r'[_a-zA-Z0-9]+'
 SCAN_NODE_SUFFIX   = ":"
 
 # Dictionary of valid keywords- values reveal keyword's # of required arguments.
-KEYWORD_DICT = {"IS": 2, "IN": 3, "LBL_CHAR": 1, "HEX_CHAR": 1}
+KEYWORD_DICT = {"IS": 2, "IN": 3, "LBL_CHAR": 1, "HEX_CHAR": 1, "ELSE": 1}
 
 # Pertinent values for generating header file.
 GEN_TEMPLATE_PATH    = "./ScanStateTemplate.h"
@@ -103,6 +103,7 @@ GEN_ENUM_LINE_TP     = "%s = TOKEN_MAX_VALUE + %d,\n"
 GEN_ENUM_INC_INIT    = 1
 GEN_CASE_NODE_TP     = "case %s:\n"
 GEN_CASE_LINE_TP     = "if (%s) {nextState = %s; break;}\n"
+GEN_CASE_ELSE_TP     = "nextState = %s; break;\n"
 GEN_CASE_END_TP      = "break;\n"
 GEN_CASE_LINE_PREFIX = "else "
 GEN_SUB_PREFIX       = "SCAN_SUB_"
@@ -129,6 +130,9 @@ def getTransition(tkns):
         clause = "IN('%s','%s')"%(tkns[1], tkns[2])
         if not re.fullmatch(SCAN_REGEX_TOKEN, tkns[3]): tkns[3] = GEN_SUB_PREFIX + tkns[3]
         return GEN_CASE_LINE_TP%(clause, tkns[3])
+    if tkns[0] == "ELSE":
+        if not re.fullmatch(SCAN_REGEX_TOKEN, tkns[1]): tkns[1] = GEN_SUB_PREFIX + tkns[1]
+        return GEN_CASE_ELSE_TP%(tkns[1])
     else: 
         if not re.fullmatch(SCAN_REGEX_TOKEN, tkns[1]): tkns[1] = GEN_SUB_PREFIX + tkns[1]
         return GEN_CASE_LINE_TP%(tkns[0], tkns[1])
@@ -350,8 +354,8 @@ def genHeader(outFilename, enumStates, caseData):
                     # Determine transition.
                     baseTransition = getTransition(tkns)
                     
-                    # Create line.
-                    if hasIf:
+                    # Create line. # TODO- fix hard-coded check.
+                    if hasIf and tkns[0] != "ELSE":
                         genLine = GEN_TAB*3 + GEN_CASE_LINE_PREFIX + baseTransition
                     else:
                         genLine = GEN_TAB*3 + baseTransition
