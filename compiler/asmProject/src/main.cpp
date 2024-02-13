@@ -12,7 +12,7 @@
 #include "AsmToken.h"
 #include "SyntaxToken_e.h"
 #include "ScanState.h"
-#include "ParseState.h"
+//#include "ParseState.h"
 
 using namespace std;
 
@@ -30,23 +30,30 @@ void syntaxMain(int argc, char* argv[]) {
 	string buffer;
 	ScanState state;
 	queue<AsmToken*> tokens;
+	int lineNum = 1;
 	do {
 		// Reset per new start to tokenizing.
 		buffer = "";
 		state.reset();
 		uint8_t peekChar = fgetc(fptr); ungetc(peekChar, fptr);
 		state.nextState(peekChar);
-		while(state.asType() != SCAN_STATE_TOKEN) {
+		while(state.asType() != SCAN_TYPE_TOKEN) {
 			// Report error in scanning.
-			if (state.asType() == SCAN_STATE_ERROR) {
-				cout << "ERROR: buf=" << buffer << ", peek=" << fgetc(fptr) << endl;
+			if (state.asType() == SCAN_TYPE_ERROR) {
+				cout << "ERROR (line " << lineNum << "): buf=" << buffer
+						<< ", peek=" << fgetc(fptr) << endl;
 				return;
 			}
 
 			// Pop char, adding it to the buffer if part of a token.
 			uint8_t popChar = fgetc(fptr);
-			if (state.asType() == SCAN_STATE_SCANNING) {
+			if (state.asType() == SCAN_TYPE_SCANNING) {
 				buffer += popChar;
+			}
+
+			// Tracking line number.
+			if (popChar == '\n') {
+				lineNum++;
 			}
 
 			// Get next state with peek.
@@ -55,13 +62,15 @@ void syntaxMain(int argc, char* argv[]) {
 		}
 
 		// Record token (except comments).
-		cout << "TOKEN: buf=" << buffer << ", tkn=" << state.asToken() << endl;
+		cout << "TOKEN (line" << lineNum << "): buf=" << buffer
+				<< ", tkn=" << state.asToken() << endl;
 		if (state.asToken() != TOKEN_COMMENT) {
 			AsmToken* newTkn = new AsmToken(state.asToken(), buffer);
 			tokens.push(newTkn);
 		}
 	} while(state.asToken() != TOKEN_EOF);
 
+	/*
 	// General parsing loop.
 	ParseState parser;
 	stack<SyntaxToken_e> actStack;
@@ -96,6 +105,7 @@ void syntaxMain(int argc, char* argv[]) {
 		cout << "ERROR: Extra tokens left over from parsing" << endl;
 		return;
 	}
+	*/
 }
 
 /*

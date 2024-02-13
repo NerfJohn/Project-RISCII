@@ -105,6 +105,7 @@ private:
 #define IN(x,y)  ((x <= peekChar) && (peekChar <= y))
 #define LBL_CHAR (IN('a', 'z') || IN('A', 'Z') || IN('0', '9') || IS('_'))
 #define HEX_CHAR (IN('a', 'f') || IN('A', 'F') || IN('0', '9'))
+#define EOF_CHAR (255 == peekChar)
 
 //============================================================================//
 
@@ -143,7 +144,7 @@ ScanStateType_e ScanState::nextState(uint8_t peekChar) {
 	int nextState = SCAN_SUB_ERROR;
 	
 	// Run transition logic (here we go!).
-	switch (nextState) {
+	switch (m_rawState) {
 		@caseData // auto-generated (if (<clause>) {nextState = <dest>;})
 		default: // Non-transition state- already set to error...
 			break;

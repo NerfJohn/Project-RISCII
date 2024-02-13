@@ -1,1 +1,9 @@
-.addr ?
+.glbl start
+
+; Start of program
+start:
+LBI	$0	0x34
+LBI	%s	$1	-20 ; Vunderbar
+
+ADD	$3	$0	$1
+HLT

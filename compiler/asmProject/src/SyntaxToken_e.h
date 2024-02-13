@@ -27,27 +27,26 @@ typedef enum SyntaxToken_e {
     TOKEN_SWP         = 13,
     TOKEN_NOP         = 14,
     TOKEN_HLT         = 15,            // ~Instruction Mnemonics
-    TOKEN_LD          = 16,            // "Load" Macro
-    TOKEN_ST          = 17,            // "Store" Macro
-    TOKEN_DS          = 18,            // "Data Stack Address" Macro
-    TOKEN_TO          = 19,            // "Goto" Macro
+    TOKEN_LD          = 16,            // "Load" built-in function
+    TOKEN_ST          = 17,            // "Store" built-in function
+    TOKEN_LA          = 18,            // "Load Address" built-in function
+    TOKEN_TO          = 19,            // "Goto" built-in function
     TOKEN_WORD        = 20,            // .word Directive
     TOKEN_ARRY        = 21,            // .arry Directive
-    TOKEN_ADDR        = 22,            // .addr Directive
-    TOKEN_IMMEDIATE   = 23,            // Immediate (decimal/hexadecimal)
-    TOKEN_REGISTER    = 24,            // Register
-    TOKEN_STRING      = 25,            // String Literal
-    TOKEN_FLAG        = 26,            // Flags
-    TOKEN_LABEL       = 27,            // Label
-    TOKEN_COLON       = 28,            // Colon (for label decls)
-    TOKEN_COMMENT     = 29,            // Comment
-	TOKEN_QUESTION    = 30,            // Question Mark
+	TOKEN_GLBL        = 22,
+	TOKEN_HEAP        = 23,
+    TOKEN_IMMEDIATE   = 24,            // Immediate (decimal/hexadecimal)
+    TOKEN_REGISTER    = 25,            // Register
+    TOKEN_STRING      = 26,            // String Literal
+    TOKEN_FLAG        = 27,            // Flags
+    TOKEN_LABEL       = 28,            // Label
+    TOKEN_COLON       = 29,            // Colon (for label decls)
+    TOKEN_COMMENT     = 30,            // Comment
 
     // Special values.
     TOKEN_EOF         = 31,            // EOF detected/read in
     TOKEN_INVALID     = 32,            // Invalid/Unknown token
-    TOKEN_VAL_MIN     = TOKEN_AND,     // Lowest token value
-    TOKEN_VAL_MAX     = TOKEN_INVALID, // Highest token value
+	TOKEN_MAX_VALUE   = TOKEN_INVALID  // Highest occupied index by enum
 } SyntaxToken_e;
 
 #endif /* SRC_SYNTAXTOKEN_E_H_ */

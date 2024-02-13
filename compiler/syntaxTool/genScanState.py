@@ -46,13 +46,17 @@ below for a summary of the syntax and their use:
     
     == Rule Syntax ==
     -> IS keyword: Used to match peeked char with a given char
-        ~ Syntax: "IS   <char> <label or token>
+        ~ Syntax: "IS   <char> <label or token>"
     -> IN keyword: Used to match peeked char with range of chars
-        ~ Syntax: "IN   <low char> <high char> <label or token>
+        ~ Syntax: "IN   <low char> <high char> <label or token>"
     -> LBL_CHAR keyword: Used to match peeked char with label char (a-zA-Z0-9_)
-        ~ Syntax: "LBL_CHAR   <label or token>
+        ~ Syntax: "LBL_CHAR   <label or token>"
     -> HEX_CHAR keyword: Used to match peeked char with hex char (a-fA-F0-9)
-        ~ Syntax: "HEX_CHAR   <label or token>
+        ~ Syntax: "HEX_CHAR   <label or token>"
+    -> ELSE keyword: Used to force transition, regardless of peeked char
+        ~ Syntax: "ELSE   <label or token>"
+    -> EOF_CHAR keyword: Used to match peeked char with EOF character
+        ~ Syntax: "EOF_CHAR   <label of token>"
     
     == Additional Syntax ==
     -> \s: Stand-in for "space" char for rules (replaced with ' ' in output)
@@ -91,7 +95,7 @@ SCAN_REGEX_DEST    = r'[_a-zA-Z0-9]+'
 SCAN_NODE_SUFFIX   = ":"
 
 # Dictionary of valid keywords- values reveal keyword's # of required arguments.
-KEYWORD_DICT = {"IS": 2, "IN": 3, "LBL_CHAR": 1, "HEX_CHAR": 1, "ELSE": 1}
+KEYWORD_DICT = {"IS": 2, "IN": 3, "LBL_CHAR": 1, "HEX_CHAR": 1, "ELSE": 1, "EOF_CHAR": 1}
 
 # Pertinent values for generating header file.
 GEN_TEMPLATE_PATH    = "./ScanStateTemplate.h"
@@ -103,7 +107,7 @@ GEN_ENUM_LINE_TP     = "%s = TOKEN_MAX_VALUE + %d,\n"
 GEN_ENUM_INC_INIT    = 1
 GEN_CASE_NODE_TP     = "case %s:\n"
 GEN_CASE_LINE_TP     = "if (%s) {nextState = %s; break;}\n"
-GEN_CASE_ELSE_TP     = "nextState = %s; break;\n"
+GEN_CASE_ELSE_TP     = "nextState = %s;\n"
 GEN_CASE_END_TP      = "break;\n"
 GEN_CASE_LINE_PREFIX = "else "
 GEN_SUB_PREFIX       = "SCAN_SUB_"
@@ -224,7 +228,7 @@ def scanRules(inFilename, enumStates, caseData):
         if len(line) == 0 or re.fullmatch(SCAN_REGEX_COMMENT, line):
             continue
         
-        # Break into component parts (aliased spaces resolved here).
+        # Break into component parts (aliased spaces/EOFs resolved here).
         line = line.replace(" ","\t").replace(SCAN_SPACE_ALIAS," ") # resolve spaces
         tkns = [x for x in line.split("\t") if x]                   # tokenize by tabs
         
@@ -255,7 +259,7 @@ def scanRules(inFilename, enumStates, caseData):
                 sys.exit(RETURN_BAD)
         
             # As a edge/transition, ensure first token is a valid keyword.
-            if KEYWORD_DICT[firstTkn] == None:
+            if not firstTkn in KEYWORD_DICT:
                 print("ERR  %s:%d  Unknown keyword \"%s\""%(inFilename, lineNum, firstTkn))
                 sys.exit(RETURN_BAD)
             
