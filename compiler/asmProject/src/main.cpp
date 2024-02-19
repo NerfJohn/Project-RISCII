@@ -12,7 +12,7 @@
 #include "AsmToken.h"
 #include "SyntaxToken_e.h"
 #include "ScanState.h"
-//#include "ParseState.h"
+#include "ParseState.h"
 
 using namespace std;
 
@@ -70,34 +70,33 @@ void syntaxMain(int argc, char* argv[]) {
 		}
 	} while(state.asToken() != TOKEN_EOF);
 
-	/*
 	// General parsing loop.
 	ParseState parser;
 	stack<SyntaxToken_e> actStack;
 	parser.reset();
-	while((parser.asType() != PARSE_STATE_EMPTY) && tokens.size()) {
+	while((parser.asType() != PARSE_TYPE_EMPTY) && tokens.size()) {
 		// Advance next state.
 		SyntaxToken_e tkn = tokens.front()->getType(); tokens.pop();
 		actStack.push(tkn);
 		parser.nextState(tkn);
 
 		// Respond to errors.
-		if (parser.asType() == PARSE_STATE_NO_MATCH) {
+		if (parser.asType() == PARSE_TYPE_NO_MATCH) {
 			cout << "NO MATCH: tkn=" << tkn << endl;
 			return;
 		}
-		else if (parser.asType() == PARSE_STATE_MISMATCH) {
+		else if (parser.asType() == PARSE_TYPE_MISMATCH) {
 			SyntaxToken_e other = parser.asToken();
 			cout << "MISMATCH: exp=" << other << ", act=" << tkn << endl;
 			return;
 		}
 
 		// Do actions.
-		while (parser.asType() == PARSE_STATE_ACTION) {
+		while (parser.asType() == PARSE_TYPE_ACTION) {
 			cout << "ACTION: action=" << parser.popAction() << endl;
 		}
 	}
-	if (parser.asType() != PARSE_STATE_EMPTY) {
+	if (parser.asType() != PARSE_TYPE_EMPTY) {
 		cout << "ERROR: Parser wasn't cleared by end of tokens" << endl;
 		return;
 	}
@@ -105,7 +104,6 @@ void syntaxMain(int argc, char* argv[]) {
 		cout << "ERROR: Extra tokens left over from parsing" << endl;
 		return;
 	}
-	*/
 }
 
 /*

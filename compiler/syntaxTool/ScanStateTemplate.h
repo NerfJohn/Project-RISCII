@@ -39,7 +39,7 @@
  * 
  * Types represent 1+ ScanState sub-states, referring to the broader steps of
  * scanning (that the application may care about). The application may use
- * these values to guide data/control actions of scanning process.
+ * these values to guide data/control actions of the scanning process.
  */
 typedef enum {
 	SCAN_TYPE_SEARCHING = 0, // ScanState is searching for a token
@@ -54,7 +54,7 @@ typedef enum {
  * Class encapsulating scan transition logic. Acts similar to a "super enum".
  * 
  * Instances track state machine progress of a scan. Can be checked for general
- * status of scan and report token types as their scanned. Transition logic
+ * status of scan and report token types as they're scanned. Transition logic
  * determined by rules given to auto-generator script.
  */
 class ScanState {
@@ -87,7 +87,7 @@ public:
 	/*
 	 * Returns state as scan token. Invalid if state type isn't a token.
 	 * 
-	 * @return scanned token if state type is valid otherwise TOKEN_INVALID
+	 * @return scanned token if state type is valid, otherwise TOKEN_INVALID
 	 */
 	SyntaxToken_e asToken(void);
 
@@ -112,9 +112,9 @@ private:
 /*
  * Active sub-states of ScanState. NOT intended for application code use.
  * 
- * Sub-states of ScanState. Defined on top of SytaxToken_e types to allow mixing
- * of the two in transition logic. These states are (mostly) non-terminal and
- * should NOT be referenced by application code.
+ * Sub-states of ScanState. Defined on top of SyntaxToken_e types to allow
+ * mixing of the two in transition logic. These states are (mostly) non-terminal
+ * and should NOT be referenced by application code.
  */
 typedef enum {
 	@enumStates // auto-generated (SCAN_SUB_<name> = TOKEN_MAX_VALUE + #)

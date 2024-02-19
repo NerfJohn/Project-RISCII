@@ -1,0 +1,13 @@
+################################################################################
+# parseRules.txt
+#
+# "Parse ruleset for RISCII assembler/linker language"
+#
+# Author: John Eslinger
+################################################################################
+
+###                        ###
+# -- Starting State Rules -- #
+###                        ###
+start:
+	TOKEN_AND		TOKEN_REGISTER	TOKEN_REGISTER	ACTION_FOO
