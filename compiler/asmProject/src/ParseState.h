@@ -129,6 +129,10 @@ private:
 typedef enum {
     PARSE_SUB_NULL = ACTION_MAX_VALUE + 1,
     PARSE_SUB_start = ACTION_MAX_VALUE + 2,
+    PARSE_SUB_op3 = ACTION_MAX_VALUE + 3,
+    PARSE_SUB_flag_reg = ACTION_MAX_VALUE + 4,
+    PARSE_SUB_reg_label = ACTION_MAX_VALUE + 5,
+    PARSE_SUB_strs_imm = ACTION_MAX_VALUE + 6,
 } ParseSubState_e;
 
 //============================================================================//
@@ -141,7 +145,24 @@ typedef enum {
  * PARSE_SUB_NULL is hit (ie "null terminated string").
  */
 static int PARSE_PATTERNS[] = {
-     ACTION_FOO, TOKEN_REGISTER, TOKEN_REGISTER, PARSE_SUB_NULL,
+     PARSE_SUB_start, ACTION_INSTR, PARSE_SUB_op3, TOKEN_REGISTER,
+     TOKEN_REGISTER, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_INSTR,
+     PARSE_SUB_op3, TOKEN_REGISTER, PARSE_SUB_flag_reg, PARSE_SUB_NULL,
+     PARSE_SUB_start, ACTION_INSTR, TOKEN_IMMEDIATE, PARSE_SUB_flag_reg,
+     PARSE_SUB_NULL, PARSE_SUB_start, ACTION_INSTR, TOKEN_IMMEDIATE,
+     TOKEN_REGISTER, TOKEN_REGISTER, PARSE_SUB_NULL, PARSE_SUB_start,
+     ACTION_INSTR, TOKEN_IMMEDIATE, TOKEN_FLAG, PARSE_SUB_NULL, PARSE_SUB_start,
+     ACTION_INSTR, TOKEN_IMMEDIATE, TOKEN_REGISTER, PARSE_SUB_NULL,
+     PARSE_SUB_start, ACTION_INSTR, PARSE_SUB_NULL, PARSE_SUB_start,
+     ACTION_FUNCTION, TOKEN_LABEL, TOKEN_REGISTER, PARSE_SUB_NULL,
+     PARSE_SUB_start, ACTION_FUNCTION, TOKEN_LABEL, TOKEN_REGISTER,
+     TOKEN_REGISTER, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_FUNCTION,
+     PARSE_SUB_reg_label, TOKEN_REGISTER, PARSE_SUB_NULL, PARSE_SUB_start,
+     ACTION_DATA, TOKEN_IMMEDIATE, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_DATA,
+     PARSE_SUB_strs_imm, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_DIRECTIVE,
+     TOKEN_LABEL, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_LABEL, TOKEN_COLON,
+     PARSE_SUB_NULL, PARSE_SUB_NULL, TOKEN_REGISTER, PARSE_SUB_NULL,
+     TOKEN_LABEL, PARSE_SUB_NULL, PARSE_SUB_strs_imm, PARSE_SUB_NULL,
 };
 
 //============================================================================//
@@ -201,6 +222,47 @@ ParseStateType_e ParseState::nextState(SyntaxToken_e popTkn) {
 	switch(m_rawState.top()) {
         case PARSE_SUB_start:
             if (TOKEN_AND == popTkn) {nextIdx = 0; break;}
+            else if (TOKEN_ORR == popTkn) {nextIdx = 0; break;}
+            else if (TOKEN_XOR == popTkn) {nextIdx = 0; break;}
+            else if (TOKEN_SHL == popTkn) {nextIdx = 0; break;}
+            else if (TOKEN_ADD == popTkn) {nextIdx = 0; break;}
+            else if (TOKEN_SUB == popTkn) {nextIdx = 0; break;}
+            else if (TOKEN_SHR == popTkn) {nextIdx = 6; break;}
+            else if (TOKEN_LBI == popTkn) {nextIdx = 12; break;}
+            else if (TOKEN_LDR == popTkn) {nextIdx = 17; break;}
+            else if (TOKEN_STR == popTkn) {nextIdx = 17; break;}
+            else if (TOKEN_SWP == popTkn) {nextIdx = 17; break;}
+            else if (TOKEN_BRC == popTkn) {nextIdx = 23; break;}
+            else if (TOKEN_JPR == popTkn) {nextIdx = 28; break;}
+            else if (TOKEN_JLR == popTkn) {nextIdx = 17; break;}
+            else if (TOKEN_NOP == popTkn) {nextIdx = 33; break;}
+            else if (TOKEN_HLT == popTkn) {nextIdx = 33; break;}
+            else if (TOKEN_LD == popTkn) {nextIdx = 36; break;}
+            else if (TOKEN_ST == popTkn) {nextIdx = 41; break;}
+            else if (TOKEN_TO == popTkn) {nextIdx = 47; break;}
+            else if (TOKEN_LA == popTkn) {nextIdx = 36; break;}
+            else if (TOKEN_WORD == popTkn) {nextIdx = 52; break;}
+            else if (TOKEN_ARRY == popTkn) {nextIdx = 56; break;}
+            else if (TOKEN_GLBL == popTkn) {nextIdx = 60; break;}
+            else if (TOKEN_HEAP == popTkn) {nextIdx = 60; break;}
+            else if (TOKEN_LABEL == popTkn) {nextIdx = 64; break;}
+            else if (TOKEN_EOF == popTkn) {nextIdx = 68; break;}
+            break;
+        case PARSE_SUB_op3:
+            if (TOKEN_REGISTER == popTkn) {nextIdx = 68; break;}
+            else if (TOKEN_IMMEDIATE == popTkn) {nextIdx = 68; break;}
+            break;
+        case PARSE_SUB_flag_reg:
+            if (TOKEN_FLAG == popTkn) {nextIdx = 69; break;}
+            else if (TOKEN_REGISTER == popTkn) {nextIdx = 68; break;}
+            break;
+        case PARSE_SUB_reg_label:
+            if (TOKEN_REGISTER == popTkn) {nextIdx = 71; break;}
+            else if (TOKEN_LABEL == popTkn) {nextIdx = 68; break;}
+            break;
+        case PARSE_SUB_strs_imm:
+            if (TOKEN_STRING == popTkn) {nextIdx = 73; break;}
+            else if (TOKEN_IMMEDIATE == popTkn) {nextIdx = 68; break;}
             break;
 		default: // Non-transition state- already set to error...
 			break;

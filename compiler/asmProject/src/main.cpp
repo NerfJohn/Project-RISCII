@@ -13,6 +13,7 @@
 #include "SyntaxToken_e.h"
 #include "ScanState.h"
 #include "ParseState.h"
+#include "BogeNodes.h"
 
 using namespace std;
 
@@ -72,12 +73,13 @@ void syntaxMain(int argc, char* argv[]) {
 
 	// General parsing loop.
 	ParseState parser;
-	stack<SyntaxToken_e> actStack;
+	stack<AsmToken> actStack;
+	vector<IBuildItem*> mainDS;
 	parser.reset();
 	while((parser.asType() != PARSE_TYPE_EMPTY) && tokens.size()) {
 		// Advance next state.
+		actStack.push(*tokens.front());
 		SyntaxToken_e tkn = tokens.front()->getType(); tokens.pop();
-		actStack.push(tkn);
 		parser.nextState(tkn);
 
 		// Respond to errors.
@@ -93,7 +95,35 @@ void syntaxMain(int argc, char* argv[]) {
 
 		// Do actions.
 		while (parser.asType() == PARSE_TYPE_ACTION) {
-			cout << "ACTION: action=" << parser.popAction() << endl;
+			ParseAction_e act = parser.popAction();
+			cout << "ACTION: action=" << act << endl;
+
+			// Create item.
+			IBuildItem* newItem;
+			switch(act) {
+				case ACTION_INSTR:
+					newItem = new InstrItem(&actStack);
+					break;
+				case ACTION_FUNCTION:
+					newItem = new FuncItem(&actStack);
+					break;
+				case ACTION_DATA:
+					newItem = new DataItem(&actStack);
+					break;
+				case ACTION_DIRECTIVE:
+					newItem = new DirectiveItem(&actStack);
+					break;
+				case ACTION_LABEL:
+					newItem = new LabelItem(&actStack);
+					break;
+				default:
+					cout << "ERROR: unknown action = " << (int)(act) << endl;
+					return;
+			}
+
+			// Announce + add item to listing.
+			newItem->print();
+			mainDS.push_back(newItem);
 		}
 	}
 	if (parser.asType() != PARSE_TYPE_EMPTY) {

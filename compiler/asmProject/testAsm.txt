@@ -1,1 +1,29 @@
-AND $0 $3
+; Dummy program that accumulates string characters
+
+myText: .arry "Hello World!\0" 13
+
+.glbl start
+
+; Main loop: Add values within myText
+start:
+
+; Setup- $7 = accum, $0 = address, $2 = counter, $1 = loaded char
+LBI	$1	0
+LBI	$7	0
+LBI	$2	13
+_la	$0	myText
+
+; Add char to accumulator
+LDR	$1	$0	0
+ADD	$7	$7	$1
+
+; Adjust incrementor + address
+ADD	$0	$0	2
+ADD	$2	$2	-1
+
+; Keep incrementing until over.
+AND	$2	$2	$2	; load condition codes
+BRC	%np	-6
+
+; All done- halt.
+HLT

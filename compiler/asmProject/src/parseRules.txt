@@ -10,4 +10,79 @@
 # -- Starting State Rules -- #
 ###                        ###
 start:
-	TOKEN_AND		TOKEN_REGISTER	TOKEN_REGISTER	ACTION_FOO
+	# Handle RRR/RRI instructions (no flags).
+	TOKEN_AND		TOKEN_REGISTER	TOKEN_REGISTER	op3	ACTION_INSTR	start
+	TOKEN_ORR		TOKEN_REGISTER	TOKEN_REGISTER	op3	ACTION_INSTR	start
+	TOKEN_XOR		TOKEN_REGISTER	TOKEN_REGISTER	op3	ACTION_INSTR	start
+	TOKEN_SHL		TOKEN_REGISTER	TOKEN_REGISTER	op3	ACTION_INSTR	start
+	TOKEN_ADD		TOKEN_REGISTER	TOKEN_REGISTER	op3	ACTION_INSTR	start
+	TOKEN_SUB		TOKEN_REGISTER	TOKEN_REGISTER	op3	ACTION_INSTR	start
+	
+	# Handle SHR (special RRR/RRI case- may have flag).
+	TOKEN_SHR		flag_reg	TOKEN_REGISTER	op3	ACTION_INSTR	start
+	
+	# Handle LBI (special data instruction).
+	TOKEN_LBI		flag_reg	TOKEN_IMMEDIATE	ACTION_INSTR	start
+	
+	# Handle Memory instructions.
+	TOKEN_LDR		TOKEN_REGISTER	TOKEN_REGISTER	TOKEN_IMMEDIATE	ACTION_INSTR	start
+	TOKEN_STR		TOKEN_REGISTER	TOKEN_REGISTER	TOKEN_IMMEDIATE	ACTION_INSTR	start
+	TOKEN_SWP		TOKEN_REGISTER	TOKEN_REGISTER	TOKEN_IMMEDIATE	ACTION_INSTR	start
+	
+	# Handle Jump instructions.
+	TOKEN_BRC		TOKEN_FLAG		TOKEN_IMMEDIATE	ACTION_INSTR	start
+	TOKEN_JPR		TOKEN_REGISTER	TOKEN_IMMEDIATE	ACTION_INSTR	start
+	TOKEN_JLR		TOKEN_REGISTER	TOKEN_REGISTER	TOKEN_IMMEDIATE	ACTION_INSTR	start
+	
+	# Handle Command instructions.
+	TOKEN_NOP		ACTION_INSTR	start
+	TOKEN_HLT		ACTION_INSTR	start
+	
+	# Handle Built-in functions.
+	TOKEN_LD		TOKEN_REGISTER	TOKEN_LABEL		ACTION_FUNCTION	start
+	TOKEN_ST		TOKEN_REGISTER	TOKEN_REGISTER	TOKEN_LABEL		ACTION_FUNCTION	start
+	TOKEN_TO		TOKEN_REGISTER	reg_label		ACTION_FUNCTION	start
+	TOKEN_LA		TOKEN_REGISTER	TOKEN_LABEL		ACTION_FUNCTION	start
+	
+	# Handle Data directives.
+	TOKEN_WORD		TOKEN_IMMEDIATE	ACTION_DATA		start
+	TOKEN_ARRY		strs_imm		ACTION_DATA		start
+	
+	# Handle Organization directives.
+	TOKEN_GLBL		TOKEN_LABEL	ACTION_DIRECTIVE	start
+	TOKEN_HEAP		TOKEN_LABEL	ACTION_DIRECTIVE	start
+	
+	# Handle Label declarations.
+	TOKEN_LABEL		TOKEN_COLON	ACTION_LABEL	start
+	
+	# End with all lines completely parsed.
+	TOKEN_EOF
+
+###                     ###
+# -- "Either/Or" Rules -- #
+###                     ###
+
+## -- RRR/RRI tail: simply match to one or another -- ##
+op3:
+	TOKEN_REGISTER
+	TOKEN_IMMEDIATE
+
+###                          ###
+# -- "Optional Token" Rules -- #
+###                          ###
+
+## -- Register may be preceded by flag -- ##
+flag_reg:
+	TOKEN_FLAG		TOKEN_REGISTER
+	TOKEN_REGISTER
+
+## -- Label may be preceded by register -- ##
+reg_label:
+	TOKEN_REGISTER	TOKEN_LABEL
+	TOKEN_LABEL
+
+## -- Array value: initialized by string(s), sized by integer -- ##
+strs_imm:
+	TOKEN_STRING	strs_imm
+	TOKEN_IMMEDIATE
+	
