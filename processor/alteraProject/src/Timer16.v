@@ -1,6 +1,7 @@
 module Timer16(busAddr, busData, busEn, busWr,	// Bus Signals
 					sigIntr,									// Special Signals
-					clk, rstn								// Common Signals
+					clk, rstn,								// Common Signals
+					sigMAX
 );
 
 //////////////////////////
@@ -18,6 +19,8 @@ output sigIntr;			// Interrupt signal (for overflow)
 
 // Common Signals.
 input clk, rstn;			// Common clock and active-low reset
+
+output[15:0] sigMAX;
 
 /////////////////////////
 // -- Signals/Wires -- //
@@ -107,5 +110,7 @@ assign triEn = busEn & ~busWr;
 // Drive outputs.
 assign busData = triY;
 assign sigIntr = intQ;
+
+assign sigMAX = maxQ;
 
 endmodule

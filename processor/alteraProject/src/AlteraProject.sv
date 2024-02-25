@@ -17,50 +17,54 @@ output[3:0] LEDG; // Green LEDs
 // User Inouts.
 inout[3:0] GPIO0;
 
-/*
-// Helper modules for ease of resources.
-logic clkSignal;
-LazyPll #(.DIVIDER(1000000)) iClk (.inClk(CLOCK_50), .outClk(clkSignal));
-SegDisplay iDisplay[7:0] (.inNibble(32'b0), .outSegs(HEX));
+//==============================================================================
 
-assign LEDR = SW;
-assign LEDG = {4{clkSignal}} & KEY;
-*/
-
-logic[1:0] state;
+// Intermediate signals (related to help modules).
+logic CLK_IN;
+logic[31:0] HEX_OUT;
 
 // Intermediate signals.
-logic dataEn, dataWr, myRstn;
-wire[15:0] dataBus;
-wire[15:0] T_data, T_val, T_ctl, T_max, T_cmp;
+logic inTCK, inTMS, inTDI, outTDO;
+logic       inRSTN;
+logic[2:0]  sigSTATE;
+logic[7:0]  sigIREG;
+logic[15:0] sigDREG;
 
-// 50 Hz clk signal.
-LazyPll #(.DIVIDER(1000000)) iClk (.inClk(CLOCK_50), .outClk(clkSignal));
+logic[15:0] sigMAX;
 
-// Example timer.
-Uart iTMR (.busAddr(state), .busData(dataBus), .busEn(dataEn), .busWr(dataWr), 
-					 .sigTxInt(LEDR[3]), .sigRxInt(/*NC*/), .txOut(GPIO0[0]), .rxIn(GPIO0[3]),
-					 .clk(clkSignal), .rstn(myRstn),
-					 .T_a0(T_val), .T_a1(T_ctl), .T_a2(T_max), .T_a3(T_cmp)
+logic[15:0] busAddr;
+wire busWr, busEn;
+wire[15:0] busData;
+
+
+// Adjusted clock signal and Hex output modules.
+LazyPll #(.DIVIDER(2000000)) iClk (.inClk(CLOCK_50), .outClk(CLK_IN));
+SegDisplay iDisplay[7:0] (.inNibble(HEX_OUT), .outSegs(HEX));
+
+// DUT.
+JtagMemController iJ(.tck(inTCK), .tms(inTMS), .tdi(inTDI), .tdo(outTDO),
+						 .addr(busAddr), .data(busData), .isWr(busWr), .memEn(busEn),
+						 .clk(CLK_IN), .rstn(inRSTN),
+						 .test_state(sigSTATE),
+						 .test_instr(sigIREG),
+						 .test_data(sigDREG)
 );
-					 
-// Human input.
-assign myRstn = KEY[0];
-assign dataEn = ~KEY[1];
-assign dataWr = ~KEY[2];
-assign dataBus = (dataEn & ~dataWr) ? 16'bz : {10'b0, SW[5:0]};
-assign state = SW[7:6];
 
-assign GPIO0[2:1] = 0;
+// DUT #2.
+Timer16 iT (.busEn(busEn), .busWr(busWr), .busAddr(busAddr[1:0]), .busData(busData), .sigIntr(/*NC*/), .clk(CLK_IN), .rstn(inRSTN),
+				.sigMAX(sigMAX));
 
-// Human feedback.
-assign LEDR[1:0] = state;
-assign LEDR[2] = 0;
+// Human Input.
+assign inTCK = SW[2];
+assign inTMS = SW[1];
+assign inTDI = SW[0];
+assign inRSTN = KEY[0];
+
+// Human Feedback.
+assign LEDR[0] = outTDO;
+assign LEDR[1] = busEn;
+assign LEDR[2] = busWr;
+assign HEX_OUT = {5'b0, sigSTATE, sigIREG, sigMAX};
 assign LEDG = ~KEY;
-assign T_data = (state == 0) ? T_val :
-                (state == 1) ? T_ctl :
-					 (state == 2) ? T_max :
-					 T_cmp;
-SegDisplay iDisplay[7:0] (.inNibble({dataBus, T_data}), .outSegs(HEX));
 
 endmodule
