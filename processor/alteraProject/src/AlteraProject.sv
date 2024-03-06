@@ -27,44 +27,32 @@ logic[31:0] HEX_OUT;
 logic inTCK, inTMS, inTDI, outTDO;
 logic       inRSTN;
 logic[2:0]  sigSTATE;
-logic[7:0]  sigIREG;
-logic[15:0] sigDREG;
-
-logic[15:0] sigMAX;
-
-logic[15:0] busAddr;
-wire busWr, busEn;
-wire[15:0] busData;
-
+logic[7:0]  sigINSTR;
+logic[15:0] sigDATA;
 
 // Adjusted clock signal and Hex output modules.
-LazyPll #(.DIVIDER(2000000)) iClk (.inClk(CLOCK_50), .outClk(CLK_IN));
+LazyPll #(.DIVIDER(50)) iClk (.inClk(CLOCK_50), .outClk(CLK_IN));
 SegDisplay iDisplay[7:0] (.inNibble(HEX_OUT), .outSegs(HEX));
 
-// DUT.
-JtagMemController iJ(.tck(inTCK), .tms(inTMS), .tdi(inTDI), .tdo(outTDO),
-						 .addr(busAddr), .data(busData), .isWr(busWr), .memEn(busEn),
-						 .clk(CLK_IN), .rstn(inRSTN),
-						 .test_state(sigSTATE),
-						 .test_instr(sigIREG),
-						 .test_data(sigDREG)
+JtagPort DUT (.tck(inTCK), .tdi(inTDI), .tms(inTMS), .tdo(outTDO),
+					.wrData(1'b0), .doUpdate(), .instrLine(sigINSTR), .dataLine(),
+					.clk(CLK_IN), .rstn(inRSTN),
+					.test_state(sigSTATE), .test_data(sigDATA)
 );
 
-// DUT #2.
-Timer16 iT (.busEn(busEn), .busWr(busWr), .busAddr(busAddr[1:0]), .busData(busData), .sigIntr(/*NC*/), .clk(CLK_IN), .rstn(inRSTN),
-				.sigMAX(sigMAX));
-
 // Human Input.
-assign inTCK = SW[2];
-assign inTMS = SW[1];
-assign inTDI = SW[0];
 assign inRSTN = KEY[0];
 
+// "Link" IO.
+assign inTCK = GPIO0[0];	// "top left" Altera pin, pin 2 on nano
+assign inTDI = GPIO0[1];	// "top right" Altera pin, pin 3 on nano
+assign inTMS = GPIO0[2];	// "low left" Altera pin, pin 4 on nano
+assign GPIO0[3] = outTDO;	// "low right" Altera pin, pin 5 on nano
+
+assign LEDR = GPIO0;
+
 // Human Feedback.
-assign LEDR[0] = outTDO;
-assign LEDR[1] = busEn;
-assign LEDR[2] = busWr;
-assign HEX_OUT = {5'b0, sigSTATE, sigIREG, sigMAX};
+assign HEX_OUT = {5'b0, sigSTATE, sigINSTR, sigDATA};
 assign LEDG = ~KEY;
 
 endmodule
