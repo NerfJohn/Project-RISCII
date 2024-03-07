@@ -143,11 +143,10 @@ uint8_t jtagByte(uint8_t dataByte, bool toUpdate, uint16_t clkPeriod) {
 // -------------------------------------------------------------------------- //
 
 /*
- * Parses model's message into model's command variables. Clears message buffer.
+ * Parses model's message into model's command variables.
  * 
  * Parsing encompassed little more than moving value around than checking
- * validity of values. However, message buffer values are edited as needed
- * to clear the buffer.
+ * validity of values.
  * 
  * @param model data model of the application
  */
@@ -173,10 +172,6 @@ void parseCommand(DataModel_t* model) {
     model->m_cmdData += model->m_msgBuffer[idx];
     idx++;
   }
-
-  // "Clear" message buffer.
-  model->m_bufferIdx = 0;
-  model->m_bufferSize = 0;
 
   // Message parsed into command fields- job well done.
   return;
@@ -283,6 +278,10 @@ void loop() {
         }
       }
       Serial.write(NEWLINE_CHAR); // end any message with clear "end" delimiter
+
+      // "Clear" message buffer.
+      s_prgmData.m_bufferIdx = 0;
+      s_prgmData.m_bufferSize = 0;
     }
   }
 }
