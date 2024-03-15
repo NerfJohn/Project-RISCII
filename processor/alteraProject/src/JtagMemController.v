@@ -21,17 +21,15 @@ module JtagMemController (
 	output[15:0] test_data,
 	output[15:0] test_addr,
 	output[1:0]  test_sigs
-	
 );
 
 /////////////////////////
 // -- Signals/Wires -- //
 /////////////////////////
 
-// JTAG port wires (those NOT pass-throughs).
-wire jtagWrData, jtagRunCmd;
-wire[7:0] jtagIReg;
-wire[15:0] jtagDReg;
+// JTAG control/data wires (exlcuding external-facing wires).
+wire jtag_wrData, jtag_doUpdate;
+wire[7:0] jtag_instrLine;
 
 // Address register wires.
 wire[15:0] addrD, addrQ;
@@ -51,14 +49,14 @@ wire cmdPulse;
 
 // JTAG port.
 JtagPort JTAG(.tck(tck), .tms(tms), .tdi(tdi), .tdo(tdo), 
-			 .wrData(jtagWrData), .doUpdate(jtagRunCmd), .instrLine(jtagIReg), .dataLine(jtagDReg),
+			 .wrData(jtag_wrData), .doUpdate(jtag_doUpdate), .instrLine(jtag_instrLine), .dataLine(data),
 			 .clk(clk), .rstn(rstn),
 			 .test_state(test_state),
 			 .test_data(test_data)
 );
 
 // Address register (head of address portion of bus- written by JTAG port).
-dff_en ADDR[15:0] (.D(addrD), .Q(addrQ), .en(addrEn), .clk(clk), .rstn(rstn));
+dff_en ADDR_REG[15:0] (.D(addrD), .Q(addrQ), .en(addrEn), .clk(clk), .rstn(rstn));
 
 // Control registers of memory bus.
 myDff WR (.D(wrD), .Q(wrQ), .clk(clk), .rstn(rstn));
@@ -71,28 +69,29 @@ myDff PULSE (.D(pulseD), .Q(pulseQ), .clk(clk), .rstn(rstn));
 // -- Connects/Logic -- //
 //////////////////////////
 
-// Create pulse for knowing when to run command.
-assign pulseD = jtagRunCmd;
-assign cmdPulse = pulseD & ~pulseQ;
+// "Pulser" signals MCU when to apply command.
+assign cmdPulse = jtag_doUpdate & ~pulseQ;
+assign pulseD = jtag_doUpdate;
 
-// Write new address if instruction = 2'b01.
-assign addrEn = ~jtagIReg[1] & jtagIReg[0] & cmdPulse;
-assign addrD = jtagDReg;
+// Set address register on "address" command.
+assign addrD = data;
+assign addrEn = ~jtag_instrLine[1] & jtag_instrLine[0] & cmdPulse; // addr cmd = 0x01
 
-// Set control registers (for mem opertions 10 and 11).
-assign wrD = jtagIReg[0];
-assign enD = jtagIReg[1] & cmdPulse; // one memory request per command
+// Set memory bus controls.
+assign wrD = jtag_instrLine[0]; // write cmd = 0x03
+assign enD = jtag_instrLine[1] & jtag_doUpdate; // read/write cmds = 0b0000001X
 
-// Set JTAG for expected read/write memory operation.
-assign jtagWrData = ~wrQ & enQ;
+// Overwrite JTAG data register for memory read.
+assign jtag_wrData = enQ & ~wrQ & jtag_doUpdate; // memory read
 
-// Connect to memory bus.
+// Test/Debug signals.
+assign test_instr = jtag_instrLine;
+assign test_addr = addrQ;
+assign test_sigs = {enQ, wrQ};
+
+// Drive outputs.
 assign addr = addrQ;
-assign data = jtagDReg;
 assign isWr = wrQ;
-assign memEn = enQ;
-
-// TODO- test signals, to delete.
-assign test_instr = jtagIReg;
+assign memEn = enQ & jtag_doUpdate;
 
 endmodule

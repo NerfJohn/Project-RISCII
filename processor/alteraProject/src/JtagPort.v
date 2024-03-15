@@ -133,6 +133,6 @@ mux2 iMUX4 (.A(dataQ[0]), .B(instrQ[0]), .sel(stateQ[1]), .out(tdo));
 
 // TODO- remove as needed.
 assign test_state = stateQ;
-assign test_data = dataQ;
+assign test_data = dataLine;
 
 endmodule
