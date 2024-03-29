@@ -27,7 +27,7 @@ logic[31:0] HEX_OUT;
 logic inTCK, inTMS, inTDI, outTDO;
 logic       inRSTN;
 logic[2:0]  sigSTATE;
-logic[7:0]  sigINSTR;
+logic[7:0]  sigINSTR, sigBYTE;
 logic[15:0] sigDATA;
 logic[15:0] sigADDR;
 logic[1:0]  sigSIGS;
@@ -35,8 +35,8 @@ logic[1:0]  sigSIGS;
 wire mem_isWr, mem_memEn;
 wire[15:0] mem_addr, mem_data;
 
-logic[15:0] sigTRIS;
-wire[15:0] dut_pins;
+logic[5:0] sigTRIS;
+wire dut_pins, sdaLine;
 
 // Adjusted clock signal and Hex output modules.
 LazyPll #(.DIVIDER(1000000)) iClk (.inClk(CLOCK_50), .outClk(CLK_IN));
@@ -65,17 +65,19 @@ JtagMemController CTRL(
 );
 
 // DUT.
-GpioPort DUT (
+I2cController DUT (
 	// Memory Bus Connections.
-	.GPort_busAddr(mem_addr[1:0]),
-	.GPort_busWr(mem_isWr),
-	.GPort_busEn(mem_memEn),
-	.GPort_busData(mem_data),
+	.I2cController_busAddr(mem_addr[1:0]),
+	.I2cController_busWr(mem_isWr),
+	.I2cController_busEn(mem_memEn),
+	.I2cController_busData(mem_data),
 	
-	// External Pin Connections.
-	.GPort_extPin(dut_pins),
+	// I2C pins/signals.
+	.I2cController_SCL(dut_pins),
+	.I2cController_SDA(sdaLine),
 	
-	.test_tris(sigTRIS),
+	.test_state(sigTRIS),
+	.test_data(sigBYTE),
 	
 	// Common Nets/Signals.
 	.clk(CLK_IN),
@@ -83,7 +85,6 @@ GpioPort DUT (
 );
 
 // TODO-remove.
-assign dut_pins = (sigTRIS == 16'h0) ? {SW, SW} : 16'hzzzz;
 
 // Human Input.
 assign inRSTN = KEY[0];
@@ -97,7 +98,7 @@ assign GPIO0[3] = outTDO;	// "low right" Altera pin, pin 5 on nano
 assign LEDR = GPIO0;
 
 // Human Feedback.
-assign HEX_OUT = {dut_pins, sigDATA};
+assign HEX_OUT = {7'h0, sigTRIS[5], sigBYTE,3'h0, sigTRIS[4:0], 3'h0, sdaLine, 3'h0, dut_pins};
 assign LEDG = ~KEY;
 
 endmodule
