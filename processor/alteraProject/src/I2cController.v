@@ -10,7 +10,7 @@ module I2cController (
 	inout       I2cController_SDA,
 	
 	output[5:0] test_state,
-	output[7:0] test_data,
+	output test_data,
 	
 	// Common Nets/Signals.
 	input       clk,
@@ -77,6 +77,9 @@ wire beginOp, endOp;
 // Processed signals useful for SCL/SDA controls.
 wire inStart, inStop, inAck, inData;
 wire mux_clk_start, mux_sdaStart_sdaStop;
+
+// Wires to ACK/NAK receiver.
+wire recD, recQ, recEn;
 
 ////////////////////////////
 // -- Blocks/Instances -- //
@@ -162,6 +165,15 @@ Tristate SDA_TRI (
 	.Y(sdaTriY)
 );
 
+// Record register for ACK/NAK signal.
+dff_en REC_ACK (
+	.D(recD),
+	.Q(recQ),
+	.en(recEn),
+	.clk(clk),
+	.rstn(rstn)
+);
+
 //////////////////////////
 // -- Connects/Logic -- //
 //////////////////////////
@@ -190,7 +202,7 @@ assign dataEn = wrDataAddr | (inData & baudMatch & runQ & stateQ[0]);
 
 // Drive bus with read hardware register.
 mux2 iMUX0[15:0] (
-	.A({12'h0, ctlStartQ, ctlStopQ, ctlWrQ, ctlEnQ}),
+	.A({11'h0, recQ, ctlStartQ, ctlStopQ, ctlWrQ, ctlEnQ}),
 	.B({baudRateQ, 1'h0}),
 	.sel(I2cController_busAddr[0]),
 	.out(mux_baud_ctl)
@@ -254,9 +266,19 @@ mux2 iMUX6 (
 	.out(sdaTriA)
 );
 assign sdaTriEn = (inData & ctlWrQ) | (inAck & ~ctlWrQ) | (inStart & ctlStartQ) | (inStop & ctlStopQ);
-assign I2cController_SDA = sdaTriY;
+//assign I2cController_SDA = sdaTriY;
+myDff DELAY (
+	.D(sdaTriY),
+	.Q(I2cController_SDA),
+	.clk(clk),
+	.rstn(rstn)
+);
+
+// Record ACK/NAK result of operation.
+assign recD = I2cController_SDA;
+assign recEn = inAck & stateQ[0];
 
 assign test_state = {runQ, stateQ};
-assign test_data = dataQ;
+assign test_data = sdaTriEn;
 
 endmodule

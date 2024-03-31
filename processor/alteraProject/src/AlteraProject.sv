@@ -15,7 +15,7 @@ output[3:0] LEDR; // Red LEDs
 output[3:0] LEDG; // Green LEDs
 
 // User Inouts.
-inout[3:0] GPIO0;
+inout[7:0] GPIO0;
 
 //==============================================================================
 
@@ -27,7 +27,7 @@ logic[31:0] HEX_OUT;
 logic inTCK, inTMS, inTDI, outTDO;
 logic       inRSTN;
 logic[2:0]  sigSTATE;
-logic[7:0]  sigINSTR, sigBYTE;
+logic[7:0]  sigINSTR;
 logic[15:0] sigDATA;
 logic[15:0] sigADDR;
 logic[1:0]  sigSIGS;
@@ -36,10 +36,10 @@ wire mem_isWr, mem_memEn;
 wire[15:0] mem_addr, mem_data;
 
 logic[5:0] sigTRIS;
-wire dut_pins, sdaLine;
+wire dut_pins, sdaLine, sigBYTE;
 
 // Adjusted clock signal and Hex output modules.
-LazyPll #(.DIVIDER(1000000)) iClk (.inClk(CLOCK_50), .outClk(CLK_IN));
+LazyPll #(.DIVIDER(50)) iClk (.inClk(CLOCK_50), .outClk(CLK_IN));
 SegDisplay iDisplay[7:0] (.inNibble(HEX_OUT), .outSegs(HEX));
 
 // JTAG controller (for better debugging).
@@ -95,10 +95,13 @@ assign inTDI = GPIO0[1];	// "top right" Altera pin, pin 3 on nano
 assign inTMS = GPIO0[2];	// "low left" Altera pin, pin 4 on nano
 assign GPIO0[3] = outTDO;	// "low right" Altera pin, pin 5 on nano
 
-assign LEDR = GPIO0;
+assign LEDR = GPIO0[3:0];
+
+assign GPIO0[5:4] = 2'b10;
+assign GPIO0[7:6] = {dut_pins, sdaLine};
 
 // Human Feedback.
-assign HEX_OUT = {7'h0, sigTRIS[5], sigBYTE,3'h0, sigTRIS[4:0], 3'h0, sdaLine, 3'h0, dut_pins};
+assign HEX_OUT = {7'h0, sigTRIS[5], 8'h0,3'h0, sigTRIS[4:0], 3'h0, sigBYTE, 3'h0, dut_pins};
 assign LEDG = ~KEY;
 
 endmodule
