@@ -42,10 +42,11 @@ typedef enum SyntaxToken_e {
     TOKEN_LABEL       = 28,            // Label
     TOKEN_COLON       = 29,            // Colon (for label decls)
     TOKEN_COMMENT     = 30,            // Comment
+	TOKEN_SECTION     = 31,            // Section (for data organization)
 
     // Special values.
-    TOKEN_EOF         = 31,            // EOF detected/read in
-    TOKEN_INVALID     = 32,            // Invalid/Unknown token
+    TOKEN_EOF         = 32,            // EOF detected/read in
+    TOKEN_INVALID     = 33,            // Invalid/Unknown token
 	TOKEN_MAX_VALUE   = TOKEN_INVALID  // Highest occupied index by enum
 } SyntaxToken_e;
 

@@ -8,7 +8,7 @@
 #ifndef SRC_PARSEACTION_E_H_
 #define SRC_PARSEACTION_E_H_
 
-#include "SyntaxToken_e.h"
+#include "../Parsing/SyntaxToken_e.h"
 
 // TODO- enum representing "action" steps to build language structures.
 typedef enum {

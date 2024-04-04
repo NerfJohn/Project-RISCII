@@ -158,11 +158,12 @@ static int PARSE_PATTERNS[] = {
      PARSE_SUB_start, ACTION_FUNCTION, TOKEN_LABEL, TOKEN_REGISTER,
      TOKEN_REGISTER, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_FUNCTION,
      PARSE_SUB_reg_label, TOKEN_REGISTER, PARSE_SUB_NULL, PARSE_SUB_start,
-     ACTION_DATA, TOKEN_IMMEDIATE, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_DATA,
-     PARSE_SUB_strs_imm, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_DIRECTIVE,
-     TOKEN_LABEL, PARSE_SUB_NULL, PARSE_SUB_start, ACTION_LABEL, TOKEN_COLON,
-     PARSE_SUB_NULL, PARSE_SUB_NULL, TOKEN_REGISTER, PARSE_SUB_NULL,
-     TOKEN_LABEL, PARSE_SUB_NULL, PARSE_SUB_strs_imm, PARSE_SUB_NULL,
+     ACTION_DATA, TOKEN_SECTION, TOKEN_IMMEDIATE, PARSE_SUB_NULL,
+     PARSE_SUB_start, ACTION_DATA, PARSE_SUB_strs_imm, PARSE_SUB_NULL,
+     PARSE_SUB_start, ACTION_DIRECTIVE, TOKEN_LABEL, PARSE_SUB_NULL,
+     PARSE_SUB_start, ACTION_LABEL, TOKEN_COLON, PARSE_SUB_NULL, PARSE_SUB_NULL,
+     TOKEN_REGISTER, PARSE_SUB_NULL, TOKEN_LABEL, PARSE_SUB_NULL,
+     PARSE_SUB_strs_imm, PARSE_SUB_NULL,
 };
 
 //============================================================================//
@@ -242,27 +243,28 @@ ParseStateType_e ParseState::nextState(SyntaxToken_e popTkn) {
             else if (TOKEN_TO == popTkn) {nextIdx = 47; break;}
             else if (TOKEN_LA == popTkn) {nextIdx = 36; break;}
             else if (TOKEN_WORD == popTkn) {nextIdx = 52; break;}
-            else if (TOKEN_ARRY == popTkn) {nextIdx = 56; break;}
-            else if (TOKEN_GLBL == popTkn) {nextIdx = 60; break;}
-            else if (TOKEN_HEAP == popTkn) {nextIdx = 60; break;}
-            else if (TOKEN_LABEL == popTkn) {nextIdx = 64; break;}
-            else if (TOKEN_EOF == popTkn) {nextIdx = 68; break;}
+            else if (TOKEN_ARRY == popTkn) {nextIdx = 57; break;}
+            else if (TOKEN_GLBL == popTkn) {nextIdx = 61; break;}
+            else if (TOKEN_HEAP == popTkn) {nextIdx = 61; break;}
+            else if (TOKEN_LABEL == popTkn) {nextIdx = 65; break;}
+            else if (TOKEN_EOF == popTkn) {nextIdx = 69; break;}
             break;
         case PARSE_SUB_op3:
-            if (TOKEN_REGISTER == popTkn) {nextIdx = 68; break;}
-            else if (TOKEN_IMMEDIATE == popTkn) {nextIdx = 68; break;}
+            if (TOKEN_REGISTER == popTkn) {nextIdx = 69; break;}
+            else if (TOKEN_IMMEDIATE == popTkn) {nextIdx = 69; break;}
             break;
         case PARSE_SUB_flag_reg:
-            if (TOKEN_FLAG == popTkn) {nextIdx = 69; break;}
-            else if (TOKEN_REGISTER == popTkn) {nextIdx = 68; break;}
+            if (TOKEN_FLAG == popTkn) {nextIdx = 70; break;}
+            else if (TOKEN_REGISTER == popTkn) {nextIdx = 69; break;}
             break;
         case PARSE_SUB_reg_label:
-            if (TOKEN_REGISTER == popTkn) {nextIdx = 71; break;}
-            else if (TOKEN_LABEL == popTkn) {nextIdx = 68; break;}
+            if (TOKEN_REGISTER == popTkn) {nextIdx = 72; break;}
+            else if (TOKEN_LABEL == popTkn) {nextIdx = 69; break;}
             break;
         case PARSE_SUB_strs_imm:
-            if (TOKEN_STRING == popTkn) {nextIdx = 73; break;}
-            else if (TOKEN_IMMEDIATE == popTkn) {nextIdx = 68; break;}
+            if (TOKEN_STRING == popTkn) {nextIdx = 74; break;}
+            else if (TOKEN_IMMEDIATE == popTkn) {nextIdx = 69; break;}
+            else if (TOKEN_SECTION == popTkn) {nextIdx = 69; break;}
             break;
 		default: // Non-transition state- already set to error...
 			break;

@@ -1,0 +1,38 @@
+; Dummy implementation of a "malloc" concept.
+
+; Setup anchors.
+.glbl main
+.heap heap_start
+heap_start: .word 0 #b
+
+
+; "Malloc" func variables (global for ease).
+malloc_ptr: .word 0 #d
+
+; "Malloc" function- reserves $0 bytes, returns ptr via $0
+malloc:				; start: $0 = # bytes for alloc, $7 = retPtr
+_la $1 malloc_ptr	; $1 = address of malloc's ptr to new memory
+LDR $2 $1 0			; $2 = ptr to new malloc memory
+ADD $3 $0 $2		; $3 = ptr updated for new block
+STR $3 $1 0			; Update malloc's record of memory ptr
+ADD $0 $2 0			; $0 = ptr to new block (within "old" memory)
+JPR $7 0			; Return to caller
+
+; Init's malloc ptr.
+malloc_init:
+_la $0 heap_start
+_la $1 malloc_ptr
+STR $0 $1 0
+JPR $7 0
+
+
+; Main- init malloc function and allocate 10 bytes.
+main:
+_la $0 malloc_init
+JLR $7 $0 0
+
+LBI $0 10
+_la $1 malloc
+JLR $7 $1 0
+
+HLT

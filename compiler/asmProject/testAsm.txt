@@ -1,6 +1,6 @@
 ; Dummy program that accumulates string characters
 
-myText: .arry "Hello World!\0" 13
+myText: .arry "Hello World!\0" #d
 
 .glbl start
 

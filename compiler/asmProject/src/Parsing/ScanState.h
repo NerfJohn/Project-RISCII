@@ -39,7 +39,7 @@
  * 
  * Types represent 1+ ScanState sub-states, referring to the broader steps of
  * scanning (that the application may care about). The application may use
- * these values to guide data/control actions of scanning process.
+ * these values to guide data/control actions of the scanning process.
  */
 typedef enum {
 	SCAN_TYPE_SEARCHING = 0, // ScanState is searching for a token
@@ -54,7 +54,7 @@ typedef enum {
  * Class encapsulating scan transition logic. Acts similar to a "super enum".
  * 
  * Instances track state machine progress of a scan. Can be checked for general
- * status of scan and report token types as their scanned. Transition logic
+ * status of scan and report token types as they're scanned. Transition logic
  * determined by rules given to auto-generator script.
  */
 class ScanState {
@@ -87,7 +87,7 @@ public:
 	/*
 	 * Returns state as scan token. Invalid if state type isn't a token.
 	 * 
-	 * @return scanned token if state type is valid otherwise TOKEN_INVALID
+	 * @return scanned token if state type is valid, otherwise TOKEN_INVALID
 	 */
 	SyntaxToken_e asToken(void);
 
@@ -112,9 +112,9 @@ private:
 /*
  * Active sub-states of ScanState. NOT intended for application code use.
  * 
- * Sub-states of ScanState. Defined on top of SytaxToken_e types to allow mixing
- * of the two in transition logic. These states are (mostly) non-terminal and
- * should NOT be referenced by application code.
+ * Sub-states of ScanState. Defined on top of SyntaxToken_e types to allow
+ * mixing of the two in transition logic. These states are (mostly) non-terminal
+ * and should NOT be referenced by application code.
  */
 typedef enum {
     SCAN_SUB_ERROR = TOKEN_MAX_VALUE + 1,
@@ -139,68 +139,70 @@ typedef enum {
     SCAN_SUB_comment_loop = TOKEN_MAX_VALUE + 20,
     SCAN_SUB_string_loop = TOKEN_MAX_VALUE + 21,
     SCAN_SUB_label_loop = TOKEN_MAX_VALUE + 22,
-    SCAN_SUB_hex_start = TOKEN_MAX_VALUE + 23,
-    SCAN_SUB_hex_loop = TOKEN_MAX_VALUE + 24,
-    SCAN_SUB_flag_loop = TOKEN_MAX_VALUE + 25,
-    SCAN_SUB_reg_end = TOKEN_MAX_VALUE + 26,
-    SCAN_SUB_esc_sequence = TOKEN_MAX_VALUE + 27,
-    SCAN_SUB_esc_hex_start = TOKEN_MAX_VALUE + 28,
-    SCAN_SUB_esc_hex_end = TOKEN_MAX_VALUE + 29,
-    SCAN_SUB_string_end = TOKEN_MAX_VALUE + 30,
-    SCAN_SUB_i_AN = TOKEN_MAX_VALUE + 31,
-    SCAN_SUB_i_AD = TOKEN_MAX_VALUE + 32,
-    SCAN_SUB_i_AND = TOKEN_MAX_VALUE + 33,
-    SCAN_SUB_i_ADD = TOKEN_MAX_VALUE + 34,
-    SCAN_SUB_i_BR = TOKEN_MAX_VALUE + 35,
-    SCAN_SUB_i_BRC = TOKEN_MAX_VALUE + 36,
-    SCAN_SUB_i_HL = TOKEN_MAX_VALUE + 37,
-    SCAN_SUB_i_HLT = TOKEN_MAX_VALUE + 38,
-    SCAN_SUB_i_JP = TOKEN_MAX_VALUE + 39,
-    SCAN_SUB_i_JL = TOKEN_MAX_VALUE + 40,
-    SCAN_SUB_i_JPR = TOKEN_MAX_VALUE + 41,
-    SCAN_SUB_i_JLR = TOKEN_MAX_VALUE + 42,
-    SCAN_SUB_i_LB = TOKEN_MAX_VALUE + 43,
-    SCAN_SUB_i_LD = TOKEN_MAX_VALUE + 44,
-    SCAN_SUB_i_LBI = TOKEN_MAX_VALUE + 45,
-    SCAN_SUB_i_LDR = TOKEN_MAX_VALUE + 46,
-    SCAN_SUB_i_NO = TOKEN_MAX_VALUE + 47,
-    SCAN_SUB_i_NOP = TOKEN_MAX_VALUE + 48,
-    SCAN_SUB_i_OR = TOKEN_MAX_VALUE + 49,
-    SCAN_SUB_i_ORR = TOKEN_MAX_VALUE + 50,
-    SCAN_SUB_i_SH = TOKEN_MAX_VALUE + 51,
-    SCAN_SUB_i_SW = TOKEN_MAX_VALUE + 52,
-    SCAN_SUB_i_ST = TOKEN_MAX_VALUE + 53,
-    SCAN_SUB_i_SU = TOKEN_MAX_VALUE + 54,
-    SCAN_SUB_i_SHL = TOKEN_MAX_VALUE + 55,
-    SCAN_SUB_i_SHR = TOKEN_MAX_VALUE + 56,
-    SCAN_SUB_i_SWP = TOKEN_MAX_VALUE + 57,
-    SCAN_SUB_i_STR = TOKEN_MAX_VALUE + 58,
-    SCAN_SUB_i_SUB = TOKEN_MAX_VALUE + 59,
-    SCAN_SUB_i_XO = TOKEN_MAX_VALUE + 60,
-    SCAN_SUB_i_XOR = TOKEN_MAX_VALUE + 61,
-    SCAN_SUB_bif__l = TOKEN_MAX_VALUE + 62,
-    SCAN_SUB_bif__s = TOKEN_MAX_VALUE + 63,
-    SCAN_SUB_bif__t = TOKEN_MAX_VALUE + 64,
-    SCAN_SUB_bif__ld = TOKEN_MAX_VALUE + 65,
-    SCAN_SUB_bif__la = TOKEN_MAX_VALUE + 66,
-    SCAN_SUB_bif__st = TOKEN_MAX_VALUE + 67,
-    SCAN_SUB_bif__to = TOKEN_MAX_VALUE + 68,
-    SCAN_SUB_d_w = TOKEN_MAX_VALUE + 69,
-    SCAN_SUB_d_a = TOKEN_MAX_VALUE + 70,
-    SCAN_SUB_d_g = TOKEN_MAX_VALUE + 71,
-    SCAN_SUB_d_h = TOKEN_MAX_VALUE + 72,
-    SCAN_SUB_d_wo = TOKEN_MAX_VALUE + 73,
-    SCAN_SUB_d_wor = TOKEN_MAX_VALUE + 74,
-    SCAN_SUB_d_word = TOKEN_MAX_VALUE + 75,
-    SCAN_SUB_d_ar = TOKEN_MAX_VALUE + 76,
-    SCAN_SUB_d_arr = TOKEN_MAX_VALUE + 77,
-    SCAN_SUB_d_arry = TOKEN_MAX_VALUE + 78,
-    SCAN_SUB_d_gl = TOKEN_MAX_VALUE + 79,
-    SCAN_SUB_d_glb = TOKEN_MAX_VALUE + 80,
-    SCAN_SUB_d_glbl = TOKEN_MAX_VALUE + 81,
-    SCAN_SUB_d_he = TOKEN_MAX_VALUE + 82,
-    SCAN_SUB_d_hea = TOKEN_MAX_VALUE + 83,
-    SCAN_SUB_d_heap = TOKEN_MAX_VALUE + 84,
+    SCAN_SUB_org_start = TOKEN_MAX_VALUE + 23,
+    SCAN_SUB_hex_start = TOKEN_MAX_VALUE + 24,
+    SCAN_SUB_hex_loop = TOKEN_MAX_VALUE + 25,
+    SCAN_SUB_flag_loop = TOKEN_MAX_VALUE + 26,
+    SCAN_SUB_reg_end = TOKEN_MAX_VALUE + 27,
+    SCAN_SUB_esc_sequence = TOKEN_MAX_VALUE + 28,
+    SCAN_SUB_esc_hex_start = TOKEN_MAX_VALUE + 29,
+    SCAN_SUB_esc_hex_end = TOKEN_MAX_VALUE + 30,
+    SCAN_SUB_string_end = TOKEN_MAX_VALUE + 31,
+    SCAN_SUB_org_end = TOKEN_MAX_VALUE + 32,
+    SCAN_SUB_i_AN = TOKEN_MAX_VALUE + 33,
+    SCAN_SUB_i_AD = TOKEN_MAX_VALUE + 34,
+    SCAN_SUB_i_AND = TOKEN_MAX_VALUE + 35,
+    SCAN_SUB_i_ADD = TOKEN_MAX_VALUE + 36,
+    SCAN_SUB_i_BR = TOKEN_MAX_VALUE + 37,
+    SCAN_SUB_i_BRC = TOKEN_MAX_VALUE + 38,
+    SCAN_SUB_i_HL = TOKEN_MAX_VALUE + 39,
+    SCAN_SUB_i_HLT = TOKEN_MAX_VALUE + 40,
+    SCAN_SUB_i_JP = TOKEN_MAX_VALUE + 41,
+    SCAN_SUB_i_JL = TOKEN_MAX_VALUE + 42,
+    SCAN_SUB_i_JPR = TOKEN_MAX_VALUE + 43,
+    SCAN_SUB_i_JLR = TOKEN_MAX_VALUE + 44,
+    SCAN_SUB_i_LB = TOKEN_MAX_VALUE + 45,
+    SCAN_SUB_i_LD = TOKEN_MAX_VALUE + 46,
+    SCAN_SUB_i_LBI = TOKEN_MAX_VALUE + 47,
+    SCAN_SUB_i_LDR = TOKEN_MAX_VALUE + 48,
+    SCAN_SUB_i_NO = TOKEN_MAX_VALUE + 49,
+    SCAN_SUB_i_NOP = TOKEN_MAX_VALUE + 50,
+    SCAN_SUB_i_OR = TOKEN_MAX_VALUE + 51,
+    SCAN_SUB_i_ORR = TOKEN_MAX_VALUE + 52,
+    SCAN_SUB_i_SH = TOKEN_MAX_VALUE + 53,
+    SCAN_SUB_i_SW = TOKEN_MAX_VALUE + 54,
+    SCAN_SUB_i_ST = TOKEN_MAX_VALUE + 55,
+    SCAN_SUB_i_SU = TOKEN_MAX_VALUE + 56,
+    SCAN_SUB_i_SHL = TOKEN_MAX_VALUE + 57,
+    SCAN_SUB_i_SHR = TOKEN_MAX_VALUE + 58,
+    SCAN_SUB_i_SWP = TOKEN_MAX_VALUE + 59,
+    SCAN_SUB_i_STR = TOKEN_MAX_VALUE + 60,
+    SCAN_SUB_i_SUB = TOKEN_MAX_VALUE + 61,
+    SCAN_SUB_i_XO = TOKEN_MAX_VALUE + 62,
+    SCAN_SUB_i_XOR = TOKEN_MAX_VALUE + 63,
+    SCAN_SUB_bif__l = TOKEN_MAX_VALUE + 64,
+    SCAN_SUB_bif__s = TOKEN_MAX_VALUE + 65,
+    SCAN_SUB_bif__t = TOKEN_MAX_VALUE + 66,
+    SCAN_SUB_bif__ld = TOKEN_MAX_VALUE + 67,
+    SCAN_SUB_bif__la = TOKEN_MAX_VALUE + 68,
+    SCAN_SUB_bif__st = TOKEN_MAX_VALUE + 69,
+    SCAN_SUB_bif__to = TOKEN_MAX_VALUE + 70,
+    SCAN_SUB_d_w = TOKEN_MAX_VALUE + 71,
+    SCAN_SUB_d_a = TOKEN_MAX_VALUE + 72,
+    SCAN_SUB_d_g = TOKEN_MAX_VALUE + 73,
+    SCAN_SUB_d_h = TOKEN_MAX_VALUE + 74,
+    SCAN_SUB_d_wo = TOKEN_MAX_VALUE + 75,
+    SCAN_SUB_d_wor = TOKEN_MAX_VALUE + 76,
+    SCAN_SUB_d_word = TOKEN_MAX_VALUE + 77,
+    SCAN_SUB_d_ar = TOKEN_MAX_VALUE + 78,
+    SCAN_SUB_d_arr = TOKEN_MAX_VALUE + 79,
+    SCAN_SUB_d_arry = TOKEN_MAX_VALUE + 80,
+    SCAN_SUB_d_gl = TOKEN_MAX_VALUE + 81,
+    SCAN_SUB_d_glb = TOKEN_MAX_VALUE + 82,
+    SCAN_SUB_d_glbl = TOKEN_MAX_VALUE + 83,
+    SCAN_SUB_d_he = TOKEN_MAX_VALUE + 84,
+    SCAN_SUB_d_hea = TOKEN_MAX_VALUE + 85,
+    SCAN_SUB_d_heap = TOKEN_MAX_VALUE + 86,
 } ScanSubState_e;
 
 //============================================================================//
@@ -254,6 +256,7 @@ ScanStateType_e ScanState::nextState(uint8_t peekChar) {
             else if (IS('\r')) {nextState = SCAN_SUB_start; break;}
             else if (IS('\n')) {nextState = SCAN_SUB_start; break;}
             else if (IS(' ')) {nextState = SCAN_SUB_start; break;}
+            else if (IS('#')) {nextState = SCAN_SUB_org_start; break;}
             else if (EOF_CHAR) {nextState = TOKEN_EOF; break;}
             break;
         case SCAN_SUB_decimal_start:
@@ -302,6 +305,14 @@ ScanStateType_e ScanState::nextState(uint8_t peekChar) {
             break;
         case SCAN_SUB_string_end:
             nextState = TOKEN_STRING;
+            break;
+        case SCAN_SUB_org_start:
+            if (IS('r')) {nextState = SCAN_SUB_org_end; break;}
+            else if (IS('d')) {nextState = SCAN_SUB_org_end; break;}
+            else if (IS('b')) {nextState = SCAN_SUB_org_end; break;}
+            break;
+        case SCAN_SUB_org_end:
+            nextState = TOKEN_SECTION;
             break;
         case SCAN_SUB_label_loop:
             if (LBL_CHAR) {nextState = SCAN_SUB_label_loop; break;}

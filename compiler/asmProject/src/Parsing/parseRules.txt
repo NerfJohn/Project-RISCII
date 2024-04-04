@@ -45,7 +45,7 @@ start:
 	TOKEN_LA		TOKEN_REGISTER	TOKEN_LABEL		ACTION_FUNCTION	start
 	
 	# Handle Data directives.
-	TOKEN_WORD		TOKEN_IMMEDIATE	ACTION_DATA		start
+	TOKEN_WORD		TOKEN_IMMEDIATE	TOKEN_SECTION	ACTION_DATA		start
 	TOKEN_ARRY		strs_imm		ACTION_DATA		start
 	
 	# Handle Organization directives.
@@ -85,4 +85,5 @@ reg_label:
 strs_imm:
 	TOKEN_STRING	strs_imm
 	TOKEN_IMMEDIATE
+	TOKEN_SECTION
 	

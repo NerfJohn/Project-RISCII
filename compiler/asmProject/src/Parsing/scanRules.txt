@@ -57,6 +57,9 @@ start:
 	IS	\n		start
 	IS	\s		start
 	
+	# Handle organization flags.
+	IS	#		org_start
+	
 	# Handle EOF- should be after final token scanned.
 	EOF_CHAR	TOKEN_EOF
 
@@ -119,6 +122,15 @@ esc_hex_end:
 ## -- End of string literal: effectivel confirming it exists -- #
 string_end:
 	ELSE		TOKEN_STRING
+	
+## -- Organize pattern: one char for (r)ead-only, (d)ata, and (b)ss -- ##
+org_start:
+	IS	r		org_end
+	IS	d		org_end
+	IS	b		org_end
+	
+org_end:
+	ELSE		TOKEN_SECTION
 
 ###                       ###
 # -- Looping State Rules -- #
