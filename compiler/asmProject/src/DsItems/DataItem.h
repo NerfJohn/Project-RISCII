@@ -20,6 +20,9 @@ public:
 	// TODO- instances created from tokens on action stack.
 	DataItem(std::stack<AsmToken*> actStack);
 
+	// TODO- analyze item for later checks and translation.
+	void doAnalysis(AnalysisData_t* model);
+
 	// TODO- "to string" for ease of debugging.
 	std::string asStr(void);
 

@@ -9,10 +9,14 @@
 #define SRC_DSITEMS_ABUILDITEM_H_
 
 #include <iostream>
+#include "../Analysis/AnalysisData_t.h"
 
 // TODO- Abstract to define base for assembly line item.
 class ABuildItem {
 public:
+	// TODO- analyze item for later checks and translation.
+	virtual void doAnalysis(AnalysisData_t* model) = 0;
+
 	// TODO- print option for sake of debugging.
 	virtual std::string asStr(void) = 0;
 

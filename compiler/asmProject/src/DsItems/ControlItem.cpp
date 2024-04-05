@@ -27,6 +27,22 @@ ControlItem::ControlItem(std::stack<AsmToken*> actStack) {
 	actStack.pop();
 }
 
+// TODO- analyze item for later checks and translation.
+void ControlItem::doAnalysis(AnalysisData_t* model) {
+	// Record label associated with control.
+	if (m_type == TOKEN_GLBL) {model->m_glblLabel = m_label;}
+	else {model->m_heapLabel = m_label;}
+
+	// Technically, a use of the label.
+	model->m_table.addUse(m_label);
+
+	// For debugging- report details.
+	cout << "INFO (" << m_origin << "): Label Use ";
+	cout << "(name =\"" << m_label << "\")" << endl;
+
+	// No bookkeeping- no final size and non-addressable. //
+}
+
 // TODO- "to string" for ease of debugging.
 std::string ControlItem::asStr(void) {
 	// Get prefix.

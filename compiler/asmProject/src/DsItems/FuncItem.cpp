@@ -33,6 +33,20 @@ FuncItem::FuncItem(std::stack<AsmToken*> actStack) {
 	actStack.pop();
 }
 
+// TODO- analyze item for later checks and translation.
+void FuncItem::doAnalysis(AnalysisData_t* model) {
+	// _la uses label- record usage.
+	model->m_table.addUse(m_label);
+
+	// For debugging- report details.
+	cout << "INFO (" << m_origin << "): Label Use ";
+	cout << "(name =\"" << m_label << "\")" << endl;
+
+	// Bookkeep.
+	model->m_textLen += 4;        // _la = 2 16-bit instructions
+	model->m_lastAddrItem = this; // can be addressed/labeled
+}
+
 // TODO- "to string" for ease of debugging.
 std::string FuncItem::asStr(void) {
 	// Get prefix.

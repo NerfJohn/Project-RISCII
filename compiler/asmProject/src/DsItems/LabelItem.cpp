@@ -25,6 +25,18 @@ LabelItem::LabelItem(std::stack<AsmToken*> actStack) {
 	actStack.pop();
 }
 
+// TODO- analyze item for later checks and translation.
+void LabelItem::doAnalysis(AnalysisData_t* model) {
+	// Label declared- mark it.
+	model->m_table.addDecl(m_name, model->m_lastAddrItem);
+
+	// For debugging- report details.
+	cout << "INFO (" << m_origin << "): Label Decl ";
+	cout << "(name =\"" << m_name << "\")" << endl;
+
+	// No bookkeeping- no size, no address. //
+}
+
 // TODO- "to string" for ease of debugging.
 std::string LabelItem::asStr(void) {
 	// Get prefix.

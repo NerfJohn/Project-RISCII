@@ -71,10 +71,23 @@ DataItem::DataItem(std::stack<AsmToken*> actStack) {
 		actStack.pop();
 	}
 
+	// TODO- HW concern in parsing/analysis phase? Assembler, sure- but still?
+	// Due to target hardware- ensure data is word addressable.
+	if (m_bytes.size() & 0x1) {m_bytes.push_back(0);}
+
 	// Record type (owner of origin).
 	m_type = actStack.top()->getType();
 	m_origin = actStack.top()->getOrigin();
 	actStack.pop();
+}
+
+// TODO- analyze item for later checks and translation.
+void DataItem::doAnalysis(AnalysisData_t* model) {
+	// Bookkeep.
+	int bytesUsed = (m_type == TOKEN_WORD) ? 2 : (int)(m_bytes.size());
+	if (m_section == SECTION_DATA) {model->m_dataLen += bytesUsed;}
+	else {model->m_bssLen += bytesUsed;}
+	model->m_lastAddrItem = this;
 }
 
 // TODO- "to string" for ease of debugging.

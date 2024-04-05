@@ -45,6 +45,15 @@ InstrItem::InstrItem(std::stack<AsmToken*> actStack) {
 	actStack.pop();
 }
 
+// TODO- analyze item for later checks and translation.
+void InstrItem::doAnalysis(AnalysisData_t* model) {
+	// No major analysis- immediates checked during type checks. //
+
+	// Bookkeeping- update model.
+	model->m_textLen += 2;        // 16-bit instruction
+	model->m_lastAddrItem = this; // can be addressed/labeled
+}
+
 // TODO- "to string" for ease of debugging.
 std::string InstrItem::asStr(void) {
 	// Get prefix.

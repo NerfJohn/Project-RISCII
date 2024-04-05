@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+#include "AnalysisData_t.h"
+#include "InfoUtils.h"
 #include "Parsing/ParseUtils.h"
 
 using namespace std;
@@ -21,14 +23,41 @@ void syntaxMain(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	// Process each file.
+	// Prepare o store program items and info.
+	vector<ABuildItem*> prgmItems = {};
+	AnalysisData_t prgmData = {
+			.m_table = LabelTable(),
+			.m_glblLabel = "",
+			.m_heapLabel = "",
+			.m_textLen = 0,
+			.m_dataLen = 0,
+			.m_bssLen = 0,
+
+			.m_lastAddrItem = nullptr
+	};
+
+	// Process each file (scan/parse/analyze- save to).
 	for (int i = 1; i < argc; i++) {
 		// Lex file- grouping characters into tokens.
 		queue<AsmToken*> tokens = ParseUtils_lexFile(argv[i]);
 
 		// Parse tokens into DS for analysis/translation.
 		vector<ABuildItem*> mainDS = ParseUtils_parseTokens(tokens);
+
+		// Analyze the items from the file.
+		InfoUtils_analyzeItems(mainDS, &prgmData);
+
+		// File fully checked- push items to overall program storage.
+		for (int j = 0; j < (int)(mainDS.size()); j++) {
+			prgmItems.push_back(mainDS[j]);
+		}
 	}
+
+	// TODO- remove/change around debug info for type checking.
+	cout << "INFO: Sizing (";
+	cout << "text length = " << prgmData.m_textLen << ", ";
+	cout << "data length = " << prgmData.m_dataLen << ", ";
+	cout << "bss length = " << prgmData.m_bssLen << ")" << endl;
 }
 
 /*
