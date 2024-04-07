@@ -47,6 +47,35 @@ void FuncItem::doAnalysis(AnalysisData_t* model) {
 	model->m_lastAddrItem = this; // can be addressed/labeled
 }
 
+// TODO- type check item- return indicates "hasError".
+bool FuncItem::doChecking(AnalysisData_t* model) {
+	// Return code.
+	bool hasErr = false;
+
+	// Ensure label has been declared.
+	if (model->m_table.getInfo(m_label).m_item == nullptr) {
+		cout << "ERR (" << m_origin << "): Undeclared label (";
+		cout << "m_label=\"" << m_label << "\")" << endl;
+		hasErr = true;
+	}
+
+	// Return results.
+	return hasErr;
+}
+
+// TODO- resolve last of (meta) data before translating.
+void FuncItem::resolveData(TranslationData_t* model) {
+	// Claim next available text address (adjusting as needed).
+	m_address = model->m_nextTextAddr;
+	model->m_nextTextAddr += 4; // function = 2 instructions, takes 4 bytes
+}
+
+// TODO- get section item is in (most do, some don't).
+SectionType_e FuncItem::getSection(void) {
+	// Functions are effectively instructions.
+	return SECTION_TEXT;
+}
+
 // TODO- "to string" for ease of debugging.
 std::string FuncItem::asStr(void) {
 	// Get prefix.

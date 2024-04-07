@@ -29,9 +29,9 @@ ControlItem::ControlItem(std::stack<AsmToken*> actStack) {
 
 // TODO- analyze item for later checks and translation.
 void ControlItem::doAnalysis(AnalysisData_t* model) {
-	// Record label associated with control.
-	if (m_type == TOKEN_GLBL) {model->m_glblLabel = m_label;}
-	else {model->m_heapLabel = m_label;}
+	// Record item associated with control.
+	if (m_type == TOKEN_GLBL) {model->m_glblLabel = this;}
+	else {model->m_heapLabel = this;}
 
 	// Technically, a use of the label.
 	model->m_table.addUse(m_label);
@@ -41,6 +41,60 @@ void ControlItem::doAnalysis(AnalysisData_t* model) {
 	cout << "(name =\"" << m_label << "\")" << endl;
 
 	// No bookkeeping- no final size and non-addressable. //
+}
+
+// TODO- type check item- return indicates "hasError".
+bool ControlItem::doChecking(AnalysisData_t* model) {
+	// Return code.
+	bool hasErr = false;
+
+	// Check control word is unique (ie should match model's records).
+	ControlItem* control = (m_type == TOKEN_GLBL) ? model->m_glblLabel : model->m_heapLabel;
+	if (control != this) {
+		// Note: based on semantic analysis, m_item should NOT be null.
+		cout << "ERR: (" << m_origin << "): Multiple controls (";
+		cout << "this = " << this->asStr() << ", ";
+		cout << "record = " << control->asStr() << ")" << endl;
+		hasErr = true;
+	}
+
+	// Check label given is declared.
+	if (model->m_table.getInfo(m_label).m_item == nullptr) {
+		cout << "ERR (" << m_origin << "): Undeclared label (";
+		cout << "m_label=\"" << m_label << "\")" << endl;
+		hasErr = true;
+	}
+	else {
+		// Label exists? then check item matches the expected section.
+		SectionType_e sectExp = (m_type == TOKEN_GLBL) ? SECTION_TEXT : SECTION_BSS;
+		SectionType_e sectAct = model->m_table.getInfo(m_label).m_item->getSection();
+		if (sectExp != sectAct) {
+			cout << "ERR (" << m_origin << "): Bad control label (";
+			cout << "expected(#)=" << sectExp << ", ";
+			cout << "actual(#)=" << sectAct << ")" << endl;
+			hasErr = true;
+		}
+	}
+
+	// Report results.
+	return hasErr;
+}
+
+// TODO- resolve last of (meta) data before translating.
+void ControlItem::resolveData(TranslationData_t* model) {
+	// No translation data to resolve.
+	return;
+}
+
+// TODO- get section item is in (most do, some don't).
+SectionType_e ControlItem::getSection(void) {
+	// Controls don't translate to a section.
+	return SECTION_INVALID;
+}
+
+// TODO- get special label (unique to control items).
+std::string ControlItem::getLabel(void) {
+	return m_label;
 }
 
 // TODO- "to string" for ease of debugging.

@@ -2,13 +2,8 @@
 
 myText: .arry "Hello World!\0" #d
 
-.glbl start
-
-; Main loop: Add values within myText
-start:
-
 ; Setup- $7 = accum, $0 = address, $2 = counter, $1 = loaded char
-LBI	$1	0
+LBI	%s $1	0
 LBI	$7	0
 LBI	$2	13
 _la	$0	myText
@@ -27,3 +22,6 @@ BRC	%np	-6
 
 ; All done- halt.
 HLT
+
+_la $4 main
+JPR $4 0

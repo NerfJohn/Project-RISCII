@@ -21,6 +21,15 @@ public:
 	// TODO- analyze item for later checks and translation.
 	void doAnalysis(AnalysisData_t* model);
 
+	// TODO- type check item- return indicates "hasError".
+	bool doChecking(AnalysisData_t* model);
+
+	// TODO- resolve last of (meta) data before translating.
+	void resolveData(TranslationData_t* model);
+
+	// TODO- get section item is in (most do, some don't).
+	SectionType_e getSection(void);
+
 	// TODO- "to string" for ease of debugging.
 	std::string asStr(void);
 

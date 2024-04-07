@@ -22,6 +22,21 @@ public:
 	// TODO- analyze item for later checks and translation.
 	void doAnalysis(AnalysisData_t* model);
 
+	// TODO- type check item- return indicates "hasError".
+	bool doChecking(AnalysisData_t* model);
+
+	// TODO- resolve last of (meta) data before translating.
+	void resolveData(TranslationData_t* model);
+
+	// TODO- get section item is in (most do, some don't).
+	SectionType_e getSection(void);
+
+	// TODO- getters for translation.
+	SyntaxToken_e getOpcode(void);
+	int getFlagMask(void);
+	int getRegIdx(int idx);
+	int getImmediate(void);
+
 	// TODO- "to string" for ease of debugging.
 	std::string asStr(void);
 
@@ -34,6 +49,9 @@ private:
 	std::string      m_flagStr;   // flags (preserved as string)
 	std::deque<int>  m_regs;      // registers (converted to ints)
 	int              m_immediate; // immediate (converted to int)
+
+	// Information gathered during analysis/checking/translation.
+	int             m_flagMask;   // Bit-mask version of converted flags
 };
 
 #endif /* SRC_DSITEMS_INSTRITEM_H_ */

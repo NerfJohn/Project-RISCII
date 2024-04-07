@@ -37,6 +37,44 @@ void LabelItem::doAnalysis(AnalysisData_t* model) {
 	// No bookkeeping- no size, no address. //
 }
 
+// TODO- type check item- return indicates "hasError".
+bool LabelItem::doChecking(AnalysisData_t* model) {
+	// Return code.
+	bool hasErr = false;
+
+	// Get details of the label.
+	LabelInfo_t info = model->m_table.getInfo(m_name);
+
+	// Warn if label is never used.
+	if (info.m_numUses == 0) {
+		cout << "WARN: (" << m_origin << "): Unused label (";
+		cout << "m_name=\"" << m_name << "\")" << endl;
+	}
+
+	// Report error if label goes nowhere.
+	if (info.m_item == nullptr) {
+		cout << "ERR: (" << m_origin << "): Label goes nowhere (";
+		cout << "m_name=\"" << m_name << "\")" << endl;
+
+		hasErr = true;
+	}
+
+	// Report results.
+	return hasErr;
+}
+
+// TODO- resolve last of (meta) data before translating.
+void LabelItem::resolveData(TranslationData_t* model) {
+	// No translation data to resolve.
+	return;
+}
+
+// TODO- get section item is in (most do, some don't).
+SectionType_e LabelItem::getSection(void) {
+	// Labels don't have sections themselves.
+	return SECTION_INVALID;
+}
+
 // TODO- "to string" for ease of debugging.
 std::string LabelItem::asStr(void) {
 	// Get prefix.

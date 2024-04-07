@@ -24,6 +24,9 @@ public:
 	// TODO- log use of a label.
 	void addUse(std::string name);
 
+	// TODO- getter for given label.
+	LabelInfo_t getInfo(std::string name);
+
 	// Std. destructor.
 	~LabelTable(void);
 

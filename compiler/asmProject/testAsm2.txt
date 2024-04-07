@@ -5,7 +5,6 @@
 .heap heap_start
 heap_start: .word 0 #b
 
-
 ; "Malloc" func variables (global for ease).
 malloc_ptr: .word 0 #d
 

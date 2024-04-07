@@ -14,9 +14,18 @@
 
 using namespace std;
 
-
-// TODO- example of scanning file input into scanned/parsed data structure.
-void syntaxMain(int argc, char* argv[]) {
+/*
+ * == Main() Program ==
+ * Start of the program. Defers to selected example program.
+ *
+ * Comment/Uncomment calls to example programs to select which one is desired in
+ * the moment.
+ *
+ * @param argc number of arguments/strings under argv
+ * @param argv array of strings/arguments in left-right call order
+ * @return general code indicating result, 0 is typically a success
+ */
+int main(int argc, char* argv[]) {
 	// Ensure filenames were provided.
 	if (argc < 2) {
 		cout << "FATAL ERR: Must provide file(s)" << endl;
@@ -27,8 +36,8 @@ void syntaxMain(int argc, char* argv[]) {
 	vector<ABuildItem*> prgmItems = {};
 	AnalysisData_t prgmData = {
 			.m_table = LabelTable(),
-			.m_glblLabel = "",
-			.m_heapLabel = "",
+			.m_glblLabel = nullptr,
+			.m_heapLabel = nullptr,
 			.m_textLen = 0,
 			.m_dataLen = 0,
 			.m_bssLen = 0,
@@ -53,29 +62,15 @@ void syntaxMain(int argc, char* argv[]) {
 		}
 	}
 
-	// TODO- remove/change around debug info for type checking.
+	// Debug info regarding result of pre-translation analysis.
 	cout << "INFO: Sizing (";
 	cout << "text length = " << prgmData.m_textLen << ", ";
 	cout << "data length = " << prgmData.m_dataLen << ", ";
 	cout << "bss length = " << prgmData.m_bssLen << ")" << endl;
-}
 
-/*
- * == Main() Program ==
- * Start of the program. Defers to selected example program.
- *
- * Comment/Uncomment calls to example programs to select which one is desired in
- * the moment.
- *
- * @param argc number of arguments/strings under argv
- * @param argv array of strings/arguments in left-right call order
- * @return general code indicating result, 0 is typically a success
- */
-int main(int argc, char* argv[]) {
-	// Run example program.
-	syntaxMain(argc, argv);
+	// Type check the entire program.
+	InfoUtils_typeCheckItems(prgmItems, &prgmData);
 
-	// Not really intended to hit- may as well return "success".
-	return 0;
+	cout << "TODO- Translate" << endl;
 }
 

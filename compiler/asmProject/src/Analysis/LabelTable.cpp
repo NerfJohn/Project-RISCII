@@ -49,5 +49,20 @@ void LabelTable::addUse(std::string name) {
 	}
 }
 
+// TODO- getter for given label.
+LabelInfo_t LabelTable::getInfo(std::string name) {
+	// Get/return instance as able.
+	if (m_table.find(name) != m_table.end()) {
+		return m_table[name];
+	}
+	else {
+		LabelInfo_t retDefault = {
+				.m_numUses = 0,
+				.m_item = nullptr
+		};
+		return retDefault;
+	}
+}
+
 // Std. destructor.
 LabelTable::~LabelTable(void) {/* no non-str pointers */}

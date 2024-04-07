@@ -6,6 +6,7 @@
  */
 
 #include "OperandUtils.h"
+#include "../Translate/TargetUtils.h"
 
 #include "DataItem.h"
 
@@ -71,9 +72,9 @@ DataItem::DataItem(std::stack<AsmToken*> actStack) {
 		actStack.pop();
 	}
 
-	// TODO- HW concern in parsing/analysis phase? Assembler, sure- but still?
-	// Due to target hardware- ensure data is word addressable.
-	if (m_bytes.size() & 0x1) {m_bytes.push_back(0);}
+	// Keep bytes aligned to hardware's memory access precision.
+	int paddingNum = m_bytes.size() % TARGET_ACCESS_SIZE;
+	while (paddingNum) {m_bytes.push_back(0); paddingNum--;}
 
 	// Record type (owner of origin).
 	m_type = actStack.top()->getType();
@@ -88,6 +89,56 @@ void DataItem::doAnalysis(AnalysisData_t* model) {
 	if (m_section == SECTION_DATA) {model->m_dataLen += bytesUsed;}
 	else {model->m_bssLen += bytesUsed;}
 	model->m_lastAddrItem = this;
+}
+
+// TODO- type check item- return indicates "hasError".
+bool DataItem::doChecking(AnalysisData_t* model) {
+	// Return code.
+	bool hasErr = false;
+
+	// Re-size word value, reporting if truncation occurred.
+	if (m_type == TOKEN_WORD) {
+		// Convert and warn as needed.
+		int oldVal = this->bytesAsInt();
+		int newVal = TargetUtils_sizeToWord(oldVal);
+		if (oldVal != newVal) {
+			cout << "WARN (" << m_origin << "): Word truncation (";
+			cout << "oldVal=" << oldVal << ", ";
+			cout << "newVal=" << newVal << ")" << endl;
+
+			hasErr = true;
+		}
+
+		// Save for translation.
+		this->setIntInBytes(newVal);
+	}
+
+	// Return result of checking.
+	return hasErr;
+}
+
+// TODO- resolve last of (meta) data before translating.
+void DataItem::resolveData(TranslationData_t* model) {
+	// TODO- could resolve value into parts here instead of type checking.
+
+	// Determine size of data.
+	int size = (m_type == TOKEN_WORD) ? 2 : (int)(m_bytes.size());
+
+	// Record/adjust address based on given location.
+	if (m_section == SECTION_DATA) {
+		m_address = model->m_nextDataAddr;
+		model->m_nextDataAddr += size;
+	}
+	else { // otherwise, must be in bss section.
+		m_address = model->m_nextBssAddr;
+		model->m_nextBssAddr += size;
+	}
+}
+
+// TODO- get section item is in (most do, some don't).
+SectionType_e DataItem::getSection(void) {
+	// Data may vary on section- check it's typing.
+	return m_section;
 }
 
 // TODO- "to string" for ease of debugging.
