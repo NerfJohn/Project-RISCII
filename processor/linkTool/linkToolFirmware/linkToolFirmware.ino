@@ -1,12 +1,29 @@
 /*
- * Link Tool Firmware: "J-Link" application for Project RISCII
+ * linkToolFirmware.ino: Implements "J-link" for Project RISCII processor.
  * 
- * Application that mimics a "J-Link" by acting as an adapter from a Host PC
- * (using UART/USB) to RISCII's JTAG. Includes configurable JTAG speed and
- * convenient return codes/data.
+ * JTAG Behavior:
+ *  -> TCK idles at LOGIC_LOW, TMS idles at LOGIC_HIGH.
+ *  -> Assumes Project RISCII's custom JTAG state machine (6-state JTAG).
+ *  -> Rate of TCK is configurable by UART/USB.
+ *  
+ * UART/USB Behavior:
+ *  -> Takes in commands to set period or send instruction/data sequences.
+ *  -> Sends return message of same size to report success and read data.
+ *    (0x00 = Failure, 0x01 = Good)
+ *  -> Uses escape char (0xFF) to properly detect end-of-command char (0x0A).
+ *    (Byte equal to 0xFF or 0x0A should prefix 0xFF before it)
+ *    (Escape chars only for input- output sized to input to avoid escape chars)
  * 
- * Hardware is simply an arduino nano (ble) with 4 wires for JTAG connection
- * and USB cable for USB connection.
+ * Available Commands:
+ *  -> Set Period: 0x30 <new period bytes> 0x0A
+ *    (Returns: <result> <old period bytes> 0x0A)
+ *    (Period saved as uint16_t- last 2 period bytes sets value)
+ *  -> Send Instruction Sequence: 0x31 <instruction sequence> 0x0A
+ *    (Returns: <result> <shifted out value> 0x0A)
+ *    (Instruction is 8-bit register- according to Project RISCII JTAG)
+ *  -> Send Data Sequence: 0x31 <data sequence> 0x0A
+ *    (Returns: <result> <shifted out data> 0x0A)
+ *    (Data is 16-bit register- according to Project RISCII JTAG)
  */
 
 #include <Serial.h>
@@ -21,75 +38,56 @@
 #define PIN_TMS 4
 #define PIN_TDO 5
 
-// Definitions for available/possible commands from UART/USB.
-#define CMD_SET_PERIOD 0x30
-#define CMD_SEND_INSTR 0x31
-#define CMD_SEND_DATA  0x32
-#define CMD_INVALID    0x00
+// Definitions of notable chars from UART/USB.
+#define CHAR_CMD_PERIOD 0x30
+#define CHAR_CMD_INSTR  0x31
+#define CHAR_CMD_DATA   0x32
+#define CHAR_ESC_CHAR   0xFF
+#define CHAR_EXE_CMD    0x0A
 
-// Definitions for validating/deciphering UART/USB commands.
-#define CMD_SIZE_MIN  3
-#define CMD_SIZE_MAX  4
-#define CMD_TYPE_IDX  0
-#define CMD_DATA_IDX  1
+// Definitions of notables chars to UART/USB.
+#define RESP_GOOD (byte)(1)
+#define RESP_FAIL (byte)(0)
 
-// Definitions for "status" part of sent UART/USB responses.
-#define RESP_GOOD (byte)1
-#define RESP_FAIL (byte)0
+// Definitions configuring the J-Link program's data model.
+#define CFG_BUF_SIZE    300
+#define CFG_CMD_IDX     0
+#define CFG_DATA_IDX    1
+#define CFG_INIT_PERIOD 2
+#define CFG_BAUD_RATE   9600
 
-// Definitions for (starting) parameters of application's data model.
-#define JTAG_PERIOD_MS 2
-#define MSG_BUF_SIZE   4
-#define SERIAL_RATE    9600
-
-// Definitions for "magic numbers" in program (generally NOT configurable).
-#define MASK_BIT0     0x01
-#define LAST_BIT_IDX  7
-#define SHIFT_IN_MSB  1
-#define SHIFT_BYTE 8
-#define NEWLINE_CHAR  '\n'
-#define LOGIC_HIGH    0x1
+// Definitions for "magic numbers" used in program.
+#define BITS_PER_BYTE 8
+#define SHIFT_IN_LSB  1
+#define MASK_LOW_BYTE 0xFF
 #define LOGIC_LOW     0x0
-#define BYTE_NUM_BITS 8
+#define LOGIC_HIGH    0x1
 
 // -------------------------------------------------------------------------- //
 
-// Data model type to hold data pertinent to the application.
+// Data-type to hold J-Link program's main data while running.
 typedef struct {
-  // Message buffer (and its metadata).
-  uint8_t   m_msgBuffer[MSG_BUF_SIZE];    // physical message buffer
-  uint8_t   m_bufferIdx;                  // next open index
-  uint8_t   m_bufferSize;                 // number of used buffer slots
+  // Data buffer- used to store incoming/outgoing data.
+  uint8_t  m_buffer[CFG_BUF_SIZE];
+  uint16_t m_bufSize;
 
-  // Parsed command tokens.
-  uint8_t   m_cmdType;                    // type of command parsed
-  uint16_t  m_cmdData;                    // data given with command
+  // Meta-data used for parsing UART/USB input.
+  bool m_charEscaped;
 
-  // Mutable JTAG connection params.
-  uint16_t  m_jtagPeriod;                 // period of TCK (when active)
+  // Configured speed (or rather delay) of JTAG.
+  uint16_t m_period;
 } DataModel_t;
 
 // -------------------------------------------------------------------------- //
 
-// Data model of the application- global because of setup()/loop() behavior.
-DataModel_t s_prgmData;
+// Data model instance- global due to setup()/loop() behavior.
+DataModel_t s_model;
 
 // -------------------------------------------------------------------------- //
 
-/*
- * Cycles JTAG connection with given inputs/period. Returns result of TDO bit
- * 
- * Function is intended to be called "back-to-back" to create expected JTAG
- * clocking/signals/etc. Signals are effectively changed on falling edge of
- * TCK (good for TDI/TMS setup timing, though poor for TDO setup timing).
- * 
- * @param tdiBit bit value to use for TDI signal on TCK rising edge
- * @param tmsBit bit value to use for TMS signal on TCK rising edge
- * @param clkPeriod TCK period to emulate- divided into two delays
- * @return TDO bit PRIOR to TCK rising edge
- */
+// Bit-bangs one JTAG period. Intended to be called back-to-back.
 uint8_t jtagCycle(uint8_t tdiBit, uint8_t tmsBit, uint16_t clkPeriod) {
-  // Read output immediately- get before TCK rising edge.
+  // Read output- previous falling edge should have triggered update.
   uint8_t retBit = digitalRead(PIN_TDO);
 
   // Set JTAG outputs (prior to cycling- ensure RX setup times are met).
@@ -97,10 +95,10 @@ uint8_t jtagCycle(uint8_t tdiBit, uint8_t tmsBit, uint16_t clkPeriod) {
   digitalWrite(PIN_TMS, (tmsBit) ? HIGH : LOW);
 
   // Cycle TCK.
-  delay(clkPeriod / 2);
-  digitalWrite(PIN_TCK, HIGH);
-  delay(clkPeriod / 2);        // TCK delay + falling edge + application delay
-  digitalWrite(PIN_TCK, LOW);  // should ease TDO setup requirements
+  delay(clkPeriod / 2);        // TCK low end
+  digitalWrite(PIN_TCK, HIGH); // TCK rising edge
+  delay(clkPeriod / 2);        // TCK high end
+  digitalWrite(PIN_TCK, LOW);  // TCK falling edge
 
   // Return read TDO value.
   return retBit;
@@ -108,32 +106,23 @@ uint8_t jtagCycle(uint8_t tdiBit, uint8_t tmsBit, uint16_t clkPeriod) {
 
 // -------------------------------------------------------------------------- //
 
-/*
- * Performs 1 byte transfer over JTAG. Returns TDO output byte.
- * 
- * Function can be used to transfer multiple bytes (as TDI) over JTAG. An
- * additional argument is available to control final value of TMS (ie if JTAG
- * should be directed to next state after byte transfer).
- * 
- * @param dataByte byte to transfer over JTAG (as TDI)
- * @param toUpdate controls final TMS value sent over JTAG
- * @param clkPeriod TCK period to emulate- divided into two delays
- * @return TDO outputs from JTAG transfer
- */
+// Performs one byte of JTAG transfer w/ given last TMS value. Returns TDO byte.
 uint8_t jtagByte(uint8_t dataByte, bool toUpdate, uint16_t clkPeriod) {
-  // Transfer one byte across JTAG connection.
-  uint8_t retByte = 0; // record TDO output
-  for (uint8_t i = 0; i < BYTE_NUM_BITS; i++) {
+  // Returned byte from write/read transfer.
+  uint8_t retByte = 0;
+  
+  // Transfer one byte across JTAG connection (MSbit first).
+  for (uint8_t i = 0; i < BITS_PER_BYTE; i++) {
     // Determine input bits for transfer.
-    uint8_t tdiBit = dataByte & MASK_BIT0;
-    uint8_t tmsBit = (i == LAST_BIT_IDX) & toUpdate;
+    uint8_t tdiBit = (dataByte >> (BITS_PER_BYTE - 1));     // Get MSB to send
+    uint8_t tmsBit = (i == (BITS_PER_BYTE - 1)) & toUpdate; // 0 = stay in state
 
     // Conduct transfer.
     uint8_t tdoBit = jtagCycle(tdiBit, tmsBit, clkPeriod);
 
     // Adjust inputs/outputs.
-    retByte = (tdoBit << LAST_BIT_IDX) | (retByte >> SHIFT_IN_MSB);
-    dataByte >>= SHIFT_IN_MSB; // shift in MSb == shift out LSb
+    retByte = (retByte << SHIFT_IN_LSB) | tdoBit; // "Shifted in" MSB into LSB
+    dataByte <<= 1;                               // "Shifted out" MSB enitrely
   }
 
   // Return compound TDOs.
@@ -142,46 +131,94 @@ uint8_t jtagByte(uint8_t dataByte, bool toUpdate, uint16_t clkPeriod) {
 
 // -------------------------------------------------------------------------- //
 
-/*
- * Parses model's message into model's command variables.
- * 
- * Parsing encompassed little more than moving value around than checking
- * validity of values.
- * 
- * @param model data model of the application
- */
-void parseCommand(DataModel_t* model) {
-  // Ensure command is correct size.
-  if ((model->m_bufferSize < CMD_SIZE_MIN) || 
-      (model->m_bufferSize > CMD_SIZE_MAX)) {
-    // Invalid-sized command.
-    model->m_cmdType = CMD_INVALID;
-    return;
+// Attempts to execute command (and leave data in buffer). Returns if executed.
+bool executeCmd(DataModel_t* model) {
+  // Ensure command actually contains command byte.
+  if (CFG_CMD_IDX >= model->m_bufSize) {
+    // Unable to execute- failure.
+    return false;
   }
 
-  // -- Command properly sized- can be "parsed" -- //
+  /* Line reached- message sent over can be parsed/run as a command */
+  
+  // Run the defined command.
+  switch (model->m_buffer[CFG_CMD_IDX]) {
+    case CHAR_CMD_PERIOD: {
+      // Save previous period.
+      uint16_t prevPrd = model->m_period;
 
-  // Extract command type (may/may not be valid).
-  model->m_cmdType = model->m_msgBuffer[CMD_TYPE_IDX];
+      // Set new period (use last 2 bytes- not counting 'execute' char).
+      uint16_t newPrd = 0;
+      for (uint16_t i = CFG_DATA_IDX; i < (model->m_bufSize - 1); i++) {
+        // Determine new period.
+        newPrd = (newPrd << BITS_PER_BYTE) | model->m_buffer[i];
 
-  // Extract command data/value.
-  uint8_t idx = CMD_DATA_IDX; // start at beginning of command's data
-  model->m_cmdData = 0;       // start with "reset" data value
-  while (model->m_msgBuffer[idx] != NEWLINE_CHAR) {
-    model->m_cmdData <<= SHIFT_BYTE;
-    model->m_cmdData += model->m_msgBuffer[idx];
-    idx++;
+        // Zero-out on the way (makes setting to old period easier).
+        model->m_buffer[i] = 0;
+      }
+
+      // Set new period.
+      model->m_period = newPrd;
+
+      // Save old in model (for reporting).
+      model->m_buffer[model->m_bufSize - 3] = (prevPrd >> BITS_PER_BYTE);
+      model->m_buffer[model->m_bufSize - 2] = prevPrd & MASK_LOW_BYTE;
+      
+      break;
+    }
+    case CHAR_CMD_INSTR: {
+      // Get to instruction register (ie instruction shift state).
+      jtagCycle(LOGIC_LOW, LOGIC_LOW, model->m_period);
+      jtagCycle(LOGIC_LOW, LOGIC_LOW, model->m_period);
+
+      // Shift in instruction bytes (and record output).
+      for (uint16_t i = CFG_DATA_IDX; i < (model->m_bufSize - 1); i++) {
+        model->m_buffer[i] = jtagByte(model->m_buffer[i],
+                                      i == (model->m_bufSize - 2),
+                                      model->m_period
+                                     );
+      }
+
+      // Return to JTAG's IDLE state.
+      jtagCycle(LOGIC_LOW, LOGIC_HIGH, model->m_period);
+
+      /* Recorded same length output return data already adjusted */
+      
+      break;
+    }
+    case CHAR_CMD_DATA: {
+      // Get to data register (ie data shift state).
+      jtagCycle(LOGIC_LOW, LOGIC_LOW, model->m_period);
+      jtagCycle(LOGIC_LOW, LOGIC_HIGH, model->m_period);
+      jtagCycle(LOGIC_LOW, LOGIC_LOW, model->m_period);
+
+      // Shift in data bytes (and record output).
+      for (uint16_t i = CFG_DATA_IDX; i < (model->m_bufSize - 1); i++) {
+        model->m_buffer[i] = jtagByte(model->m_buffer[i],
+                                      i == (model->m_bufSize - 2),
+                                      model->m_period
+                                     );
+      }
+
+      // Return to JTAG's IDLE state.
+      jtagCycle(LOGIC_LOW, LOGIC_HIGH, model->m_period);
+
+      /* Recorded same length output return data already adjusted */
+      
+      break;
+    }
+    default:
+      // Invalid command- failure.
+      return false;
   }
 
-  // Message parsed into command fields- job well done.
-  return;
+  // Command executed- sucess!
+  return true;
 }
 
 // -------------------------------------------------------------------------- //
 
-/*
- * Initialization rountine. Sets up JTAG/USB connections and starting data.
- */
+// Initializes serial, JTAG pins, and program's data (called once on reset).
 void setup() {
   // Setup pin directions.
   pinMode(PIN_TCK, OUTPUT);
@@ -189,99 +226,65 @@ void setup() {
   pinMode(PIN_TMS, OUTPUT);
   pinMode(PIN_TDO, INPUT);
 
+  // Initialize starting pin values.
+  digitalWrite(PIN_TCK, LOW);
+  digitalWrite(PIN_TDI, LOW);
+  digitalWrite(PIN_TMS, HIGH);
+
   // (Set inputs as pull-ups).
   digitalWrite(PIN_TDO, HIGH);
 
   // Init serial connection.
-  Serial.begin(SERIAL_RATE);
+  Serial.begin(CFG_BAUD_RATE);
   while(!Serial) {};
 
   // Setup program data.
-  s_prgmData.m_bufferIdx  = 0;
-  s_prgmData.m_bufferSize = 0;
-  s_prgmData.m_cmdType    = CMD_INVALID;
-  s_prgmData.m_cmdData    = 0;
-  s_prgmData.m_jtagPeriod = JTAG_PERIOD_MS;
+  s_model.m_bufSize = 0;
+  s_model.m_charEscaped = false;
+  s_model.m_period = CFG_INIT_PERIOD;
 }
 
 // -------------------------------------------------------------------------- //
 
-/*
- * Main loop of application. Attempts to execute/respond to UART commands.
- */
+// Main program. Parses in command, executes it, and returns result/data.
 void loop() {
   // Monitor Serial input data.
-  if (Serial.available()) {
-    // Append input to buffer.
+  if (Serial.available()) { 
+    // Grab newest char.
     uint8_t newByte = Serial.read();
-    s_prgmData.m_msgBuffer[s_prgmData.m_bufferIdx] = newByte;
 
-    // Adjust buffer records.
-    if (s_prgmData.m_bufferIdx < (MSG_BUF_SIZE + 1)) {
-      s_prgmData.m_bufferIdx++;
+    // Append (or escape) as necessary.
+    if ((newByte == CHAR_ESC_CHAR) && !s_model.m_charEscaped) {
+      // Escape char- record presence.
+      s_model.m_charEscaped = true;
+      return;                       // like "continue" in context of loop()
     }
-    s_prgmData.m_bufferSize++;
-
-    // Attempt parse/JTAG transaction if message is ended.
-    if (newByte == NEWLINE_CHAR) {
-      // Parse command- converting buffer into command variables.
-      parseCommand(&s_prgmData);
-
-      // Run procedure as appropirate.
-      switch(s_prgmData.m_cmdType) {
-        case CMD_SET_PERIOD: {
-          // Set period, passing back previous period.
-          uint16_t oldPeriod = s_prgmData.m_jtagPeriod;
-          s_prgmData.m_jtagPeriod = s_prgmData.m_cmdData;
-          Serial.write(RESP_GOOD);
-          Serial.write((uint8_t)(oldPeriod >> SHIFT_BYTE));
-          Serial.write((uint8_t)(oldPeriod));
-          break;
-        }
-        case CMD_SEND_INSTR: {
-          // Send instruction byte over JTAG, pass back byte received.
-          jtagCycle(LOGIC_LOW, LOGIC_LOW, s_prgmData.m_jtagPeriod);
-          jtagCycle(LOGIC_LOW, LOGIC_LOW, s_prgmData.m_jtagPeriod);
-          uint8_t retByte = jtagByte((uint8_t)(s_prgmData.m_cmdData),
-                                     true,
-                                     s_prgmData.m_jtagPeriod
-                                    );
-          jtagCycle(LOGIC_LOW, LOGIC_HIGH, s_prgmData.m_jtagPeriod);
-          Serial.write(RESP_GOOD);
-          Serial.write(retByte);
-          break;
-        }
-        case CMD_SEND_DATA: {
-          // Send data word over JTAG, pass back word received.
-          jtagCycle(LOGIC_LOW, LOGIC_LOW, s_prgmData.m_jtagPeriod);
-          jtagCycle(LOGIC_LOW, LOGIC_HIGH, s_prgmData.m_jtagPeriod);
-          jtagCycle(LOGIC_LOW, LOGIC_LOW, s_prgmData.m_jtagPeriod);
-          uint8_t outByteLo = (uint8_t)(s_prgmData.m_cmdData);
-          uint8_t outByteHi = (uint8_t)(s_prgmData.m_cmdData >> SHIFT_BYTE);
-          uint8_t retByteLo = jtagByte(outByteLo,
-                                       false,
-                                       s_prgmData.m_jtagPeriod
-                                      );
-          uint8_t retByteHi = jtagByte(outByteHi, 
-                                       true, 
-                                       s_prgmData.m_jtagPeriod
-                                      );
-          jtagCycle(LOGIC_LOW, LOGIC_HIGH, s_prgmData.m_jtagPeriod);
-          Serial.write(RESP_GOOD);
-          Serial.write(retByteHi);
-          Serial.write(retByteLo);
-          break;
-        }
-        default: {
-          // Invalid command- let UART/USB user know this.
-          Serial.write(RESP_FAIL);
-        }
+    else {
+      // Otherwise, append to buffer (if able).
+      if (s_model.m_bufSize < CFG_BUF_SIZE) {
+        s_model.m_buffer[s_model.m_bufSize] = newByte;
+        s_model.m_bufSize++;
       }
-      Serial.write(NEWLINE_CHAR); // end any message with clear "end" delimiter
-
-      // "Clear" message buffer.
-      s_prgmData.m_bufferIdx = 0;
-      s_prgmData.m_bufferSize = 0;
     }
+
+    /* Line reached- char in question is NOT used as escape char */
+
+    // Execute command if (unescaped) 'execute' char is seen.
+    if ((newByte == CHAR_EXE_CMD) && !s_model.m_charEscaped) {  
+      // Attempt to execute command.
+      bool goodExe = executeCmd(&s_model);
+
+      // Report status/data from execution.
+      Serial.write((goodExe) ? RESP_GOOD : RESP_FAIL);
+      for (uint16_t i = CFG_DATA_IDX; i < s_model.m_bufSize; i++) {
+        Serial.write(s_model.m_buffer[i]);
+      }
+
+      // Reset buffer.
+      s_model.m_bufSize = 0;
+    }
+
+    // Data from escape char (ie escap-ed char) handled- deassert.
+    s_model.m_charEscaped = false;
   }
 }
