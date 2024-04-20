@@ -1,13 +1,14 @@
 module JtagPort (
 	// External-facing input pins.
-	input        tck,
-	input        tms,
-	input        tdi,
+	input        tckSynch,
+	input        tmsSynch,
+	input        tdiSynch,
 	output       tdo,
 	
 	// MCU-facing I/O pins.
 	input        wrData,
 	output       doUpdate,
+	output       inDShift,
 	output[7:0]  instrLine,
 	inout[15:0]  dataLine,
 	
@@ -40,10 +41,6 @@ General States:
 // -- Signals/Wires -- //
 /////////////////////////
 
-// Synchronizer wires.
-wire[2:0] synchD, synchQ;
-wire tckSynch, tmsSynch, tdiSynch;
-
 // State machine wires.
 wire[2:0] stateD, stateQ;
 
@@ -70,9 +67,6 @@ wire[2:0] mux_100_101, mux_110_111, mux_10X_11X;
 // -- Blocks/Instances -- //
 ////////////////////////////
 
-// Synchronizer for external inputs.
-SynchFlop SYNCH[2:0] (.D(synchD), .Q(synchQ), .clk(clk), .rstn(rstn));
-
 // State of the JTAG port.
 myDff STATE[2:0] (.D(stateD), .Q(stateQ), .clk(tckSynch), .rstn(rstn));
 
@@ -91,12 +85,6 @@ Tristate TRI[15:0] (.A(triA), .en(triEn), .Y(triY));
 assign inShiftD =  stateQ[2] &  stateQ[1] &  stateQ[0]; // 3'b111
 assign inUpdate = ~stateQ[2] & ~stateQ[1] &  stateQ[0]; // 3'b001
 
-// Pass external inputs through synchronizing.
-assign synchD = {tck, tms, tdi};
-assign tckSynch = synchQ[2];
-assign tmsSynch = synchQ[1];
-assign tdiSynch = synchQ[0];
-
 // Determine next state (for each state).
 assign state100Next = {1'b1, tmsSynch, ~tmsSynch};
 assign state101Next = {~tmsSynch, 2'b01};
@@ -112,11 +100,11 @@ mux2 iMUX3[2:0] (.A(mux_10X_11X),    .B(state00XNext),   .sel(stateQ[2]), .out(s
 
 // Handle shifting into instruction register.
 assign instrEn = ~stateQ[1] & stateQ[0];
-assign instrD = {8{~inUpdate}} & {tdiSynch, instrQ[7:1]};
+assign instrD = {8{~inUpdate}} & {instrQ[6:0], tdiSynch}; //{tdiSynch, instrQ[7:1]};
 
 // Handle shifting into data register.
 assign dataEn = inShiftD | wrData;
-assign dataShifted = {tdiSynch, dataQ[15:1]};
+assign dataShifted = {dataQ[14:0], tdiSynch}; //{tdiSynch, dataQ[15:1]};
 mux2 iMUX5[15:0] (.A(dataLine), .B(dataShifted), .sel(wrData), .out(dataD));
 
 // Tristate data register lines.
@@ -127,12 +115,13 @@ assign triEn = ~wrData;
 assign instrLine = instrQ;
 assign dataLine = triY;
 assign doUpdate = inUpdate;
+assign inDShift = inShiftD;
 
 // Output shifting register.
-mux2 iMUX4 (.A(dataQ[0]), .B(instrQ[0]), .sel(stateQ[1]), .out(tdo));
+mux2 iMUX4 (.A(dataQ[15]), .B(instrQ[7]), .sel(stateQ[1]), .out(tdo));
 
 // TODO- remove as needed.
 assign test_state = stateQ;
-assign test_data = dataLine;
+assign test_data = dataQ;
 
 endmodule

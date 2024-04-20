@@ -54,9 +54,11 @@ LINK_CMD_DATA   = b'\x32'
 LINK_EXE_CMD    = b'\x0A'
 
 # Definitions for building "JTAG/Hardware" commands.
+JTAG_PASS       = b'\x00'
 JTAG_ADDR       = b'\x01'
 JTAG_READ       = b'\x02'
 JTAG_WRITE      = b'\x03'
+JTAG_SPI        = b'\x04'
 
 # Definitions for building "SPI EEPROM" commands.
 SPI_WREN        = b'\x06'
@@ -120,6 +122,9 @@ def read(tkns):
     _transferBytes(readCmd)
     retBytes = _transferBytes(readOut)
     
+    # (Skip if in error).
+    if retBytes == None: return
+    
     # Report read data.
     retHex = "0x" + retBytes[1:3].hex()      # Chop off overhead data
     print ("MEM[0x%s] = %s"%(hexAddr, retHex))
@@ -140,7 +145,10 @@ def write(tkns):
     
     # Write data at given address.
     _transferBytes(dataIn)
-    _transferBytes(writeCmd)
+    res = _transferBytes(writeCmd)
+    
+    # (Skip if in error).
+    if res == None: return
     
     # Report actions to user.
     print ("0x%s => MEM[0x%s]"%(hexData, hexAddr))
@@ -150,7 +158,15 @@ def spi_read(tkns):
     # Determine bytes to send (address = 2nd token, # bytes to read = 3rd token).
     hexAddr = tkns[1][2:].zfill(4)
     fillIn = "0".zfill(int(tkns[2]) * 2)
+    spiCmd = LINK_CMD_INSTR + JTAG_SPI
     readCmd = LINK_CMD_DATA + SPI_READ + bytearray.fromhex(hexAddr) + bytearray.fromhex(fillIn)
+    resetCmd = LINK_CMD_INSTR + JTAG_PASS
+    
+    # Enable SPI mode.
+    res = _transferBytes(spiCmd)
+    
+    # (Skip if in error).
+    if res == None: return
     
     # Read SPI data.
     retBytes = _transferBytes(readCmd)
@@ -158,14 +174,25 @@ def spi_read(tkns):
     # Report read data.
     retHex = "0x" + retBytes[4:-1].hex()      # Chop off overhead data
     print ("SPI_MEM[0x%s...] = %s"%(hexAddr, retHex))
+    
+    # Reset SPI mode selection.
+    _transferBytes(resetCmd)
 
 # Function to handle writing to SPI EEPROM address (limit to page).
 def spi_write(tkns):
     # Determine bytes to send (address = 2nd token,  value = 3rd token).
     hexAddr  = tkns[1][2:].zfill(4)
     hexData  = tkns[2][2:]          # Regex ensures it aligns to bytes
+    spiCmd = LINK_CMD_INSTR + JTAG_SPI
     wrenCmd  = LINK_CMD_DATA + SPI_WREN
     writeCmd = LINK_CMD_DATA + SPI_WRITE + bytearray.fromhex(hexAddr) + bytearray.fromhex(hexData)
+    resetCmd = LINK_CMD_INSTR + JTAG_PASS
+    
+    # Enable SPI mode.
+    retBytes = _transferBytes(spiCmd)
+    
+    # (Skip if in error).
+    if retBytes == None: return
     
     # Enable writes on the SPI (good until actual write occurs).
     _transferBytes(wrenCmd)
@@ -175,6 +202,9 @@ def spi_write(tkns):
     
     # Report action to user.
     print("0x%s => SPI_MEM[0x%s...]"%(hexData, hexAddr))
+    
+    # Reset SPI mode selection.
+    _transferBytes(resetCmd)
 
 ## -- Helper/Internal/CLI Functions ----------------------------------------- ##
 

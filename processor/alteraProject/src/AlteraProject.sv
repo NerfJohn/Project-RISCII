@@ -14,7 +14,7 @@ module AlteraProject(
 	output[3:0]  LEDG,     // Green LEDs
 	
 	// Human/Direct Bi-directionals.
-	inout[7:0]   GPIO0,    // Basic GPIOs (left->right/up->down on board)
+	inout[11:0]   GPIO0,    // Basic GPIOs (left->right/up->down on board)
 	
 	// FPGA/board provided 50 MHz clock.
 	input        CLOCK_50,  // Clock signal
@@ -65,11 +65,13 @@ assign LEDG[1] = _FROM_CLK;
 
 // Test signals related to JTAG DUT.
 logic[15:0] test_jtagData;
+logic[7:0] test_jtagState;
 
 // Wires connecting JTAG controller to other DUTs/blocks.
 wire[15:0] jtagAddr, jtagData;
 wire jtagWr, jtagEn;
 wire jtagTck, jtagTdi, jtagTdo, jtagTms;
+wire jtagSck, jtagSdi, jtagSdo, jtagSen;
 
 // JTAG DUT instance.
 JtagMemController CTRL(
@@ -83,9 +85,15 @@ JtagMemController CTRL(
 	.tdi(jtagTdi),
 	.tdo(jtagTdo),
 	
+	.spiControl(jtagSen),
+	.spiClk(jtagSck),
+	.spiTdi(jtagSdi),
+	.spiTdo(jtagSdo),
+	
 	.clk(_FROM_CLK),
 	.rstn(_FROM_RSTN),
 	
+	.test_instr(test_jtagState),
 	.test_data(test_jtagData)
 );
 
@@ -110,7 +118,39 @@ assign SRAM_UB_N = jtagWr & ~_FROM_CLK; // related to write trigger- sync w/ clk
 assign SRAM_LB_N = jtagWr & ~_FROM_CLK; // related to write trigger- sync w/ clk posedge
 assign SRAM_CE_N = ~jtagEn;
 
+// -- TODO- add this to a controller block for SPI pins. -- //
+wire pinScs, pinSck, pinSmo, pinSmi; // Typical SPI signals
+wire unlockSck;
+
+// register to delay clk by 1 cycle (prevent JTAG enter data shift from being counted).
+myDff CLK_GATE (.D(jtagSen), .Q(unlockSck), .clk(jtagSck), .rstn(_FROM_RSTN));
+
+// Set up SPI pins.
+assign pinScs = ~jtagSen & ~unlockSck;
+assign pinSck = jtagSck & unlockSck;
+assign pinSmo = jtagSdi & jtagSen;
+assign jtagSdo = pinSmi;
+
+// Tie to output leds for checking.
+assign LEDR[3:0] = {pinSmi, pinSmo, pinSck, pinScs};
+assign GPIO0[4] = pinScs;
+assign pinSmi = GPIO0[5];
+assign GPIO0[6] = 1'b1;
+assign GPIO0[7] = 1'b0;
+assign GPIO0[8] = pinSmo;
+assign GPIO0[9] = pinSck;
+assign GPIO0[10] = 1'b1;
+assign GPIO0[11] = 1'b1;
+
+
+/*
+assign GPIO0[7:4] = {pinScs, pinSmi, 1'b1, 1'b0}; // SOIC pins {1, 2, 3, 4} (write protect OFF)
+assign GPIO0[11:8] = {1'b1, 1'b0, pinSck, pinSmo}; // SOIC pins {8, 7, 6, 5} (hold OFF)
+*/
+
+// -- -------------------------------------------------- -- //
+
 // Watch JTAGs data.
-assign _TO_HEX = {jtagData, test_jtagData};
+assign _TO_HEX = {8'h0, test_jtagState, test_jtagData};
 
 endmodule
