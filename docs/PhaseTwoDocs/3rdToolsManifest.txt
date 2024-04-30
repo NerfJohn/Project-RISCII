@@ -19,4 +19,7 @@ Version 0.6.3-pre20170905-1
 Quartus Web II Edition
 Version 13.0 SP1 (LIKELY DEPRECATED AT THIS POINT)
 
+Python
+Version 3.10.4
+
 ================================================================================

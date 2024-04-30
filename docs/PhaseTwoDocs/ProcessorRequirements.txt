@@ -1,0 +1,167 @@
+================================================================================
+Project RISCII: Processor Requirements
+---
+"Document outlining expectation/requirements of the microprocessor design"
+================================================================================
+Table of Contents:
+	-> Purpose
+	-> High Level Requirements
+	-> External Interface Requirements
+================================================================================
+Summary:
+
+	This document is meant to provide a record of the intended behavior of the
+	RISCII soft-core microprocessor. Descriptions are not strictly targeted
+	towards validation or verfication, though should provide enough detail to
+	generally infer either. When possible, descriptions should use proper
+	requirement writing (e.g. shall, while, when, etc).
+	
+	Due to the nature of the RISCII microprocessor being soft-core (ie run on
+	an FPGA), some descriptions may make assumptions or constraints on the FGPA
+	itself (e.g. clock signal is stable by the time the microprocessor powers
+	up). These descriptions should be treaded carefully between the
+	microprocessor and board design phases.
+	
+	For the rest of this document, the RISCII soft-core microprocessor is
+	referred to as a custom designed circuit, NOT an FPGA design. The RISCII
+	microprocessor may also be referred to as "processor" or "MCU".
+
+================================================================================
+High Level Requirements:
+
+	-- Clocking --
+
+	-> REQ-HL-0: Microprocessor shall run up to 8.333 MHz
+		(i.e. 50 MHz / 6, based on development setup)
+		(Can be regarded as 8 MHz + reasonable deviation)
+	
+	-- Architecture --
+	
+	-> REQ-HL-1: Microprocessor shall use a 16-bit architecture
+		(i.e. operands and results are stored as 16-bit values)
+	
+	-> REQ-HL-2: Microprocessor shall use separate program/data address spaces
+		(Implies existence of two address 0x0, 0x1, etc.)
+		(Does not require signals/path to be completely separate)
+	
+	-- Memory --
+	
+	-> REQ-HL-3: Microprocessor shall support 64 KB of program address space
+		(Program space is used to store binary image of device)
+	
+	-> REQ-HL-4: Microprocessor shall support 32 KB of free memory
+		(Free memory is used for stack, heap, globals, etc)
+	
+	-> REQ-HL-5: Microprocessor shall support 32 KB of memory-mapping
+		(Memory-maps used to give software access to peripherals)
+	
+	-> REQ-HL-6: Free memory and memory-mapping shall share data address space
+		(Effect is common space for accessing common sources of data)
+		(Inferred that each resource gets contiguous region in address space)
+
+================================================================================
+External Interface Requirements:
+
+	-- JTAG(esque) Port (hereby referred to as JTAG) --
+	
+	-> REQ-EI-0: Microprocessor shall support 4 pins for JTAG use
+		pin name | default level | direction |description
+		---------+---------------+-----------+-----------
+		TCK      | 0             | to MCU    | Test Clock, for transfer rate
+		TMS      | 1             | to MCU    | Test Select, for selecting state
+		TDI      | 0             | to MCU    | Test Data In, for input data
+		TDO      | 0             | from MCU  | Test Data Out, for output data
+	
+	-> REQ-EI-1: Microprocessor shall synchronize all JTAG pins
+		(Inputs should be synched with MCU's main clock before being used)
+		(Outputs should be updated in synch with MCU's main clock)
+	
+	-> REQ-EI-2: Microprocessor shall update TMS, TDI, and TDO based on TCK
+		(TCK's rising edge should trigger TMS and TDI sampling)
+		(TCK's rising edge should trigger TDO's updating)
+	
+	-> REQ-EI-3: TCK shall run at least 8x slower than the MCU's main clock
+		(This gives the MCU some time to synch and process the inputs)
+		
+	-> REQ-EI-4: While microprocessor is 'booting', JTAG is unresponsive
+		(JTAG effectively makes connected J-Link think it's disconnected)
+	
+	-> REQ-EI-5: While microprocessor is 'running', JTAG is on standby
+		(JTAG is responsive to J-Link, but cannot access MCU resources)
+		(JTAG should effectively only be able to set MCU to 'paused')
+	
+	-> REQ-EI-6: While microprocessor is 'paused', JTAG has full control
+		(JTAG can access resources typically used by MCU)
+		
+	-> REQ-EI-7: JTAG shall support direct shift access to instruction register
+		(This is typical of standard JTAG- TDI is used to input bits)
+		(There should effectively be a "shift instruction" state in JTAG)
+	
+	-> REQ-EI-8: Shifting JTAG instruction register shall indicate MCU's status
+		(Shall report if MCU is 'booting', 'paused', or 'running')
+		(Initial value shifted out of instruction register indicates status)
+	
+	-> REQ-EI-9: Shifting into JTAG instruction register shall execute a command
+		(Command based on final value left within instruction register)
+	
+	-> REQ-EI-10: JTAG shall support direct shift access to data register
+		(This is typical of standard JTAG- TDI is used to input bits)
+		(There should effectively be a "shift data" state in JTAG)
+	
+	-> REQ-EI-11: JTAG shall support abilities for debugging and programming
+		action name          | description
+		---------------------+------------
+		Read RAM Address     | Read given raw RAM address
+		Write RAM Address    | Write given data to given raw RAM address
+		Access Scan Register | Relay data register I/O to scan register
+		Access EEPROM        | Relay data register I/O to EEPROM
+		Pause MCU            | Set MCU to 'paused' if MCU was in 'running'
+		Run MCU              | Set MCU to 'running' if MCU was in 'paused'
+	
+	-> REQ-EI-12: Executing a JTAG command shall reset data register relays
+		(i.e. 'access scan' and 'access eeprom' are undone by next command)
+	
+	-- EEPROM Port --
+	
+	-> REQ-EI-13: EEPROM shall be accessed using a SPI connection
+		pin name | default level | direction | description
+		---------+---------------+-----------+------------
+		SCLK     | 0             | from MCU  | SPI clock, for transfer rate
+		MOSI     | 0             | from MCU  | Write data, for sending data
+		MISO     | - (ext. chip) | to MCU    | Read data, for receiving data
+		CS       | 1             | from MCU  | chip select, enables connection
+	
+	-> REQ-EI-14: EEPROM port shall adhere to standard SPI behavior
+		(Port is effectively a typical SPI port- explicit to EEPROM chip)
+	
+	-> REQ-EI-15: EEPROM port shall allow various "control sources"
+		source name | priority | description
+		------------+----------+------------
+		Boot Block  | Highest  | Circuit responsible for properly resetting MCU
+		Mapped SPI  | ...      | Memory-mapped SPI for SW access to SPI pins
+		JTAG Relay  | Lowest   | Relay passing JTAG signals to SPI pins
+	
+	-- RAM Port --
+	
+	-> REQ-EI-16: RAM port shall be accessed using a parallel interface
+		pin name | default level | direction      | description
+		---------+---------------+----------------+------------
+		address  | 0s            | from MCU       | address to read/write
+		data     | - (high Zs)   | bi-directional | data path for read/write
+		isWr     | 0             | from MCU       | indicates access type
+		memEn    | 0             | from MCU       | triggers an access
+		<ctrls>  | ? (inactive)  | from MCU       | chip specific controls
+	
+	-> REQ-EI-17: RAM port shall adhere to standard parallel access behavior
+		(That is, behavior typical of parallel access RAM chips)
+		(Exact behavior is chip specific, though basic usage should be apparent)
+	
+	-> REQ-EI-18: RAM port shall allow various "control sources"
+		source name | priority | description
+		------------+----------+------------
+		Boot Block  | Highest  | Circuit responsible for properly resetting MCU
+		Core D-Path | ...      | Data pathline of MCU's Core
+		Core I-Path | ...      | Instruction pathline of MCU's Core
+		JTAG Access | Lowest   | JTAG access port for debugging purposes
+	
+================================================================================
