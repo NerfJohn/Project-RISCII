@@ -5,12 +5,12 @@ software/src/ParseTable.h
 
 *.out
 
-processor/alteraProject/db
-processor/alteraProject/incremental_db
-processor/alteraProject/output_files
-processor/alteraProject/AlteraProject.qws
-processor/alteraProject/*.bak
-processor/alteraProject/src/*.bak
+**/db
+**/incremental_db
+**/output_files
+**/*.qws
+**/*.bak
+**/src/*.bak
 
 compiler/asmProject/.settings
 compiler/asmProject/Debug
