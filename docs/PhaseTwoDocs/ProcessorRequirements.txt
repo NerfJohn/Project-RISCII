@@ -120,6 +120,10 @@ External Interface Requirements:
     
     -> REQ-EI-12: Executing a JTAG command shall reset data register relays
         (i.e. 'access scan' and 'access eeprom' are undone by next command)
+	
+	-> REQ-EI-19: JTAG's shift scheme shall match EEPROM Port' shift scheme
+		(Serial shift most significant bit first)
+		(Polarity and Phase match the EEPROM's target Polarity/Phase)
     
     -- EEPROM Port --
     
