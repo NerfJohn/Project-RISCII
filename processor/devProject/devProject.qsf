@@ -271,5 +271,10 @@ set_global_assignment -name SDC_FILE devProjectSDC.sdc
 set_global_assignment -name SYSTEMVERILOG_FILE src/DevChasis/devProject.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/DevChasis/LazyPll.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/DevChasis/SegDisplay.sv
-set_global_assignment -name VERILOG_FILE src/UProcBlocks/UProc.v
+set_global_assignment -name VERILOG_FILE src/Primitives/MyDff.v
+set_global_assignment -name VERILOG_FILE src/Primitives/DffEn.v
+set_global_assignment -name VERILOG_FILE src/CombBlocks/Mux2.v
+set_global_assignment -name VERILOG_FILE src/ProcBlocks/UProc.v
+set_global_assignment -name VERILOG_FILE src/Primitives/Tristate.v
+set_global_assignment -name VERILOG_FILE src/PortBlocks/Synch2.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

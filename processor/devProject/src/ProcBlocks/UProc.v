@@ -1,0 +1,81 @@
+/*
+ * UProc.v
+ *
+ * "Top level of Project RISCII's microprocessor design"
+ */
+module UProc (
+    // SRAM chip connections.
+    output [15:0] uproc_sramAddr,
+    inout  [15:0] uproc_sramData,
+    output        uproc_sramWr,
+    output        uproc_sramEn,
+    
+    // EEPROM SPI chip connections.
+    output        uproc_spiSCK,
+    output        uproc_spiSDO,
+    input         uproc_spiSDI,
+    output        uproc_spiSCS,
+    
+    // JTAG port connections.
+    input         uproc_jtagTCK,
+    input         uproc_jtagTDI,
+    output        uproc_jtagTDO,
+    input         uproc_jtagTMS,
+
+    // Common signals.
+    input         uproc_clk,
+    input         uproc_rstn,
+     
+     // TODO- test signals for development. TO DELETE!!!
+     output [15:0] test_word0,
+     output [15:0] test_word1
+);
+
+/////////////////////////
+// -- Signals/Wires -- //
+/////////////////////////
+
+// Synchronized JTAG wires.
+wire[2:0] jtagSynchA, jtagSynchY;
+wire jtagSynchTCK, jtagSynchTDI, jtagSynchTMS;
+
+////////////////////////////
+// -- Blocks/Instances -- //
+////////////////////////////
+
+// Synchronizer for JTAG inputs.
+Synch2 JTAG_SYNCH[2:0] (
+    .A(jtagSynchA),
+    .Y(jtagSynchY),
+    .clk(uproc_clk),
+    .rstn(uproc_rstn),
+);
+
+//////////////////////////
+// -- Connects/Logic -- //
+//////////////////////////
+
+// Synchronize JTAG pins for internal use.
+assign jtagSynchA = {uproc_jtagTCK, uproc_jtagTDI, uproc_jtagTMS};
+assign jtagSynchTCK = jtagSynchY[2];
+assign jtagSynchTDI = jtagSynchY[1];
+assign jtagSynchTMS = jtagSynchY[0];
+
+///////////////////////////////////////////////////////////
+// -- TODO- test signals for development. TO DELETE!! -- //
+///////////////////////////////////////////////////////////
+
+assign uproc_jtagTDO = 1'b1;
+
+assign test_word0 = {3'b0, jtagSynchTCK,
+                            3'b0, jtagSynchTDI,
+                            3'b0, uproc_jtagTDO,
+                            3'b0, jtagSynchTMS
+                          };
+assign test_word1 = {3'b0, uproc_jtagTCK,
+                            3'b0, uproc_jtagTDI,
+                            3'b0, uproc_jtagTDO,
+                            3'b0, uproc_jtagTMS
+                          };
+
+endmodule
