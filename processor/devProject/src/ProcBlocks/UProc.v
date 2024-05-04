@@ -39,6 +39,10 @@ module UProc (
 wire[2:0] jtagSynchA, jtagSynchY;
 wire jtagSynchTCK, jtagSynchTDI, jtagSynchTMS;
 
+// JTAG port/controller wires.
+wire[15:0] jtagSramAddr;
+wire jtagEnScan, jtagEnSPI;
+
 ////////////////////////////
 // -- Blocks/Instances -- //
 ////////////////////////////
@@ -48,7 +52,35 @@ Synch2 JTAG_SYNCH[2:0] (
     .A(jtagSynchA),
     .Y(jtagSynchY),
     .clk(uproc_clk),
-    .rstn(uproc_rstn),
+    .rstn(uproc_rstn)
+);
+
+// JTAG Port/Controller- Debug access port for development/programming.
+JtagPort JTAG_PORT (
+    // JTAG pin wires.
+    .jtagTCK(jtagSynchTCK),
+    .jtagTDI(jtagSynchTDI),
+    .jtagTDO(),
+    .jtagTMS(jtagSynchTMS),
+    
+    // Status signals (from MCU, to user).
+    .isBooted(),
+    .isPaused(),
+    
+    // SRAM chip connector.
+    .sramAddr(jtagSramAddr),
+    .sramData(),
+    .sramWr(),
+    .sramEn(),
+    
+    // Control signals (from user, to MCU).
+    .enScanRelay(jtagEnScan),
+    .enSPIRelay(jtagEnSPI),
+    .enPaused(),
+    
+    // Common signals.
+    .clk(uproc_clk),
+    .rstn(uproc_rstn)
 );
 
 //////////////////////////
@@ -67,15 +99,11 @@ assign jtagSynchTMS = jtagSynchY[0];
 
 assign uproc_jtagTDO = 1'b1;
 
-assign test_word0 = {3'b0, jtagSynchTCK,
+assign test_word0 = jtagSramAddr;
+assign test_word1 = {3'b0, jtagSynchTCK,
                             3'b0, jtagSynchTDI,
                             3'b0, uproc_jtagTDO,
                             3'b0, jtagSynchTMS
-                          };
-assign test_word1 = {3'b0, uproc_jtagTCK,
-                            3'b0, uproc_jtagTDI,
-                            3'b0, uproc_jtagTDO,
-                            3'b0, uproc_jtagTMS
                           };
 
 endmodule
