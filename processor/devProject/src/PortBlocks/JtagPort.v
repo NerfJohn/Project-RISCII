@@ -77,15 +77,26 @@ wire[2:0] nextState1XX, nextState10X;
 wire[2:0] nextState0XX, nextState00X;
 
 // Computed signals regarding current/next state.
-wire getStatus, inDShift;
+wire inDShift, inUpdate;
+wire cmdPulseD, cmdPulseQ;
+wire getStatus, runCmd;
 
 // Instruction register wires/computed input.
 wire[7:0] iRegD, iRegQ;
 wire[1:0] nextIRegBits;
 
-// Data register wires/computed input.
+// Data register wires.
 wire[15:0] dRegD, dRegQ;
 wire dRegEn;
+
+// Computed signals regarding command/data input.
+wire is3Bit, inControl;
+
+// RAM access register/device wires.
+wire[15:0] addrD, addrQ;
+wire addrEn;
+wire[15:0] dTriA, dTriY;
+wire dTriEn;
 
 ////////////////////////////
 // -- Blocks/Instances -- //
@@ -97,6 +108,14 @@ DffAsynch STATE[2:0] (
     .Q(stateQ),
     .clk(jtagTCK),
     .rstn(rstn)
+);
+
+// "Command Pulse"- for commands that need pulse (vs 'update' state).
+MyDff CMD_PULSE (
+	.D(cmdPulseD),
+	.Q(cmdPulseQ),
+	.clk(clk),
+	.rstn(rstn)
 );
 
 // Instruction register- 8-bit command controlling JTAG (and MCU).
@@ -114,6 +133,20 @@ DffAsynchEn D_REG[15:0] (
 	.S(dRegEn),
 	.clk(jtagTCK),
 	.rstn(rstn)
+);
+
+// Registers/devices used for RAM accessing.
+DffEn ADDR[15:0] (
+	.D(addrD),
+	.Q(addrQ),
+	.S(addrEn),
+	.clk(clk),
+	.rstn(rstn)
+);
+Tristate DATA_TRI[15:0] (
+	.A(dTriA),
+	.Y(dTriY),
+	.S(dTriEn)
 );
 
 //////////////////////////
@@ -148,8 +181,11 @@ Mux2 M3[2:0] (
 );
 
 // Compute signals based on state machine.
-assign getStatus = (~stateQ[2] & ~stateQ[1] & stateQ[0]) & ~jtagTMS;
+assign inUpdate  = (stateQ[2] & stateQ[1] & ~stateQ[0]);
 assign inDShift  = (~stateQ[2] & stateQ[1] & ~stateQ[0]);
+assign cmdPulseD = inUpdate;
+assign getStatus = (~stateQ[2] & ~stateQ[1] & stateQ[0]) & ~jtagTMS;
+assign runCmd = inUpdate & ~cmdPulseQ;
 
 // Determine instruction register input (shift vs status).
 Mux2 M4[1:0] (
@@ -169,8 +205,22 @@ Mux2 M5[15:0] (
 );
 assign dRegEn = inDShift;
 
-// TODO- quick test remove
-assign sramAddr = {4'b0, iRegQ, 1'b0, stateQ};
-assign sramData = dRegQ;
+// Compute signals based on command/data input.
+assign is3Bit    = ~(|iRegQ[7:3]);
+assign inControl = isPaused & isBooted;
+
+// Handle RAM access registers/controls.
+assign addrD  = dRegQ;
+assign addrEn = (is3Bit & ~iRegQ[2] & ~iRegQ[1] & iRegQ[0]) & runCmd;
+assign dTriA  = dRegQ;
+assign dTriEn = (is3Bit & ~iRegQ[2] & iRegQ[1] & iRegQ[0]) 
+                & inUpdate 
+                & inControl;
+
+// Set SRAM outputs (access by state due to updating data register).
+assign sramAddr = addrQ;
+assign sramData = dTriY;
+assign sramWr   = iRegQ[0];
+assign sramEn   = (is3Bit & ~iRegQ[2] & iRegQ[1]) & inUpdate & inControl;
 
 endmodule
