@@ -4,30 +4,30 @@
  * "Circuit to parse JTAG signals into requests and control signals"
  */
 module JtagPort (
-	// Typical I/O of JTAG port.
-	input  jtagTCK,
-	input  jtagTDI,
-	output jtagTDO,
-	input  jtagTMS,
-	
-	// Inputs for reporting status via "instruction" register.
-	input  isBooted,
-	input  isPaused,
-	
-	// SRAM chip access connections.
-	output [15:0] sramAddr,
-	inout  [15:0] sramData,
-	output        sramWr,
-	output        sramEn,
-	
-	// Control signals for relay/pausing.
-	output enScanRelay,
-	output enSPIRelay,
-	output enPaused,
-	
-	// Common signals.
-	input  clk,
-	input  rstn
+    // Typical I/O of JTAG port.
+    input  jtagTCK,
+    input  jtagTDI,
+    output jtagTDO,
+    input  jtagTMS,
+    
+    // Inputs for reporting status via "instruction" register.
+    input  isBooted,
+    input  isPaused,
+    
+    // SRAM chip access connections.
+    output [15:0] sramAddr,
+    inout  [15:0] sramData,
+    output        sramWr,
+    output        sramEn,
+    
+    // Control signals for relay/pausing.
+    output enScanRelay,
+    output enSPIRelay,
+    output enPaused,
+    
+    // Common signals.
+    input  clk,
+    input  rstn
 );
 
 /*
@@ -76,14 +76,29 @@ wire[2:0] stateD, stateQ;
 wire[2:0] nextState1XX, nextState10X;
 wire[2:0] nextState0XX, nextState00X;
 
+// Computed signals regarding current/next state.
+wire getStatus;
+
+// Instruction register wires/computed input.
+wire[7:0] iRegD, iRegQ;
+wire[1:0] nextIRegBits;
+
 ////////////////////////////
 // -- Blocks/Instances -- //
 ////////////////////////////
 
 // State machine of external JTAG- clocked at TCK speed, NOT core speed.
 DffAsynch STATE[2:0] (
-	.D(stateD),
-	.Q(stateQ),
+    .D(stateD),
+    .Q(stateQ),
+    .clk(jtagTCK),
+    .rstn(rstn)
+);
+
+// Instruction register- 8-bit command controlling JTAG (and MCU).
+DffAsynch I_REG[7:0] (
+	.D(iRegD),
+	.Q(iRegQ),
 	.clk(jtagTCK),
 	.rstn(rstn)
 );
@@ -94,34 +109,46 @@ DffAsynch STATE[2:0] (
 
 // Determine next state/update state.
 Mux2 M0[2:0] (
-	.A({2'b10, jtagTMS}), 
-	.B({2'b00, ~jtagTMS}), 
-	.S(stateQ[0]), 
-	.Y(nextState00X)
+    .A({2'b10, jtagTMS}), 
+    .B({2'b00, ~jtagTMS}), 
+    .S(stateQ[0]), 
+    .Y(nextState00X)
 );
 Mux2 M1[2:0] (
-	.A({jtagTMS, 2'b10}),
-	.B(nextState00X),
-	.S(stateQ[1]),
-	.Y(nextState0XX)
+    .A({jtagTMS, 2'b10}),
+    .B(nextState00X),
+    .S(stateQ[1]),
+    .Y(nextState0XX)
 );
 Mux2 M2[2:0] (
-	.A({1'b0, ~jtagTMS, 1'b0}), 
-	.B({1'b1, jtagTMS, 1'b0}), 
-	.S(stateQ[0]), 
-	.Y(nextState10X)
+    .A({1'b0, ~jtagTMS, 1'b0}), 
+    .B({1'b1, jtagTMS, 1'b0}), 
+    .S(stateQ[0]), 
+    .Y(nextState10X)
 );
-assign nextState1XX = nextState10X & {3{~stateQ[1]}}; // simplified Mux2
+assign nextState1XX = nextState10X & {3{~stateQ[1]}}; // "Mux w/ 0"
 Mux2 M3[2:0] (
-	.A(nextState1XX), 
-	.B(nextState0XX), 
-	.S(stateQ[2]),
-	.Y(stateD)
+    .A(nextState1XX), 
+    .B(nextState0XX), 
+    .S(stateQ[2]),
+    .Y(stateD)
 );
 
+// Compute signals based on state machine.
+assign getStatus = (~stateQ[2] & ~stateQ[1] & stateQ[0]) & ~jtagTMS;
+
+// Determine instruction register input (shift vs status).
+Mux2 M4[1:0] (
+	.A({isPaused, isBooted}), // status
+	.B(iRegQ[2:1]),           // shifted
+	.S(getStatus),
+	.Y(nextIRegBits)
+);
+assign iRegD = {{jtagTDI, iRegQ[7:3]} & {6{~getStatus}}, nextIRegBits};
+
 // TODO- quick test remove
-assign sramAddr = {13'b0, stateQ};
-assign enScanRelay = jtagTCK;
-assign enSPIRelay = jtagTMS;
+assign sramAddr = {4'b0, iRegQ, 1'b0, stateQ};
+assign enScanRelay = getStatus;
+assign enSPIRelay = 1'b0;
 
 endmodule

@@ -64,8 +64,8 @@ JtagPort JTAG_PORT (
     .jtagTMS(jtagSynchTMS),
     
     // Status signals (from MCU, to user).
-    .isBooted(),
-    .isPaused(),
+    .isBooted(1'b0),
+    .isPaused(1'b1),
     
     // SRAM chip connector.
     .sramAddr(jtagSramAddr),
