@@ -9,9 +9,9 @@
  * UART/USB Behavior:
  *  -> Takes in commands to set period or send instruction/data sequences.
  *  -> Sends return message of same size to report success and read data.
- *    (0x00 = Failure, 0x01 = Good)
+ *    (First byte = 0x00 = Failure, 0x01 = Good)
  *  -> Uses escape char (0xFF) to properly detect end-of-command char (0x0A).
- *    (Byte equal to 0xFF or 0x0A should prefix 0xFF before it)
+ *    (Data byte equal to 0xFF or 0x0A should prefix 0xFF before it)
  *    (Escape chars only for input- output sized to input to avoid escape chars)
  * 
  * Available Commands:
@@ -35,8 +35,8 @@
 // Definitions mapping MCU pins to JTAG pins/functionality.
 #define PIN_TCK 2
 #define PIN_TDI 3
-#define PIN_TMS 4
-#define PIN_TDO 5
+#define PIN_TDO 4
+#define PIN_TMS 5
 
 // Definitions of notable chars from UART/USB.
 #define CHAR_CMD_PERIOD 0x30

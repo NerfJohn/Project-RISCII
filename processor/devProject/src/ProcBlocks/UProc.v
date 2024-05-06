@@ -40,7 +40,7 @@ wire[2:0] jtagSynchA, jtagSynchY;
 wire jtagSynchTCK, jtagSynchTDI, jtagSynchTMS;
 
 // JTAG port/controller wires.
-wire[15:0] jtagSramAddr;
+wire[15:0] jtagSramAddr, jtagSramData;
 wire jtagEnScan, jtagEnSPI;
 
 ////////////////////////////
@@ -69,7 +69,7 @@ JtagPort JTAG_PORT (
     
     // SRAM chip connector.
     .sramAddr(jtagSramAddr),
-    .sramData(),
+    .sramData(jtagSramData),
     .sramWr(),
     .sramEn(),
     
@@ -100,10 +100,6 @@ assign jtagSynchTMS = jtagSynchY[0];
 assign uproc_jtagTDO = 1'b1;
 
 assign test_word0 = jtagSramAddr;
-assign test_word1 = {3'b0, jtagSynchTCK,
-                            3'b0, jtagSynchTDI,
-                            3'b0, uproc_jtagTDO,
-                            3'b0, jtagSynchTMS
-                          };
+assign test_word1 = jtagSramData;
 
 endmodule

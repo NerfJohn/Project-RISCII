@@ -138,10 +138,10 @@ UProc DUT (
     .uproc_spiSCS(),
     
     // JTAG port connections.
-    .uproc_jtagTCK(SW[0]), // "Upper" 3 pins of GPIO_0 connector
+    .uproc_jtagTCK(GPIO_0[0]), // "Upper" 3 pins of GPIO_0 connector
     .uproc_jtagTDI(GPIO_0[1]),
     .uproc_jtagTDO(GPIO_0[2]),
-    .uproc_jtagTMS(SW[1]),
+    .uproc_jtagTMS(GPIO_0[3]),
     
     // Common signals.
     .uproc_clk(pllClockQ),

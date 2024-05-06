@@ -77,11 +77,15 @@ wire[2:0] nextState1XX, nextState10X;
 wire[2:0] nextState0XX, nextState00X;
 
 // Computed signals regarding current/next state.
-wire getStatus;
+wire getStatus, inDShift;
 
 // Instruction register wires/computed input.
 wire[7:0] iRegD, iRegQ;
 wire[1:0] nextIRegBits;
+
+// Data register wires/computed input.
+wire[15:0] dRegD, dRegQ;
+wire dRegEn;
 
 ////////////////////////////
 // -- Blocks/Instances -- //
@@ -99,6 +103,15 @@ DffAsynch STATE[2:0] (
 DffAsynch I_REG[7:0] (
 	.D(iRegD),
 	.Q(iRegQ),
+	.clk(jtagTCK),
+	.rstn(rstn)
+);
+
+// Data register- 16-bit value acting as RAM address or RAM data.
+DffAsynchEn D_REG[15:0] (
+	.D(dRegD),
+	.Q(dRegQ),
+	.S(dRegEn),
 	.clk(jtagTCK),
 	.rstn(rstn)
 );
@@ -136,19 +149,28 @@ Mux2 M3[2:0] (
 
 // Compute signals based on state machine.
 assign getStatus = (~stateQ[2] & ~stateQ[1] & stateQ[0]) & ~jtagTMS;
+assign inDShift  = (~stateQ[2] & stateQ[1] & ~stateQ[0]);
 
 // Determine instruction register input (shift vs status).
 Mux2 M4[1:0] (
 	.A({isPaused, isBooted}), // status
-	.B(iRegQ[2:1]),           // shifted
+	.B({iRegQ[0], jtagTDI}),  // shifted
 	.S(getStatus),
 	.Y(nextIRegBits)
 );
-assign iRegD = {{jtagTDI, iRegQ[7:3]} & {6{~getStatus}}, nextIRegBits};
+assign iRegD = {{iRegQ[6:1]} & {6{~getStatus}}, nextIRegBits};
+
+// Determine data register input/enable (shift vs overwrite vs nothing).
+Mux2 M5[15:0] (
+	.A({dRegQ[14:0], jtagTDI}),
+	.B(sramData),
+	.S(inDShift),
+	.Y(dRegD)
+);
+assign dRegEn = inDShift;
 
 // TODO- quick test remove
 assign sramAddr = {4'b0, iRegQ, 1'b0, stateQ};
-assign enScanRelay = getStatus;
-assign enSPIRelay = 1'b0;
+assign sramData = dRegQ;
 
 endmodule
