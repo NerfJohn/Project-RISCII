@@ -37,11 +37,14 @@ module UProc (
 
 // Synchronized JTAG wires.
 wire[2:0] jtagSynchA, jtagSynchY;
-wire jtagSynchTCK, jtagSynchTDI, jtagSynchTMS;
+wire      jtagSynchTCK, jtagSynchTDI, jtagSynchTMS;
 
 // JTAG port/controller wires.
+wire       jtagBaseTDO;
 wire[15:0] jtagSramAddr, jtagSramData;
-wire jtagEnScan, jtagEnSPI;
+wire       jtagSramWr, jtagSramEn;
+wire       jtagEnScan, jtagEnSPI;
+wire       jtagDoPause;
 
 ////////////////////////////
 // -- Blocks/Instances -- //
@@ -60,23 +63,23 @@ JtagPort JTAG_PORT (
     // JTAG pin wires.
     .jtagTCK(jtagSynchTCK),
     .jtagTDI(jtagSynchTDI),
-    .jtagTDO(),
+    .jtagTDO(jtagBaseTDO),
     .jtagTMS(jtagSynchTMS),
     
     // Status signals (from MCU, to user).
-    .isBooted(1'b1),
-    .isPaused(1'b1),
+    .isBooted(/* TODO- populate */ 1'b1),
+    .isPaused(/* TODO- populate */ 1'b1),
     
     // SRAM chip connector.
     .sramAddr(jtagSramAddr),
     .sramData(jtagSramData),
-    .sramWr(),
-    .sramEn(),
+    .sramWr(jtagSramWr),
+    .sramEn(jtagSramEn),
     
     // Control signals (from user, to MCU).
     .enScanRelay(jtagEnScan),
     .enSPIRelay(jtagEnSPI),
-    .enPaused(),
+    .enPaused(jtagDoPause),
     
     // Common signals.
     .clk(uproc_clk),
@@ -97,9 +100,9 @@ assign jtagSynchTMS = jtagSynchY[0];
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
-assign uproc_jtagTDO = 1'b1;
+assign uproc_jtagTDO = jtagBaseTDO;
 
-assign test_word0 = jtagSramAddr;
-assign test_word1 = jtagSramData;
+assign test_word0 = {3'b0, jtagSramEn, 3'b0, jtagDoPause, 3'b0, jtagEnScan, 3'b0, jtagEnSPI};
+assign test_word1 = jtagSramAddr;
 
 endmodule
