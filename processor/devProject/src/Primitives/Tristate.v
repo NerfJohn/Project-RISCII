@@ -1,5 +1,5 @@
 /*
- * Tristate.sv
+ * Tristate.v
  * 
  * "Unidirectional Pass Gate- passes driving input or high impedance signal"
  */

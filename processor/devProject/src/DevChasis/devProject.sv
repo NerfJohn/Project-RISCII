@@ -122,14 +122,19 @@ assign HEX7 = debugCtrl1[27:21];
  * == Debug/Test Signals ==
  * -> debugWord0, debugWord1: words sent to hex displays
  */
+ 
+// Broken out SRAM signals (to handle specifc SRAM chip interface).
+wire dut_sramWr, dut_sramEn;
+
+// ---
 
 // Microprocessor DUT Incarnate...
 UProc DUT (
     // SRAM chip connections.
-    .uproc_sramAddr(),
-    .uproc_sramData(),
-    .uproc_sramWr(),
-    .uproc_sramEn(),
+    .uproc_sramAddr(SRAM_ADDR[15:0]),
+    .uproc_sramData(SRAM_DQ),
+    .uproc_sramWr(dut_sramWr),
+    .uproc_sramEn(dut_sramEn),
     
     // EEPROM SPI chip connections.
     .uproc_spiSCK(),
@@ -152,6 +157,16 @@ UProc DUT (
     .test_word1(debugWord1)
 );
 
+// ---
+
+// Connect to specific SRAM chip signals.
+assign SRAM_WE_N = ~dut_sramWr;
+assign SRAM_OE_N = dut_sramWr;
+assign SRAM_UB_N = dut_sramWr & ~pllClockQ; // write trigger- sync w/ clk
+assign SRAM_LB_N = dut_sramWr & ~pllClockQ; // write trigger- sync w/ clk
+assign SRAM_CE_N = ~dut_sramEn;
+
+
 //////////////////////////////////////
 // -- Disabled/Unconnected Ports -- //
 //////////////////////////////////////
@@ -161,13 +176,7 @@ assign LEDR      = 18'b0;
 assign LEDG[8:3] = 6'b0;
 
 // SRAM Signals.
-assign SRAM_ADDR = 18'b0;
-assign SRAM_DQ   = 16'bZZZZZZZZZZZZZZZZ;
-assign SRAM_WE_N = 1'b1;
-assign SRAM_OE_N = 1'b1;
-assign SRAM_UB_N = 1'b1;
-assign SRAM_LB_N = 1'b1;
-assign SRAM_CE_N = 1'b1;
+assign SRAM_ADDR[17:16] = 2'b0;
 
 // GPIO Ports.
 assign GPIO_0[35:4] = 32'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;

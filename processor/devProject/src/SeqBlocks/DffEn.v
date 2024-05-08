@@ -1,9 +1,9 @@
 /*
- * DffAsynchEn.sv
+ * DffEn.v
  * 
- * "Asynchronous DFF with enable signal (i.e. alternate form of Asynch DFF)"
+ * "Synchronous DFF with enable signal (i.e. alternate form of DFF)"
  */
-module DffAsynchEn (
+module DffEn (
     // Flop I/O.
     input  D,
     output Q,
@@ -28,7 +28,7 @@ Mux2 M0 (
 );
 
 // Typical DFF (arguable not primitive, but close enough).
-DffAsynch CORE_DFF (
+MyDff CORE_DFF (
     .D(newD),
     .Q(Q),
     .clk(clk),

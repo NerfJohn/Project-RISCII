@@ -83,7 +83,7 @@ wire[2:0] nextState0XX, nextState00X;
 
 // Computed signals regarding current/next state.
 wire inDShift, inUpdate;
-wire runCmd;
+wire getStatus;
 
 // Instruction register wires/computed input.
 wire[7:0] iRegD, iRegQ;

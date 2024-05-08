@@ -1,5 +1,5 @@
 /*
- * MyDff.sv
+ * MyDff.v
  * 
  * "Simple, Synchronous D-Flip-Flop Register; Base of all memory blocks"
  */

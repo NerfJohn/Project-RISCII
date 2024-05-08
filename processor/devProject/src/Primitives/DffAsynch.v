@@ -1,5 +1,5 @@
 /*
- * DffAsynch.sv
+ * DffAsynch.v
  * 
  * "Asynchronous DFF for unique cases where synchronous won't cut it"
  */

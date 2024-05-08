@@ -1,5 +1,5 @@
 /*
- * Synch2.sv
+ * Synch2.v
  * 
  * "Simple 2 cycle synchronizer to synch signals and mitigate metastability"
  */

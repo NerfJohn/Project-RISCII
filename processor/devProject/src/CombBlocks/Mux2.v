@@ -1,5 +1,5 @@
 /*
- * Mux2.sv
+ * Mux2.v
  * 
  * "Simple 2 multiplexer- basic building block for many circuits"
  */

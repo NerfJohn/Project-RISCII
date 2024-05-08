@@ -100,9 +100,15 @@ assign jtagSynchTMS = jtagSynchY[0];
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
+MemoryBus OO (
+	.data(jtagSramData[0]),
+	.en(~jtagSramWr),
+	.sData(uproc_sramData[0]),
+);
+
 assign uproc_jtagTDO = jtagBaseTDO;
 
 assign test_word0 = {3'b0, jtagSramEn, 3'b0, jtagDoPause, 3'b0, jtagEnScan, 3'b0, jtagEnSPI};
-assign test_word1 = jtagSramAddr;
+//assign test_word1 = jtagSramAddr;
 
 endmodule
