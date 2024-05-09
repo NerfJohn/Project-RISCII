@@ -166,6 +166,8 @@ assign SRAM_UB_N = dut_sramWr & ~pllClockQ; // write trigger- sync w/ clk
 assign SRAM_LB_N = dut_sramWr & ~pllClockQ; // write trigger- sync w/ clk
 assign SRAM_CE_N = ~dut_sramEn;
 
+// TODO- For development, DELETE LATER.
+assign LEDG[3] = GPIO_0[0];
 
 //////////////////////////////////////
 // -- Disabled/Unconnected Ports -- //
@@ -173,7 +175,7 @@ assign SRAM_CE_N = ~dut_sramEn;
 
 // Direct I/O Devices.
 assign LEDR      = 18'b0;
-assign LEDG[8:3] = 6'b0;
+assign LEDG[8:4] = 5'b0;
 
 // SRAM Signals.
 assign SRAM_ADDR[17:16] = 2'b0;

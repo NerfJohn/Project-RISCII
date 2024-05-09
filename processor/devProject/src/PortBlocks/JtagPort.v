@@ -66,7 +66,7 @@ module JtagPort (
  * 1) Only TCK edges within "SHFT" state count (including exiting edge!).
  * 2) UPDATE signals occur at TCK speed (ie RAM accesses are held/repeated).
  * 3) Design contains Mealy aspects (ie state + TMS driven signals).
- * 4) Even when relaying, data registers gets updated.
+ * 4) Even when relaying, data register gets updated.
  * 5) Every instruction shift is followed by an attempt to execute
  */
 
@@ -229,11 +229,11 @@ Mux2 M5[15:0] (
     .S(inDShift),
     .Y(dRegD)
 );
-assign dRegEn = inDShift;
+assign dRegEn = inDShift | inUpdate;
 
 // Compute signals based on command/data input.
-assign is3Bit    = ~(|iRegQ[7:3]);
-assign inControl = isPaused & isBooted;
+assign is3Bit      = ~(|iRegQ[7:3]);
+assign inControl   = isPaused & isBooted;
 
 // Handle RAM access registers/controls.
 assign addrD  = dRegQ;

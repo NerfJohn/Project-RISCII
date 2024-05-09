@@ -26,25 +26,45 @@ module UProc (
     input         uproc_clk,
     input         uproc_rstn,
      
-     // TODO- test signals for development. TO DELETE!!!
-     output [15:0] test_word0,
-     output [15:0] test_word1
+    // TODO- test signals for development. TO DELETE!!!
+    output [15:0] test_word0,
+    output [15:0] test_word1
 );
+
+/*
+ * Microprocessor ("UProc") Top-Level Design:
+ *
+ * TODO- summary of module + design notes. Keep list of modules- order later.
+ *
+ * module name          | desc.
+ * ---------------------+------
+ * JTAG Synch           | Synchronizer for JTAG pins (ie not boundary scanned)
+ * Memory Controller    | Controller for SRAM/Mapped Memory Bus
+ * JTAG Port            | Port/Controller for handling JTAG signals
+ */
 
 /////////////////////////
 // -- Signals/Wires -- //
 /////////////////////////
 
+// Internal Global Signals.
+wire[15:0] gbl_memData;
+
 // Synchronized JTAG wires.
-wire[2:0] jtagSynchA, jtagSynchY;
+wire[2:0] jtagSynchA,   jtagSynchY;
 wire      jtagSynchTCK, jtagSynchTDI, jtagSynchTMS;
 
 // JTAG port/controller wires.
-wire       jtagBaseTDO;
-wire[15:0] jtagSramAddr, jtagSramData;
-wire       jtagSramWr, jtagSramEn;
-wire       jtagEnScan, jtagEnSPI;
+wire[15:0] jtagSramAddr;
+wire       jtagSramWr,  jtagSramEn;
+wire       jtagEnScan,  jtagEnSPI;
 wire       jtagDoPause;
+wire       jtagBaseTDO;
+
+// Memory Bus Controller wires.
+wire[15:0] memBusAddr;
+wire       memBusWr;
+wire       memBusRamEn, memBusMapEn;
 
 ////////////////////////////
 // -- Blocks/Instances -- //
@@ -72,7 +92,7 @@ JtagPort JTAG_PORT (
     
     // SRAM chip connector.
     .sramAddr(jtagSramAddr),
-    .sramData(jtagSramData),
+    .sramData(uproc_sramData),
     .sramWr(jtagSramWr),
     .sramEn(jtagSramEn),
     
@@ -86,6 +106,34 @@ JtagPort JTAG_PORT (
     .rstn(uproc_rstn)
 );
 
+// Memory Bus Controller- Determines who currently controls the memory bus.
+MemoryController MEM_CTRL (
+	// Processor control inputs.
+	.procAddr(),
+	.procWr(),
+	.procEn(),
+	
+	// JTAG control inputs.
+	.jtagAddr(jtagSramAddr),
+	.jtagWr(jtagSramWr),
+	.jtagEn(jtagSramEn),
+	
+	// Boot circuit inputs.
+	.bootAddr(),
+	.bootWr(),
+	.bootEn(),
+	
+	// Control signals determining controlling circuits.
+	.isPaused(/* TODO- populate */ 1'b1),
+	.isBooted(/* TODO- populate */ 1'b1),
+	
+	// Selected control signals.
+	.busAddr(memBusAddr),
+	.busWr(memBusWr),
+	.busRamEn(memBusRamEn),
+	.busMapEn(memBusMapEn)
+);
+
 //////////////////////////
 // -- Connects/Logic -- //
 //////////////////////////
@@ -96,19 +144,19 @@ assign jtagSynchTCK = jtagSynchY[2];
 assign jtagSynchTDI = jtagSynchY[1];
 assign jtagSynchTMS = jtagSynchY[0];
 
+// Connect memory bus controller to SRAM chip.
+assign uproc_sramAddr = memBusAddr;
+//assign uproc_sramData = uproc_sramData;
+assign uproc_sramWr = memBusWr;
+assign uproc_sramEn = memBusRamEn;
+
 ///////////////////////////////////////////////////////////
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
-MemoryBus OO (
-	.data(jtagSramData[0]),
-	.en(~jtagSramWr),
-	.sData(uproc_sramData[0]),
-);
-
 assign uproc_jtagTDO = jtagBaseTDO;
 
-assign test_word0 = {3'b0, jtagSramEn, 3'b0, jtagDoPause, 3'b0, jtagEnScan, 3'b0, jtagEnSPI};
-//assign test_word1 = jtagSramAddr;
+assign test_word0 = uproc_sramData;
+assign test_word1 = jtagSramAddr;
 
 endmodule
