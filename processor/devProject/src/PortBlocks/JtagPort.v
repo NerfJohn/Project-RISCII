@@ -63,7 +63,7 @@ module JtagPort (
  * Pause MCU     | 0x07 | Booted   | Set MCU to 'paused' state
  *
  * Design Notes:
- * 1) Only TCK edges within "SHFT" state count (including exiting edge!).
+ * 1) Only TCK edges within "SHFT" state shift (including exiting edge!).
  * 2) UPDATE signals occur at TCK speed (ie RAM accesses are held/repeated).
  * 3) Design contains Mealy aspects (ie state + TMS driven signals).
  * 4) Even when relaying, data register gets updated.
@@ -268,8 +268,8 @@ assign sramWr   = iRegQ[0];
 assign sramEn   = (is3Bit & ~iRegQ[2] & iRegQ[1]) & inUpdate & inControl;
 
 // Set relay outputs.
-assign enScanRelay = scanQ;
-assign enSPIRelay = spiQ;
+assign enScanRelay = scanQ & inDShift;
+assign enSPIRelay = spiQ & inDShift;
 
 // Set 'paused' output (for pausing MCU/giving JTAG control).
 assign enPaused = pauseQ;

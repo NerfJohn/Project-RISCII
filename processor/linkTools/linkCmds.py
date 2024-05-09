@@ -58,7 +58,7 @@ JTAG_PASS       = b'\x00'
 JTAG_ADDR       = b'\x01'
 JTAG_READ       = b'\x02'
 JTAG_WRITE      = b'\x03'
-JTAG_SPI        = b'\x04'
+JTAG_SPI        = b'\x05'
 
 # Definitions for building "SPI EEPROM" commands.
 SPI_WREN        = b'\x06'

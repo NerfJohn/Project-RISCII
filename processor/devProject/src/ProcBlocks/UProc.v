@@ -66,6 +66,10 @@ wire[15:0] memBusAddr;
 wire       memBusWr;
 wire       memBusRamEn, memBusMapEn;
 
+// Storage Controller wires.
+wire spiBusSCK, spiBusSCS;
+wire spiBusSDI, spiBusSDO;
+
 ////////////////////////////
 // -- Blocks/Instances -- //
 ////////////////////////////
@@ -134,6 +138,31 @@ MemoryController MEM_CTRL (
 	.busMapEn(memBusMapEn)
 );
 
+// External Storage Controller- determines who controls SPI access to storage.
+StorageController SPI_CTRL (
+    // Controls from memory-mapped peripheral.
+    .mapEn(),
+    
+    // Controls from JTAG port.
+    .jtagTCK(jtagSynchTCK),
+    .jtagEn(jtagEnSPI),
+    
+    // Controls from Boot circuit.
+    .bootEn(),
+    
+    // Control signals deciding which circuit is in control.
+    .isPaused(/* TODO- populate */ 1'b1),
+    .isBooted(/* TODO- populate */ 1'b1),
+    
+    // Selected controls sent over SPI connection.
+    .spiSCK(spiBusSCK),
+    .spiSCS(spiBusSCS),
+    
+    // Common signals.
+    .clk(uproc_clk),
+    .rstn(uproc_rstn)
+);
+
 //////////////////////////
 // -- Connects/Logic -- //
 //////////////////////////
@@ -146,17 +175,25 @@ assign jtagSynchTMS = jtagSynchY[0];
 
 // Connect memory bus controller to SRAM chip.
 assign uproc_sramAddr = memBusAddr;
-//assign uproc_sramData = uproc_sramData;
 assign uproc_sramWr = memBusWr;
 assign uproc_sramEn = memBusRamEn;
+
+// Connect storage/SPI bus to SPI pins.
+assign uproc_spiSCK = spiBusSCK;
+assign uproc_spiSDO = jtagSynchTDI;
+assign uproc_spiSCS = spiBusSCS;
+Mux2 M0 (
+	.A(uproc_spiSDI),
+	.B(jtagBaseTDO),
+	.S(jtagEnSPI),
+	.Y(uproc_jtagTDO)
+);
 
 ///////////////////////////////////////////////////////////
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
-assign uproc_jtagTDO = jtagBaseTDO;
-
-assign test_word0 = uproc_sramData;
+assign test_word0 = {8'b0, 3'b0, jtagSynchTCK, 3'b0, spiBusSCK};
 assign test_word1 = jtagSramAddr;
 
 endmodule

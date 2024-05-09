@@ -27,7 +27,7 @@ module MemoryController (
     output[15:0] busAddr,
     output       busWr,
     output       busRamEn,
-     output       busMapEn
+    output       busMapEn
 );
 
 /*

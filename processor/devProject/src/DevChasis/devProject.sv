@@ -137,10 +137,10 @@ UProc DUT (
     .uproc_sramEn(dut_sramEn),
     
     // EEPROM SPI chip connections.
-    .uproc_spiSCK(),
-    .uproc_spiSDO(),
-    .uproc_spiSDI(),
-    .uproc_spiSCS(),
+    .uproc_spiSCK(GPIO_0[29]),
+    .uproc_spiSDO(GPIO_0[28]),
+    .uproc_spiSDI(GPIO_0[33]),
+    .uproc_spiSCS(GPIO_0[32]),
     
     // JTAG port connections.
     .uproc_jtagTCK(GPIO_0[0]), // "Upper" 3 pins of GPIO_0 connector
@@ -166,22 +166,31 @@ assign SRAM_UB_N = dut_sramWr & ~pllClockQ; // write trigger- sync w/ clk
 assign SRAM_LB_N = dut_sramWr & ~pllClockQ; // write trigger- sync w/ clk
 assign SRAM_CE_N = ~dut_sramEn;
 
+// Handle EEPROM specific signals.
+assign GPIO_0[35] = 1'b0; // GND
+assign GPIO_0[34] = 1'b1; // Write Protect DISABLED
+assign GPIO_0[31] = 1'b1; // VDD
+assign GPIO_0[30] = 1'b1; // Hold DISABLED
+
 // TODO- For development, DELETE LATER.
 assign LEDG[3] = GPIO_0[0];
+
+assign LEDR[0] = GPIO_0[29];
+assign LEDR[1] = GPIO_0[32];
 
 //////////////////////////////////////
 // -- Disabled/Unconnected Ports -- //
 //////////////////////////////////////
 
 // Direct I/O Devices.
-assign LEDR      = 18'b0;
+assign LEDR[17:2] = 16'b0;
 assign LEDG[8:4] = 5'b0;
 
 // SRAM Signals.
 assign SRAM_ADDR[17:16] = 2'b0;
 
 // GPIO Ports.
-assign GPIO_0[35:4] = 32'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_0[27:4] = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
 assign GPIO_1 = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
 
 endmodule
