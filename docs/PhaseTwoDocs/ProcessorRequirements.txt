@@ -29,6 +29,8 @@ Summary:
 ================================================================================
 High Level Requirements:
 
+    (Contains REQ-HL-0 through REQ-HL-6)
+
     -- Clocking --
 
     -> REQ-HL-0: Microprocessor shall run up to 8.333 MHz
@@ -61,6 +63,8 @@ High Level Requirements:
 
 ================================================================================
 External Interface Requirements:
+
+    (Contains REQ-EI-0 through REQ-EI-19)
 
     -- JTAG(esque) Port (hereby referred to as JTAG) --
     
@@ -144,6 +148,10 @@ External Interface Requirements:
         Boot Block  | Highest  | Circuit responsible for properly resetting MCU
         Mapped SPI  | ...      | Memory-mapped SPI for SW access to SPI pins
         JTAG Relay  | Lowest   | Relay passing JTAG signals to SPI pins
+
+    -> REQ-EI-20: Pins to EEPROM shall be subject to the boundary scan register
+		(Boundary scan register allows JTAG to have minor control of pins)
+		(Intended to help with HW debugging)
     
     -- RAM Port --
     
@@ -167,5 +175,35 @@ External Interface Requirements:
         Core D-Path | ...      | Data pathline of MCU's Core
         Core I-Path | ...      | Instruction pathline of MCU's Core
         JTAG Access | Lowest   | JTAG access port for debugging purposes
+	
+    -> REQ-EI-21: Pins to RAM shall be subject to the boundary scan register
+		(Boundary scan register allows JTAG to have minor control of pins)
+		(Intended to help with HW debugging)
+	
+	-- Boundary Scan Register --
+	
+    -> REQ-EI-00: Boundary scan register shall support 3 settings per pin
+		setting  | effective for ___ pins | desc.
+		---------+------------------------+------
+		output   | output, bi-directional | value to drive pin to
+		tristate | output, bi-directional | allows pin to be driven
+		input    | all                    | reads value currently on pin
+	
+	-> REQ-EI-00: Read-only pins shall support output and tristate settings
+		(Neither setting is applied, but keep settings per pin consistent)
+	
+	-> REQ-EI-00: While the MCU is 'paused' and the JTAG scan relay is enabled,
+	              the boundary scan register shall be enabled
+		(Output and tristate settings are applied to their assigned pin)
+
+    -> REQ-EI-00: While the MCU is not 'paused', the boundary scan register
+	              shall be disabled
+		(Boundary scan register is intended for HW debugging, not running code)
+		(Output and tristate settings are not applied to their assigned pin)
+	
+    -> REQ-EI-00: While the JTAG scan relay is enabled and is shifting into the
+	              data register, the boundary scan register shall be disabled
+		(Boundary scan register should not control pins while being updated)
+		(Output and tristate settings are not applied to their assigned pin)
     
 ================================================================================
