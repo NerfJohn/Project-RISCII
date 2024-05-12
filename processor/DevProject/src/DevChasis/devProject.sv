@@ -1,5 +1,5 @@
 /*
- * devProject.sv
+ * DevProject.sv
  * 
  * "Top level of 'chasis' connecting processor design to development FPGA pins"
  */
@@ -21,7 +21,7 @@ module DevProject (
     output [6:0]  HEX7,
     
     // 50 MHz Clock Input.
-    input CLOCK_50,
+    input         CLOCK_50,
     
     // SRAM Signals.
     output [17:0] SRAM_ADDR,
@@ -37,97 +37,128 @@ module DevProject (
     inout  [35:0] GPIO_1
 );
 
-/////////////////////////////
-// -- CHASIS Wires/Regs -- //
-/////////////////////////////
+/*
+ * DevProject Chasis + Microprocessor (UProc):
+ *
+ * Project/platform for developing Project RISCII microprocessor design. Project
+ * includes both the core microprocessor deign (as the "device under test/DUT")
+ * and a chasis to set it up on the FPGA. Below describes the FPGA controls.
+ *
+ * control name | location | defined with | desc.
+ * -------------+----------+--------------+------
+ * reset button | KEY[0]   | Chasis sigs  | External reset pin on MCU design
+ * switch clks  | KEY[1]   | Chasis sigs  | Switch between 8.333 MHz and 8 Hz
+ * reset LED    | LEDG[0]  | Chasis sigs  | visual confirmation of reset state
+ * switch LED   | LEDG[1]  | Chasis sigs  | visual confirmation of switch press
+ * clk LED      | LEDG[2]  | Chasis sigs  | visual confirmation of clk input
+ */
+
+/////////////////////////////////////////////
+// -- CHASIS Signals/Internal Registers -- //
+/////////////////////////////////////////////
 
 // PLL block wires.
-wire pllClockD, pllClockQ;
-wire pllSelect;
+wire pll_clkD, pll_clkQ;
+wire pll_selPulse;
 
 // Reset wires/registers.
 wire resetD;
 reg  resetQ;
 
 // Segment Display "Debug Words" wires.
-wire[27:0] debugCtrl0, debugCtrl1;
-wire[15:0] debugWord0, debugWord1;
+wire [27:0] seg_ctrl0, seg_ctrl1;
+wire [15:0] seg_word0, seg_word1;
 
-///////////////////////////////////
-// -- CHASIS Blocks/Instances -- //
-///////////////////////////////////
+//////////////////////////////////////////////////////
+// -- CHASIS Behavioral Blocks/Functional Instances //
+//////////////////////////////////////////////////////
 
+//------------------------------------------------------------------------------
 // PLL Block- generates 8.333 MHz and 8 Hz clocks for development.
 LazyPll PLL (
-    .pll_clock50_i(pllClockD),
-    .pll_switchFreq_i(pllSelect),
-    .pll_genClk_o(pllClockQ)
+    // Input 50 MHz clock.
+    .i_clock50(pll_clkD),
+    
+    // Pulsing freq. selector.
+    .i_switchFreq(pll_selPulse),
+    
+    // Generated clock.
+    .o_genClk(pll_clkQ)
 );
 
+//------------------------------------------------------------------------------
 // Reset signal- synchronized to generated clock signal.
-always @(posedge pllClockQ) begin
+always @(posedge pll_clkQ) begin
     resetQ <= resetD;
 end
 
-// Segmen Displays- organized as two 16-bit words (for debugging).
+//------------------------------------------------------------------------------
+// Segment Displays- organized as two 16-bit words (for debugging).
 SegDisplay DBG_WORD0[3:0] (
-    .seg_nibble_i(debugWord0),
-     .seg_controls_o(debugCtrl0)
+    // Basic Encoder I/O.
+    .i_segNibble(seg_word0),
+    .o_segControls(seg_ctrl0)
 );
 SegDisplay DBG_WORD1[3:0] (
-    .seg_nibble_i(debugWord1),
-     .seg_controls_o(debugCtrl1)
+    // Basic Encoder I/O.
+    .i_segNibble(seg_word1),
+    .o_segControls(seg_ctrl1)
 );
 
-/////////////////////////////////
-// -- CHASIS Connects/Logic -- //
-/////////////////////////////////
+//////////////////////////////////////////////////
+// -- CHASIS Connections/Combinational Logic -- //
+//////////////////////////////////////////////////
 
+//------------------------------------------------------------------------------
 // Generate proper clock signal for DUT.
-assign pllClockD = CLOCK_50;
-assign pllSelect = ~KEY[1];  // Pushbutton 2nd from the right
+assign pll_clkD     = CLOCK_50;
+assign pll_selPulse = ~KEY[1];  // Pushbutton 2nd from the right
 
+//------------------------------------------------------------------------------
 // Generate/syncrhonize reset signal to generated clock signal.
-assign resetD    = KEY[0];   // Rightmost Pushbutton
+assign resetD = KEY[0];   // Rightmost Pushbutton
 
+//------------------------------------------------------------------------------
 // Create feedback for PLL control.
 assign LEDG[1] = ~KEY[1];   // Pushbutton/Green LED 2nd from the right
-assign LEDG[2] = pllClockQ; // LED 3rd from the right
+assign LEDG[2] = pll_clkQ;  // LED 3rd from the right
 
+//------------------------------------------------------------------------------
 // Create feedback for Reset control.
 assign LEDG[0] = resetQ;    // Rightmost GreenLED
 
+//------------------------------------------------------------------------------
 // Create feedback for "debug words" for development.
-assign HEX0 = debugCtrl0[6:0];
-assign HEX1 = debugCtrl0[13:7];
-assign HEX2 = debugCtrl0[20:14];
-assign HEX3 = debugCtrl0[27:21];
-assign HEX4 = debugCtrl1[6:0];
-assign HEX5 = debugCtrl1[13:7];
-assign HEX6 = debugCtrl1[20:14];
-assign HEX7 = debugCtrl1[27:21];
+assign HEX0 = seg_ctrl0[6:0];
+assign HEX1 = seg_ctrl0[13:7];
+assign HEX2 = seg_ctrl0[20:14];
+assign HEX3 = seg_ctrl0[27:21];
+assign HEX4 = seg_ctrl1[6:0];
+assign HEX5 = seg_ctrl1[13:7];
+assign HEX6 = seg_ctrl1[20:14];
+assign HEX7 = seg_ctrl1[27:21];
 
-///////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // -- Device Under Test (DUT) -- //
-///////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 /*
- * Resources available (from Chasis):
+ * CHASIS Resources available:
  * == Expected/Production Signals ==
- * -> pllClockQ             : Input Clock Signal
- * -> resetQ                : Input (Synchronous) Reset Signal
- * -> SRAM_<sigs>           : RAM chip signals
- * -> GPIO_0, GPIO_1        : Generic pins (for JTAG, SPI, etc)
+ * -> pll_clkQ             : Input Clock Signal
+ * -> resetQ               : Input (Synchronous) Reset Signal
+ * -> SRAM_<sigs>          : RAM chip signals
+ * -> GPIO_0, GPIO_1       : Generic pins (for JTAG, SPI, etc)
  *
  * == Debug/Test Signals ==
- * -> debugWord0, debugWord1: words sent to hex displays
+ * -> seg_word0, seg_word1 : Words sent to hex displays
  */
- 
+
+//------------------------------------------------------------------------------
 // Broken out SRAM signals (to handle specifc SRAM chip interface).
 wire dut_sramWr, dut_sramEn;
 
-// ---
-
+//------------------------------------------------------------------------------
 // Microprocessor DUT Incarnate...
 UProc DUT (
     // SRAM chip connections.
@@ -149,48 +180,45 @@ UProc DUT (
     .uproc_jtagTMS(GPIO_0[3]),
     
     // Common signals.
-    .uproc_clk(pllClockQ),
+    .uproc_clk(pll_clkQ),
     .uproc_rstn(resetQ),
     
     // TODO- test signals for development. TO DELETE!!!
-    .test_word0(debugWord0),
-    .test_word1(debugWord1)
+    .test_word0(seg_word0),
+    .test_word1(seg_word1)
 );
 
-// ---
-
+//------------------------------------------------------------------------------
 // Connect to specific SRAM chip signals.
-assign SRAM_WE_N = ~dut_sramWr;
-assign SRAM_OE_N = dut_sramWr;
-assign SRAM_UB_N = dut_sramWr & ~pllClockQ; // write trigger- sync w/ clk
-assign SRAM_LB_N = dut_sramWr & ~pllClockQ; // write trigger- sync w/ clk
-assign SRAM_CE_N = ~dut_sramEn;
+assign SRAM_WE_N = ~dut_sramWr;             // Inverted write/read signal
+assign SRAM_OE_N = dut_sramWr;              // Allow output on read request
+assign SRAM_UB_N = dut_sramWr & ~pll_clkQ;  // Write trigger- sync w/ clk
+assign SRAM_LB_N = dut_sramWr & ~pll_clkQ;  // Write trigger- sync w/ clk
+assign SRAM_CE_N = ~dut_sramEn;             // Inverted enable signal
 
+//------------------------------------------------------------------------------
 // Handle EEPROM specific signals.
 assign GPIO_0[35] = 1'b0; // GND
-assign GPIO_0[34] = 1'b1; // Write Protect DISABLED
+assign GPIO_0[34] = 1'b1; // Write Protect disabled
 assign GPIO_0[31] = 1'b1; // VDD
-assign GPIO_0[30] = 1'b1; // Hold DISABLED
+assign GPIO_0[30] = 1'b1; // Hold disabled
 
-// TODO- For development, DELETE LATER.
-assign LEDG[3] = GPIO_0[0];
-
-assign LEDR[0] = GPIO_0[29];
-assign LEDR[1] = GPIO_0[32];
-
-//////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // -- Disabled/Unconnected Ports -- //
-//////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
+//------------------------------------------------------------------------------
 // Direct I/O Devices.
-assign LEDR[17:2] = 16'b0;
-assign LEDG[8:4] = 5'b0;
+assign LEDR [17:0] = 16'b0;
+assign LEDG [8:3]  = 6'b0;
 
+//------------------------------------------------------------------------------
 // SRAM Signals.
 assign SRAM_ADDR[17:16] = 2'b0;
 
+//------------------------------------------------------------------------------
 // GPIO Ports.
-assign GPIO_0[27:4] = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
-assign GPIO_1 = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_0 [27:4] = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_1        = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
 
 endmodule
