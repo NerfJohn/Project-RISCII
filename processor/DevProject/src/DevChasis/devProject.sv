@@ -3,7 +3,7 @@
  * 
  * "Top level of 'chasis' connecting processor design to development FPGA pins"
  */
-module devProject (
+module DevProject (
     // Direct I/O Devices.
     input  [17:0] SW,
     input  [3:0]  KEY,
