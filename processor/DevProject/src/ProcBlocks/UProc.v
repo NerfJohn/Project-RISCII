@@ -4,31 +4,38 @@
  * "Top level of Project RISCII's microprocessor design"
  */
 module UProc (
-    // SRAM chip connections.
-    output [15:0] uproc_sramAddr,
-    inout  [15:0] uproc_sramData,
-    output        uproc_sramWr,
-    output        uproc_sramEn,
-    
-    // EEPROM SPI chip connections.
-    output        uproc_spiSCK,
-    output        uproc_spiSDO,
-    input         uproc_spiSDI,
-    output        uproc_spiSCS,
+    // Memory/SRAM chip connections (IO due to B-Scan).
+    inout  [15:0] io_memAddr,
+    inout  [15:0] io_memData,
+    inout         io_memWr,
+    inout         io_memEn,
+
+    // Storage/EEPROM SPI connections (IO due to B-Scan).
+    inout         io_storeSCK,
+    inout         io_storeSDI,
+    inout         io_storeSDO,
+    inout         io_storeSCS,
+
+    // GPIO connections.
+    inout  [15:0] io_gpioPin,
+
+    // State/Status connections (IO due to B-Scan).
+    inout         io_isBooted,
+    inout         io_isPaused,
     
     // JTAG port connections.
-    input         uproc_jtagTCK,
-    input         uproc_jtagTDI,
-    output        uproc_jtagTDO,
-    input         uproc_jtagTMS,
+    input         i_jtagTCK,
+    input         i_jtagTDI,
+    output        o_jtagTDO,
+    input         i_jtagTMS,
 
     // Common signals.
-    input         uproc_clk,
-    input         uproc_rstn,
-     
-    // TODO- test signals for development. TO DELETE!!!
-    output [15:0] test_word0,
-    output [15:0] test_word1
+    input         i_clk,
+    input         i_rstn,
+
+    // TODO- Test signals for development; DELETE FOR PRODUCTION!!!
+    output [15:0] o_test_word0,
+    output [15:0] o_test_word1
 );
 
 /*

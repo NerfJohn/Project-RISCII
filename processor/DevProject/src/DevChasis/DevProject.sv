@@ -161,6 +161,41 @@ wire dut_sramWr, dut_sramEn;
 //------------------------------------------------------------------------------
 // Microprocessor DUT Incarnate...
 UProc DUT (
+    // Memory/SRAM chip connections (IO due to B-Scan).
+    .io_memAddr(),
+    .io_memData(),
+    .io_memWr(),
+    .io_memEn(),
+
+    // Storage/EEPROM SPI connections (IO due to B-Scan).
+    .io_storeSCK(),
+    .io_storeSDI(),
+    .io_storeSDO(),
+    .io_storeSCS(),
+
+    // GPIO connections.
+    .io_gpioPin(),
+
+    // State/Status connections (IO due to B-Scan).
+    .io_isBooted(),
+    .io_isPaused(),
+    
+    // JTAG port connections.
+    .i_jtagTCK(),
+    .i_jtagTDI(),
+    .o_jtagTDO(),
+    .i_jtagTMS(),
+
+    // Common signals.
+    .i_clk(),
+    .i_rstn(),
+
+    // TODO- Test signals for development; DELETE FOR PRODUCTION!!!
+    .o_test_word0(seg_word0),
+    .o_test_word1(seg_word1)
+);
+
+UProc DUT (
     // SRAM chip connections.
     .uproc_sramAddr(SRAM_ADDR[15:0]),
     .uproc_sramData(SRAM_DQ),
