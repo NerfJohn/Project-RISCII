@@ -58,7 +58,7 @@ Summary:
 		running | MCU is running the binary image
 		paused  | MCU is paused for debugging, or has been halted
 	
-	-- Memory --
+	-- Memory Layout --
 	
 	-> REQ-006: MCU shall support 64 KB of storage address space
 		(space used for nonvolatile storage of binary image)
@@ -175,5 +175,47 @@ Summary:
     -> REQ-028: JTAG's shift scheme shall match Storage connector's shift scheme
         (Serial shift most significant bit first)
         (Polarity and Phase match the Storage's target Polarity/Phase)
+	
+	(TODO- Translate/Practice writing "requirements" out of below thoughts)
+	
+	-- External Pin Driving Notes (+JTAG/Memory/etc stuff) --
+	
+	General Rule: Pins w/ B-scan = public inout nets (even if unidirectional)
+		due to Verilog rules, net name is shared by all involved parties
+		due to lack of pass-gates, approach is distributed tristates
+		tristates need excellent coordination to avoid contention
+	
+	By Net
+		Memory:  Used by Processor (managed as 1 line), Booter, and JTAG
+		Storage: Used by Mapped SPI, Booter, and JTAG
+		GPIO:    Used by Mapped GPIO and JTAG
+		Status:  Used by MCU state signals and JTAG
+	
+	Attack Plan: 
+		MCU in Boot  ? --> Boot can drive, everything else locks
+		MCU in Run   ? --> Maps/Proc can drive, everything else locks
+		MCU in Pause ? --> JTAG/Scan can drive, everything else locks
+	
+	Note on Pausing
+		Proc or maps begin pause (eg doPause)
+		Some blocks may need time to pause (eg startPause)
+		Blocks will need to confirm pause (eg nowPaused)
+		Can give JTAG/Scan control once all are paused (eg isPaused)
+		status signal based off "isPaused"
+	
+	For JTAG
+		Can access memory/storage/scan one at a time
+		Causing pause should clear all access requests
+		Switching to new resource clears prior requests
+	
+	For Scan
+		Given control once in paused
+		settings changed by JTAG w/ permission and data shifting
+		scan is disabled while shifting (ie enable on pause + no changing)
+		special disables should be added for memEn and storageEN
+			ie prevent scenario where ext chip drives while scan drives
+			limits total # of ways to test, but abilities are still there
+		reset state should keep driving off- safer "pause" state if not used
+	
 
 ================================================================================

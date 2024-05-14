@@ -13,6 +13,11 @@ module DffAsynch (
     input      rstn
 );
 
+//////////////////////////////////////////////////////////
+// -- Asynch Reset DFF Common Verilog Implementation -- //
+//////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------------------
 // Core Logic: Update logic on rising clk edge OR falling reset edge.
 always @(posedge clk, negedge rstn) begin
     if (~rstn)  Q <= 1'b0;     // Asynchronous, active-low reset
