@@ -163,9 +163,9 @@ wire dut_sramWr, dut_sramEn;
 UProc DUT (
     // Memory/SRAM chip connections (IO due to B-Scan).
     .io_memAddr(),
-    .io_memData(),
-    .io_memWr(),
-    .io_memEn(),
+    .io_memData(SRAM_DQ),
+    .io_memWr(dut_sramWr),
+    .io_memEn(dut_sramEn),
 
     // Storage/EEPROM SPI connections (IO due to B-Scan).
     .io_storeSCK(),
@@ -181,20 +181,21 @@ UProc DUT (
     .io_isPaused(),
     
     // JTAG port connections.
-    .i_jtagTCK(),
-    .i_jtagTDI(),
-    .o_jtagTDO(),
-    .i_jtagTMS(),
+    .i_jtagTCK(GPIO_0[0]), // "Upper" 3 pins of GPIO_0 connector
+    .i_jtagTDI(GPIO_0[1]),
+    .o_jtagTDO(GPIO_0[2]),
+    .i_jtagTMS(GPIO_0[3]),
 
     // Common signals.
-    .i_clk(),
-    .i_rstn(),
+    .i_clk(pll_clkQ),
+    .i_rstn(resetQ),
 
     // TODO- Test signals for development; DELETE FOR PRODUCTION!!!
     .o_test_word0(seg_word0),
     .o_test_word1(seg_word1)
 );
 
+/* TODO- delete
 UProc DUT (
     // SRAM chip connections.
     .uproc_sramAddr(SRAM_ADDR[15:0]),
@@ -222,6 +223,7 @@ UProc DUT (
     .test_word0(seg_word0),
     .test_word1(seg_word1)
 );
+*/
 
 //------------------------------------------------------------------------------
 // Connect to specific SRAM chip signals.

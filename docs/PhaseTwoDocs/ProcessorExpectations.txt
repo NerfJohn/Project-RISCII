@@ -5,7 +5,8 @@ Project RISCII: Processor Expectations
 ================================================================================
 Table of Contents:
     -> Summary
-    -> Expectations
+    -> Expectations (Old/Formal)
+    -> Expectations (New/Informal)
 ================================================================================
 Summary:
 
@@ -24,94 +25,95 @@ Summary:
     For the rest of this document, the RISCII soft-core microprocessor is
     referred to as a custom designed circuit, NOT an FPGA design. The RISCII
     microprocessor may also be referred to as "processor" or "MCU".
-	
-	Expectations shall be labelled as "REQ-###". At present, there are 30 documented expectations.
+    
+    Expectations shall be labelled as "REQ-###". At present, there are 30
+	documented expectations.
 
 ================================================================================
--> Expectations:
+-> Expectations (Old/Formal):
 
-	-- Clocking --
+    -- Clocking --
 
-	-> REQ-000: MCU shall support a clock input pin
-		(external pin on MCU- subject to pin expectations)
-	
-	-> REQ-001: MCU shall support running up to 8.333 MHz
-		(ie 50 MHz / 6 on development setup)
-		(effectively 8 MHz + some deviation)
-	
-	-> REQ-002: MCU shall function for a square wave provided to the clock pin
-		(ie clock pin expects a square wave)
-		
-	-- Architecture --
-	
-	-> REQ-003: MCU shall use a 16-bit architecture
-		(ie operands and results are stored as 16-bit values)
-		(pointers are 16-bit values, thus 64 KB of byte addressing)
-	
-	-> REQ-004: MCU shall use storage and memory address spaces
-		(ie two different address 0x0000, 0x0001, etc)
-	
-	-> REQ-005: MCU shall support the following high level states
-		name    | desc.
-		--------+------
-		booting | MCU is preparing itself to run the binary image
-		running | MCU is running the binary image
-		paused  | MCU is paused for debugging, or has been halted
-	
-	-- Memory Layout --
-	
-	-> REQ-006: MCU shall support 64 KB of storage address space
-		(space used for nonvolatile storage of binary image)
-	
-	-> REQ-007: MCU shall support 32 KB of free memory address space
-		(ie RAM addresses, free to use at program's leisure)
-	
-	-> REQ-008: MCU shall support 32 KB of mapped memory address space
-		(mapped to various MCU peripherals- not all used per say)
-	
-	-- Pinout --
-	
-	-> REQ-029: MCU shall support the following pins/pin groups
-		name    | # of pins | direction | desc.
-		--------+-----------+-----------+------
-		Clock   | 1         | -> MCU    | Main Clock Signal
-		Reset   | 1         | -> MCU    | External Reset Input
-		JTAG    | 4         | -> MCU -> | JTAG Connector
-		Memory  | 34        | -> MCU -> | Parallel Volatile Memory Connector
-		Storage | 4         | -> MCU -> | SPI Non-Volatile Storage Connector
-		GPIO    | 16        | -> MCU -> | General Purpose Input/Output Pins
-		Status  | 2         | MCU ->    | MCU Status Indicators
-	
-	-> REQ-009: The following pins shall synchronize any inputs before use
-		name    | # of pins | direction | desc.
-		--------+-----------+-----------+------
-		Reset   | 1         | -> MCU    | External Reset Input
-		JTAG    | 4         | -> MCU -> | JTAG Connector
-		GPIO    | 16        | -> MCU -> | General Purpose Input/Output Pins
-		Status  | 2         | MCU ->    | MCU Status Indicators
-	
-	-> REQ-010: The following pins shall be subject to boundary scanning
-		name    | # of pins | direction | desc.
-		--------+-----------+-----------+------
-		Memory  | 34        | -> MCU -> | Parallel Volatile Memory Connector
-		Storage | 4         | -> MCU -> | SPI Non-Volatile Storage Connector
-		GPIO    | 16        | -> MCU -> | General Purpose Input/Output Pins
-		Status  | 2         | MCU ->    | MCU Status Indicators
-	
-	-> REQ-011: Pins shall only have one driving circuit at any time
-		(this affects boundary scan, output, and inout pins)
-		(this should be consistent across MCU states and circuit settings)
-	
-	-> REQ-012: Pins shall have a given direction at any time
-		(every pin should have a given direction at any time)
-		(this should be consistent across MCU states and circuit settings)
-	
-	-> REQ-013: Pins shall have a "default level" as sensible to their role
-		(if a pin can be an output, it should have a known "default level")
-		(if a pin is an input, special "default levels" should be noted)
-	
-	-- JTAG Port/Connection --
-	
+    -> REQ-000: MCU shall support a clock input pin
+        (external pin on MCU- subject to pin expectations)
+    
+    -> REQ-001: MCU shall support running up to 8.333 MHz
+        (ie 50 MHz / 6 on development setup)
+        (effectively 8 MHz + some deviation)
+    
+    -> REQ-002: MCU shall function for a square wave provided to the clock pin
+        (ie clock pin expects a square wave)
+        
+    -- Architecture --
+    
+    -> REQ-003: MCU shall use a 16-bit architecture
+        (ie operands and results are stored as 16-bit values)
+        (pointers are 16-bit values, thus 64 KB of byte addressing)
+    
+    -> REQ-004: MCU shall use storage and memory address spaces
+        (ie two different address 0x0000, 0x0001, etc)
+    
+    -> REQ-005: MCU shall support the following high level states
+        name    | desc.
+        --------+------
+        booting | MCU is preparing itself to run the binary image
+        running | MCU is running the binary image
+        paused  | MCU is paused for debugging, or has been halted
+    
+    -- Memory Layout --
+    
+    -> REQ-006: MCU shall support 64 KB of storage address space
+        (space used for nonvolatile storage of binary image)
+    
+    -> REQ-007: MCU shall support 32 KB of free memory address space
+        (ie RAM addresses, free to use at program's leisure)
+    
+    -> REQ-008: MCU shall support 32 KB of mapped memory address space
+        (mapped to various MCU peripherals- not all used per say)
+    
+    -- Pinout --
+    
+    -> REQ-029: MCU shall support the following pins/pin groups
+        name    | # of pins | direction | desc.
+        --------+-----------+-----------+------
+        Clock   | 1         | -> MCU    | Main Clock Signal
+        Reset   | 1         | -> MCU    | External Reset Input
+        JTAG    | 4         | -> MCU -> | JTAG Connector
+        Memory  | 34        | -> MCU -> | Parallel Volatile Memory Connector
+        Storage | 4         | -> MCU -> | SPI Non-Volatile Storage Connector
+        GPIO    | 16        | -> MCU -> | General Purpose Input/Output Pins
+        Status  | 2         | MCU ->    | MCU Status Indicators
+    
+    -> REQ-009: The following pins shall synchronize any inputs before use
+        name    | # of pins | direction | desc.
+        --------+-----------+-----------+------
+        Reset   | 1         | -> MCU    | External Reset Input
+        JTAG    | 4         | -> MCU -> | JTAG Connector
+        GPIO    | 16        | -> MCU -> | General Purpose Input/Output Pins
+        Status  | 2         | MCU ->    | MCU Status Indicators
+    
+    -> REQ-010: The following pins shall be subject to boundary scanning
+        name    | # of pins | direction | desc.
+        --------+-----------+-----------+------
+        Memory  | 34        | -> MCU -> | Parallel Volatile Memory Connector
+        Storage | 4         | -> MCU -> | SPI Non-Volatile Storage Connector
+        GPIO    | 16        | -> MCU -> | General Purpose Input/Output Pins
+        Status  | 2         | MCU ->    | MCU Status Indicators
+    
+    -> REQ-011: Pins shall only have one driving circuit at any time
+        (this affects boundary scan, output, and inout pins)
+        (this should be consistent across MCU states and circuit settings)
+    
+    -> REQ-012: Pins shall have a given direction at any time
+        (every pin should have a given direction at any time)
+        (this should be consistent across MCU states and circuit settings)
+    
+    -> REQ-013: Pins shall have a "default level" as sensible to their role
+        (if a pin can be an output, it should have a known "default level")
+        (if a pin is an input, special "default levels" should be noted)
+    
+    -- JTAG Port/Connection --
+    
     -> REQ-014: MCU shall support 4 pins for JTAG use
         pin name | default level | direction |description
         ---------+---------------+-----------+-----------
@@ -119,15 +121,15 @@ Summary:
         TMS      | 1             | -> MCU    | Test Select, for selecting state
         TDI      | 0             | -> MCU    | Test Data In, for input data
         TDO      | 0             | MCU ->    | Test Data Out, for output data
-	
-	-> REQ-015: MCU shall synchronize JTAG pins before using them
-		(inputs are syncrhonized to Main Clock before use)
-		(outputs are updated on positive edge of Main Clock)
-	
-	-> REQ-016: MCU shall update TMS, TDI, and TDO based on TCK
-		(TCK's rising edge should trigger TMS and TDI sampling)
+    
+    -> REQ-015: MCU shall synchronize JTAG pins before using them
+        (inputs are syncrhonized to Main Clock before use)
+        (outputs are updated on positive edge of Main Clock)
+    
+    -> REQ-016: MCU shall update TMS, TDI, and TDO based on TCK
+        (TCK's rising edge should trigger TMS and TDI sampling)
         (TCK's rising edge should trigger TDO's updating)
-	
+    
     -> REQ-017: TCK shall run at least 8x slower than the MCU's main clock
         (this gives the MCU some time to synch and process the inputs)
         
@@ -151,71 +153,35 @@ Summary:
     
     -> REQ-023: Shifting into JTAG instruction register shall execute a command
         (command based on final value left within instruction register)
-	
-	-> REQ-024: JTAG shall supports commands that can do the following
-		action               | req. state | desc.
-		---------------------+------------+------
-		Access Memory        | paused     | Read/Write Memory
-		Access Storage       | paused     | Read/Write Storage
-		Access Scan Register | paused     | Read/Write Boundary Scan Register
-		Pause MCU            | running    | Pause MCU, sets to "pause" state
-		Run MCU              | paused     | Run MCU, sets to "running" state
-	
-	-> REQ-025: Executing a JTAG command shall reset resouce accesses
-		(JTAG should not be accessing Memory, Storage, and Scan simultaneously)
-		(this has effects on raw pin controls)
+    
+    -> REQ-024: JTAG shall supports commands that can do the following
+        action               | req. state | desc.
+        ---------------------+------------+------
+        Access Memory        | paused     | Read/Write Memory
+        Access Storage       | paused     | Read/Write Storage
+        Access Scan Register | paused     | Read/Write Boundary Scan Register
+        Pause MCU            | running    | Pause MCU, sets to "pause" state
+        Run MCU              | paused     | Run MCU, sets to "running" state
+    
+    -> REQ-025: Executing a JTAG command shall reset resouce accesses
+        (JTAG should not be accessing Memory, Storage, and Scan simultaneously)
+        (this has effects on raw pin controls)
     
     -> REQ-026: JTAG shall support direct shift access to the data register
         (this is typical of standard JTAG- TDI is used to input bits)
         (there should effectively be a "shift data" state in JTAG)
-	
-	-> REQ-027: Shifting JTAG data register shall shift data in/out of resource
-		(source of data relies on what is being access at the moment)
+    
+    -> REQ-027: Shifting JTAG data register shall shift data in/out of resource
+        (source of data relies on what is being access at the moment)
     
     -> REQ-028: JTAG's shift scheme shall match Storage connector's shift scheme
         (Serial shift most significant bit first)
         (Polarity and Phase match the Storage's target Polarity/Phase)
-	
-	(TODO- Translate/Practice writing "requirements" out of below thoughts)
-	
-	-- External Pin Driving Notes (+JTAG/Memory/etc stuff) --
-	
-	General Rule: Pins w/ B-scan = public inout nets (even if unidirectional)
-		due to Verilog rules, net name is shared by all involved parties
-		due to lack of pass-gates, approach is distributed tristates
-		tristates need excellent coordination to avoid contention
-	
-	By Net
-		Memory:  Used by Processor (managed as 1 line), Booter, and JTAG
-		Storage: Used by Mapped SPI, Booter, and JTAG
-		GPIO:    Used by Mapped GPIO and JTAG
-		Status:  Used by MCU state signals and JTAG
-	
-	Attack Plan: 
-		MCU in Boot  ? --> Boot can drive, everything else locks
-		MCU in Run   ? --> Maps/Proc can drive, everything else locks
-		MCU in Pause ? --> JTAG/Scan can drive, everything else locks
-	
-	Note on Pausing
-		Proc or maps begin pause (eg doPause)
-		Some blocks may need time to pause (eg startPause)
-		Blocks will need to confirm pause (eg nowPaused)
-		Can give JTAG/Scan control once all are paused (eg isPaused)
-		status signal based off "isPaused"
-	
-	For JTAG
-		Can access memory/storage/scan one at a time
-		Causing pause should clear all access requests
-		Switching to new resource clears prior requests
-	
-	For Scan
-		Given control once in paused
-		settings changed by JTAG w/ permission and data shifting
-		scan is disabled while shifting (ie enable on pause + no changing)
-		special disables should be added for memEn and storageEN
-			ie prevent scenario where ext chip drives while scan drives
-			limits total # of ways to test, but abilities are still there
-		reset state should keep driving off- safer "pause" state if not used
-	
 
+================================================================================
+Expectations (New/Informal):
+
+    (TODO- Translate informal expectations, eventually, into formal ones)
+    
+    
 ================================================================================

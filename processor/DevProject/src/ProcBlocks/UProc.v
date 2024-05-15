@@ -39,168 +39,107 @@ module UProc (
 );
 
 /*
- * Microprocessor ("UProc") Top-Level Design:
+ * Microprocessor ("UProc")- Top-level Design of the MCU
+ *
+ * This file combines all pieces of the MCU into one, working unit. Beyond this
+ * file lies a chasis to tie the MCU to the physical FPGA and/or the "open road"
+ * (ie physical hardware making up the board).
  *
  * TODO- summary of module + design notes. Keep list of modules- order later.
  *
+ * == Top-Level Modules/Blocks ==
  * module name          | desc.
  * ---------------------+------
- * JTAG Synch           | Synchronizer for JTAG pins (ie not boundary scanned)
- * Memory Controller    | Controller for SRAM/Mapped Memory Bus
+ * JTAG Synch           | Synchronizer for JTAG pins
  * JTAG Port            | Port/Controller for handling JTAG signals
+ *
+ *
+ * == Notable Top-Level Nets ==
+ * net name             | desc.
+ * ---------------------+------
+ * io_memData           | Bi-directional net for Memory Bus data signals
+ * 
+ * Design Notes:
  */
 
-/////////////////////////
-// -- Signals/Wires -- //
-/////////////////////////
+//////////////////////////////////
+// -- Internal Signals/Wires -- //
+//////////////////////////////////
 
-// Internal Global Signals.
-wire[15:0] gbl_memData;
+// Wires related to JTAG pin's synchronizer.
+wire [2:0] synch_jtagA, synch_jtagY;
+wire       jtag_TCK, jtag_TDI, jtag_TDO, jtag_TMS;
 
-// Synchronized JTAG wires.
-wire[2:0] jtagSynchA,   jtagSynchY;
-wire      jtagSynchTCK, jtagSynchTDI, jtagSynchTMS;
+// Wires related to JTAG port controls.
+wire [15:0] jtag_memAddr;
+wire        jtag_memWr, jtag_memEn;
+wire        jtag_storeEn;
+wire        jtag_scanEn, jtag_scanShift;
+wire        jtag_doPause;
 
-// JTAG port/controller wires.
-wire[15:0] jtagSramAddr;
-wire       jtagSramWr,  jtagSramEn;
-wire       jtagEnScan,  jtagEnSPI;
-wire       jtagDoPause;
-wire       jtagBaseTDO;
+///////////////////////////////////////
+// -- Functional Blocks/Instances -- //
+///////////////////////////////////////
 
-// Memory Bus Controller wires.
-wire[15:0] memBusAddr;
-wire       memBusWr;
-wire       memBusRamEn, memBusMapEn;
-
-// Storage Controller wires.
-wire spiBusSCK, spiBusSCS;
-wire spiBusSDI, spiBusSDO;
-
-////////////////////////////
-// -- Blocks/Instances -- //
-////////////////////////////
-
-// Synchronizer for JTAG inputs.
+//------------------------------------------------------------------------------
+// Synchronizer for JTAG input pins.
 Synch2 JTAG_SYNCH[2:0] (
-    .A(jtagSynchA),
-    .Y(jtagSynchY),
-    .clk(uproc_clk),
-    .rstn(uproc_rstn)
+    .A(synch_jtagA),
+    .Y(synch_jtagY),
+    .clk(i_clk),
+    .rstn(i_rstn)
 );
 
-// JTAG Port/Controller- Debug access port for development/programming.
+//------------------------------------------------------------------------------
+// JTAG Port/Controller- port to allow for debugging/programming.
 JtagPort JTAG_PORT (
-    // JTAG pin wires.
-    .jtagTCK(jtagSynchTCK),
-    .jtagTDI(jtagSynchTDI),
-    .jtagTDO(jtagBaseTDO),
-    .jtagTMS(jtagSynchTMS),
+    // Typical I/O of JTAG port.
+    .i_TCK(jtag_TCK),
+    .i_TDI(jtag_TDI),
+    .o_TDO(jtag_TDO),
+    .i_TMS(jtag_TMS),
     
-    // Status signals (from MCU, to user).
-    .isBooted(/* TODO- populate */ 1'b1),
-    .isPaused(/* TODO- populate */ 1'b1),
+	 // MCU state for status report + control signal computation.
+	 .i_isBooted(/* TODO- dummy */ 1'b1),
+	 .i_isPaused(/* TODO- dummy */ jtag_doPause),
     
-    // SRAM chip connector.
-    .sramAddr(jtagSramAddr),
-    .sramData(uproc_sramData),
-    .sramWr(jtagSramWr),
-    .sramEn(jtagSramEn),
+	 // Memory control connections.
+	 .o_memAddr(jtag_memAddr),
+	 .io_memData(io_memData),
+	 .o_memWr(jtag_memWr),
+	 .o_memEn(jtag_memEn),
+	 
+	 // Storage control connections.
+	 .o_storeEn(jtag_storeEn),
+	 
+	 // B-Scan control connections.
+	 .o_scanEn(jtag_scanEn),
+    .o_scanShift(jtag_scanShift),
     
-    // Control signals (from user, to MCU).
-    .enScanRelay(jtagEnScan),
-    .enSPIRelay(jtagEnSPI),
-    .enPaused(jtagDoPause),
-    
-    // Common signals.
-    .clk(uproc_clk),
-    .rstn(uproc_rstn)
-);
-
-// Memory Bus Controller- Determines who currently controls the memory bus.
-MemoryController MEM_CTRL (
-	// Processor control inputs.
-	.procAddr(),
-	.procWr(),
-	.procEn(),
-	
-	// JTAG control inputs.
-	.jtagAddr(jtagSramAddr),
-	.jtagWr(jtagSramWr),
-	.jtagEn(jtagSramEn),
-	
-	// Boot circuit inputs.
-	.bootAddr(),
-	.bootWr(),
-	.bootEn(),
-	
-	// Control signals determining controlling circuits.
-	.isPaused(/* TODO- populate */ 1'b1),
-	.isBooted(/* TODO- populate */ 1'b1),
-	
-	// Selected control signals.
-	.busAddr(memBusAddr),
-	.busWr(memBusWr),
-	.busRamEn(memBusRamEn),
-	.busMapEn(memBusMapEn)
-);
-
-// External Storage Controller- determines who controls SPI access to storage.
-StorageController SPI_CTRL (
-    // Controls from memory-mapped peripheral.
-    .mapEn(),
-    
-    // Controls from JTAG port.
-    .jtagTCK(jtagSynchTCK),
-    .jtagEn(jtagEnSPI),
-    
-    // Controls from Boot circuit.
-    .bootEn(),
-    
-    // Control signals deciding which circuit is in control.
-    .isPaused(/* TODO- populate */ 1'b1),
-    .isBooted(/* TODO- populate */ 1'b1),
-    
-    // Selected controls sent over SPI connection.
-    .spiSCK(spiBusSCK),
-    .spiSCS(spiBusSCS),
+	 // Run/Pause control signal.
+	 .o_doPause(jtag_doPause),
     
     // Common signals.
-    .clk(uproc_clk),
-    .rstn(uproc_rstn)
+    .i_clk(i_clk),
+    .i_rstn(i_rstn)
 );
 
-//////////////////////////
-// -- Connects/Logic -- //
-//////////////////////////
+///////////////////////////////////////////
+// -- Connections/Combinational Logic -- //
+///////////////////////////////////////////
 
+//------------------------------------------------------------------------------
 // Synchronize JTAG pins for internal use.
-assign jtagSynchA = {uproc_jtagTCK, uproc_jtagTDI, uproc_jtagTMS};
-assign jtagSynchTCK = jtagSynchY[2];
-assign jtagSynchTDI = jtagSynchY[1];
-assign jtagSynchTMS = jtagSynchY[0];
-
-// Connect memory bus controller to SRAM chip.
-assign uproc_sramAddr = memBusAddr;
-assign uproc_sramWr = memBusWr;
-assign uproc_sramEn = memBusRamEn;
-
-// Connect storage/SPI bus to SPI pins.
-assign uproc_spiSCK = spiBusSCK;
-assign uproc_spiSDO = jtagSynchTDI;
-assign uproc_spiSCS = spiBusSCS;
-Mux2 M0 (
-	.A(uproc_spiSDI),
-	.B(jtagBaseTDO),
-	.S(jtagEnSPI),
-	.Y(uproc_jtagTDO)
-);
+assign synch_jtagA = {i_jtagTCK, i_jtagTDI, i_jtagTMS};
+assign jtag_TCK    = synch_jtagY[2];
+assign jtag_TDI    = synch_jtagY[1];
+assign jtag_TMS    = synch_jtagY[0];
 
 ///////////////////////////////////////////////////////////
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
-assign test_word0 = {8'b0, 3'b0, jtagSynchTCK, 3'b0, spiBusSCK};
-assign test_word1 = jtagSramAddr;
+assign o_test_word0 = io_memData;
+assign o_test_word1 = jtag_memAddr;
 
 endmodule

@@ -1,9 +1,9 @@
 /*
- * DffASynchEn.v
+ * DffAsynchEn.v
  * 
  * "Asynchronous DFF with enable signal (i.e. alternate form of Asynch DFF)"
  */
-module DffASynchEn (
+module DffAsynchEn (
     // Flop I/O.
     input  D,
     output Q,
@@ -32,7 +32,7 @@ wire regD, regQ;
 
 //------------------------------------------------------------------------------
 // Typical DFF (arguable not primitive, but close enough).
-DffASynch CORE_DFF (
+DffAsynch CORE_DFF (
     .D(regD),
     .Q(regQ),
     .clk(clk),
@@ -50,10 +50,14 @@ Mux2 M0 (
     .B(regQ),
     .S(S),
     .Y(newD)
-)
+);
 
 //------------------------------------------------------------------------------
 // Update DFF with selected input.
 assign regD = newD;
+
+//------------------------------------------------------------------------------
+// Output DFF value.
+assign Q = regQ;
 
 endmodule
