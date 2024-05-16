@@ -101,7 +101,7 @@ JtagPort JTAG_PORT (
     
 	 // MCU state for status report + control signal computation.
 	 .i_isBooted(/* TODO- dummy */ 1'b1),
-	 .i_isPaused(/* TODO- dummy */ jtag_doPause),
+	 .i_isPaused(/* TODO- dummy */ 1'b1),
     
 	 // Memory control connections.
 	 .o_memAddr(jtag_memAddr),
@@ -124,6 +124,41 @@ JtagPort JTAG_PORT (
     .i_rstn(i_rstn)
 );
 
+//------------------------------------------------------------------------------
+// Boundary Scan Register- probes in/outgoing pins for HW debugging purposes.
+BScanRegister BSCAN_REG (
+	// Typical shift register IO.
+	.i_shiftIn(jtag_TDI),
+	.o_shiftOut(/* TODO- temporary */ o_jtagTDO),
+	
+	// Memory connector probe lines.
+	.io_memAddr(io_memAddr),
+	.io_memData(io_memData),
+	.io_memWr(io_memWr),
+	.io_memEn(io_memEn),
+	
+	// Storage connector probe lines.
+	.io_storeSCK(io_storeSCK),
+	.io_storeSDI(io_storeSDI),
+	.io_storeSDO(io_storeSDO),
+	.io_storeSCS(io_storeSCS),
+	
+	// GPIO connector probe lines.
+	.io_gpioPin(io_gpioPin),
+	
+	// Status connection probe lines.
+	.io_isBooted(io_isBooted),
+	.io_isPaused(io_isPaused),
+	
+	// Control lines to enable settings/shifting.
+	.i_canDrive(jtag_scanEn),
+	.i_doShift(jtag_scanShift),
+	
+	// Common signals.
+	.i_clk(jtag_TCK),
+	.i_rstn(i_rstn)
+);
+
 ///////////////////////////////////////////
 // -- Connections/Combinational Logic -- //
 ///////////////////////////////////////////
@@ -140,6 +175,6 @@ assign jtag_TMS    = synch_jtagY[0];
 ///////////////////////////////////////////////////////////
 
 assign o_test_word0 = io_memData;
-assign o_test_word1 = jtag_memAddr;
+assign o_test_word1 = {14'b0, jtag_scanShift, jtag_scanEn};
 
 endmodule

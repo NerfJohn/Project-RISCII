@@ -162,16 +162,16 @@ wire dut_sramWr, dut_sramEn;
 // Microprocessor DUT Incarnate...
 UProc DUT (
     // Memory/SRAM chip connections (IO due to B-Scan).
-    .io_memAddr(),
-    .io_memData(SRAM_DQ),
+    .io_memAddr(SRAM_ADDR),
+    .io_memData({GPIO_1[7:0], GPIO_1[35:28]}),
     .io_memWr(dut_sramWr),
     .io_memEn(dut_sramEn),
 
     // Storage/EEPROM SPI connections (IO due to B-Scan).
-    .io_storeSCK(),
-    .io_storeSDI(),
-    .io_storeSDO(),
-    .io_storeSCS(),
+    .io_storeSCK(GPIO_0[29]),
+    .io_storeSDI(GPIO_0[33]),
+    .io_storeSDO(GPIO_0[28]),
+    .io_storeSCS(GPIO_0[32]),
 
     // GPIO connections.
     .io_gpioPin(),
@@ -240,6 +240,10 @@ assign GPIO_0[34] = 1'b1; // Write Protect disabled
 assign GPIO_0[31] = 1'b1; // VDD
 assign GPIO_0[30] = 1'b1; // Hold disabled
 
+//------------------------------------------------------------------------------
+// TODO- Additional feedback signals for development- TO DELETE!!!
+assign LEDG[3] = GPIO_0[0]; // JTAG's TCK signal
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Disabled/Unconnected Ports -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -247,7 +251,7 @@ assign GPIO_0[30] = 1'b1; // Hold disabled
 //------------------------------------------------------------------------------
 // Direct I/O Devices.
 assign LEDR [17:0] = 16'b0;
-assign LEDG [8:3]  = 6'b0;
+assign LEDG [8:4]  = 5'b0;
 
 //------------------------------------------------------------------------------
 // SRAM Signals.
@@ -256,6 +260,6 @@ assign SRAM_ADDR[17:16] = 2'b0;
 //------------------------------------------------------------------------------
 // GPIO Ports.
 assign GPIO_0 [27:4] = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
-assign GPIO_1        = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_1 [27:8] = 20'bZZZZZZZZZZZZZZZZZZZZ;
 
 endmodule

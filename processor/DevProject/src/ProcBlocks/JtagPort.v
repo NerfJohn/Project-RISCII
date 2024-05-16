@@ -10,25 +10,25 @@ module JtagPort (
     output        o_TDO,
     input         i_TMS,
     
-     // MCU state for status report + control signal computation.
-     input         i_isBooted,
-     input         i_isPaused,
+    // MCU state for status report + control signal computation.
+    input         i_isBooted,
+    input         i_isPaused,
     
-     // Memory control connections.
-     output [15:0] o_memAddr,
-     inout  [15:0] io_memData,
-     output        o_memWr,
-     output        o_memEn,
+    // Memory control connections.
+    output [15:0] o_memAddr,
+    inout  [15:0] io_memData,
+    output        o_memWr,
+    output        o_memEn,
      
-     // Storage control connections.
-     output        o_storeEn,
-     
-     // B-Scan control connections.
-     output        o_scanEn,
+    // Storage control connections.
+    output        o_storeEn,
+    
+    // B-Scan control connections.
+    output        o_scanEn,
     output        o_scanShift,    
     
-     // Run/Pause control signal.
-     output        o_doPause,
+    // Run/Pause control signal.
+    output        o_doPause,
     
     // Common signals.
     input         i_clk,
