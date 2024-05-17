@@ -52,6 +52,7 @@ module UProc (
  * ---------------------+------
  * JTAG Synch           | Synchronizer for JTAG pins
  * JTAG Port            | Port/Controller for handling JTAG signals
+ * B-Scan Register      | Boundary Scan Register for HW Debugging
  *
  *
  * == Notable Top-Level Nets ==
@@ -175,6 +176,6 @@ assign jtag_TMS    = synch_jtagY[0];
 ///////////////////////////////////////////////////////////
 
 assign o_test_word0 = io_memData;
-assign o_test_word1 = {14'b0, jtag_scanShift, jtag_scanEn};
+assign o_test_word1 = {3'b0, io_storeSDO, 3'b0, io_storeSDI, 3'b0, io_storeSCS, 3'b0, io_storeSCK};
 
 endmodule

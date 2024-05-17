@@ -97,7 +97,7 @@ wire storeSDOIn, storeSDOOut;
 wire storeSCSIn, storeSCSOut, storeSCSDriving;
 
 // TODO- dummy wires to remove as rest of module is designed.
-wire [17:0] dummyIn, dummyOut;
+wire [53:0] dummyIn, dummyOut;
 
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
@@ -251,7 +251,7 @@ ScanRegReporter STORE_SCS (
 
 //------------------------------------------------------------------------------
 // TODO- dummy registers to be replaced with implemented scan registers.
-DffAsynch DUMMY[17:0] (
+DffAsynch DUMMY[53:0] (
 	.D(dummyIn),
 	.Q(dummyOut),
 	.clk(i_clk),
@@ -286,7 +286,7 @@ assign storeSCSIn = storeSDOOut;
 
 //------------------------------------------------------------------------------
 // TODO- dummy connections to replace with implemented scan registers.
-assign dummyIn    = {dummyOut[16:0], storeSCSOut};
-assign o_shiftOut = dummyOut[17];
+assign dummyIn    = {dummyOut[52:0], storeSCSOut};
+assign o_shiftOut = dummyOut[53];
 
 endmodule

@@ -47,6 +47,7 @@ CMD_WRITE       = '(?:w|write) 0x[0-9a-fA-F]{1,4} 0x[0-9a-fA-F]{1,4}'
 CMD_SPI_READ    = '(?:sr|spi_read) 0x[0-9a-fA-F]{1,4} [0-9]+'
 CMD_SPI_WRITE   = '(?:sw|spi_write) 0x[0-9a-fA-F]{1,4} 0x(?:[0-9a-fA-F]{2})+'
 CMD_BSCAN       = '(?:bs|bscan) [0-9]+ [10zZ]'
+CMD_BSCAN_RESET = '(?:br|bscan_reset)'
 
 # Definitions for building "J-link" commands.
 LINK_CMD_PERIOD = b'\x30'
@@ -84,6 +85,7 @@ def pHelp():
     print("sr|spi_read 0x<address> <number>   : read <number> bytes from SPI starting at <address>")
     print("sw|spi_write 0x<address> 0x<value> : write <value> to SPI starting at <address>")
     print("bs|bscan <pin number> <0|1|z>      : set <pin number> to <0|1|z>, reading back value")
+    print("br|bscan_reset                     : reset bscan register")
 
 # Function to handle setting COM port "J-Link" is connected to.
 def com(tkns):
@@ -234,7 +236,7 @@ def bscan(tkns):
         for j in range(7, -1, -1):
             newByte = newByte << 1
             if (g_BscanSetting[8 * i + j] == '1'): newByte = newByte | 0x1
-        scanData = scanData + newByte.to_bytes(1, 'little')
+        scanData = newByte.to_bytes(1, 'little') + scanData
     
     # Determine bytes to send.
     scanCmd  = LINK_CMD_INSTR + JTAG_SCAN
@@ -252,9 +254,39 @@ def bscan(tkns):
     # Parse data for changed pin's last reading.
     byteIdx = int(basdIdx / 8)
     bitIdx  = basdIdx - (8 * byteIdx)
-    readValue = (int(retBytes[byteIdx + 1]) >> bitIdx) & 0x1
-    print("BScan updated- last read value at pin %d = 0x%d"%(int(tkns[1]), readValue))
-    print(retBytes[1:-1].hex())
+    readValue = (int(retBytes[20 - byteIdx + 1]) >> bitIdx) & 0x1
+    print("%s => bscan[%d] (last read = %d)"%(tkns[2], int(tkns[1]), readValue))
+
+# Function to handle setting pin via boundary scan to certain value.
+def bscan_reset(tkns):
+    # Update local copy of bscan settings
+    global g_BscanSetting
+    g_BscanSetting = list('0' * 168) # 56 pins * 3 bit settings each
+    
+    # Get byte array from settings to update MCU.
+    scanData = bytearray()
+    for i in range(int(len(g_BscanSetting) / 8)):
+        newByte = 0
+        for j in range(7, -1, -1):
+            newByte = newByte << 1
+            if (g_BscanSetting[8 * i + j] == '1'): newByte = newByte | 0x1
+        scanData = newByte.to_bytes(1, 'little') + scanData
+    
+    # Determine bytes to send.
+    scanCmd  = LINK_CMD_INSTR + JTAG_SCAN
+    dataCmd  = LINK_CMD_DATA + scanData
+    
+    # Enable scan mode.
+    retBytes = _transferBytes(scanCmd)
+    
+    # (Skip if in error).
+    if retBytes == None: return
+    
+    # Send over data.
+    _transferBytes(dataCmd)
+    
+    # Parse data for changed pin's last reading.
+    print("BScan register reset to 0x0")
 
 ## -- Helper/Internal/CLI Functions ----------------------------------------- ##
 
@@ -319,6 +351,7 @@ def _doCli():
         elif re.fullmatch(CMD_SPI_READ, rawInput):  spi_read(tkns)
         elif re.fullmatch(CMD_SPI_WRITE, rawInput): spi_write(tkns)
         elif re.fullmatch(CMD_BSCAN, rawInput):     bscan(tkns)
+        elif re.fullmatch(CMD_BSCAN_RESET, rawInput): bscan_reset(tkns)
         else: print("Unknown command: \"%s\""%(rawInput))
 
 ## -------------------------------------------------------------------------- ##

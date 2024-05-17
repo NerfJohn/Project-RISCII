@@ -163,7 +163,7 @@ wire dut_sramWr, dut_sramEn;
 UProc DUT (
     // Memory/SRAM chip connections (IO due to B-Scan).
     .io_memAddr(SRAM_ADDR),
-    .io_memData({GPIO_1[7:0], GPIO_1[35:28]}),
+    .io_memData(SRAM_DQ),
     .io_memWr(dut_sramWr),
     .io_memEn(dut_sramEn),
 
@@ -194,36 +194,6 @@ UProc DUT (
     .o_test_word0(seg_word0),
     .o_test_word1(seg_word1)
 );
-
-/* TODO- delete
-UProc DUT (
-    // SRAM chip connections.
-    .uproc_sramAddr(SRAM_ADDR[15:0]),
-    .uproc_sramData(SRAM_DQ),
-    .uproc_sramWr(dut_sramWr),
-    .uproc_sramEn(dut_sramEn),
-    
-    // EEPROM SPI chip connections.
-    .uproc_spiSCK(GPIO_0[29]),
-    .uproc_spiSDO(GPIO_0[28]),
-    .uproc_spiSDI(GPIO_0[33]),
-    .uproc_spiSCS(GPIO_0[32]),
-    
-    // JTAG port connections.
-    .uproc_jtagTCK(GPIO_0[0]), // "Upper" 3 pins of GPIO_0 connector
-    .uproc_jtagTDI(GPIO_0[1]),
-    .uproc_jtagTDO(GPIO_0[2]),
-    .uproc_jtagTMS(GPIO_0[3]),
-    
-    // Common signals.
-    .uproc_clk(pll_clkQ),
-    .uproc_rstn(resetQ),
-    
-    // TODO- test signals for development. TO DELETE!!!
-    .test_word0(seg_word0),
-    .test_word1(seg_word1)
-);
-*/
 
 //------------------------------------------------------------------------------
 // Connect to specific SRAM chip signals.
@@ -260,6 +230,6 @@ assign SRAM_ADDR[17:16] = 2'b0;
 //------------------------------------------------------------------------------
 // GPIO Ports.
 assign GPIO_0 [27:4] = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
-assign GPIO_1 [27:8] = 20'bZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_1 [35:0] = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
 
 endmodule
