@@ -4,38 +4,41 @@
  * "'Mux' for controlling which circuit has control of the memory bus"
  */
 module MemoryController (
-    // Controls from processor.
-    input [15:0] procAddr,
-    input        procWr,
-    input        procEn,
+    // Controls from processor core.
+    input [15:0] i_coreAddr,
+    input        i_coreWr,
+    input        i_coreEn,
     
     // Controls from JTAG port.
-    input [15:0] jtagAddr,
-    input        jtagWr,
-    input        jtagEn,
+    input [15:0] i_jtagAddr,
+    input        i_jtagWr,
+    input        i_jtagEn,
     
     // Controls from Boot circuit.
-    input [15:0] bootAddr,
-    input        bootWr,
-    input        bootEn,
+    input [15:0] i_bootAddr,
+    input        i_bootWr,
+    input        i_bootEn,
     
     // Control signals deciding which circuit is in control.
-    input        isPaused,
-    input        isBooted,
+    input        i_isPaused,
+    input        i_isBooted,
+
+    // Control signal deciding when controller can drive memory bus.
+    input        i_disableDrive,
     
     // Selected controls sent over memory bus.
-    output[15:0] busAddr,
-    output       busWr,
-    output       busRamEn,
-    output       busMapEn
+    inout [15:0] io_memAddr,
+    inout        io_memWr,
+    inout        io_memExtEn,
+    output       o_memMapEn
 );
 
 /*
- * Memory Controller:
+ * Memory Controller- "Gated Mux" of Memory Bus Controls
  *
- * Large "mux" of various circuit controls for memory bus (where circuit in
- * control is effectively based on MCU's top-level state). Below describes
- * when each circuit has control and what addresses actually access.
+ * Routes memory control signals of responsible circuit to official memory bus
+ * (based on MCU state machine signals). Also can stop driving memory bus to
+ * prevent contention, as well as implements external vs mapped memory access.
  *
  * state   | control circuit | desc.
  * --------+-----------------+------
@@ -49,50 +52,79 @@ module MemoryController (
  * Memory-mapped registers | 0xC000 - 0xFFFF | word (2-byte) access
  *
  * Design Notes:
- * 1) 'isPaused' should factor for MCU needing several cycles to pause
+ * 1) 'i_isPaused' should factor for MCU needing several cycles to pause
  * 2) Data line not included due to Verilog limits- data is strictly one net
+ * 3) Assumes JTAG signals infer when bus can be driven while 'paused'
  */
 
-/////////////////////////
-// -- Signals/Wires -- //
-/////////////////////////
+//////////////////////////////////
+// -- Internal Signals/Wires -- //
+//////////////////////////////////
 
 // "Packed" control signals for easier selection.
-wire[17:0] procCtrl, jtagCtrl, bootCtrl;
-wire[17:0] busCtrl;
+wire [17:0] coreCtrl, jtagCtrl, bootCtrl;
 
-// Intermediate signals between mux selection.
-wire[17:0] hasBootedCtrls;
+// Nets related to mux-ing of control signals.
+wire [17:0] busCtrl, hasBootedCtrl;
 
-//////////////////////////
-// -- Connects/Logic -- //
-//////////////////////////
+// Computed signals for enabling correct part of memory.
+wire enExtAddr;
 
+// Wires related to tristate driving memory control signals.
+wire [17:0] triA, triY;
+wire        triS;
+
+///////////////////////////////////////
+// -- Functional Blocks/Instances -- //
+///////////////////////////////////////
+
+//------------------------------------------------------------------------------
+// Tristate controlling when memory controls can be applied/drive.
+Tristate TRI[17:0] (
+    .A(triA),
+    .Y(triY),
+    .S(triS)
+);
+
+///////////////////////////////////////////
+// -- Connections/Combinational Logic -- //
+///////////////////////////////////////////
+
+//------------------------------------------------------------------------------
 // Pack input controls to ease readability.
-assign procCtrl = {procEn, procWr, procAddr};
-assign jtagCtrl = {jtagEn, jtagWr, jtagAddr};
-assign bootCtrl = {bootEn, bootWr, bootAddr};
+assign coreCtrl = {i_coreEn, i_coreWr, i_coreAddr};
+assign jtagCtrl = {i_jtagEn, i_jtagWr, i_jtagAddr};
+assign bootCtrl = {i_bootEn, i_bootWr, i_bootAddr};
 
+//------------------------------------------------------------------------------
 // Determine which circuit should be in control.
 Mux2 M0[17:0] ( // 'Running' vs. 'Paused' state of MCU
     .A(jtagCtrl),
-    .B(procCtrl),
-    .S(isPaused),
-    .Y(hasBootedCtrls)
+    .B(coreCtrl),
+    .S(i_isPaused),
+    .Y(hasBootedCtrl)
 );
 Mux2 M1[17:0] ( // 'Booting' state vs. 'Running/Paused' states
-    .A(hasBootedCtrls),
+    .A(hasBootedCtrl),
     .B(bootCtrl),
-    .S(isBooted),
+    .S(i_isBooted),
     .Y(busCtrl)
 );
 
-// Unpack controls to begin controlling memory bus.
-assign busAddr = busCtrl[15:0];
-assign busWr   = busCtrl[16];
+//------------------------------------------------------------------------------
+// Compute enable signals for different addressable spaces.
+assign enExtAddr = busCtrl[17] & ~(busCtrl[15] & busCtrl[14]);
 
-// Computer enable signals based on address being accessed.
-assign busRamEn = ~(busCtrl[15] & busCtrl[14]) & busCtrl[17];
-assign busMapEn = (busCtrl[15] & busCtrl[14]) & busCtrl[17];
+//------------------------------------------------------------------------------
+// Use tristate to only drive memory bus when allowed.
+assign triA = {enExtAddr, busCtrl[16:0]};
+assign triS = ~i_disableDrive;
+
+//------------------------------------------------------------------------------
+// Drive selected bus controls (as able).
+assign io_memAddr  = triY[15:0];
+assign io_memWr    = triY[16];
+assign io_memExtEn = triY[17];
+assign o_memMapEn  = busCtrl[17] & ~enExtAddr; // Mapped access- within MCU
 
 endmodule

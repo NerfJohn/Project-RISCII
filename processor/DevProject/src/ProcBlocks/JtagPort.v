@@ -98,7 +98,8 @@ module JtagPort (
  * 2) Design contains Mealy aspects (ie state + TMS driven signals)
  * 3) Even when masked, data register gets updated
  * 4) Every instruction shift is followed by an attempt to execute
- * 5) Memory enable with 'exeCmd', other enables happen just after
+ * 5) Memory enable with 'inUpdate', other enables happen just after
+ * 6) Memory read/write technically "repeating" until JTAG TCK catches up
  */
 
 //////////////////////////////////
@@ -295,10 +296,10 @@ assign isMcuCmd     = is3BitCmd & iRegQ[2] & iRegQ[1];
 Mux2 M5[15:0] (
     .A({dRegQ[14:0], i_TDI}),        // shift  
     .B(io_memData),                  // memory
-    .S(inDShift),                    // just ensure "shift" in D-SHFT
+    .S(inDShift),                    // ensure "shift" in D-SHFT
     .Y(dRegD)
 );
-assign dRegEn = inDShift | exeCmd;   // ...or nothing
+assign dRegEn = inDShift | inUpdate; // ...or nothing
 
 //------------------------------------------------------------------------------
 // Handle return of shifted out bit from JTAG registers.
@@ -314,7 +315,7 @@ Mux2 M6 (
 assign addrD     = dRegQ;
 assign addrEn    = isAddrCmd & exeCmd;
 assign dataTriA  = dRegQ;
-assign dataTriEn = isMemCmd & iRegQ[0] & exeCmd & inControl;
+assign dataTriEn = isMemCmd & iRegQ[0] & inUpdate & inControl;
 
 //------------------------------------------------------------------------------
 // Handle acquiring of hardware resources (attempted on every command).
@@ -322,7 +323,7 @@ assign scanD   = isScanCmd & inControl;
 assign scanEn  = exeCmd;
 assign storeD  = isStorageCmd & inControl;
 assign storeEn = exeCmd;
-assign memEn   = isMemCmd & exeCmd & inControl;
+assign memEn   = isMemCmd & inUpdate & inControl;
 
 //------------------------------------------------------------------------------
 // Handle pausing/unpausing of MCU from JTAG.

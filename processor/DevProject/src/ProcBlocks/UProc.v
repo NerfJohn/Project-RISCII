@@ -53,12 +53,14 @@ module UProc (
  * JTAG Synch           | Synchronizer for JTAG pins
  * JTAG Port            | Port/Controller for handling JTAG signals
  * B-Scan Register      | Boundary Scan Register for HW Debugging
- *
+ * Memory Controller    | Control logic to handle who's in control of memory
+ * Storage Controller   | Control logic to handle who's in control of storage
  *
  * == Notable Top-Level Nets ==
  * net name             | desc.
  * ---------------------+------
  * io_memData           | Bi-directional net for Memory Bus data signals
+ * io_storeTDO          | "Input" net that, due to scanning, is bi-directional
  * 
  * Design Notes:
  */
@@ -69,7 +71,7 @@ module UProc (
 
 // Wires related to JTAG pin's synchronizer.
 wire [2:0] synch_jtagA, synch_jtagY;
-wire       jtag_TCK, jtag_TDI, jtag_TDO, jtag_TMS;
+wire       jtag_TCK, jtag_TDI, jtag_TMS;
 
 // Wires related to JTAG port controls.
 wire [15:0] jtag_memAddr;
@@ -77,6 +79,13 @@ wire        jtag_memWr, jtag_memEn;
 wire        jtag_storeEn;
 wire        jtag_scanEn, jtag_scanShift;
 wire        jtag_doPause;
+wire        jtag_TDO;
+
+// Wires related to boundary scan register.
+wire bscan_shiftOut;
+
+// Nets related to muxing of JTAG's TDO pin.
+wire jtagTDO_maybeStore;
 
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
@@ -130,7 +139,7 @@ JtagPort JTAG_PORT (
 BScanRegister BSCAN_REG (
 	// Typical shift register IO.
 	.i_shiftIn(jtag_TDI),
-	.o_shiftOut(/* TODO- temporary */ o_jtagTDO),
+	.o_shiftOut(bscan_shiftOut),
 	
 	// Memory connector probe lines.
 	.io_memAddr(io_memAddr),
@@ -160,6 +169,71 @@ BScanRegister BSCAN_REG (
 	.i_rstn(i_rstn)
 );
 
+//------------------------------------------------------------------------------
+// Memory Controller- selects circuit to control memory bus pins.
+MemoryController MEM_CTRL (
+    // Controls from processor core.
+    .i_coreAddr(),
+    .i_coreWr(),
+    .i_coreEn(),
+    
+    // Controls from JTAG port.
+    .i_jtagAddr(jtag_memAddr),
+    .i_jtagWr(jtag_memWr),
+    .i_jtagEn(jtag_memEn),
+    
+    // Controls from Boot circuit.
+    .i_bootAddr(),
+    .i_bootWr(),
+    .i_bootEn(),
+    
+    // Control signals deciding which circuit is in control.
+    .i_isPaused(/* TODO- dummy */ 1'b1),
+    .i_isBooted(/* TODO- dummy */ 1'b1),
+
+    // Control signal deciding when controller can drive memory bus.
+    .i_disableDrive(jtag_scanEn), // JTAG can only assert in 'paused' state
+    
+    // Selected controls sent over memory bus.
+    .io_memAddr(io_memAddr),
+    .io_memWr(io_memWr),
+    .io_memExtEn(io_memEn),
+    .o_memMapEn()
+);
+
+//------------------------------------------------------------------------------
+// Storage Controller- selects circuit to control storage bus pins.
+StorageController STORE_CTRL (
+    // Controls from memory-mapped peripheral.
+    .i_mapEn(),
+    .i_mapSDI(),
+    
+    // Controls from JTAG port.
+    .i_jtagTCK(jtag_TCK),
+    .i_jtagEn(jtag_storeEn),
+    .i_jtagSDI(jtag_TDI),
+    
+    // Controls from Boot circuit.
+    .i_bootEn(),
+    .i_bootSDI(),
+    
+    // Control signals deciding which circuit is in control.
+    .i_isPaused(/* TODO- dummy */ 1'b1),
+    .i_isBooted(/* TODO- dummy */ 1'b1),
+    
+    // Selected controls sent over SPI connection.
+    .io_storeSDI(io_storeSDI),
+    .io_storeSCK(io_storeSCK),
+    .io_storeSCS(io_storeSCS),
+ 
+    // Control signal deciding when controller can drive memory bus.
+    .i_disableDrive(jtag_scanEn), // JTAG can only assert in 'paused' state
+    
+    // Common signals.
+    .i_clk(i_clk),
+    .i_rstn(i_rstn)
+);
+
 ///////////////////////////////////////////
 // -- Connections/Combinational Logic -- //
 ///////////////////////////////////////////
@@ -171,11 +245,26 @@ assign jtag_TCK    = synch_jtagY[2];
 assign jtag_TDI    = synch_jtagY[1];
 assign jtag_TMS    = synch_jtagY[0];
 
+//------------------------------------------------------------------------------
+// Determine which circuit should report back over JTAG port.
+Mux2 M0 (
+	.A(io_storeSDO),
+	.B(jtag_TDO),
+	.S(jtag_storeEn),
+	.Y(jtagTDO_maybeStore)
+);
+Mux2 M1 (
+	.A(bscan_shiftOut),
+	.B(jtagTDO_maybeStore),
+	.S(jtag_scanShift),
+	.Y(o_jtagTDO)
+);
+
 ///////////////////////////////////////////////////////////
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
 assign o_test_word0 = io_memData;
-assign o_test_word1 = {3'b0, io_storeSDO, 3'b0, io_storeSDI, 3'b0, io_storeSCS, 3'b0, io_storeSCK};
+assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, io_storeSDI, 3'b0, io_storeSDO};
 
 endmodule

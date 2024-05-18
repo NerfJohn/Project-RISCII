@@ -51,6 +51,8 @@ module DevProject (
  * reset LED    | LEDG[0]  | Chasis sigs  | visual confirmation of reset state
  * switch LED   | LEDG[1]  | Chasis sigs  | visual confirmation of switch press
  * clk LED      | LEDG[2]  | Chasis sigs  | visual confirmation of clk input
+ * JTAG TCK LED | LEDG[3]  | DUT sigs     | visual check of JTAG's TCK
+ * RAM En LED   | LEDG[4]  | DUT sigs     | visual check of RAM access
  */
 
 /////////////////////////////////////////////
@@ -169,8 +171,8 @@ UProc DUT (
 
     // Storage/EEPROM SPI connections (IO due to B-Scan).
     .io_storeSCK(GPIO_0[29]),
-    .io_storeSDI(GPIO_0[33]),
-    .io_storeSDO(GPIO_0[28]),
+    .io_storeSDI(GPIO_0[28]),
+    .io_storeSDO(GPIO_0[33]),
     .io_storeSCS(GPIO_0[32]),
 
     // GPIO connections.
@@ -212,7 +214,9 @@ assign GPIO_0[30] = 1'b1; // Hold disabled
 
 //------------------------------------------------------------------------------
 // TODO- Additional feedback signals for development- TO DELETE!!!
-assign LEDG[3] = GPIO_0[0]; // JTAG's TCK signal
+assign LEDG[3] = GPIO_0[0];   // JTAG's TCK signal
+assign LEDG[4] = dut_sramEn;  // RAM En signal
+assign LEDG[5] = ~GPIO_0[32]; // EEPROM/SPI En signal
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Disabled/Unconnected Ports -- //
@@ -221,7 +225,7 @@ assign LEDG[3] = GPIO_0[0]; // JTAG's TCK signal
 //------------------------------------------------------------------------------
 // Direct I/O Devices.
 assign LEDR [17:0] = 16'b0;
-assign LEDG [8:4]  = 5'b0;
+assign LEDG [8:6]  = 3'b0;
 
 //------------------------------------------------------------------------------
 // SRAM Signals.
