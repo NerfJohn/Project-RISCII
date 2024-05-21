@@ -53,10 +53,10 @@ CMD_JTAG_RUN    = '(?:jr|jtag_run)'
 LINK_CMD_PERIOD = b'\x30'
 LINK_CMD_INSTR  = b'\x31'
 LINK_CMD_DATA   = b'\x32'
-LINK_CHAR_ESC   = b'\xFF'
-LINK_CHAR_EXE   = b'\x0A'
 LINK_RESP_GOOD  = b'\x01'
 LINK_RESP_FAIL  = b'\x00'
+LINK_CHAR_ESC   = 0xFF
+LINK_CHAR_EXE   = 0x0A
 
 # Definitions for building "JTAG/Hardware" commands.
 JTAG_PASS       = b'\x00'
@@ -518,12 +518,12 @@ def _transferBytes(sendBytes, isSilent = True):
         linkSerial.write(sendBytes[i].to_bytes(1, "big"))
     
     # Bytes sent- trigger command execution by sending "execute" byte.
-    linkSerial.write(LINK_CHAR_EXE)
+    linkSerial.write(LINK_CHAR_EXE.to_bytes(1, "big"))
     
     # Link tool response should match sent length (sendBytes + LINK_CHAR_EXE).
     retMsg = b''
     while len(retMsg) < (len(sendBytes) + 1):
-        retMsg += linkSerial.readline()
+        retMsg += linkSerial.read(1)
         
     # Close serial.
     linkSerial.close()
