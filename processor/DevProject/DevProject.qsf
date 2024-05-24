@@ -275,6 +275,7 @@ set_global_assignment -name VERILOG_FILE src/HwPrimitives/DffSynch.v
 set_global_assignment -name VERILOG_FILE src/HwPrimitives/DffAsynch.v
 set_global_assignment -name VERILOG_FILE src/HwPrimitives/Tristate.v
 set_global_assignment -name VERILOG_FILE src/CombBasic/Mux2.v
+set_global_assignment -name VERILOG_FILE src/CombBasic/Add1.v
 set_global_assignment -name VERILOG_FILE src/SeqBasic/DffSynchEn.v
 set_global_assignment -name VERILOG_FILE src/SeqBasic/DffAsynchEn.v
 set_global_assignment -name VERILOG_FILE src/SeqBasic/Synch2.v
@@ -283,8 +284,7 @@ set_global_assignment -name VERILOG_FILE src/ProcBlocks/JtagPort.v
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/BScanRegister.v
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/MemoryController.v
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/StorageController.v
+set_global_assignment -name VERILOG_FILE src/ProcBlocks/BootBlock.v
 set_global_assignment -name VERILOG_FILE src/FuncBlocks/ScanReg.v
 set_global_assignment -name VERILOG_FILE src/FuncBlocks/ScanRegReporter.v
-set_global_assignment -name VERILOG_FILE src/ProcBlocks/BootBlock.v
-set_global_assignment -name VERILOG_FILE src/CombBasic/Add1.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

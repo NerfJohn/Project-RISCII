@@ -44,6 +44,7 @@ module DevProject (
  * includes both the core microprocessor deign (as the "device under test/DUT")
  * and a chasis to set it up on the FPGA. Below describes the FPGA controls.
  *
+ * == Additional Controls/Signals ==
  * control name | location | defined with | desc.
  * -------------+----------+--------------+------
  * reset button | KEY[0]   | Chasis sigs  | External reset pin on MCU design
@@ -177,11 +178,11 @@ UProc DUT (
     .io_storeSCS(GPIO_0[32]),
 
     // GPIO connections.
-    .io_gpioPin(),
+    .io_gpioPin({GPIO_1[35:28], GPIO_1[7:0]}),
 
     // State/Status connections (IO due to B-Scan).
-    .io_isBooted(),
-    .io_isPaused(),
+    .io_isBooted(LEDG[6]),
+    .io_isPaused(LEDG[7]),
     
     // JTAG port connections.
     .i_jtagTCK(GPIO_0[0]), // "Upper" 3 pins of GPIO_0 connector
@@ -215,9 +216,9 @@ assign GPIO_0[30] = 1'b1; // Hold disabled
 
 //------------------------------------------------------------------------------
 // TODO- Additional feedback signals for development- TO DELETE!!!
-assign LEDG[3] = GPIO_0[0];   // JTAG's TCK signal
-assign LEDG[4] = dut_sramEn;  // RAM En signal
-assign LEDG[5] = ~GPIO_0[32]; // EEPROM/SPI En signal
+assign LEDG[3]   = GPIO_0[0];   // JTAG's TCK signal
+assign LEDG[4]   = dut_sramEn;  // RAM En signal
+assign LEDG[5]   = ~GPIO_0[32]; // EEPROM/SPI En signal
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Disabled/Unconnected Ports -- //
@@ -226,7 +227,7 @@ assign LEDG[5] = ~GPIO_0[32]; // EEPROM/SPI En signal
 //------------------------------------------------------------------------------
 // Direct I/O Devices.
 assign LEDR [17:0] = 16'b0;
-assign LEDG [8:6]  = 3'b0;
+assign LEDG [8]    = 1'b0;
 
 //------------------------------------------------------------------------------
 // SRAM Signals.
@@ -235,6 +236,6 @@ assign SRAM_ADDR[17:16] = 2'b0;
 //------------------------------------------------------------------------------
 // GPIO Ports.
 assign GPIO_0 [27:4] = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
-assign GPIO_1 [35:0] = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_1 [27:8] = 20'bZZZZZZZZZZZZZZZZZZZZ;
 
 endmodule

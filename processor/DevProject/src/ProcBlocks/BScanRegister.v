@@ -44,10 +44,8 @@ module BScanRegister (
  * place, providing method of setting and reading the controls.
  *
  * While mostly a scaled up version of ScanReg.v, safety features are
- * present to prevent some lines (ie io_memData and io_storeSDI) from being
- * driven when their respectie enable is being driven (to prevent contention).
- *
- * TODO- update documentation blurb as module design is completed.
+ * present to prevent some lines (ie io_memData, io_storeSDI, io_storeSDO) from
+ * being driven when their respective enable is being driven (ie contention).
  *
  * == Settings (per probed line) ==
  * bit field | name     | desc.
@@ -93,8 +91,15 @@ wire memEnIn, memEnOut, memEnDriving;
 // Wires related to storage scan registers.
 wire storeSCKIn, storeSCKOut;
 wire storeSDIIn, storeSDIOut, storeSDIEn;
-wire storeSDOIn, storeSDOOut;
+wire storeSDOIn, storeSDOOut, storeSDOEn;
 wire storeSCSIn, storeSCSOut, storeSCSDriving;
+
+// Wires related to GPIO registers.
+wire [15:0] gpioIn, gpioOut;
+
+// Wires related to status signal registers.
+wire pausedIn, pausedOut;
+wire bootedIn, bootedOut;
 
 // TODO- dummy wires to remove as rest of module is designed.
 wire [53:0] dummyIn, dummyOut;
@@ -222,7 +227,7 @@ ScanReg  STORE_SDO (
     .io_probeLine(io_storeSDO),
     
     // Control lines to enable settings/shifting.
-    .i_canDrive(i_canDrive),
+    .i_canDrive(storeSDOEn),
     .i_doShift(i_doShift),
     
     // Common signals.
@@ -250,12 +255,57 @@ ScanRegReporter STORE_SCS (
 );
 
 //------------------------------------------------------------------------------
-// TODO- dummy registers to be replaced with implemented scan registers.
-DffAsynch DUMMY[53:0] (
-	.D(dummyIn),
-	.Q(dummyOut),
-	.clk(i_clk),
-	.rstn(i_rstn)
+// Boundary scan registers for GPIO lines.
+ScanReg GPIO[15:0] (
+    // Typical shift register IO.
+    .i_shiftIn(gpioIn),
+    .o_shiftOut(gpioOut),
+    
+    // Line probed by scan register.
+    .io_probeLine(io_gpioPin),
+    
+    // Control lines to enable settings/shifting.
+    .i_canDrive(i_canDrive),
+    .i_doShift(i_doShift),
+    
+    // Common signals.
+    .i_clk(i_clk),
+    .i_rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Boundary scan registers for MCU status/state signals.
+ScanReg PAUSED_STAT (
+    // Typical shift register IO.
+    .i_shiftIn(pausedIn),
+    .o_shiftOut(pausedOut),
+    
+    // Line probed by scan register.
+    .io_probeLine(io_isPaused),
+    
+    // Control lines to enable settings/shifting.
+    .i_canDrive(i_canDrive),
+    .i_doShift(i_doShift),
+    
+    // Common signals.
+    .i_clk(i_clk),
+    .i_rstn(i_rstn)
+);
+ScanReg BOOTED_STAT (
+    // Typical shift register IO.
+    .i_shiftIn(bootedIn),
+    .o_shiftOut(bootedOut),
+    
+    // Line probed by scan register.
+    .io_probeLine(io_isBooted),
+    
+    // Control lines to enable settings/shifting.
+    .i_canDrive(i_canDrive),
+    .i_doShift(i_doShift),
+    
+    // Common signals.
+    .i_clk(i_clk),
+    .i_rstn(i_rstn)
 );
 
 ///////////////////////////////////////////
@@ -282,11 +332,20 @@ assign storeSCKIn = memEnOut;
 assign storeSDIIn = storeSCKOut;
 assign storeSDIEn = i_canDrive & ~storeSCSDriving; // safety on ext. driving
 assign storeSDOIn = storeSDIOut;
+assign storeSDOEn = i_canDrive & ~storeSCSDriving; // safety on ext. driving
 assign storeSCSIn = storeSDOOut;
 
 //------------------------------------------------------------------------------
-// TODO- dummy connections to replace with implemented scan registers.
-assign dummyIn    = {dummyOut[52:0], storeSCSOut};
-assign o_shiftOut = dummyOut[53];
+// Shift input through GPIO scan registers (9th in shift line).
+assign gpioIn = {gpioOut[14:0], storeSCSOut};
+
+//------------------------------------------------------------------------------
+// Shift input through status/state scan registers (10th/11th in shift line).
+assign pausedIn = gpioOut[15];
+assign bootedIn = pausedOut;
+
+//------------------------------------------------------------------------------
+// Shift output to user.
+assign o_shiftOut = bootedOut;
 
 endmodule
