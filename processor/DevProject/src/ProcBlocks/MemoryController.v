@@ -14,9 +14,8 @@ module MemoryController (
     input        i_jtagWr,
     input        i_jtagEn,
     
-    // Controls from Boot circuit.
+    // Controls from Boot circuit (only writes).
     input [15:0] i_bootAddr,
-    input        i_bootWr,
     input        i_bootEn,
     
     // Control signals deciding which circuit is in control.
@@ -94,7 +93,7 @@ Tristate TRI[17:0] (
 // Pack input controls to ease readability.
 assign coreCtrl = {i_coreEn, i_coreWr, i_coreAddr};
 assign jtagCtrl = {i_jtagEn, i_jtagWr, i_jtagAddr};
-assign bootCtrl = {i_bootEn, i_bootWr, i_bootAddr};
+assign bootCtrl = {i_bootEn, 1'b1,     i_bootAddr}; // boot only writes
 
 //------------------------------------------------------------------------------
 // Determine which circuit should be in control.

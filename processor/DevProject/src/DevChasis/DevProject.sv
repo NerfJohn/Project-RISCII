@@ -53,6 +53,7 @@ module DevProject (
  * clk LED      | LEDG[2]  | Chasis sigs  | visual confirmation of clk input
  * JTAG TCK LED | LEDG[3]  | DUT sigs     | visual check of JTAG's TCK
  * RAM En LED   | LEDG[4]  | DUT sigs     | visual check of RAM access
+ * SPI EN LED   | LEDG[5]  | DUT sigs     | visual check of SPI access
  */
 
 /////////////////////////////////////////////
@@ -171,7 +172,7 @@ UProc DUT (
 
     // Storage/EEPROM SPI connections (IO due to B-Scan).
     .io_storeSCK(GPIO_0[29]),
-    .io_storeSDI(GPIO_0[28]),
+    .io_storeSDI(GPIO_0[28]), // TODO- "data in"to slave- refactor naming...
     .io_storeSDO(GPIO_0[33]),
     .io_storeSCS(GPIO_0[32]),
 

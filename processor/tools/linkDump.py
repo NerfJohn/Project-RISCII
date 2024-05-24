@@ -90,7 +90,7 @@ if __name__ == "__main__":
     
     # Setup MCU for reading.
     tkns = ["jtag_pause"]
-    jtag_pause(tkns)
+    jtag_pause(tkns, False)
     
     # Prep header.
     print(" Addr  |    +0     +1     +2     +3     +4     +5     +6     +7")

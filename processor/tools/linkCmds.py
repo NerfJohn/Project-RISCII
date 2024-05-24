@@ -65,8 +65,8 @@ JTAG_READ       = b'\x02'
 JTAG_WRITE      = b'\x03'
 JTAG_SCAN       = b'\x04'
 JTAG_STORE      = b'\x05'
-JTAG_PAUSE      = b'\x06'
-JTAG_RUN        = b'\x07'
+JTAG_RUN        = b'\x06'
+JTAG_PAUSE      = b'\x07'
 
 # Definitions for commands on EEPROM chip (ie storage on MCU).
 SPI_READ        = b'\x03'

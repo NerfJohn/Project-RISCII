@@ -89,7 +89,7 @@ if __name__ == "__main__":
     tkns = ["set_period", "0"]
     if set_period(tkns, False) is None: sys.exit(RET_FAIL)
     
-    # Setup MCU for programming.
+    # Setup MCU for reading.
     tkns = ["jtag_pause"]
     jtag_pause(tkns, False)
     

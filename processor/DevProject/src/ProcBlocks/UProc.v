@@ -55,12 +55,14 @@ module UProc (
  * B-Scan Register      | Boundary Scan Register for HW Debugging
  * Memory Controller    | Control logic to handle who's in control of memory
  * Storage Controller   | Control logic to handle who's in control of storage
+ * Boot Block           | State machine used to init MCU + memory devices
  *
  * == Notable Top-Level Nets ==
  * net name             | desc.
  * ---------------------+------
  * io_memData           | Bi-directional net for Memory Bus data signals
  * io_storeTDO          | "Input" net that, due to scanning, is bi-directional
+ * boot_nowBooted       | Status/State signal for the MCU's overall state
  * 
  * Design Notes:
  */
@@ -87,6 +89,12 @@ wire bscan_shiftOut;
 // Nets related to muxing of JTAG's TDO pin.
 wire jtagTDO_maybeStore;
 
+// Wires related to Boot Block.
+wire [15:0] boot_memAddr;
+wire        boot_memEn;
+wire        boot_storeEn, boot_storeSDI;
+wire        boot_nowBooted;
+
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
 ///////////////////////////////////////
@@ -110,8 +118,8 @@ JtagPort JTAG_PORT (
     .i_TMS(jtag_TMS),
     
 	 // MCU state for status report + control signal computation.
-	 .i_isBooted(/* TODO- dummy */ 1'b1),
-	 .i_isPaused(/* TODO- dummy */ 1'b1),
+	 .i_isBooted(boot_nowBooted),
+	 .i_isPaused(/* TODO- implement w/ SM*/ jtag_doPause),
     
 	 // Memory control connections.
 	 .o_memAddr(jtag_memAddr),
@@ -182,14 +190,13 @@ MemoryController MEM_CTRL (
     .i_jtagWr(jtag_memWr),
     .i_jtagEn(jtag_memEn),
     
-    // Controls from Boot circuit.
-    .i_bootAddr(),
-    .i_bootWr(),
-    .i_bootEn(),
+    // Controls from Boot circuit (only writes).
+    .i_bootAddr(boot_memAddr),
+    .i_bootEn(boot_memEn),
     
     // Control signals deciding which circuit is in control.
-    .i_isPaused(/* TODO- dummy */ 1'b1),
-    .i_isBooted(/* TODO- dummy */ 1'b1),
+    .i_isPaused(/* TODO- implement w/ SM*/ jtag_doPause),
+    .i_isBooted(boot_nowBooted),
 
     // Control signal deciding when controller can drive memory bus.
     .i_disableDrive(jtag_scanEn), // JTAG can only assert in 'paused' state
@@ -214,12 +221,12 @@ StorageController STORE_CTRL (
     .i_jtagSDI(jtag_TDI),
     
     // Controls from Boot circuit.
-    .i_bootEn(),
-    .i_bootSDI(),
+    .i_bootEn(boot_storeEn),
+    .i_bootSDI(boot_storeSDI),
     
     // Control signals deciding which circuit is in control.
-    .i_isPaused(/* TODO- dummy */ 1'b1),
-    .i_isBooted(/* TODO- dummy */ 1'b1),
+    .i_isPaused(/* TODO- implement w/ SM*/ jtag_doPause),
+    .i_isBooted(boot_nowBooted),
     
     // Selected controls sent over SPI connection.
     .io_storeSDI(io_storeSDI),
@@ -232,6 +239,27 @@ StorageController STORE_CTRL (
     // Common signals.
     .i_clk(i_clk),
     .i_rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Boot Block- first "controlling block", copies binary sections to memory.
+BootBlock BOOT_BLOCK (
+	// Memory bus connections (write only).
+	.o_memAddr(boot_memAddr),
+	.io_memData(io_memData),
+	.o_memEn(boot_memEn),
+	
+	// Storage bus connections (core clock used for SCK).
+	.o_storeEn(boot_storeEn),
+	.o_storeSDI(boot_storeSDI),
+	.i_storeSDO(io_storeSDO),
+	
+	// Generated control signal (origin of "booting" state).
+	.o_nowBooted(boot_nowBooted),
+	
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
 );
 
 ///////////////////////////////////////////
@@ -264,7 +292,7 @@ Mux2 M1 (
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
-assign o_test_word0 = io_memData;
-assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, io_storeSDI, 3'b0, io_storeSDO};
+assign o_test_word0 = io_memAddr;
+assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, boot_nowBooted, 3'b0, jtag_doPause};
 
 endmodule
