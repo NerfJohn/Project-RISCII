@@ -33,7 +33,7 @@ reg [23:0] clkThresh;
 initial begin
     // Initialize PLL.
     clkCnt     = 24'h000000;
-    clkThresh  = 24'h000006;  // 50 MHz / 6 = 8.333 MHz
+    clkThresh  = 24'h000003;  // 50 MHz / (3 * 2 halves) = 8.333 MHz 
     o_genClk   = 1'b0;
 end
 
@@ -41,8 +41,8 @@ end
 // Input handling- update threshold register.
 always @(posedge i_switchFreq) begin
     // Update threshold.
-    if (clkThresh == 24'h000006) clkThresh = 24'h5F5E10; // 8.333 MHz -> 8 Hz
-    else                         clkThresh = 24'h000006; // 8 Hz -> 8.333 MHz
+    if (clkThresh == 24'h000003) clkThresh = 24'h5F5E10; // 8.333 MHz -> 4 Hz
+    else                         clkThresh = 24'h000003; // 4 Hz -> 8.333 MHz
 end
 
 //------------------------------------------------------------------------------

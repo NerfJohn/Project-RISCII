@@ -74,7 +74,7 @@ wire [15:0] seg_word0, seg_word1;
 //////////////////////////////////////////////////////
 
 //------------------------------------------------------------------------------
-// PLL Block- generates 8.333 MHz and 8 Hz clocks for development.
+// PLL Block- generates 8.333 MHz and 4 Hz clocks for development.
 LazyPll PLL (
     // Input 50 MHz clock.
     .i_clock50(pll_clkD),
