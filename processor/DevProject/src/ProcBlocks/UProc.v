@@ -71,6 +71,9 @@ module UProc (
 // -- Internal Signals/Wires -- //
 //////////////////////////////////
 
+// Wires related to syncrhonizing reset pin input.
+wire synch_rstnA, synch_rstnMid, synch_rstnY;
+
 // Wires related to JTAG pin's synchronizer.
 wire [2:0] synch_jtagA, synch_jtagY;
 wire       jtag_TCK, jtag_TDI, jtag_TMS;
@@ -95,9 +98,22 @@ wire        boot_memEn;
 wire        boot_storeEn, boot_storeSDI;
 wire        boot_nowBooted;
 
+// Wires related to MCU output state/status signals.
+wire bStatTriA,  pStatTriY;
+wire bStatTriEn, pStatTriEn;
+
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
 ///////////////////////////////////////
+
+//------------------------------------------------------------------------------
+// Special "synchronizer" for reset signal- avoids "who resets reset" question.
+DffSynch RESET_SYNCH[1:0] (
+	.D(2'b11),
+	.Q({synch_rstnY, synch_rstnMid}),
+	.clk(i_clk),
+	.rstn({synch_rstnMid, synch_rstnA})
+);
 
 //------------------------------------------------------------------------------
 // Synchronizer for JTAG input pins.
@@ -105,7 +121,7 @@ Synch2 JTAG_SYNCH[2:0] (
     .A(synch_jtagA),
     .Y(synch_jtagY),
     .clk(i_clk),
-    .rstn(i_rstn)
+    .rstn(synch_rstnY)
 );
 
 //------------------------------------------------------------------------------
@@ -139,7 +155,7 @@ JtagPort JTAG_PORT (
     
     // Common signals.
     .i_clk(i_clk),
-    .i_rstn(i_rstn)
+    .i_rstn(synch_rstnY)
 );
 
 //------------------------------------------------------------------------------
@@ -174,7 +190,7 @@ BScanRegister BSCAN_REG (
 	
 	// Common signals.
 	.i_clk(jtag_TCK),
-	.i_rstn(i_rstn)
+	.i_rstn(synch_rstnY)
 );
 
 //------------------------------------------------------------------------------
@@ -238,7 +254,7 @@ StorageController STORE_CTRL (
     
     // Common signals.
     .i_clk(i_clk),
-    .i_rstn(i_rstn)
+    .i_rstn(synch_rstnY)
 );
 
 //------------------------------------------------------------------------------
@@ -259,12 +275,29 @@ BootBlock BOOT_BLOCK (
 	
 	// Common signals.
 	.i_clk(i_clk),
-	.i_rstn(i_rstn)
+	.i_rstn(synch_rstnY)
+);
+
+//------------------------------------------------------------------------------
+// Tristate to control report of status (boundary scanned pins).
+Tristate BSTAT_TRI (
+	.A(bStatTriA),
+	.Y(io_isBooted),
+	.S(bStatTriEn)
+);
+Tristate PSTAT_TRI (
+	.A(pStatTriA),
+	.Y(io_isPaused),
+	.S(pStatTriEn)
 );
 
 ///////////////////////////////////////////
 // -- Connections/Combinational Logic -- //
 ///////////////////////////////////////////
+
+//------------------------------------------------------------------------------
+// Synchronizer reset input pin for internal use.
+assign synch_rstnA = i_rstn;
 
 //------------------------------------------------------------------------------
 // Synchronize JTAG pins for internal use.
@@ -287,6 +320,13 @@ Mux2 M1 (
 	.S(jtag_scanShift),
 	.Y(o_jtagTDO)
 );
+
+//------------------------------------------------------------------------------
+// Handle driving status pins (vs. boundary scan register).
+assign bStatTriA  = boot_nowBooted;
+assign bStatTriEn = ~jtag_scanEn;   // JTAG can only assert in 'paused' state
+assign pStatTriA  = /* TODO- implement */ jtag_doPause;
+assign pStatTriEn = ~jtag_scanEn;   // JTAG can only assert in 'paused' state
 
 ///////////////////////////////////////////////////////////
 // -- TODO- test signals for development. TO DELETE!! -- //

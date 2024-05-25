@@ -49,7 +49,7 @@ module DevProject (
  * -------------+----------+--------------+------
  * reset button | KEY[0]   | Chasis sigs  | External reset pin on MCU design
  * switch clks  | KEY[1]   | Chasis sigs  | Switch between 8.333 MHz and 8 Hz
- * reset LED    | LEDG[0]  | Chasis sigs  | visual confirmation of reset state
+ * reset LED    | LEDG[0]  | DUT sigs     | visual confirmation of reset state
  * switch LED   | LEDG[1]  | Chasis sigs  | visual confirmation of switch press
  * clk LED      | LEDG[2]  | Chasis sigs  | visual confirmation of clk input
  * JTAG TCK LED | LEDG[3]  | DUT sigs     | visual check of JTAG's TCK
@@ -64,10 +64,6 @@ module DevProject (
 // PLL block wires.
 wire pll_clkD, pll_clkQ;
 wire pll_selPulse;
-
-// Reset wires/registers.
-wire resetD;
-reg  resetQ;
 
 // Segment Display "Debug Words" wires.
 wire [27:0] seg_ctrl0, seg_ctrl1;
@@ -89,12 +85,6 @@ LazyPll PLL (
     // Generated clock.
     .o_genClk(pll_clkQ)
 );
-
-//------------------------------------------------------------------------------
-// Reset signal- synchronized to generated clock signal.
-always @(posedge pll_clkQ) begin
-    resetQ <= resetD;
-end
 
 //------------------------------------------------------------------------------
 // Segment Displays- organized as two 16-bit words (for debugging).
@@ -119,17 +109,9 @@ assign pll_clkD     = CLOCK_50;
 assign pll_selPulse = ~KEY[1];  // Pushbutton 2nd from the right
 
 //------------------------------------------------------------------------------
-// Generate/syncrhonize reset signal to generated clock signal.
-assign resetD = KEY[0];   // Rightmost Pushbutton
-
-//------------------------------------------------------------------------------
 // Create feedback for PLL control.
 assign LEDG[1] = ~KEY[1];   // Pushbutton/Green LED 2nd from the right
 assign LEDG[2] = pll_clkQ;  // LED 3rd from the right
-
-//------------------------------------------------------------------------------
-// Create feedback for Reset control.
-assign LEDG[0] = resetQ;    // Rightmost GreenLED
 
 //------------------------------------------------------------------------------
 // Create feedback for "debug words" for development.
@@ -150,7 +132,6 @@ assign HEX7 = seg_ctrl1[27:21];
  * CHASIS Resources available:
  * == Expected/Production Signals ==
  * -> pll_clkQ             : Input Clock Signal
- * -> resetQ               : Input (Synchronous) Reset Signal
  * -> SRAM_<sigs>          : RAM chip signals
  * -> GPIO_0, GPIO_1       : Generic pins (for JTAG, SPI, etc)
  *
@@ -192,7 +173,7 @@ UProc DUT (
 
     // Common signals.
     .i_clk(pll_clkQ),
-    .i_rstn(resetQ),
+    .i_rstn(KEY[0]),  // Rightmost Pushbutton
 
     // TODO- Test signals for development; DELETE FOR PRODUCTION!!!
     .o_test_word0(seg_word0),
@@ -216,6 +197,7 @@ assign GPIO_0[30] = 1'b1; // Hold disabled
 
 //------------------------------------------------------------------------------
 // TODO- Additional feedback signals for development- TO DELETE!!!
+assign LEDG[0]   = KEY[0];      // Input to reset pin
 assign LEDG[3]   = GPIO_0[0];   // JTAG's TCK signal
 assign LEDG[4]   = dut_sramEn;  // RAM En signal
 assign LEDG[5]   = ~GPIO_0[32]; // EEPROM/SPI En signal
