@@ -1,0 +1,49 @@
+================================================================================
+Project RISCII: Third Party (Tools) Manifest
+---
+"General manifest of 3rd party tools knowingly used"
+================================================================================
+Table of Contents:
+    -> Purpose
+    -> Common Tools
+    -> Software Related Tools
+    -> Hardware Related Tools
+================================================================================
+Purpose:
+
+    This document is meant to keep a loose record of the third party tools used
+    in order to develop and deploy the product deliverables (ie board, 
+    processor, compiler, libraries, etc). The intention is to give an idea of 
+    what tooling is needed to create the products, NOT to fully re-create the 
+    development environment (ie personal, NOT professional, project work).
+    
+    It is assumed overly generic tools (eg Host OS) do NOT need to be stated.
+
+================================================================================
+Common Tools:
+
+    Git (and Git Bash)
+    Version 2.38.1
+
+    Python
+    Version 3.10.4
+
+================================================================================
+Software Related Tools:
+
+    Eclipse 2023-03
+    Version Unknown (2023-03?)
+
+    MinGW (downloaded to get gcc and g++)
+    Version 0.6.3-pre20170905-1
+
+================================================================================
+Hardware Related Tools:
+
+    Quartus Web II Edition
+    Version 13.0 SP1 (LIKELY DEPRECATED AT THIS POINT)
+
+    Arduino IDE
+    Version 1.8.19
+
+================================================================================
