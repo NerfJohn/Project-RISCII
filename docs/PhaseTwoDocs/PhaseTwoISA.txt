@@ -205,7 +205,8 @@ Instruction Set Details:
         Sets PC to SR1 + 5bImm. Since instructions are always 2 bytes, 5bImm is
         left shifted by 1 and sign extended, prior to adding, for better range.
         
-        If in return from interrupt format, operands are ignored while PC and CC registers are set with values of PCsh and CCsh, respectively.
+        If in return from interrupt format, operands are ignored while PC and 
+		CC registers are set with values of PCsh and CCsh, respectively.
     
     == JLR: Jump/Link Register Offset ==
     [0111][DST][SR1][0][5bImm]           *5-bit, sign extended offset format
