@@ -1,0 +1,17 @@
+// .text metadata
+0000 0000 0000 0110  // 7 instructions- 0x0000 + (7-1) = 0x0006
+
+1010 0000 0000 0100  // LBI $0 4 ; base address, .data sets initial values in RAM
+
+// Begin sequence loop
+0101 001 000 111100  // LDR $1 $0 -4  ; get 1st argument
+0101 010 000 111110  // LDR $2 $0 -2  ; get 2nd argument
+1000 011 001 0 00010 // ADD $3 $1 $2 ; calculate new value
+0100 011 000 000000  // STR $3 $0 0  ; store new value
+1000 000 000 1 00010 // ADD $0 $0 2  ; move to next address
+0010 1110 11110100   // BRC nzp -12  ; begin loop again
+
+// .data metadata + value
+1000 0000 0000 0001  // 2 values- 0x8000 + (2-1) = 0x8001
+0000 0000 0000 0000
+0000 0000 0000 0001

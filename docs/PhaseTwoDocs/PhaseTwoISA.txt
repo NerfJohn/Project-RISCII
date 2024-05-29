@@ -105,7 +105,7 @@ Instruction Set Details:
     given instruction (with enough detail to be usable by software).
     
     Be aware that operations take place within a 16-bit architecture. Operands, 
-    extended values, and saved results are 16-bits wide integers).
+    extended values, and saved results are 16-bits wide integers.
 
     == AND: Bitwise AND ==
     [1111][DST][SR1][000][SR2]           *Register format

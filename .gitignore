@@ -7,6 +7,8 @@ software/src/ParseTable.h
 
 **/__pycache__
 
+**/*.bin
+
 **/db
 **/incremental_db
 **/output_files
