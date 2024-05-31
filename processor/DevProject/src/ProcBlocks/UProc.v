@@ -63,8 +63,11 @@ module UProc (
  * io_memData           | Bi-directional net for Memory Bus data signals
  * io_storeTDO          | "Input" net that, due to scanning, is bi-directional
  * boot_nowBooted       | Status/State signal for the MCU's overall state
+ * stat_startPause      | starts pausing process for most blocks, NOT MCU state
+ * stat_nowPaused       | Status/State signal for MCU, used to switch to JTAG
  * 
  * Design Notes:
+ * 1) Pause call/response in UProc has no DFFs- may become long signal
  */
 
 //////////////////////////////////
@@ -99,8 +102,19 @@ wire        boot_storeEn, boot_storeSDI;
 wire        boot_nowBooted;
 
 // Wires related to MCU output state/status signals.
-wire bStatTriA,  pStatTriY;
-wire bStatTriEn, pStatTriEn;
+wire [1:0] stat_triA, stat_triY;
+wire       stat_triEn;
+
+// Computed signals regarding pausing the MCU.
+wire stat_startPause, stat_nowPaused;
+
+// Wires related to core of MCU.
+wire [15:0] core_memAddr;
+wire        core_memWr;
+wire        core_doPause, core_nowPaused;
+
+// TODO- temporary test signals- TO DELETE!
+wire [15:0] core_test0, core_test1;
 
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
@@ -109,10 +123,10 @@ wire bStatTriEn, pStatTriEn;
 //------------------------------------------------------------------------------
 // Special "synchronizer" for reset signal- avoids "who resets reset" question.
 DffSynch RESET_SYNCH[1:0] (
-	.D(2'b11),
-	.Q({synch_rstnY, synch_rstnMid}),
-	.clk(i_clk),
-	.rstn({synch_rstnMid, synch_rstnA})
+    .D(2'b11),
+    .Q({synch_rstnY, synch_rstnMid}),
+    .clk(i_clk),
+    .rstn({synch_rstnMid, synch_rstnA})
 );
 
 //------------------------------------------------------------------------------
@@ -133,25 +147,25 @@ JtagPort JTAG_PORT (
     .o_TDO(jtag_TDO),
     .i_TMS(jtag_TMS),
     
-	 // MCU state for status report + control signal computation.
-	 .i_isBooted(boot_nowBooted),
-	 .i_isPaused(/* TODO- implement w/ SM*/ jtag_doPause),
+     // MCU state for status report + control signal computation.
+     .i_isBooted(boot_nowBooted),
+     .i_isPaused(stat_nowPaused), // let MCU finish accesses
     
-	 // Memory control connections.
-	 .o_memAddr(jtag_memAddr),
-	 .io_memData(io_memData),
-	 .o_memWr(jtag_memWr),
-	 .o_memEn(jtag_memEn),
-	 
-	 // Storage control connections.
-	 .o_storeEn(jtag_storeEn),
-	 
-	 // B-Scan control connections.
-	 .o_scanEn(jtag_scanEn),
+     // Memory control connections.
+     .o_memAddr(jtag_memAddr),
+     .io_memData(io_memData),
+     .o_memWr(jtag_memWr),
+     .o_memEn(jtag_memEn),
+     
+     // Storage control connections.
+     .o_storeEn(jtag_storeEn),
+     
+     // B-Scan control connections.
+     .o_scanEn(jtag_scanEn),
     .o_scanShift(jtag_scanShift),
     
-	 // Run/Pause control signal.
-	 .o_doPause(jtag_doPause),
+     // Run/Pause control signal.
+     .o_doPause(jtag_doPause),
     
     // Common signals.
     .i_clk(i_clk),
@@ -161,45 +175,44 @@ JtagPort JTAG_PORT (
 //------------------------------------------------------------------------------
 // Boundary Scan Register- probes in/outgoing pins for HW debugging purposes.
 BScanRegister BSCAN_REG (
-	// Typical shift register IO.
-	.i_shiftIn(jtag_TDI),
-	.o_shiftOut(bscan_shiftOut),
-	
-	// Memory connector probe lines.
-	.io_memAddr(io_memAddr),
-	.io_memData(io_memData),
-	.io_memWr(io_memWr),
-	.io_memEn(io_memEn),
-	
-	// Storage connector probe lines.
-	.io_storeSCK(io_storeSCK),
-	.io_storeSDI(io_storeSDI),
-	.io_storeSDO(io_storeSDO),
-	.io_storeSCS(io_storeSCS),
-	
-	// GPIO connector probe lines.
-	.io_gpioPin(io_gpioPin),
-	
-	// Status connection probe lines.
-	.io_isBooted(io_isBooted),
-	.io_isPaused(io_isPaused),
-	
-	// Control lines to enable settings/shifting.
-	.i_canDrive(jtag_scanEn),
-	.i_doShift(jtag_scanShift),
-	
-	// Common signals.
-	.i_clk(jtag_TCK),
-	.i_rstn(synch_rstnY)
+    // Typical shift register IO.
+    .i_shiftIn(jtag_TDI),
+    .o_shiftOut(bscan_shiftOut),
+    
+    // Memory connector probe lines.
+    .io_memAddr(io_memAddr),
+    .io_memData(io_memData),
+    .io_memWr(io_memWr),
+    .io_memEn(io_memEn),
+    
+    // Storage connector probe lines.
+    .io_storeSCK(io_storeSCK),
+    .io_storeSDI(io_storeSDI),
+    .io_storeSDO(io_storeSDO),
+    .io_storeSCS(io_storeSCS),
+    
+    // GPIO connector probe lines.
+    .io_gpioPin(io_gpioPin),
+    
+    // Status connection probe lines.
+    .io_isBooted(io_isBooted),
+    .io_isPaused(io_isPaused),
+    
+    // Control lines to enable settings/shifting.
+    .i_canDrive(jtag_scanEn),
+    .i_doShift(jtag_scanShift),
+    
+    // Common signals.
+    .i_clk(jtag_TCK),
+    .i_rstn(synch_rstnY)
 );
 
 //------------------------------------------------------------------------------
 // Memory Controller- selects circuit to control memory bus pins.
 MemoryController MEM_CTRL (
     // Controls from processor core.
-    .i_coreAddr(),
-    .i_coreWr(),
-    .i_coreEn(),
+    .i_coreAddr(core_memAddr),
+    .i_coreWr(core_memWr),
     
     // Controls from JTAG port.
     .i_jtagAddr(jtag_memAddr),
@@ -211,7 +224,7 @@ MemoryController MEM_CTRL (
     .i_bootEn(boot_memEn),
     
     // Control signals deciding which circuit is in control.
-    .i_isPaused(/* TODO- implement w/ SM*/ jtag_doPause),
+    .i_isPaused(stat_nowPaused),  // let core finish access
     .i_isBooted(boot_nowBooted),
 
     // Control signal deciding when controller can drive memory bus.
@@ -241,7 +254,7 @@ StorageController STORE_CTRL (
     .i_bootSDI(boot_storeSDI),
     
     // Control signals deciding which circuit is in control.
-    .i_isPaused(/* TODO- implement w/ SM*/ jtag_doPause),
+    .i_isPaused(stat_nowPaused),  // let mapped block finish access
     .i_isBooted(boot_nowBooted),
     
     // Selected controls sent over SPI connection.
@@ -260,35 +273,53 @@ StorageController STORE_CTRL (
 //------------------------------------------------------------------------------
 // Boot Block- first "controlling block", copies binary sections to memory.
 BootBlock BOOT_BLOCK (
-	// Memory bus connections (write only).
-	.o_memAddr(boot_memAddr),
-	.io_memData(io_memData),
-	.o_memEn(boot_memEn),
-	
-	// Storage bus connections (core clock used for SCK).
-	.o_storeEn(boot_storeEn),
-	.o_storeSDI(boot_storeSDI),
-	.i_storeSDO(io_storeSDO),
-	
-	// Generated control signal (origin of "booting" state).
-	.o_nowBooted(boot_nowBooted),
-	
-	// Common signals.
-	.i_clk(i_clk),
-	.i_rstn(synch_rstnY)
+    // Memory bus connections (write only).
+    .o_memAddr(boot_memAddr),
+    .io_memData(io_memData),
+    .o_memEn(boot_memEn),
+    
+    // Storage bus connections (core clock used for SCK).
+    .o_storeEn(boot_storeEn),
+    .o_storeSDI(boot_storeSDI),
+    .i_storeSDO(io_storeSDO),
+    
+    // Generated control signal (origin of "booting" state).
+    .o_nowBooted(boot_nowBooted),
+    
+    // Common signals.
+    .i_clk(i_clk),
+    .i_rstn(synch_rstnY)
 );
 
 //------------------------------------------------------------------------------
 // Tristate to control report of status (boundary scanned pins).
-Tristate BSTAT_TRI (
-	.A(bStatTriA),
-	.Y(io_isBooted),
-	.S(bStatTriEn)
+Tristate STAT_TRI[1:0] (
+    .A(stat_triA),
+    .Y(stat_triY),
+    .S(stat_triEn)
 );
-Tristate PSTAT_TRI (
-	.A(pStatTriA),
-	.Y(io_isPaused),
-	.S(pStatTriEn)
+
+//------------------------------------------------------------------------------
+// Core of MCU- executes loaded program instructions.
+Core PROC_CORE (
+    // Memory bus connection (for instructions/data- always enabled).
+    .o_memAddr(core_memAddr),
+    .io_memData(io_memData),
+    .o_memWr(core_memWr),
+    
+    // MCU state signals (pause source + multi-cycle pause).
+    .o_doPause(core_doPause),
+    .i_startPause(stat_startPause),
+    .o_nowPaused(core_nowPaused),
+    .i_isBooted(boot_nowBooted),
+    
+    // Common signals.
+    .i_clk(i_clk),
+    .i_rstn(synch_rstnY),
+    
+   // TODO- Test signals for development; DELETE FOR PRODUCTION!!!
+   .o_test_word0(core_test0),
+   .o_test_word1(core_test1)
 );
 
 ///////////////////////////////////////////
@@ -309,30 +340,36 @@ assign jtag_TMS    = synch_jtagY[0];
 //------------------------------------------------------------------------------
 // Determine which circuit should report back over JTAG port.
 Mux2 M0 (
-	.A(io_storeSDO),
-	.B(jtag_TDO),
-	.S(jtag_storeEn),
-	.Y(jtagTDO_maybeStore)
+    .A(io_storeSDO),
+    .B(jtag_TDO),
+    .S(jtag_storeEn),
+    .Y(jtagTDO_maybeStore)
 );
 Mux2 M1 (
-	.A(bscan_shiftOut),
-	.B(jtagTDO_maybeStore),
-	.S(jtag_scanShift),
-	.Y(o_jtagTDO)
+    .A(bscan_shiftOut),
+    .B(jtagTDO_maybeStore),
+    .S(jtag_scanShift),
+    .Y(o_jtagTDO)
 );
 
 //------------------------------------------------------------------------------
 // Handle driving status pins (vs. boundary scan register).
-assign bStatTriA  = boot_nowBooted;
-assign bStatTriEn = ~jtag_scanEn;   // JTAG can only assert in 'paused' state
-assign pStatTriA  = /* TODO- implement */ jtag_doPause;
-assign pStatTriEn = ~jtag_scanEn;   // JTAG can only assert in 'paused' state
+assign stat_triA   = {stat_nowPaused, boot_nowBooted};
+assign stat_triEn  = ~jtag_scanEn;
+assign io_isPaused = stat_triY[1];
+assign io_isBooted = stat_triY[0];
+
+//------------------------------------------------------------------------------
+// Handle coordinating pause related signals.
+assign stat_startPause = |{jtag_doPause};
+assign stat_nowPaused  = &{core_nowPaused};
 
 ///////////////////////////////////////////////////////////
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
 assign o_test_word0 = io_memAddr;
-assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, boot_nowBooted, 3'b0, jtag_doPause};
+assign o_test_word1 = io_memData;
+//assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, boot_nowBooted, 3'b0, jtag_doPause};
 
 endmodule

@@ -7,7 +7,6 @@ module MemoryController (
     // Controls from processor core.
     input [15:0] i_coreAddr,
     input        i_coreWr,
-    input        i_coreEn,
     
     // Controls from JTAG port.
     input [15:0] i_jtagAddr,
@@ -91,7 +90,7 @@ Tristate TRI[17:0] (
 
 //------------------------------------------------------------------------------
 // Pack input controls to ease readability.
-assign coreCtrl = {i_coreEn, i_coreWr, i_coreAddr};
+assign coreCtrl = {1'b1    , i_coreWr, i_coreAddr}; // core always accessing
 assign jtagCtrl = {i_jtagEn, i_jtagWr, i_jtagAddr};
 assign bootCtrl = {i_bootEn, 1'b1,     i_bootAddr}; // boot only writes
 

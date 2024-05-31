@@ -55,6 +55,8 @@ module DevProject (
  * JTAG TCK LED | LEDG[3]  | DUT sigs     | visual check of JTAG's TCK
  * RAM En LED   | LEDG[4]  | DUT sigs     | visual check of RAM access
  * SPI EN LED   | LEDG[5]  | DUT sigs     | visual check of SPI access
+ * isBooted Pin | LEDG[6]  | DUT sigs     | visual check on "Boot" status pin
+ * isPaused Pin | LEDG[7]  | DUT sigs     | visual check on "Paused" status pin
  */
 
 /////////////////////////////////////////////
