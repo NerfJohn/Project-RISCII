@@ -241,8 +241,8 @@ MemoryController MEM_CTRL (
 // Storage Controller- selects circuit to control storage bus pins.
 StorageController STORE_CTRL (
     // Controls from memory-mapped peripheral.
-    .i_mapEn(),
-    .i_mapSDI(),
+    .i_mapEn(/* TODO- implement */ 1'b0),
+    .i_mapSDI(/* TODO- implement */ 1'b0),
     
     // Controls from JTAG port.
     .i_jtagTCK(jtag_TCK),
@@ -361,7 +361,7 @@ assign io_isBooted = stat_triY[0];
 
 //------------------------------------------------------------------------------
 // Handle coordinating pause related signals.
-assign stat_startPause = |{jtag_doPause};
+assign stat_startPause = |{jtag_doPause, core_doPause};
 assign stat_nowPaused  = &{core_nowPaused};
 
 ///////////////////////////////////////////////////////////
@@ -369,7 +369,8 @@ assign stat_nowPaused  = &{core_nowPaused};
 ///////////////////////////////////////////////////////////
 
 assign o_test_word0 = core_test0;
+//assign o_test_word1 = 16'b0;
 assign o_test_word1 = core_test1;
-//assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, boot_nowBooted, 3'b0, jtag_doPause};
+//assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, io_storeSDI, 3'b0, io_storeSDO};
 
 endmodule

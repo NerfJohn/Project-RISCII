@@ -54,6 +54,9 @@ wire [15:0] pipeInstr;
 // Computed signals for Hazard detection/resolution.
 wire doStallPc, doClearPipe, doFreezePipe;
 
+// Computed signals for controlling core's EXE resources.
+wire isPseInstr;
+
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
 ///////////////////////////////////////
@@ -133,9 +136,14 @@ assign pipeInstr = {pipeQ[15:12] & {4{~pipeClear}}, // force NOP (0x0XXX)
 
 //------------------------------------------------------------------------------
 // Compute hazard signals.
-assign doStallPc    = i_startPause;
+assign doStallPc    = i_startPause | isPseInstr;
 assign doClearPipe  = i_startPause;
-assign doFreezePipe = /* TODO- implement */ 1'b0;
+assign doFreezePipe = isPseInstr;
+
+//------------------------------------------------------------------------------
+// Compute control signals.
+assign isPseInstr = ~pipeInstr[15] & ~pipeInstr[14] & // ie PSE = 0x3XXX
+                    pipeInstr[13] & pipeInstr[12];
 
 //------------------------------------------------------------------------------
 // Connect memory controller to core's interface to the MCU.
@@ -144,12 +152,12 @@ assign o_memWr   = memCoreWr;
 
 //------------------------------------------------------------------------------
 // Determine pause controls based on core and pause details.
-assign o_doPause   = /* TODO- implement */ 1'b0;
-assign o_nowPaused = i_startPause & pipeClear; // active clear = paused
+assign o_doPause   = isPseInstr;
+assign o_nowPaused = i_startPause & (pipeClear | isPseInstr); // clear or PSE
 
 //------------------------------------------------------------------------------
 // TODO- test signals for development- TO DELETE!
 assign o_test_word0 = pcQ;
-assign o_test_word1 = pipeInstr;
+assign o_test_word1 = io_memData; //pipeInstr;
 
 endmodule

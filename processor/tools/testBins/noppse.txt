@@ -1,0 +1,9 @@
+// .text metadata
+0000 0000 0000 0001  // NOP and PSE
+
+0000 0000 0000 0000 // NOP
+0011 0000 0000 0000 // HLT
+
+// .data metadata (no real set value)
+1000 0000 0000 0000
+0000 0000 0000 0000
