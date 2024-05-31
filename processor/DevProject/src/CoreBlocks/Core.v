@@ -32,9 +32,6 @@ module Core (
 // -- Internal Signals/Wires -- //
 //////////////////////////////////
 
-// Computed signals for controlling pipeline flow of core.
-wire doStallPc, doClearPipe, doFreezePipe;
-
 // Wires related to core's memory controller.
 wire [14:0] memIAddr;
 wire [15:0] memCoreAddr;
@@ -42,9 +39,20 @@ wire        memCoreWr;
 
 // Wires related to Program Counter (PC) register (word addressable).
 wire [14:0] pcD, pcQ;
+wire        pcRstn;
 
 // Wires related to incrementor for PC addresses.
 wire [14:0] pcIncA, pcIncY, pcIncCarry;
+
+// Wires related to register implementing "pipline" of core.
+wire [31:0] pipeD, pipeQ;
+wire        pipeEn;
+wire        pipeClear;
+wire [14:0] pipePc2;
+wire [15:0] pipeInstr;
+
+// Computed signals for Hazard detection/resolution.
+wire doStallPc, doClearPipe, doFreezePipe;
 
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
@@ -68,7 +76,7 @@ DffSynch PC[14:0] (
     .D(pcD),
     .Q(pcQ),
     .clk(i_clk),
-    .rstn(i_rstn)
+    .rstn(pcRstn)
 );
 
 //------------------------------------------------------------------------------
@@ -81,15 +89,19 @@ Add1 PC_INC[14:0] ( // TODO- using as incrementor- refactor?
     .O(pcIncCarry)
 );
 
+//------------------------------------------------------------------------------
+// Pipeline register- split's core into FETCH and EXECUTE/MEMORY stages.
+DffSynchEn PIPE_REG[31:0] (
+	.D(pipeD),
+	.Q(pipeQ),
+	.S(pipeEn),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+
 ///////////////////////////////////////////
 // -- Connections/Combinational Logic -- //
 ///////////////////////////////////////////
-
-//------------------------------------------------------------------------------
-// Compute control signals to control pipeline.
-assign doStallPc    = /* TODO- implement */ 1'b0;
-assign doClearPipe  = /* TODO- implement */ 1'b0;
-assign doFreezePipe = /* TODO- implement */ 1'b0;
 
 //------------------------------------------------------------------------------
 // Connect core parts to memory controller.
@@ -97,11 +109,33 @@ assign memIAddr = pcQ;
 
 //------------------------------------------------------------------------------
 // Determine next PC address to attempt to read.
-assign pcD = pcIncY & {16{i_isBooted}}; // TODO- implement
+Mux2 M0[14:0] (
+	.A(pcQ),
+	.B(pcIncY),
+	.S(doStallPc),
+	.Y(pcD)
+);
+assign pcRstn = i_rstn & i_isBooted; // wait at 0x0000 while booting
 
 //------------------------------------------------------------------------------
 // Compute next PC address in sequence.
 assign pcIncA = pcQ;
+
+//------------------------------------------------------------------------------
+// Handle pipeline register logic- transitioning data between stages.
+assign pipeD     = {doClearPipe, pcIncY, io_memData};
+assign pipeEn    = ~doFreezePipe & i_isBooted;      // spin (resets to NOP)
+assign pipeClear = pipeQ[31];
+assign pipePc2   = pipeQ[30:16];
+assign pipeInstr = {pipeQ[15:12] & {4{~pipeClear}}, // force NOP (0x0XXX)
+                    pipeQ[11:0]
+						 };
+
+//------------------------------------------------------------------------------
+// Compute hazard signals.
+assign doStallPc    = i_startPause;
+assign doClearPipe  = i_startPause;
+assign doFreezePipe = /* TODO- implement */ 1'b0;
 
 //------------------------------------------------------------------------------
 // Connect memory controller to core's interface to the MCU.
@@ -110,12 +144,12 @@ assign o_memWr   = memCoreWr;
 
 //------------------------------------------------------------------------------
 // Determine pause controls based on core and pause details.
-assign o_doPause   = 1'b0;
-assign o_nowPaused = i_startPause;
+assign o_doPause   = /* TODO- implement */ 1'b0;
+assign o_nowPaused = i_startPause & pipeClear; // active clear = paused
 
 //------------------------------------------------------------------------------
 // TODO- test signals for development- TO DELETE!
-assign o_test_word0 = 0;
-assign o_test_word1 = 0;
+assign o_test_word0 = pcQ;
+assign o_test_word1 = pipeInstr;
 
 endmodule

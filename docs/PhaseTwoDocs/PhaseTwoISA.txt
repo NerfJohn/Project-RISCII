@@ -92,10 +92,10 @@ Instruction Set Overview:
     [0001][DST][SR1][6bOfst]             *6-bit, sign extended offset format
 
     -- NOP: No Operation --
-    [0011][000000000000]                 *Command format
-
-    -- HLT: Halt Opetation --
     [0000][000000000000]                 *Command format
+
+    -- PSE: Pause Operation --
+    [0011][000000000000]                 *Command format
 
 ================================================================================
 Instruction Set Details:
@@ -223,16 +223,15 @@ Instruction Set Details:
         left shifted by 1 and sign extended, prior to adding, for better range.
     
     == NOP: No Operation ==
-    [0011][000000000000]                 *Command format
+    [0000][000000000000]                 *Command format
         
         Performs no operations and does not update any registers. Acts as
         "filler" instruction for explicit/implicit stalling.
     
-    == HLT: Halt Opetation ==
-    [0000][000000000000]                 *Command format
+    == PSE: Pause Operation ==
+    [0011][000000000000]                 *Command format
         
-        Halts the processor's direct execution of code. Stops PC from being
-        updated by software or interrupts (though may be changed by external
-        means, such as JTAG control).
+		Causes MCU to be put into a 'paused' state (detectable by JTAG). PC may
+		be updated by interrupts, but the interrupt will not run.
 
 ================================================================================
