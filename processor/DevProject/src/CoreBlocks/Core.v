@@ -34,6 +34,10 @@ module Core (
 
 // Wires related to core's memory controller.
 wire [14:0] memIAddr;
+wire        memIBusy;
+wire [15:0] memDAddr, memDData;
+wire        memDWr,   memDSwp,  memDEn;
+wire        memDRead, memDDone;
 wire [15:0] memCoreAddr;
 wire        memCoreWr;
 
@@ -55,7 +59,11 @@ wire [15:0] pipeInstr;
 wire doStallPc, doClearPipe, doFreezePipe;
 
 // Computed signals for controlling core's EXE resources.
-wire isPseInstr;
+wire isPseInstr, isMemInstr;
+
+// TODO- test signals, to delete after checking mem controller.
+wire [15:0] dummyD, dummyQ;
+wire        dummyEn;
 
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
@@ -66,11 +74,29 @@ wire isPseInstr;
 CoreMemController MEM_CTRL (
     // Instruction memory inputs (implied enable/read- also word addressable).
     .i_iAddr(memIAddr),
+	 
+	 // Instruction memory status signals.
+	 .o_iIsBusy(memIBusy),
+	 
+	 // Data memory inputs.
+	 .i_dAddr(memDAddr),
+	 .i_dData(memDData),
+	 .i_dWr(memDWr),
+	 .i_dSwp(memDSwp),
+	 .i_dEn(memDEn),
+	 
+	 // Data memory status signals.
+	 .o_dIsReading(memDRead),
+	 .o_dIsDone(memDDone),
     
     // Unified memory interface (data for writing, implied enable).
     .o_coreAddr(memCoreAddr),
     .io_coreData(io_memData), // direct connect- verilog inout limitations
-    .o_coreWr(memCoreWr)
+    .o_coreWr(memCoreWr),
+	 
+	 // Common signals.
+	 .i_clk(i_clk),
+	 .i_rstn(i_rstn)
 );
 
 //------------------------------------------------------------------------------
@@ -136,14 +162,36 @@ assign pipeInstr = {pipeQ[15:12] & {4{~pipeClear}}, // force NOP (0x0XXX)
 
 //------------------------------------------------------------------------------
 // Compute hazard signals.
-assign doStallPc    = i_startPause | isPseInstr;
-assign doClearPipe  = i_startPause;
-assign doFreezePipe = isPseInstr;
+assign doStallPc    = i_startPause | isPseInstr | isMemInstr;
+assign doClearPipe  = i_startPause | memIBusy;
+assign doFreezePipe = isPseInstr | (isMemInstr & ~memDDone);
 
 //------------------------------------------------------------------------------
 // Compute control signals.
-assign isPseInstr = ~pipeInstr[15] & ~pipeInstr[14] & // ie PSE = 0x3XXX
-                    pipeInstr[13] & pipeInstr[12];
+assign isPseInstr  = ~pipeInstr[15] & ~pipeInstr[14] &  // PSE = 0x3XXX
+                      pipeInstr[13] &  pipeInstr[12];
+assign isMemInstr  = ~pipeInstr[15] & ~pipeInstr[13] &  // LDR, STR, SWP
+                     (pipeInstr[14] | pipeInstr[12]);
+
+//------------------------------------------------------------------------------
+// TODO- dummy test for core memory controller and pipe logic.
+
+DffSynchEn DUMMY_REG[15:0] (
+	.D(dummyD),
+	.Q(dummyQ),
+	.S(dummyEn),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+
+assign memDAddr = {12'b0, pipeInstr[3:1]};
+assign memDData = dummyQ;
+assign memDWr   = ~pipeInstr[12];
+assign memDEn   = isMemInstr;
+assign memDSwp  = ~pipeInstr[15] & ~pipeInstr[14] & ~pipeInstr[13] & pipeInstr[12];
+
+assign dummyD   = io_memData;
+assign dummyEn  = memDRead;
 
 //------------------------------------------------------------------------------
 // Connect memory controller to core's interface to the MCU.
@@ -158,6 +206,6 @@ assign o_nowPaused = i_startPause & (pipeClear | isPseInstr); // clear or PSE
 //------------------------------------------------------------------------------
 // TODO- test signals for development- TO DELETE!
 assign o_test_word0 = pcQ;
-assign o_test_word1 = io_memData; //pipeInstr;
+assign o_test_word1 = io_memData; //{3'b0, memIBusy, 3'b0, memDRead, 3'b0, memDDone, io_memData[3:0]};
 
 endmodule

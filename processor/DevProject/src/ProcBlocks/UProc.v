@@ -368,7 +368,7 @@ assign stat_nowPaused  = &{core_nowPaused};
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
-assign o_test_word0 = core_test0;
+assign o_test_word0 = io_memAddr;
 //assign o_test_word1 = 16'b0;
 assign o_test_word1 = core_test1;
 //assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, io_storeSDI, 3'b0, io_storeSDO};

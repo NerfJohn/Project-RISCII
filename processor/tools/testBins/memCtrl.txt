@@ -1,0 +1,20 @@
+// Test with dummy core setup to check core's memory controller works as intended.
+
+// Text section metadata
+0000 0000 0000 0101 // 6 instructions- words [5:0]
+
+0101 0000 0000 0000 // Load value at 0
+0100 0000 0000 0010 // Store at 1
+0100 0000 0000 0100 // Store at 2
+0001 0000 0000 0110 // Swap with 3
+0100 0000 0000 1000 // store at 4
+0011 0000 0000 0000 // PSE
+
+// Data metadata
+1000 0000 0000 0100 // 5 words- words [4:0]
+
+0000 0000 0000 1010 // 10 - loaded into core
+0000 0000 0000 0000
+0000 0000 0000 0000
+0000 0000 0000 1111 // 15 - swapped into core
+0000 0000 0000 0000
