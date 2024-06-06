@@ -25,7 +25,7 @@ module CoreMemController (
     output [15:0] o_coreAddr,
     inout  [15:0] io_coreData,
     output        o_coreWr,
-	 
+
 	 // Common signals.
 	 input         i_clk,
 	 input         i_rstn
@@ -70,8 +70,9 @@ wire servingData, readingData, writingData, finishData;
 // Wires related to SW to HW address translation.
 wire [14:0] wordAddr;
 
-// Wires related to buffer to hold write data.
-wire [15:0] bufferD, bufferQ;
+// Wires related to buffer to hold addr/data.
+wire [14:0] aBufferD, aBufferQ;
+wire [15:0] dBufferD, dBufferQ;
 
 // Wires related to tristate allowing for data memory writes.
 wire [15:0] triA, triY;
@@ -91,10 +92,16 @@ DffSynch STATE[1:0] (
 );
 
 //------------------------------------------------------------------------------
-// Write buffer- ensures swap's read won't change it's write data.
-DffSynch BUFFER[15:0] (
-	.D(bufferD),
-	.Q(bufferQ),
+// Write buffer- ensures swap's address/write data won't change.
+DffSynch ADDR_BUFFER[14:0] (
+	.D(aBufferD),
+	.Q(aBufferQ),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+DffSynch DATA_BUFFER[15:0] (
+	.D(dBufferD),
+	.Q(dBufferQ),
 	.clk(i_clk),
 	.rstn(i_rstn)
 );
@@ -132,8 +139,9 @@ assign finishData  = stateQ[0];
 
 //------------------------------------------------------------------------------
 // Handle driving memory bus' controls (address and read/write bit).
+assign aBufferD = i_dAddr;
 Mux2 M1[14:0] (
-	.A(i_dAddr),
+	.A(aBufferQ),
 	.B(i_iAddr),
 	.S(servingData),
 	.Y(wordAddr)
@@ -143,8 +151,8 @@ assign o_coreWr   = writingData;             // instructions always read
 
 //------------------------------------------------------------------------------
 // Handle driving/buffering of write data through data lines.
-assign bufferD     = i_dData;
-assign triA        = bufferQ;
+assign dBufferD     = i_dData;
+assign triA        = dBufferQ;
 assign triEn       = writingData;
 assign io_coreData = triY;
 

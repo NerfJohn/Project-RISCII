@@ -32,8 +32,8 @@ wire extBitShorts;
 wire extBit;
 
 // Nets to compute the two highest bits of the raw immediate.
-wire [2:0] upBitsShorts;
-wire [2:0] upBits;
+wire [1:0] upBitsShorts;
+wire [1:0] upBits;
 
 // Nets to compute sixth bit of raw immediate.
 wire sixthBit;

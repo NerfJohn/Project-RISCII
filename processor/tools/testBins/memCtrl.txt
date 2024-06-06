@@ -1,13 +1,14 @@
 // Test with dummy core setup to check core's memory controller works as intended.
 
 // Text section metadata
-0000 0000 0000 0101 // 6 instructions- words [5:0]
+0000 0000 0000 0110 // 7 instructions- words [6:0]
 
-0101 0000 0000 0000 // Load value at 0
-0100 0000 0000 0010 // Store at 1
-0100 0000 0000 0100 // Store at 2
-0001 0000 0000 0110 // Swap with 3
-0100 0000 0000 1000 // store at 4
+0000 000 000 000000 // NOP
+0101 000 000 000000 // LDR $0 $0 0 ; Load 10 into R0
+0100 000 001 000001 // STR $0 $1 1 ; Store 10 to 0x8001
+0100 000 001 000010 // STR $0 $1 2 ; Store 10 to 0x8002
+0001 000 001 000011 // SWP $0 $1 3 ; Swap 10 and 15
+0100 000 001 000100 // STR $0 $1 4 ; Store 15 to 0x8004
 0011 0000 0000 0000 // PSE
 
 // Data metadata
