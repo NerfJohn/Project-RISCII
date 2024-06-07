@@ -72,7 +72,9 @@ wire [14:0] wordAddr;
 
 // Wires related to buffer to hold addr/data.
 wire [14:0] aBufferD, aBufferQ;
+wire        aBufferEn;
 wire [15:0] dBufferD, dBufferQ;
+wire        dBufferEn;
 
 // Wires related to tristate allowing for data memory writes.
 wire [15:0] triA, triY;
@@ -93,15 +95,17 @@ DffSynch STATE[1:0] (
 
 //------------------------------------------------------------------------------
 // Write buffer- ensures swap's address/write data won't change.
-DffSynch ADDR_BUFFER[14:0] (
+DffSynchEn ADDR_BUFFER[14:0] (
 	.D(aBufferD),
 	.Q(aBufferQ),
+	.S(aBufferEn),
 	.clk(i_clk),
 	.rstn(i_rstn)
 );
-DffSynch DATA_BUFFER[15:0] (
+DffSynchEn DATA_BUFFER[15:0] (
 	.D(dBufferD),
 	.Q(dBufferQ),
+	.S(dBufferEn),
 	.clk(i_clk),
 	.rstn(i_rstn)
 );
@@ -139,7 +143,8 @@ assign finishData  = stateQ[0];
 
 //------------------------------------------------------------------------------
 // Handle driving memory bus' controls (address and read/write bit).
-assign aBufferD = i_dAddr;
+assign aBufferD   = i_dAddr;
+assign aBufferEn  = i_dEn;                   // LDR/SWP breaks without this line
 Mux2 M1[14:0] (
 	.A(aBufferQ),
 	.B(i_iAddr),
@@ -151,7 +156,8 @@ assign o_coreWr   = writingData;             // instructions always read
 
 //------------------------------------------------------------------------------
 // Handle driving/buffering of write data through data lines.
-assign dBufferD     = i_dData;
+assign dBufferD    = i_dData;
+assign dBufferEn   = i_dEn;        // LDR/SWP breaks without this line
 assign triA        = dBufferQ;
 assign triEn       = writingData;
 assign io_coreData = triY;
