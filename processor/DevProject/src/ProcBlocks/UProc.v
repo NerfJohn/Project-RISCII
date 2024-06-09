@@ -105,13 +105,16 @@ wire        boot_nowBooted;
 wire [1:0] stat_triA, stat_triY;
 wire       stat_triEn;
 
-// Computed signals regarding pausing the MCU.
+// Wires related to MCU internal 'pause' state.
+wire startPauseD,     startPauseQ;
+wire nowPausedD,      nowPausedQ;
 wire stat_startPause, stat_nowPaused;
 
 // Wires related to core of MCU.
 wire [15:0] core_memAddr;
 wire        core_memWr;
 wire        core_doPause, core_nowPaused;
+wire [14:0] core_pcValue;
 
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
@@ -297,6 +300,21 @@ Tristate STAT_TRI[1:0] (
 );
 
 //------------------------------------------------------------------------------
+// DFFs to give defined breaks between do/start/now pause steps.
+DffSynch START_PAUSE (
+	.D(startPauseD),
+	.Q(startPauseQ),
+	.clk(i_clk),
+	.rstn(synch_rstnY)
+);
+DffSynch NOW_PAUSED (
+	.D(nowPausedD),
+	.Q(nowPausedQ),
+	.clk(i_clk),
+	.rstn(synch_rstnY)
+);
+
+//------------------------------------------------------------------------------
 // Core of MCU- executes loaded program instructions.
 Core PROC_CORE (
     // Memory bus connection (for instructions/data- always enabled).
@@ -309,6 +327,9 @@ Core PROC_CORE (
     .i_startPause(stat_startPause),
     .o_nowPaused(core_nowPaused),
     .i_isBooted(boot_nowBooted),
+	 
+	 // Values used by memory mapped peripherals for computations.
+	 .o_pcValue(core_pcValue),
     
     // Common signals.
     .i_clk(i_clk),
@@ -354,16 +375,18 @@ assign io_isBooted = stat_triY[0];
 
 //------------------------------------------------------------------------------
 // Handle coordinating pause related signals.
-assign stat_startPause = |{jtag_doPause, core_doPause};
-assign stat_nowPaused  = &{core_nowPaused};
+assign startPauseD     = |{jtag_doPause, core_doPause};
+assign stat_startPause = startPauseQ;
+assign nowPausedD      = &{core_nowPaused};
+assign stat_nowPaused  = nowPausedQ;
 
 ///////////////////////////////////////////////////////////
 // -- TODO- test signals for development. TO DELETE!! -- //
 ///////////////////////////////////////////////////////////
 
-assign o_test_word0 = 16'b0; //io_memAddr;
+assign o_test_word0 = io_memData;
 //assign o_test_word1 = 16'b0;
-assign o_test_word1 = 16'b0; //core_test1;
+assign o_test_word1 = {core_pcValue, 1'b0};
 //assign o_test_word1 = {3'b0, io_storeSCK, 3'b0, io_storeSCS, 3'b0, io_storeSDI, 3'b0, io_storeSDO};
 
 endmodule

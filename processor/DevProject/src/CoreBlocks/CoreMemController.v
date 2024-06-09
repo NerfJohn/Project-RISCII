@@ -53,119 +53,27 @@ module CoreMemController (
  * 4) Pauses should be done when in "instruction read" state
  * 5) For reads, raw data line passed to "io_coreData" should be used
  * 6) For swaps, the "Wr" input MUST be 0 (ie swap acts as read)
+ *
+ * TODO- redo
  */
 
 //////////////////////////////////
 // -- Internal Signals/Wires -- //
 //////////////////////////////////
 
-// Wires related to state machine + nextState logic.
-wire [1:0] stateD,     stateQ;
-wire       inIState;
-wire [1:0] fromIState, fromDState;
-
-// Computed signals to control the core memory connection.
-wire servingData, readingData, writingData, finishData;
-
-// Wires related to SW to HW address translation.
-wire [14:0] wordAddr;
-
-// Wires related to buffer to hold addr/data.
-wire [14:0] aBufferD, aBufferQ;
-wire        aBufferEn;
-wire [15:0] dBufferD, dBufferQ;
-wire        dBufferEn;
-
-// Wires related to tristate allowing for data memory writes.
-wire [15:0] triA, triY;
-wire        triEn;
-
 ///////////////////////////////////////
 // -- Functional Blocks/Instances -- //
 ///////////////////////////////////////
 
 //------------------------------------------------------------------------------
-// State machine- coordinating instruction vs data access.
-DffSynch STATE[1:0] (
-	.D(stateD),
-	.Q(stateQ),
-	.clk(i_clk),
-	.rstn(i_rstn)
-);
-
-//------------------------------------------------------------------------------
-// Write buffer- ensures swap's address/write data won't change.
-DffSynchEn ADDR_BUFFER[14:0] (
-	.D(aBufferD),
-	.Q(aBufferQ),
-	.S(aBufferEn),
-	.clk(i_clk),
-	.rstn(i_rstn)
-);
-DffSynchEn DATA_BUFFER[15:0] (
-	.D(dBufferD),
-	.Q(dBufferQ),
-	.S(dBufferEn),
-	.clk(i_clk),
-	.rstn(i_rstn)
-);
-
-//------------------------------------------------------------------------------
-// Tristate for driving writes to memory.
-Tristate WR_TRI[15:0] (
-	.A(triA),
-	.Y(triY),
-	.S(triEn)
-);
 
 ///////////////////////////////////////////
 // -- Connections/Combinational Logic -- //
 ///////////////////////////////////////////
 
 //------------------------------------------------------------------------------
-// Determine next state and update state machine.
-assign inIState   = ~stateQ[1] & ~stateQ[0];        // serving instr mem
-assign fromIState = {~i_dWr, ~i_dSwp} & {2{i_dEn}}; // state after instr serve
-assign fromDState = {1'b0, stateQ[1] & ~stateQ[0]}; // state after data serve
-Mux2 M0[1:0] (
-	.A(fromIState), // switches to data state
-	.B(fromDState), // switches to data or instruction state
-	.S(inIState),
-	.Y(stateD)
-);
-
-//------------------------------------------------------------------------------
-// Compute internal control signals for memory connection.
-assign servingData = stateQ[1] | stateQ[0];
-assign readingData = stateQ[1];
-assign writingData = ~stateQ[1] & stateQ[0];
-assign finishData  = stateQ[0];
-
-//------------------------------------------------------------------------------
-// Handle driving memory bus' controls (address and read/write bit).
-assign aBufferD   = i_dAddr;
-assign aBufferEn  = i_dEn;                   // LDR/SWP breaks without this line
-Mux2 M1[14:0] (
-	.A(aBufferQ),
-	.B(i_iAddr),
-	.S(servingData),
-	.Y(wordAddr)
-);
-assign o_coreAddr = {servingData, wordAddr}; // address proper section on chip
-assign o_coreWr   = writingData;             // instructions always read
-
-//------------------------------------------------------------------------------
-// Handle driving/buffering of write data through data lines.
-assign dBufferD    = i_dData;
-assign dBufferEn   = i_dEn;        // LDR/SWP breaks without this line
-assign triA        = dBufferQ;
-assign triEn       = writingData;
-assign io_coreData = triY;
-
-//------------------------------------------------------------------------------
-// Handle status signals for both instruction and data memory.
-assign o_iIsBusy    = servingData;
-assign o_dIsReading = readingData;
-assign o_dIsDone    = finishData;
+// Drive core's memory controls.
+assign o_coreAddr = i_iAddr;
+assign o_coreWr   = 1'b0;
 
 endmodule
