@@ -22,6 +22,9 @@ compiler/AsmLdProject/Debug/*
 compiler/AsmLdProject/cppCheckDir/*
 !compiler/AsmLdProject/cppCheckDir/files.txt
 
+# (compiler) Ignore .gitignore in compiler project(s)- not needed.
+compiler/*/.gitignore
+
 ################################################################################
 # -- General Rules --
 ################################################################################
