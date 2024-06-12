@@ -1,20 +1,21 @@
-hardware/work
-software/quaidcc.exe
-software/src/ScanTable.h
-software/src/ParseTable.h
+################################################################################
+# -- Design Specific Rules --
+################################################################################
 
-*.out
+# (processor) Ignore Quartus generated metadata and output files.
+processor/**/db
+processor/**/incremental_db
+processor/**/output_files
+processor/**/*.qws
+processor/**/*.bak
+processor/**/src/*.bak
 
+# (processor) Ignore bins created for testing hardware.
+processor/tools/testBins/*.bin
+
+################################################################################
+# -- General Rules --
+################################################################################
+
+# Ignore pycaches- just "scripts running scripts"
 **/__pycache__
-
-**/*.bin
-
-**/db
-**/incremental_db
-**/output_files
-**/*.qws
-**/*.bak
-**/src/*.bak
-
-compiler/asmProject/.settings
-compiler/asmProject/Debug
