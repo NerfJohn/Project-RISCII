@@ -30,12 +30,12 @@ User Story:
 	section in the order they are given (give/take declaring a starting point).
 	
 	Global data can be declared as a word (ie 2 byte) or multi-byte value. Data 
-	assigned non-zero values are placed in the .data section wheras zero or 
-	uninitialized values are placed in the .bss section.
+	with an asigned value is placed in the .data section, while uninitialized 
+	data is placed in the .bss section.
 	
-	Values (ie data and arguments) should be human readable (ie should not be 
-	forced to write binary/hex code). Additionally, comments should be 
-	supported to help make programs more understandable for human readers.
+	Values should be human readable, with the user having various options to 
+	convey values (eg integers, hexadecimals, strings, etc). Additionally, 
+	comments should be supported to create understandable source files.
 	
 	Assembler/linker abstracts addresses from user with labels, which can be 
 	tied to instructions or data. Special labels are built-in for declaring 

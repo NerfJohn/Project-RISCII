@@ -1,0 +1,221 @@
+================================================================================
+Project RISCII: Assembler User Guide
+---
+"User Guide for RISCII Assembler/Linker use and implemented assembly language"
+================================================================================
+Table of Contents:
+	-> Purpose
+	-> Assembly Language
+	-> Table- Assembly Syntax
+
+================================================================================
+Purpose:
+
+	This document is meant to provide guidance on how to use RISCII's 
+	assembler/linker, as well as how the implemented assembly language works. 
+	This document should be sufficient to write and assemble RISCII programs.
+	
+	In terms of development, this document also acts as additional material 
+	describing what the finished program should be able to do. However, other 
+	documents (eg AssemblerRequirements.txt) more properly track requirements.
+	
+================================================================================
+Assembly Language:
+
+	This section describes how assembly language parsed and interpreted by the 
+	assembler/linker program. All input files should adhere to the syntax and 
+	expectations on interpretation below.
+	
+	Note that the assembler/linker program is targeted to the RISCII processor. 
+	Because of this, constraints may exist in practice and have been specified 
+	as noticed (eg language addresses bytes, hardware addresses words).
+	
+	================================
+	=== Language Variable Tokens ===
+	================================
+	
+	The assembly language is made up of various "tokens"- some of which include 
+	variable data/values. The following sub-sections cover each of these 
+	tokens in better detail.
+	
+	== Register Token ==
+
+	Register tokens refer to the RISCII processors registers directly 
+	accessible by instructions. They begin with '$', followed by the integer ID 
+	of the register.
+	
+	Examples:
+	
+	$0, $1, $6
+	
+	(Note: The RISCII processor supports $0-$7)
+	
+	== Immediate Token ==
+	
+	Immediate tokens represent raw integer values (32-bit precision). They can 
+	be given in decimal (with a prefixed '+' or '-') or in hexadecimal (with a 
+	prefixed '0x'- casing ignored for 'A'-'F').
+	
+	Examples:
+	
+	3, -5, 0x0aB8
+	
+	(Note: For RISCII processor, valid range depends on context)
+	
+	== Flag Token ==
+	
+	Flag tokens represent specific bit flags (typically within instructions). 
+	They begin with '%', followed by specific, ordered, lowercase characters. 
+	See "Table- Assembly Syntax" for more details.
+	
+	Examples:
+	
+	%a, %s, %np
+	
+	(Note: Specific flags based on RISCII ISA)
+	
+	== String Token ==
+	
+	String tokens represent multi-byte values best shown as ASCII text. They 
+	begin and end with '"', with visible ASCII character(s) in-between. The 
+	string literal is NOT implicitly null terminated.
+	
+	String tokens may contain the follow escape characters: \n \r \t \0 \".
+	
+	Examples:
+	
+	"Hello World", "Hey?!\n", "\"Null terminated string\"\0"
+	
+	(Note: For RISCII processor, string is padded to word boundary, with the 
+	first character placed at the lowest byte address)
+	
+	== Label Token ==
+	
+	Label tokens represent abstracted addresses (to be resolved by the 
+	assembler/linker). They follow typical identifier rules, using alphanumeric 
+	(and _) chars, starting with NOT a numerical value.
+	
+	Examples:
+	
+	Foo, _bar, r2D4;
+	
+	(Note: For RISCII processor, all addresses are 16-bit values)
+	
+	== Array Token ==
+	
+	Array tokens (or array groups) is a collection immediate, string, and label 
+	tokens separated by whitespace and contained with curly brackets (ie "{" 
+	and "}").
+	
+	In general, the array's components are resolved first, then the entire 
+	array. This results in one constant value (typically multiple bytes in 
+	size).
+	
+	Examples:
+	
+	{23 "hi" foo}, {"oh my" _noAck}, {6}
+	
+	(Note: For RISCII processor, array and contents are padded to word 
+	boundary, with the first component placed at the lowest address)
+	
+	== Comment Token ==
+	
+	Comment tokens are human readable text added to make the source code more 
+	readable. They begin with ";" and continue until the next newline (or EOF). 
+	They have no effect on the source code.
+	
+	Examples:
+	
+	; This is a comment
+	; And another one
+	; Comment ; inception
+	
+	====================
+	=== Instructions ===
+	====================
+	
+================================================================================
+Table- Assembly Syntax
+
+	= Instruction Syntax =
+	syntax      | (f)lags | (r)egs | (i)mms | desc.
+	------------+---------+--------+--------+------
+	AND   r r r | ---     | 0-7    | ---    | bitwise AND
+	AND   r r i | ---     | 0-7    | int5   | bitwise AND
+	ORR   r r r | ---     | 0-7    | ---    | bitwise OR
+	ORR   r r i | ---     | 0-7    | int5   | bitwise OR
+	XOR   r r r | ---     | 0-7    | ---    | bitwise XOR
+	XOR   r r i | ---     | 0-7    | int5   | bitwise XOR
+	SHL   r r r | ---     | 0-7    | ---    | bitwise left shift
+	SHL   r r i | ---     | 0-7    | uint4  | bitwise left shift
+	SHR f r r r | a,""    | 0-7    | ---    | bitwise right shift
+	SHR f r r i | a,""    | 0-7    | uint4  | bitwise right shift
+	ADD   r r r | ---     | 0-7    | ---    | arithmetic addition
+	ADD   r r i | ---     | 0-7    | int5   | arithmetic addition
+	SUB   r r r | ---     | 0-7    | ---    | arithmetic subtraction
+	SUB   r r i | ---     | 0-7    | int5   | arithmetic subtraction
+	LBI f r i   | s,""    | 0-7    | int8   | load immediate byte
+	LDR   r r i | ---     | 0-7    | int6   | load word from pointer offset
+	STR   r r i | ---     | 0-7    | int6   | store word to pointer offset
+	BRC f i     | n,z,p,c | ---    | int8   | conditional PC offset branch
+	JPR f r i   | r,""    | 0-7    | int5   | jump to pointer offset
+	JLR   r i   | ---     | 0-7    | int5   | jump and link to pointer offset
+	SWP   r r i | ---     | 0-7    | int6   | swap register and pointer offset
+	NOP         | ---     | ---    | ---    | no operation
+	PSE         | ---     | ---    | ---    | pause MCU
+	
+	= Data Syntax =
+	syntax  | (i)mms | (s)trings | (l)abels | (a)rrays | desc.
+	--------+--------+-----------+----------+----------+------
+	.data i | 16 bit | ---       | ---      | ---      | 16-bit value
+	.data s | ---    | ascii     | ---      | ---      | ASCII (w/o null term.)
+	.data l | ---    | ---       | any type | ---      | label's value
+	.data a | ---    | ---       | ---      | i,s,l    | concatenated values
+	.bss  i | 15 bit | ---       | ---      | ---      | bytes to reserve
+	
+	= Functions Syntax =
+	syntax   | (r)egs | (l)abels | desc.
+	---------+--------+----------+------
+	_la r l  | 0-7    | any type | load label value to register
+	
+	= Misc. Syntax =
+	syntax | (l)abels | (c)omments        | desc.
+	-------+----------+-------------------+------
+	; c    | ---      | non-newline chars | line comment, ended with newline
+	l:     | any type | ---               | label declaration
+	
+================================================================================
+	
+	
+
+
+Assembly Language General Idea
+
+high level groups
+	instructions (ADD, SUB, NOP, etc)
+	data (.word, .arry)
+	func/built-ins (_la)
+	labels (myLabel, myLabel:)
+	(comments- more so an add on to groups)
+
+Instructions/Data/Func- arg types
+	flags:     %a %apb (% prefix, HW specific flag combos supported)
+	register:  $0 ($ prefix, 0-7 supported by HW)
+	immediate: 5 -2 0xaB01 (decimal of hexadecimal number)
+	label:     foo _bar BAR (typical identifier scheme)
+	string:    "<text>\0" (general string literal)
+	array:     {<stuff>, >stuff>} (bracket/comma separated array of imms/strings/labels)
+
+
+general formats
+	instruction: <opcode> [flags] [regs] [immediates]
+	func:        _la <label>
+	data:        .val [imm, array, or nothing- ie implicit bss]
+	label decl:  <label>:
+	comment:     ;[comment]
+
+pre-defined labels
+	__TEXT: .text section (start of program); defined at 0x0 (text), MUST be declared
+	__DATA: .data section (start of RAM); defined and declared at 0x0 (data)
+	__BSS:  .bss section (start of baked in "no fly" zone); defined and declared implicitly
+	__FREE: free memory; defined and declared implicitly
