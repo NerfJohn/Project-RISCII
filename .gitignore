@@ -13,6 +13,15 @@ processor/**/src/*.bak
 # (processor) Ignore bins created for testing hardware.
 processor/tools/testBins/*.bin
 
+# (compiler) Ignore Eclipse generated/related files (except for makefile).
+compiler/AsmLdProject/.settings
+compiler/AsmLdProject/Debug/*
+!compiler/AsmLdProject/Debug/makefile
+
+# (compiler) Ignore CppCheck related items (bar one to ensure folder stays).
+compiler/AsmLdProject/cppCheckDir/*
+!compiler/AsmLdProject/cppCheckDir/files.txt
+
 ################################################################################
 # -- General Rules --
 ################################################################################
