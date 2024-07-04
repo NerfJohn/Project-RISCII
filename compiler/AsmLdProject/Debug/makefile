@@ -8,6 +8,9 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include src/OsLayer/subdir.mk
+-include src/DeviceLayer/subdir.mk
+-include src/AppLayer/subdir.mk
 -include src/subdir.mk
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(C++_DEPS)),)

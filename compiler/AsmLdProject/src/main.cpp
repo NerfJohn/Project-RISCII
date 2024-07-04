@@ -1,24 +1,29 @@
 /*
  * main.cpp
  *
- * "Top-level of RISCII assembler/linker program."
+ * "Top-level of RISCII assembler/linker program"
  */
 
-#include <cstdint>
-#include <iostream>
-#include <variant>
+#include <iostream> // TODO- likely delete
+
+#include "AppLayer/ParseCliStep.h"
+#include "DeviceLayer/Terminate.h"
 
 using namespace std;
 
+//==============================================================================
+// The RISCII assembler/linker- Host PC runs entire program from here.
 int main(int argc, char* argv[]) {
-	if (argc < 2) {
-		cout << "fool" << endl;
-		return 0;
-	}
+	// Initialize program's data model.
+	DataModel_t prgmData = {
+		.m_inFiles = vector<string>()
+	};
 
-	variant<
+	// Handle the command line inputs before formal assembling.
+	ParseCliStep_parseCli(argc, argv, &prgmData);
 
-	cout << "Test 1 2 " << argc << endl;
+	// Assembled successfully- return as such.
+	Terminate::getInst()->exit(REASON_SUCCESS);
 }
 
 

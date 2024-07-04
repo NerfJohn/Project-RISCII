@@ -40,6 +40,10 @@ High-Level Assembler Process (Data):
 - Trans/Prep     : To new struct (all in ordered struct and to binary)
 - Trans/Bin      : --- (model is just outputting to a file)
 
-
-
+Skeleton Code Approach: Get SHR instructions parsed/working
+	many files can be provided
+	SHR instructions scannable/parseable
+	flags, registers, immediates bounds checked as needed
+	binary image created based on inputs
+	
 ================================================================================
