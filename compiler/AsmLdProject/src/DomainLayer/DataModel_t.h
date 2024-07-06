@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include "DomainLayer/ExitReasonType_e.h"
 
 /*
  * Data shared between the program's different stages.
@@ -18,8 +19,13 @@
  * rights, it provides a quick and clean interface for data to flow.
  */
 typedef struct {
+	// Values related to warning and error detection/reporting.
+	uint32_t         m_numWarnings;     // # of warnings found
+	uint32_t         m_numErrors;       // # of errors found
+	ExitReasonType_e m_firstReason;     // reason for build failure
+
 	// Values related to parsed command line input.
-	std::vector<std::string> m_inFiles;
+	std::vector<std::string> m_inFiles; // passed in input files
 } DataModel_t;
 
 

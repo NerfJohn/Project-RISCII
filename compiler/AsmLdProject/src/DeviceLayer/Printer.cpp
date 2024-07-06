@@ -4,9 +4,9 @@
  * "Device handling printing of log messages to stdout"
  */
 
-#include <iostream>
-#include "OsLayer/OsExit.h"
+#include "DeviceLayer/Terminate.h"
 #include "OsLayer/OsStdout.h"
+#include "Utils/PrintUtils.h"
 
 #include "DeviceLayer/Printer.h"
 
@@ -14,10 +14,8 @@ using namespace std;
 
 //==============================================================================
 
-// Definitions for string literals used in messages.
-#define STRLIT_ASMLD_NAME ("asmld.exe")
-#define STRLIT_ERROR      ("ERR")
-#define STRLIT_WARNING    ("WARN")
+// Logged messages awaiting printing.
+std::queue<std::string> Printer::m_log = queue<string>();
 
 //==============================================================================
 // Getter for singleton instance. Instantiates on first call.
@@ -30,42 +28,83 @@ Printer* Printer::getInst(void) {
 }
 
 //==============================================================================
-// Print a given message to stdout. Type specifies message grouping.
+// Logs (but does not output) basic message.
 void Printer::log(LogType_e type, std::string msg) {
-	// Begin all print-outs with program's name.
-	string printMsg = STRLIT_ASMLD_NAME;
+	// Begin creating message to log.
+	string logStr = msg;
 
-	// Add appropriate message type.
-	printMsg += " ["; // separate program name and log type
-	switch (type) {
-		case LOG_ERR:
-			printMsg += string(STRLIT_ERROR) + "]";
-			break;
-		case LOG_WARN:
-			printMsg += string(STRLIT_WARNING) + "]";
-			break;
-		default:
-			// Unknown error- special assert + exit.
-			printMsg = string(STRLIT_ASMLD_NAME)
-			           + " ASSERT! asserted while adding log type";
-			OsStdout_printStringLn(printMsg);
-			OsExit_exitWithReason(REASON_ASSERT);
+	// Format into stdout message- ensuring formatted goes well.
+	if (!PrintUtils_formatLog(type, &logStr)) {
+		// Unexpected bad formatting (likely design bug)- assert!
+		this->printAssert("unable to format basic message properly");
+		Terminate::getInst()->exit(REASON_ASSERT);
 	}
 
-	// Add custom message.
-	printMsg += " "; // separate message type and custom message
-	printMsg += msg;
-
-	// Print message to stdout.
-	OsStdout_printStringLn(printMsg);
+	// Message formatted- save to log for now.
+	m_log.push(logStr);
 }
 
 //==============================================================================
-// Print a given message to stdout. Includes given location in message.
-void Printer::log(LogType_e type, std::string location, std::string msg) {
-	// Prepend the file location to the custom message (with separator).
-	string printMsg = location + ": " + msg;
+// Logs (but does not output) message with related filename.
+void Printer::log(LogType_e type, std::string file, std::string msg) {
+	// Begin creating message to log.
+	string logStr = msg;
 
-	// Reuse "no file" log function for ease.
-	this->log(type, printMsg);
+	// Format into stdout message- ensuring formatted goes well.
+	if (!PrintUtils_formatLog(type, file, &logStr)) {
+		// Unexpected bad formatting (likely design bug)- assert!
+		this->printAssert("unable to format file message properly");
+		Terminate::getInst()->exit(REASON_ASSERT);
+	}
+
+	// Message formatted- save to log for now.
+	m_log.push(logStr);
+}
+
+//==============================================================================
+// Logs (but does not output) message with related filename/line number.
+void Printer::log(LogType_e type,
+		          std::string file,
+				  uint32_t line,
+				  std::string msg
+				 ) {
+	// Begin creating message to log.
+	string logStr = msg;
+
+	// Format into stdout message- ensuring formatted goes well.
+	if (!PrintUtils_formatLog(type, file, line, &logStr)) {
+		// Unexpected bad formatting (likely design bug)- assert!
+		this->printAssert("unable to format file/line message properly");
+		Terminate::getInst()->exit(REASON_ASSERT);
+	}
+
+	// Message formatted- save to log for now.
+	m_log.push(logStr);
+}
+
+//==============================================================================
+// Prints all logged messages (in the order of being logged).
+void Printer::printLog(void) {
+	// Empty log, printing each message in order.
+	while (!m_log.empty()) {
+		// Print message to stdout.
+		OsStdout_printStringLn(m_log.front());
+
+		// Flush the message from the log.
+		m_log.pop();
+	}
+}
+
+//==============================================================================
+// Prints special assert message immediately. Empties log first.
+void Printer::printAssert(std::string msg) {
+	// Begin creating message to log.
+	string assertStr = msg;
+
+	// Re-format to become an assert.
+	PrintUtils_formatAssert(&assertStr);
+
+	// Empty log for info about events leading to assert (ended with assert).
+	this->printLog();
+	OsStdout_printStringLn(assertStr);
 }

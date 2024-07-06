@@ -1,5 +1,5 @@
 /*
- * LogType.h
+ * LogType_e.h
  *
  * "Various levels of logging available to the program"
  */

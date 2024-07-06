@@ -15,11 +15,18 @@
  * called per their scenario properly.
  */
 typedef enum {
-	// Successful values.
-	REASON_SUCCESS = 0,  // successful run
+	// Special values (0x00 - 0x3F).
+	REASON_SUCCESS = 0x00,     // Successful build/assembly
+	REASON_ASSERT  = 0x01,     // Assert/Unknown error occurred
 
-	// Special values.
-	REASON_ASSERT  = 255 // design error (oof!)- covers all "unknown" errors
+	// Warning values (0x40 - 0x7F).
+	REASON_WARNING_MIN = 0x40, // Sentinel value for warning range
+	REASON_WARNING_MAX = 0x7F, // Sentinel value for warning range
+
+	// Error values (0x80 - 0xBF).
+	REASON_ERROR_MIN = 0x80,   // Sentinel value for error range
+	REASON_NO_FILE   = 0x80,   // Could not file or open file
+	REASON_ERROR_MAX = 0xBF    // Sentinel value for error range
 } ExitReasonType_e;
 
 #endif /* SRC_DOMAINLAYER_EXITREASONTYPE_E_H_ */

@@ -45,5 +45,11 @@ Skeleton Code Approach: Get SHR instructions parsed/working
 	SHR instructions scannable/parseable
 	flags, registers, immediates bounds checked as needed
 	binary image created based on inputs
+
+Printing responsibilities
+	Direct Caller- provides message specific info
+	General Caller- configures Printer and implements behavioral/business logic
+	PrintUtils- formats any message intended for printing directly
+	Printer- directs process of silencing/formatting/printing (ie message traffic)
 	
 ================================================================================

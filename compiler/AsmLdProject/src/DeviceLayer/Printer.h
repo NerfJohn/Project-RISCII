@@ -8,8 +8,8 @@
 #define SRC_DEVICELAYER_PRINTER_H_
 
 #include <string>
-#include "DomainLayer/DataModel_t.h"
-#include "DomainLayer/LogType.h"
+#include <queue>
+#include "DomainLayer/LogType_e.h"
 
 /*
  * Device for printing messages according to formatting/business logic.
@@ -27,36 +27,70 @@ public:
 	static Printer* getInst(void);
 
 	// Do not allow other forms of construction.
-	Printer(Printer const&)         = delete;
-	void operator= (Printer const&) = delete;
+	Printer(Printer const&) = delete;
+	void operator=(Printer const&) = delete;
 
 	/*
-	 * Print a given message to stdout. Type specifies message grouping.
+	 * Logs (but does not output) basic message.
 	 *
-	 * Formats message to unify stdout output from program. Always appends a
-	 * newline to the custom message.
+	 * Formats and saves message. Message is printed once Printer::printLog is
+	 * called.
 	 *
-	 * @param type type of message with respect to logging
-	 * @param msg custom message to display
+	 * @param type grouping message falls under
+	 * @param msg message to log for future printing
 	 */
 	void log(LogType_e type, std::string msg);
 
 	/*
-	 * Print a given message to stdout. Includes given location in message.
+	 * Logs (but does not output) message with related filename.
 	 *
-	 * Formats message to unify stdout output from program. Always appends a
-	 * newline to the custom message.
+	 * Formats and saves message. Message is printed once Printer::printLog is
+	 * called.
 	 *
-	 * @param type type of message with respect to logging
-	 * @param location file and line to report with message
-	 * @param msg custom message to display
+	 * @param type grouping message falls under
+	 * @param file filename to include in message header
+	 * @param msg message to log for future printing
 	 */
-	void log(LogType_e type, std::string location, std::string msg);
+	void log(LogType_e type, std::string file, std::string msg);
+
+	/*
+	 * Logs (but does not output) message with related filename/line number.
+	 *
+	 * Formats and saves message. Message is printed once Printer::printLog is
+	 * called.
+	 *
+	 * @param type grouping message falls under
+	 * @param file filename to include in message header
+	 * @param msg message to log for future printing
+	 */
+	void log(LogType_e type, std::string file, uint32_t line, std::string msg);
+
+	/*
+	 * Prints all logged messages (in the order of being logged).
+	 *
+	 * Function empties the entire saved log. Calling before logging (more)
+	 * messages has no effect.
+	 *
+	 */
+	void printLog(void);
+
+	/*
+	 * Prints special assert message immediately. Empties log first.
+	 *
+	 * Calling implictly calls Printer::printLog before printing the assert
+	 * message. Caller is responsible for terminating just after printing.
+	 *
+	 * @param msg custom message for assert message
+	 */
+	void printAssert(std::string msg);
 
 private:
 	// Limit construction/destruction to internal scope.
 	Printer()  {}
 	~Printer() {}
+
+	// Keep track of logged messages.
+	static std::queue<std::string> m_log;
 };
 
 #endif /* SRC_DEVICELAYER_PRINTER_H_ */
