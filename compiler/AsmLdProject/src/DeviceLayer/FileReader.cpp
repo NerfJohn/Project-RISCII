@@ -7,6 +7,7 @@
 #include "DeviceLayer/Printer.h"
 #include "DeviceLayer/Terminate.h"
 #include "OsLayer/OsFile.h"
+#include "Utils/ErrorUtils.h"
 
 #include "DeviceLayer/FileReader.h"
 
@@ -14,9 +15,20 @@ using namespace std;
 
 //==============================================================================
 // Constructs file reader for given filename. File opened on construction.
-FileReader::FileReader(std::string filename) {
+FileReader::FileReader(DataModel_t* model, std::string filename) {
+	// Save filename (for posterity).
+	m_filename = filename;
+
 	// Attempt to open the given filename for reading.
 	m_fileOpened = OsFile_openReadFile(&m_file, filename);
+
+	// Report errors as needed.
+	if (!m_fileOpened) {
+		// Log failure to open the file.
+		string errStr = string("Failure to open file \"") + filename + "\"";
+		Printer::getInst()->log(LOG_ERR, errStr);
+		ErrorUtils_includeReason(model, REASON_NO_FILE);
+	}
 }
 
 //==============================================================================
@@ -24,6 +36,13 @@ FileReader::FileReader(std::string filename) {
 bool FileReader::isReady(void) {
 	// Report result of opening file (trust an open file stays open).
 	return m_fileOpened;
+}
+
+//==============================================================================
+// Get name of the file being read from.
+std::string FileReader::getFilename(void) {
+	// Report name given on instantiation.
+	return m_filename;
 }
 
 //==============================================================================

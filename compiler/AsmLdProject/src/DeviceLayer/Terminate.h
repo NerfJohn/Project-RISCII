@@ -21,7 +21,7 @@ public:
 	/*
 	 * Getter for singleton instance. Instantiates on first call.
 	 *
-	 * @return singleton instance of Printer
+	 * @return singleton instance of Terminate
 	 */
 	static Terminate* getInst(void);
 

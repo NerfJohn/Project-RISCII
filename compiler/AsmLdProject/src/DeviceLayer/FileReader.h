@@ -8,6 +8,7 @@
 #define SRC_DEVICELAYER_FILEREADER_H_
 
 #include <string>
+#include "DomainLayer/DataModel_t.h"
 #include "DomainLayer/ReadFile_t.h"
 
 /*
@@ -23,12 +24,13 @@ public:
 	 *
 	 * Filename is used to open file for reading while constructing the reader.
 	 * Construction occurs regardless of opening result, but can be checked with
-	 * FileReader.isReady().
+	 * FileReader.isReady(). Logs own errors (without print/termination).
 	 *
 	 * @param filename name of file to read from
+	 * @param model data model of the program
 	 * @return FileReader instance with already opened (or attempted open) file
 	 */
-	FileReader(std::string filename);
+	FileReader(DataModel_t* model, std::string filename);
 
 	/*
 	 * Checks if opening file for reading was successful.
@@ -36,6 +38,13 @@ public:
 	 * @return true if file was successfully opened, false otherwise
 	 */
 	bool isReady(void);
+
+	/*
+	 * Get name of the file being read from.
+	 *
+	 * @return name of file being read from/accessed.
+	 */
+	std::string getFilename(void);
 
 	/*
 	 * Peeks next available byte in file (if opened successfully).
@@ -72,6 +81,9 @@ private:
 
 	// File access status (on opening- trusting opened file stays open).
 	bool m_fileOpened;
+
+	// Name of file accessed- groups name and file descriptor.
+	std::string m_filename;
 };
 
 #endif /* SRC_DEVICELAYER_FILEREADER_H_ */
