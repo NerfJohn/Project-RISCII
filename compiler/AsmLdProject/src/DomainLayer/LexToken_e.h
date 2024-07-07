@@ -16,16 +16,16 @@
  */
 typedef enum {
 	// Core values.
-	TOKEN_COMMENT,
-	TOKEN_SHR,                     // SHR instruction keyword
+	TOKEN_COMMENT,                 // User comments
 	TOKEN_FLAGS,                   // Flag bit(s) variable
 	TOKEN_REGISTER,                // Register file variable
 	TOKEN_IMMEDIATE,               // Constant integer value (decimal or hex)
+	TOKEN_SHR,                     // SHR instruction keyword
 	TOKEN_EOF,                     // End-of-File character
 
 	// Special values.
 	TOKEN_INVALID,                 // Unknown/Invalid lex token
-	TOKEN_LEX_MIN = TOKEN_SHR,     // Lowest value lex token
+	TOKEN_LEX_MIN = TOKEN_COMMENT, // Lowest value lex token
 	TOKEN_LEX_MAX = TOKEN_INVALID  // Highest value lex token
 } LexToken_e;
 

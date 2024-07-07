@@ -20,7 +20,6 @@ typedef enum {
 	// Core values (extend LexToken_e values).
 	LEX_START = TOKEN_LEX_MAX + 1, // Start of all lex/regex paths
 	LEX_ERROR,                     // "Bad" end state for lexed value
-	LEX_SLASH_HANDLE,              // '/' peeked- comment?
 	LEX_COMMENT_LOOP,              // Comment valid- greedy
 	LEX_FLAG_START,                // Prefix of flag peeked
 	LEX_FLAG_LOOP,                 // Flag valid- greedy

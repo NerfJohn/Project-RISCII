@@ -49,7 +49,7 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 		case LEX_START:                          // start of all tokens
 			WSPACE       TO(LEX_START)           // skip token "spacers"
 			EOF          HAVE(TOKEN_EOF)         // last token to scan
-			IS('/')      TO(LEX_SLASH_HANDLE)
+			IS(';')      TO(LEX_COMMENT_LOOP)
 			IS('%')      TO(LEX_FLAG_START)
 			IS('$')      TO(LEX_REG_START)
 			IS('0')      TO(LEX_ZERO_HANDLE)
@@ -57,13 +57,10 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IN('1', '9') TO(LEX_DECIMAL_LOOP)
 			IS('S')      TO(LEX_S)
 			break;
-		case LEX_SLASH_HANDLE:                   // /...
-			IS('/')      TO(LEX_COMMENT_LOOP)
-			break;
 		case LEX_COMMENT_LOOP:                   // greedy grab comment
 			IS('\n')     HAVE(TOKEN_COMMENT)
 			EOF          HAVE(TOKEN_COMMENT)
-			ELSE         TO(LEX_DECIMAL_LOOP)
+			ELSE         TO(LEX_COMMENT_LOOP)
 			break;
 		case LEX_FLAG_START:                     // %...
 			IN('a', 'z') TO(LEX_FLAG_LOOP)
