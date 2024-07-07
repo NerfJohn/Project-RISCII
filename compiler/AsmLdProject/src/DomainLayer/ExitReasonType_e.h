@@ -27,6 +27,8 @@ typedef enum {
 	REASON_ERROR_MIN   = 0x80, // Sentinel value for error range
 	REASON_NO_FILE     = 0x80, // Could not file or open file
 	REASON_BAD_SCAN    = 0x81, // Byte sequence wasn't a known token
+	REASON_EXP_PARSE   = 0x82, // Expected token, received different token
+	REASON_UNEXP_PARSE = 0x83, // Unexpected token during parsing
 	REASON_ERROR_MAX   = 0xBF  // Sentinel value for error range
 } ExitReasonType_e;
 

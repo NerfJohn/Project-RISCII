@@ -6,6 +6,7 @@
 
 #include "DeviceLayer/FileReader.h"
 #include "DeviceLayer/LexScanner.h"
+#include "DeviceLayer/Parser.h"
 #include "DeviceLayer/Printer.h"
 #include "DeviceLayer/Terminate.h"
 #include "Utils/ErrorUtils.h"
@@ -23,9 +24,15 @@ void ReadFilesStep_readFiles(DataModel_t* model) {
 		FileReader* readFile = new FileReader(model, inFile);
 
 		// Scan file for tokens (as able to).
-		queue<ScanToken_t>* scanTkns = nullptr; // failed till proven success
+		queue<ScanToken_t*>* scanTkns = nullptr; // failed till proven success
 		if (readFile->isReady()) {
 			scanTkns = LexScanner::getInst()->scanFile(model, readFile);
+		}
+
+		// Parse tokens into build items (as able to).
+		queue<IBuildItem*>* buildItems = nullptr;
+		if (scanTkns != nullptr) {
+			buildItems = Parser::getInst()->parseTokens(model, scanTkns);
 		}
 
 		// Handle "outputs" of file unit.

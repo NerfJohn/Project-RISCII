@@ -51,5 +51,10 @@ Printing responsibilities
 	General Caller- configures Printer and implements behavioral/business logic
 	PrintUtils- formats any message intended for printing directly
 	Printer- directs process of silencing/formatting/printing (ie message traffic)
+
+BuildItem Plan
+	items have ScanToken_t fields (separated by purpose in sequence)
+	token (raw values) are checked, but not saved, during check phase
+	tokens are converted into 16-bit binary during pre translation phase
 	
 ================================================================================

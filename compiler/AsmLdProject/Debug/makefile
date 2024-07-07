@@ -10,6 +10,7 @@ RM := rm -rf
 -include sources.mk
 -include src/Utils/subdir.mk
 -include src/OsLayer/subdir.mk
+-include src/Items/subdir.mk
 -include src/DeviceLayer/subdir.mk
 -include src/AppLayer/subdir.mk
 -include src/subdir.mk

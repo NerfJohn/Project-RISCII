@@ -29,11 +29,11 @@ LexScanner* LexScanner::getInst(void) {
 
 //==============================================================================
 // Scans read file into list of tokens. Returns nullptr on failure.
-std::queue<ScanToken_t>* LexScanner::scanFile(DataModel_t* model,
+std::queue<ScanToken_t*>* LexScanner::scanFile(DataModel_t* model,
 		                                      FileReader* file
 											 ) {
 	// Queue of tokens to return.
-	queue<ScanToken_t>* retTkns = new queue<ScanToken_t>();
+	queue<ScanToken_t*>* retTkns = new queue<ScanToken_t*>();
 
 	// Track line numbers- good for warnings/errors.
 	uint32_t lineNum = 1; // files start at line 1
@@ -91,17 +91,16 @@ std::queue<ScanToken_t>* LexScanner::scanFile(DataModel_t* model,
 		/* - Line reached- token is worth saving for parsing/analysis */
 
 		// Create scan token from lexed data.
-		ScanToken_t newTkn = {
-			.m_lexTkn = lexToken,
-			.m_rawStr = lexBuffer,
-			.m_orignFile = file->getFilename(),
-			.m_originLine = lineNum
-		};
+		ScanToken_t* newTkn  = new ScanToken_t();
+		newTkn->m_lexTkn     = lexToken;
+		newTkn->m_rawStr     = lexBuffer;
+		newTkn->m_orignFile  = file->getFilename();
+		newTkn->m_originLine = lineNum;
 
 		// Append to maintain ordering.
 		retTkns->push(newTkn);
 
-	} while(retTkns->back().m_lexTkn != TOKEN_EOF);
+	} while(retTkns->back()->m_lexTkn != TOKEN_EOF);
 
 	// File lexed successfully- return queue pointer (and thus ownership).
 	return retTkns;

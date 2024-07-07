@@ -14,8 +14,8 @@
 /*
  * Returns the given state as a LexToken. Returns TOKEN_INVALID if not a token.
  *
- * Since LexState_e is a super set of LexToken_e, it sometimes be casted as a
- * LexToken_e. This function implements the logic to safely check/do so.
+ * Since LexState_e is a super set of LexToken_e, it sometimes can be casted as
+ * a LexToken_e. This function implements the logic to safely check/do so.
  *
  * @param state lex state to turn into a lex token
  * @return lex token if successful, TOKEN_INVALID otherwise

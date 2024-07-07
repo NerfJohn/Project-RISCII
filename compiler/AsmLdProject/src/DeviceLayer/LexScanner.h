@@ -36,14 +36,14 @@ public:
 	 * Scans read file into list of tokens. Returns nullptr on failure.
 	 *
 	 * Modifies read file in order to lex its contents. Logs its own errors, but
-	 * relies on caller to print/terminate as needed. Returned pointer's
+	 * relies on caller to print/terminate as needed. Returned pointers'
 	 * ownership becomes caller's upon function return.
 	 *
 	 * @param model data model of the program
 	 * @param file read file to scan/lex for tokens
 	 * @return ordered list of tokens on success, nullptr otherwise
 	 */
-	std::queue<ScanToken_t>* scanFile(DataModel_t* model, FileReader* file);
+	std::queue<ScanToken_t*>* scanFile(DataModel_t* model, FileReader* file);
 
 private:
 	// Limit construction/destruction to internal scope.
