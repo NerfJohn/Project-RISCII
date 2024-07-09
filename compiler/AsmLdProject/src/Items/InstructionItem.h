@@ -32,6 +32,17 @@ public:
 	InstructionItem(std::queue<ScanToken_t*>* tokens);
 
 	/*
+	 * Performs analysis and checks available before entire program is parsed.
+	 *
+	 * Any checks or data analysis that doesn't require knowledge about other
+	 * items or files is performed. Updates data model with any analyzed info
+	 * (or found warnings/errors).
+	 *
+	 * @param model data model of the program
+	 */
+	void doLocalAnalysis(DataModel_t* model);
+
+	/*
 	 * Destructs instruction item (along with originally passed scan tokens).
 	 *
 	 * Item assumes hard ownership of the items- using the saved pointer to

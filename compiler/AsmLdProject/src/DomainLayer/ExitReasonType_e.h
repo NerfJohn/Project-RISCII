@@ -21,6 +21,7 @@ typedef enum {
 
 	// Warning values (0x40 - 0x7F).
 	REASON_WARNING_MIN = 0x40, // Sentinel value for warning range
+	REASON_REPEAT_FLAG = 0x40, // Repeated flag in flag token
 	REASON_WARNING_MAX = 0x7F, // Sentinel value for warning range
 
 	// Error values (0x80 - 0xBF).
@@ -29,6 +30,9 @@ typedef enum {
 	REASON_BAD_SCAN    = 0x81, // Byte sequence wasn't a known token
 	REASON_EXP_PARSE   = 0x82, // Expected token, received different token
 	REASON_UNEXP_PARSE = 0x83, // Unexpected token during parsing
+	REASON_BAD_FLAG    = 0x84, // Flag not supported by instruction
+	REASON_BAD_REG     = 0x85, // Register value was bad/out of bounds
+	REASON_BAD_IMM     = 0x86, // Immediate value was bad/out of bounds
 	REASON_ERROR_MAX   = 0xBF  // Sentinel value for error range
 } ExitReasonType_e;
 

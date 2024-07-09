@@ -26,11 +26,11 @@ Parser* Parser::getInst(void) {
 
 //==============================================================================
 //
-std::queue<IBuildItem*>* Parser::parseTokens(DataModel_t* model,
-			                                 std::queue<ScanToken_t*>* tokens
-								            ) {
+std::vector<IBuildItem*>* Parser::parseTokens(DataModel_t* model,
+			                                  std::queue<ScanToken_t*>* tokens
+								             ) {
 	// List of items- to return (and pass ownership of).
-	queue<IBuildItem*>* retItems = new queue<IBuildItem*>();
+	vector<IBuildItem*>* retItems = new vector<IBuildItem*>();
 
 	// Prepare key data structures for creating items.
 	queue<ScanToken_t*> buildTkns;
@@ -60,7 +60,7 @@ std::queue<IBuildItem*>* Parser::parseTokens(DataModel_t* model,
 			}
 
 			// Add item to return list.
-			retItems->push(newItem);
+			retItems->push_back(newItem);
 
 			// Action completed from parse stack.
 			parseStk.pop();

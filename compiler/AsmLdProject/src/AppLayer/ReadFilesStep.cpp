@@ -16,7 +16,7 @@
 using namespace std;
 
 //==============================================================================
-// TODO- desc.
+// Reads input files specified in model. Adds parsed/checked items to model.
 void ReadFilesStep_readFiles(DataModel_t* model) {
 	// Read each file- scanning, parsing, and analyzing each as its own unit.
 	for (string inFile : model->m_inFiles) {
@@ -30,10 +30,26 @@ void ReadFilesStep_readFiles(DataModel_t* model) {
 		}
 
 		// Parse tokens into build items (as able to).
-		queue<IBuildItem*>* buildItems = nullptr;
+		vector<IBuildItem*>* buildItems = nullptr;
 		if (scanTkns != nullptr) {
 			buildItems = Parser::getInst()->parseTokens(model, scanTkns);
 		}
+
+		// Analyze tokens locally (as able to).
+		if (buildItems != nullptr) {
+			for (IBuildItem* item : *buildItems) {
+				item->doLocalAnalysis(model);
+			}
+		}
+
+		// "File" parsed and analyzed- add to cumulative program.
+		for (IBuildItem* item : *buildItems) {
+			model->m_items.push_back(item);
+		}
+
+		// (Clean up memory). // TODO- STLs should be safe/good to "de-ptr-ize"
+		delete scanTkns;
+		delete buildItems;
 
 		// Handle "outputs" of file unit.
 		delete readFile;

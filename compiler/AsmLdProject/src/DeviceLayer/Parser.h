@@ -7,7 +7,6 @@
 #ifndef SRC_DEVICELAYER_PARSER_H_
 #define SRC_DEVICELAYER_PARSER_H_
 
-#include <queue>
 #include "DomainLayer/DataModel_t.h"
 #include "DomainLayer/ScanToken_t.h"
 #include "Items/IBuildItem.h"
@@ -43,9 +42,9 @@ public:
 	 * @param tokens list of scan tokens to parse into new build items
 	 * @return list of build items on success, otherwise nullptr
 	 */
-	std::queue<IBuildItem*>* parseTokens(DataModel_t* model,
-			                             std::queue<ScanToken_t*>* tokens
-										);
+	std::vector<IBuildItem*>* parseTokens(DataModel_t* model,
+			                              std::queue<ScanToken_t*>* tokens
+										 );
 
 private:
 	// Limit construction/destruction to internal scope.

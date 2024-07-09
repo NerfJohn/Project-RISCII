@@ -11,6 +11,9 @@
 #include <vector>
 #include "DomainLayer/ExitReasonType_e.h"
 
+// Forward declaration- keep data model "independent".
+class IBuildItem;
+
 /*
  * Data shared between the program's different stages.
  *
@@ -20,12 +23,15 @@
  */
 typedef struct {
 	// Values related to warning and error detection/reporting.
-	uint32_t         m_numWarnings;     // # of warnings found
-	uint32_t         m_numErrors;       // # of errors found
-	ExitReasonType_e m_firstReason;     // reason for build failure
+	uint32_t                 m_numWarnings;     // # of warnings found
+	uint32_t                 m_numErrors;       // # of errors found
+	ExitReasonType_e         m_firstReason;     // reason for build failure
 
 	// Values related to parsed command line input.
 	std::vector<std::string> m_inFiles; // passed in input files
+
+	// Values related to parsing/analyzing/checking the entire program.
+	std::vector<IBuildItem*> m_items;
 } DataModel_t;
 
 

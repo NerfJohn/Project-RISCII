@@ -10,7 +10,13 @@
 #include "DomainLayer/DataModel_t.h"
 
 /*
- * TODO- desc.
+ * Reads input files specified in model. Adds parsed/checked items to model.
+ *
+ * Read step reads, parses, and analyzes each file- adding the consequent build
+ * items to the data model. Step will print/terminate the program if errors are
+ * found (printing/potentially terminating after each file).
+ *
+ * @param model data model of the program
  */
 void ReadFilesStep_readFiles(DataModel_t* model);
 

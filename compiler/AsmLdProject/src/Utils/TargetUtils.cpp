@@ -1,0 +1,117 @@
+/*
+ * TargetUtils.cpp
+ *
+ * "Helper functions for tasks involving target specific information"
+ */
+
+#include "Utils/TargetUtils.h"
+
+using namespace std;
+
+//==============================================================================
+
+// Definitions for checking/reporting flags per instruction.
+#define SHR_FLAGS string("a")
+
+// Definitions for limits on int/uint values.
+#define IN_UINT3_RANGE(x) ((0 <= (x)) && ((x) <= 7))
+#define IN_UINT4_RANGE(x) ((0 <= (x)) && ((x) <= 15))
+
+// Definitions for types of int/uint values.
+#define NO_TYPE string("NULL")
+#define UINT3 string("uint3")
+#define UINT4 string("uint4")
+
+//==============================================================================
+// Converts token into instruction type. Returns INSTR_INVALID on failure.
+InstrType_e TargetUtils_asInstr(LexToken_e token) {
+	// Instruction for return.
+	InstrType_e retInstr = INSTR_INVALID; // guilty till proven innocent
+
+	// Determine matching instruction (switch in case tokens not contiguous).
+	switch(token) {
+		case TOKEN_SHR: retInstr = INSTR_SHR; break;
+		default: retInstr = INSTR_INVALID; break; // No matching instruction
+	}
+
+	// Return translated instruction.
+	return retInstr;
+}
+
+//==============================================================================
+// Validates a bit flag for a given instruction.
+bool TargetUtils_isValidFlag(InstrType_e instr, uint8_t flag) {
+	// Boolean to return.
+	bool retBool = false; // guilty till proven innocent
+
+	// Check flag against instruction's available flags.
+	switch (instr) {
+	    case INSTR_SHR: retBool = (SHR_FLAGS.find(flag) != string::npos); break;
+		default:        retBool = false; // no flags supported
+	}
+
+	// Return result of flag analysis.
+	return retBool;
+}
+
+//==============================================================================
+// Gets string of valid flag options for an instruction.
+std::string TargetUtils_getInstrFlags(InstrType_e instr) {
+	// String to return.
+	string retStr;
+
+	// Get instruction's available flags.
+	switch (instr) {
+	    case INSTR_SHR: retStr = SHR_FLAGS; break;
+		default: break; // no flags supported
+	}
+
+	// Return available flags.
+	return retStr;
+}
+
+//==============================================================================
+// Validates if uint is within range of a register.
+bool TargetUtils_isValidReg(uint32_t reg) {
+	// Register value must fall within register file hardware bounds.
+	return IN_UINT3_RANGE(reg);
+}
+
+//==============================================================================
+// Gets type/range of register as string.
+std::string TargetUtils_getRegType(void) {
+	// Simply return its typing.
+	return UINT3;
+}
+
+//==============================================================================
+// Validates if int can is within valid range for a given instruction.
+bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm) {
+	// Result of check to return.
+	bool retBool = false; // guilty till proven innocent
+
+	// Use instruction to determine check/result.
+	switch (instr) {
+		case INSTR_SHR: retBool = IN_UINT4_RANGE(imm); break;
+		default: retBool = false; // instruction doesn't support immediate
+	}
+
+	// Return result.
+	return retBool;
+}
+
+//==============================================================================
+// Gets type/range of immediate for given instruction as string.
+std::string TargetUtils_getImmType(InstrType_e instr) {
+	// String to return.
+	string retStr;
+
+	// Get instruction's range type.
+	switch (instr) {
+	    case INSTR_SHR: retStr = UINT4; break;
+		default:  retStr = NO_TYPE; break; // no immediate type supported
+	}
+
+	// Return available flags.
+	return retStr;
+}
