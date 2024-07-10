@@ -83,4 +83,25 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm);
  */
 std::string TargetUtils_getImmType(InstrType_e instr);
 
+/*
+ * Get size of an instruction in bytes.
+ *
+ * @return size of one instruction in bytes
+ */
+uint32_t TargetUtils_getInstrSize(void);
+
+/*
+ * Get maximum size (in bytes) the text section of the program can be.
+ *
+ * @return maximum number of bytes text section can be
+ */
+uint32_t TargetUtils_getMaxTextSize(void);
+
+/*
+ * Get maximum size (in bytes) the binary image can be.
+ *
+ * @return maximum number of bytes binary image can be
+ */
+uint32_t TargetUtils_getMaxBinSize(void);
+
 #endif /* SRC_UTILS_TARGETUTILS_H_ */

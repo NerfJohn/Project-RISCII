@@ -4,6 +4,7 @@
  * "Top-level of RISCII assembler/linker program"
  */
 
+#include "AppLayer/CheckProgramStep.h"
 #include "AppLayer/ParseCliStep.h"
 #include "AppLayer/ReadFilesStep.h"
 #include "DeviceLayer/Terminate.h"
@@ -34,6 +35,9 @@ int main(int argc, char* argv[]) {
 
 	// Read in the input files, parsing them into the model.
 	ReadFilesStep_readFiles(&prgmData);
+
+	// Analyze/check entire program before starting translation.
+	CheckProgramStep_checkProgram(&prgmData);
 
 	// Assembled successfully- return as such.
 	Terminate::getInst()->exit(REASON_SUCCESS);

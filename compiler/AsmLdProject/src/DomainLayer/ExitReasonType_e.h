@@ -33,6 +33,8 @@ typedef enum {
 	REASON_BAD_FLAG    = 0x84, // Flag not supported by instruction
 	REASON_BAD_REG     = 0x85, // Register value was bad/out of bounds
 	REASON_BAD_IMM     = 0x86, // Immediate value was bad/out of bounds
+	REASON_BIG_TEXT    = 0x87, // Text section is too big for binary
+	REASON_BIG_BIN     = 0x88, // Binary image is too big for target
 	REASON_ERROR_MAX   = 0xBF  // Sentinel value for error range
 } ExitReasonType_e;
 

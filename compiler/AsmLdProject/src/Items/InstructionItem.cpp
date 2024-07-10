@@ -133,6 +133,13 @@ void InstructionItem::doLocalAnalysis(DataModel_t* model) {
 }
 
 //==============================================================================
+// Performs analysis and checks with respect to the entire given program.
+void InstructionItem::doGlobalAnalysis(DataModel_t* model) {
+	// Each instruction takes up text section space.
+	model->m_numTextBytes += TargetUtils_getInstrSize();
+}
+
+//==============================================================================
 //
 InstructionItem::~InstructionItem(void) {
 	// Hard ownership of data- delete with the item.

@@ -28,10 +28,11 @@ typedef struct {
 	ExitReasonType_e         m_firstReason;     // reason for build failure
 
 	// Values related to parsed command line input.
-	std::vector<std::string> m_inFiles; // passed in input files
+	std::vector<std::string> m_inFiles;         // passed in input files
 
 	// Values related to parsing/analyzing/checking the entire program.
-	std::vector<IBuildItem*> m_items;
+	std::vector<IBuildItem*> m_items;           // item-ized program
+	uint32_t                 m_numTextBytes;    // bytes needed for text section
 } DataModel_t;
 
 

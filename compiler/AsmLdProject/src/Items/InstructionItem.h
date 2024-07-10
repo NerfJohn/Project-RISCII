@@ -43,6 +43,17 @@ public:
 	void doLocalAnalysis(DataModel_t* model);
 
 	/*
+	 * Performs analysis and checks with respect to the entire given program.
+	 *
+	 * Any checks or data analysis that require information about the entire
+	 * given program (or just weren't done during doLocalAnalysis()) are done.
+	 * Update model with analyzed info (or found warnings/errors).
+	 *
+	 * @param model data model of the program
+	 */
+	void doGlobalAnalysis(DataModel_t* model);
+
+	/*
 	 * Destructs instruction item (along with originally passed scan tokens).
 	 *
 	 * Item assumes hard ownership of the items- using the saved pointer to
