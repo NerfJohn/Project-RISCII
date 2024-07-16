@@ -5,6 +5,7 @@
  */
 
 #include "AppLayer/CheckProgramStep.h"
+#include "AppLayer/GenerateImageStep.h"
 #include "AppLayer/ParseCliStep.h"
 #include "AppLayer/ReadFilesStep.h"
 #include "DeviceLayer/Terminate.h"
@@ -25,6 +26,7 @@ int main(int argc, char* argv[]) {
 
 		// Values related to parsed command line input.
 		.m_inFiles     = vector<string>(),     // passed in input files
+		.m_outFile     = "",                   // filename to use for binary
 
 		// Values related to parsing/analyzing/checking the entire program.
 		.m_items       = vector<IBuildItem*>() // item-ized program
@@ -38,6 +40,9 @@ int main(int argc, char* argv[]) {
 
 	// Analyze/check entire program before starting translation.
 	CheckProgramStep_checkProgram(&prgmData);
+
+	// Generate the binary image.
+	GenerateImageStep_generateImage(prgmData);
 
 	// Assembled successfully- return as such.
 	Terminate::getInst()->exit(REASON_SUCCESS);

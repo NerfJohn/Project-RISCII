@@ -120,21 +120,3 @@ std::string TargetUtils_getImmType(InstrType_e instr) {
 	// Return available flags.
 	return retStr;
 }
-
-//==============================================================================
-// Get size of an instruction in bytes.
-uint32_t TargetUtils_getInstrSize(void) {
-	return INSTR_SIZE_BYTES;
-}
-
-//==============================================================================
-// Get maximum size (in bytes) the text section of the program can be.
-uint32_t TargetUtils_getMaxTextSize(void) {
-	return TEXT_MAX_BYTES;
-}
-
-//==============================================================================
-// Get maximum size (in bytes) the binary image can be.
-uint32_t TargetUtils_getMaxBinSize(void) {
-	return BIN_MAX_BYTES;
-}

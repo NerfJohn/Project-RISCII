@@ -58,4 +58,16 @@ bool StringUtils_asUint(std::string uintStr, uint32_t* uint);
  */
 bool StringUtils_asInt(std::string intStr, int32_t* intPtr);
 
+/*
+ * Removes "type" portion from filename (based on dot operator).
+ *
+ * Attempts to remove a file type from the given string by finding the dot
+ * operator. Separates based on the first dot found. If no dot is found, the
+ * returned string is the same as the given string.
+ *
+ * @param filename filename to remove the file type from
+ * @return name of the file (ie filename without file type)
+ */
+std::string StringUtils_removeFileType(std::string filename);
+
 #endif /* SRC_UTILS_STRINGUTILS_H_ */

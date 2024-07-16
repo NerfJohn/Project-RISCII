@@ -5,6 +5,8 @@
  */
 
 #include "DeviceLayer/Printer.h"
+#include "DeviceLayer/Terminate.h"
+#include "Utils/BinaryUtils.h"
 #include "Utils/ErrorUtils.h"
 #include "Utils/StringUtils.h"
 #include "Utils/TargetUtils.h"
@@ -136,11 +138,61 @@ void InstructionItem::doLocalAnalysis(DataModel_t* model) {
 // Performs analysis and checks with respect to the entire given program.
 void InstructionItem::doGlobalAnalysis(DataModel_t* model) {
 	// Each instruction takes up text section space.
-	model->m_numTextBytes += TargetUtils_getInstrSize();
+	model->m_numTextBytes += TARGETUTILS_INSTR_SIZE;
 }
 
 //==============================================================================
-//
+// Translates item's values into binary words. Populates model's sections.
+void InstructionItem::generateBinaryValue(DataModel_t* model) {
+	// Fields to populate with instruction data.
+	InstrFields_t fields;
+
+	// Set opcode.
+	fields.m_opcode = TargetUtils_asInstr(m_opcode->m_lexTkn);
+
+	// Set flags.
+	if (m_flag != nullptr) {
+		fields.m_flags = StringUtils_getNoRepeats(m_flag->m_rawStr);
+		fields.m_flags = fields.m_flags.substr(FLAGS_VAL_IDX);       // cut '%'
+	}
+
+	// Set registers.
+	if  (m_regs.size() >= 1) {
+		StringUtils_asUint(m_regs[0]->m_rawStr.substr(REG_VAL_IDX),
+				           &fields.m_r1
+						  );
+	}
+	if  (m_regs.size() >= 2) {
+		StringUtils_asUint(m_regs[1]->m_rawStr.substr(REG_VAL_IDX),
+				           &fields.m_r2
+						  );
+	}
+	if  (m_regs.size() >= 3) {
+		StringUtils_asUint(m_regs[2]->m_rawStr.substr(REG_VAL_IDX),
+				           &fields.m_r3
+						  );
+	}
+
+	// Set immediate.
+	if (m_immediate != nullptr) {
+		StringUtils_asInt(m_immediate->m_rawStr, &fields.m_imm);
+	}
+
+	// Translate into binary instruction.
+	uint16_t binInstr = 0x0000;
+	int retErr = BinaryUtils_genInstr(binInstr, fields);
+	if (retErr) {
+		string assertStr = "failed to convert instruction to binary";
+		Printer::getInst()->printAssert(assertStr);
+		Terminate::getInst()->exit(REASON_ASSERT);
+	}
+
+	// Append instruction to translated text section.
+	model->m_textSection.push_back(binInstr);
+}
+
+//==============================================================================
+// Std. destructor.
 InstructionItem::~InstructionItem(void) {
 	// Hard ownership of data- delete with the item.
 	delete m_opcode;

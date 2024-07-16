@@ -11,6 +11,18 @@
 #include "DomainLayer/InstrType_e.h"
 #include "DomainLayer/LexToken_e.h"
 
+// Public definitions of sizes (in bytes) related to target.
+#define TARGETUTILS_INSTR_SIZE     (2)
+#define TARGETUTILS_MAX_TEXT_SIZE  (65530)  // 64 KB - metadata - 1 data word
+#define TARGETUTILS_MAX_MEM_SIZE   (32768)  // Data + Bss must fit in 32 KB RAM
+#define TARGETUTILS_METADATA_SIZE  (4)      // instruction and data word
+#define TARGETUTILS_MAX_BIN_SIZE   (65536)  // 64 KB image maximum
+#define TARGETUTILS_WORD_SIZE      (2)      // Bytes per word
+
+// Public definitions for key base numbers.
+#define TARGETUTILS_TEXT_META_BASE (0x0000) // base of text section metadata
+#define TARGETUTILS_DATA_META_BASE (0x8000) // base of data section metadata
+
 /*
  * Converts token into instruction type. Returns INSTR_INVALID on failure.
  *
@@ -82,26 +94,5 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm);
  * @return type/range of immediate supported by instruction
  */
 std::string TargetUtils_getImmType(InstrType_e instr);
-
-/*
- * Get size of an instruction in bytes.
- *
- * @return size of one instruction in bytes
- */
-uint32_t TargetUtils_getInstrSize(void);
-
-/*
- * Get maximum size (in bytes) the text section of the program can be.
- *
- * @return maximum number of bytes text section can be
- */
-uint32_t TargetUtils_getMaxTextSize(void);
-
-/*
- * Get maximum size (in bytes) the binary image can be.
- *
- * @return maximum number of bytes binary image can be
- */
-uint32_t TargetUtils_getMaxBinSize(void);
 
 #endif /* SRC_UTILS_TARGETUTILS_H_ */

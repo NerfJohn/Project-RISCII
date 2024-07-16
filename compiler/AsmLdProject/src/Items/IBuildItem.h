@@ -41,6 +41,17 @@ public:
 	virtual void doGlobalAnalysis(DataModel_t* model) = 0;
 
 	/*
+	 * Translates item's values into binary words. Populates model's sections.
+	 *
+	 * Has the item convert its contents to its binary representation (as used
+	 * in the binary image). Once converted, it appends the converted values to
+	 * the proper section in the data model for writing to the image file.
+	 *
+	 * @param model data model of the program
+	 */
+	virtual void generateBinaryValue(DataModel_t* model) = 0;
+
+	/*
 	 * Std. destructor- no real use for interface.
 	 */
 	virtual ~IBuildItem(void) {}

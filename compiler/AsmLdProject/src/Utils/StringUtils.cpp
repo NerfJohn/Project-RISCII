@@ -12,10 +12,13 @@ using namespace std;
 
 //==============================================================================
 
-// Definitions for converting decimal nd hexadecimal strings.
-#define HEX_PREFIX ("0x")
-#define HEX_BASE   (16)
-#define DEC_BASE   (10)
+// Definitions for converting decimal and hexadecimal strings.
+#define HEX_PREFIX     ("0x")
+#define HEX_BASE       (16)
+#define DEC_BASE       (10)
+
+// Definitions for extracting parts of filenames.
+#define FILE_DELIMITER ('.')
 
 //==============================================================================
 // Generates list of repeated chars in given string.
@@ -117,4 +120,14 @@ bool StringUtils_asInt(std::string intStr, int32_t* intPtr) {
 
 	// Return based on success of actual conversion.
 	return retBool;
+}
+
+//==============================================================================
+// Removes "type" portion from filename (based on dot operator).
+std::string StringUtils_removeFileType(std::string filename) {
+	// Find the dot separating the file name and type.
+	uint8_t dotIdx = filename.find(FILE_DELIMITER);
+
+	// Return file's name only (no dot? index defaults to end of string anyway).
+	return filename.substr(0, dotIdx);
 }

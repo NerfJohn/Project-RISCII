@@ -15,11 +15,6 @@
 using namespace std;
 
 //==============================================================================
-
-// Definitions for calculating projected sizes.
-#define BIN_METADATA_BYTES (4)
-
-//==============================================================================
 // Checks parsed build items for program-level feasibility.
 void CheckProgramStep_checkProgram(DataModel_t* model) {
 	// First check/analyze all items together.
@@ -29,7 +24,7 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 
 	// Check if projected text section will fit.
 	uint32_t textSize    = model->m_numTextBytes;
-	uint32_t maxTextSize = TargetUtils_getMaxTextSize();
+	uint32_t maxTextSize = TARGETUTILS_MAX_TEXT_SIZE;
 	if (textSize > maxTextSize) {
 		// Report sizing of text section.
 		string errStr = string("Text section is too large- ")
@@ -42,8 +37,8 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 	}
 
 	// Check if projected binary image is within target's size.
-	uint32_t binSize    = model->m_numTextBytes + BIN_METADATA_BYTES;
-	uint32_t maxBinSize = TargetUtils_getMaxBinSize();
+	uint32_t binSize    = model->m_numTextBytes + TARGETUTILS_METADATA_SIZE;
+	uint32_t maxBinSize = TARGETUTILS_MAX_BIN_SIZE;
 	if (binSize > maxBinSize) {
 		// Report sizing of text section.
 		string errStr = string("Binary image is too large- ")
@@ -52,7 +47,7 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 						+ to_string(maxBinSize)
 						+ " bytes";
 		Printer::getInst()->log(LOG_ERR, errStr);
-		ErrorUtils_includeReason(model, REASON_BIG_TEXT);
+		ErrorUtils_includeReason(model, REASON_BIG_BIN);
 	}
 
 	// Handle "outputs" of step.

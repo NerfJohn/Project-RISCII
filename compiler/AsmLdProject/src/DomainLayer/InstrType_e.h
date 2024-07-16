@@ -12,11 +12,11 @@
  *
  * Enum is meant to be a more restrictive "LexToken" type- focusing on the
  * instructions such that instruction items can explicitly express an
- * ISA instruction, but determine that instruction using their tokens.
+ * ISA instruction opcode, but determine that instruction using their tokens.
  */
 typedef enum {
 	// Cores values.
-	INSTR_SHR,                 // Shift Right
+	INSTR_SHR = 0xD,           // Shift Right
 
 	// Special values.
 	INSTR_INVALID              // Invalid/Unknown instruction

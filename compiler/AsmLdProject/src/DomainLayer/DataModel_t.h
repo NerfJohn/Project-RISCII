@@ -29,10 +29,14 @@ typedef struct {
 
 	// Values related to parsed command line input.
 	std::vector<std::string> m_inFiles;         // passed in input files
+	std::string              m_outFile;         // filename to use for binary
 
 	// Values related to parsing/analyzing/checking the entire program.
 	std::vector<IBuildItem*> m_items;           // item-ized program
 	uint32_t                 m_numTextBytes;    // bytes needed for text section
+
+	// Values related to prepping for file writing.
+	std::vector<uint16_t>    m_textSection;     // translated text section
 } DataModel_t;
 
 

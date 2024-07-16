@@ -10,6 +10,8 @@
 
 #include "DeviceLayer/LexScanner.h"
 
+#include <iostream>
+
 using namespace std;
 
 //==============================================================================
@@ -100,7 +102,7 @@ std::queue<ScanToken_t*>* LexScanner::scanFile(DataModel_t* model,
 		// Append to maintain ordering.
 		retTkns->push(newTkn);
 
-	} while(retTkns->back()->m_lexTkn != TOKEN_EOF);
+	} while((retTkns->size() == 0) || (retTkns->back()->m_lexTkn != TOKEN_EOF));
 
 	// File lexed successfully- return queue pointer (and thus ownership).
 	return retTkns;
