@@ -14,6 +14,11 @@ using namespace std;
 
 //==============================================================================
 
+// Development "switch" for block/non-blocking printing (eases deep debugging).
+//#define DEV_PRINT_ON_LOG
+
+//==============================================================================
+
 // Logged messages awaiting printing.
 std::queue<std::string> Printer::m_log = queue<string>();
 
@@ -42,6 +47,11 @@ void Printer::log(LogType_e type, std::string msg) {
 
 	// Message formatted- save to log for now.
 	m_log.push(logStr);
+
+#ifdef DEV_PRINT_ON_LOG
+	// Immediately print logged information.
+	this->printLog();
+#endif // DEV_PRINT_ON_LOG
 }
 
 //==============================================================================
@@ -59,6 +69,11 @@ void Printer::log(LogType_e type, std::string file, std::string msg) {
 
 	// Message formatted- save to log for now.
 	m_log.push(logStr);
+
+#ifdef DEV_PRINT_ON_LOG
+	// Immediately print logged information.
+	this->printLog();
+#endif // DEV_PRINT_ON_LOG
 }
 
 //==============================================================================
@@ -80,6 +95,11 @@ void Printer::log(LogType_e type,
 
 	// Message formatted- save to log for now.
 	m_log.push(logStr);
+
+#ifdef DEV_PRINT_ON_LOG
+	// Immediately print logged information.
+	this->printLog();
+#endif // DEV_PRINT_ON_LOG
 }
 
 //==============================================================================
