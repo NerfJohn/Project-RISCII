@@ -128,3 +128,26 @@ void Printer::printAssert(std::string msg) {
 	this->printLog();
 	OsStdout_printStringLn(assertStr);
 }
+
+//==============================================================================
+// Logs a summary of the assembly process as an info message.
+void Printer::printSummary(DataModel_t const& model) {
+	// String to log.
+	string logStr;
+
+	// Format summary message.
+	int retErr = PrintUtils_formatSummary(model, logStr);
+	if (retErr) {
+		// Should be a safe operation- design flaw!
+		this->printAssert("unable to format summary properly");
+		Terminate::getInst()->exit(REASON_ASSERT);
+	}
+
+	// Message formatted- save to log for now.
+	m_log.push(logStr);
+
+#ifdef DEV_PRINT_ON_LOG
+	// Immediately print logged information.
+	this->printLog();
+#endif // DEV_PRINT_ON_LOG
+}

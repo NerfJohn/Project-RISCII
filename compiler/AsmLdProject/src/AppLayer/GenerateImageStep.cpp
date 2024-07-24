@@ -40,6 +40,10 @@ void GenerateImageStep_generateImage(DataModel_t& model) {
 		writeFile->writeByte((uint8_t)(UPPER_BYTE(textMeta)));
 		writeFile->writeByte((uint8_t)(LOWER_BYTE(textMeta)));
 
+		// (Inform debugging users).
+		string dbgStr = string("Written text metadata: ") + to_string(textMeta);
+		Printer::getInst()->log(LOG_DEBUG, dbgStr);
+
 		// Text section.
 		for (uint16_t instr : model.m_textSection) {
 			writeFile->writeByte((uint8_t)(UPPER_BYTE(instr)));
@@ -52,6 +56,14 @@ void GenerateImageStep_generateImage(DataModel_t& model) {
 		writeFile->writeByte((uint8_t)(LOWER_BYTE(dataMeta)));
 		writeFile->writeByte(0x00);
 		writeFile->writeByte(0x00);
+
+		// (Inform debugging users).
+		dbgStr = string("Written data metadata: ") + to_string(dataMeta);
+		Printer::getInst()->log(LOG_DEBUG, dbgStr);
+
+		// (Keep user informed).
+		string infoStr = "Generated \"" + model.m_outFile + "\"";
+		Printer::getInst()->log(LOG_INFO, infoStr);
 	}
 
 	// Handle additional "outputs" of the step.
@@ -59,6 +71,8 @@ void GenerateImageStep_generateImage(DataModel_t& model) {
 	Printer::getInst()->printLog();
 	if (model.m_firstReason != REASON_SUCCESS) { // failure occurred
 		// Program failed- terminate for listed reason.
+		Printer::getInst()->printSummary(model);
+		Printer::getInst()->printLog();
 		Terminate::getInst()->exit(model.m_firstReason);
 	}
 }

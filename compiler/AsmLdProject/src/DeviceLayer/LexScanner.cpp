@@ -83,7 +83,19 @@ std::queue<ScanToken_t*>* LexScanner::scanFile(DataModel_t* model,
 			/* else- buffer represents a token; inner loop will break */
 
 			// Adjust line number count as needed.
-			if (peekByte == CHAR_NEWLINE) {lineNum++;}
+			if (peekByte == CHAR_NEWLINE) {
+				// (Inform debugging users)...
+				string dbgStr = to_string(retTkns->size()) +
+						        " tokens through line";
+				Printer::getInst()->log(LOG_DEBUG,
+						                file->getFilename(),
+										lineNum,
+										dbgStr
+									   );
+
+				// ...now adjust the count.
+				lineNum++;
+			}
 
 		} while (lexToken == TOKEN_INVALID);
 
@@ -103,6 +115,10 @@ std::queue<ScanToken_t*>* LexScanner::scanFile(DataModel_t* model,
 		retTkns->push(newTkn);
 
 	} while((retTkns->size() == 0) || (retTkns->back()->m_lexTkn != TOKEN_EOF));
+
+	// (Inform debugging users)...
+	string dbgStr = to_string(retTkns->size()) + " tokens in file";
+	Printer::getInst()->log(LOG_DEBUG, file->getFilename(), dbgStr);
 
 	// File lexed successfully- return queue pointer (and thus ownership).
 	return retTkns;

@@ -9,6 +9,7 @@
 
 #include <string>
 #include <queue>
+#include "DomainLayer/DataModel_t.h"
 #include "DomainLayer/LogType_e.h"
 
 /*
@@ -83,6 +84,17 @@ public:
 	 * @param msg custom message for assert message
 	 */
 	void printAssert(std::string msg);
+
+	/*
+	 * Logs a summary of the assembly process as an info message.
+	 *
+	 * Logs a messages noting the number of warnings/errors found and the status
+	 * of the image's ability to be created. Intended to be called just before
+	 * terminating (caller must terminate).
+	 *
+	 * @param model data model of the program
+	 */
+	void printSummary(DataModel_t const& model);
 
 private:
 	// Limit construction/destruction to internal scope.

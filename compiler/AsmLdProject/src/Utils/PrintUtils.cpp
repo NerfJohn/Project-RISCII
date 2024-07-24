@@ -10,10 +10,16 @@ using namespace std;
 
 //==============================================================================
 
-// String literals used in formatted files.
+// Common definitions for status return codes.
+#define RET_GOOD (0)
+#define RET_ERR  (-1)
+
+// String literals used in formatted messages.
 #define PRGM_NAME    ("asmld.exe")
 #define ERROR_NAME   ("ERR  ")
 #define WARNING_NAME ("WARN ")
+#define INFO_NAME    ("INFO ")
+#define DEBUG_NAME   ("DEBUG")
 #define ASSERT_NAME  ("ASSERT!")
 
 //==============================================================================
@@ -30,6 +36,12 @@ bool PrintUtils_formatLog(LogType_e type, std::string* msg) {
 			break;
 		case LOG_WARN:
 			printMsg += string("[") + WARNING_NAME + "]";
+			break;
+		case LOG_INFO:
+			printMsg += string("[") + INFO_NAME + "]";
+			break;
+		case LOG_DEBUG:
+			printMsg += string("[") + DEBUG_NAME + "]";
 			break;
 		default:
 			// Unknown type (likely design bug)- halt formatting.
@@ -91,4 +103,25 @@ void PrintUtils_formatAssert(std::string* msg) {
 
 	// Overwrite custom message with formatted message.
 	*msg = printMsg;
+}
+
+//==============================================================================
+// Formats model data into a summary of the assembly process. Info type msg.
+int PrintUtils_formatSummary(DataModel_t const& model, std::string& msg) {
+	// Code returned- indicating success of function.
+	int retCode = RET_GOOD; // innocent till guilty
+
+	// Get summary's main information.
+	string numWarns = to_string(model.m_numWarnings);
+	string numErrs  = to_string(model.m_numErrors);
+	string prgmRes  = (model.m_firstReason == REASON_SUCCESS) ?
+			          string("Image created") :
+					  string("Image NOT created");
+
+	// Format as an informational message.
+	msg = numWarns + " warnings, " + numErrs + " errors- " + prgmRes;
+	if(!PrintUtils_formatLog(LOG_INFO, &msg)) {retCode = RET_ERR;}
+
+	// Finished- return result of formatting.
+	return retCode;
 }

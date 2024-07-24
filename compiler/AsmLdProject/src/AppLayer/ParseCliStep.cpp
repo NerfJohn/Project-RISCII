@@ -27,6 +27,10 @@ using namespace std;
 void ParseCliStep_parseCli(int argc, char* argv[], DataModel_t* model) {
 	// Iterate through arguments- adding input filenames to model.
 	for (int i = 1; i < argc; i++) { // skip exe name (ie index 0).
+		// (Inform debugging users).
+		string dbgStr = string("Parsing \"") + argv[i] + "\"";
+		Printer::getInst()->log(LOG_DEBUG, dbgStr);
+
 		// C++ stringify the filename.
 		string inFilename = argv[i];
 
@@ -52,6 +56,8 @@ void ParseCliStep_parseCli(int argc, char* argv[], DataModel_t* model) {
 	Printer::getInst()->printLog();
 	if (model->m_firstReason != REASON_SUCCESS) { // failure occurred
 		// Program failed- terminate for listed reason.
+		Printer::getInst()->printSummary(*model);
+		Printer::getInst()->printLog();
 		Terminate::getInst()->exit(model->m_firstReason);
 	}
 

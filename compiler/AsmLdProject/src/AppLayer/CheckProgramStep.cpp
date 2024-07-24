@@ -22,6 +22,9 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 		item->doGlobalAnalysis(model);
 	}
 
+	// (Inform debugging users).
+	Printer::getInst()->log(LOG_DEBUG, "Items checked- now checking sizing");
+
 	// Check if projected text section will fit.
 	uint32_t textSize    = model->m_numTextBytes;
 	uint32_t maxTextSize = TARGETUTILS_MAX_TEXT_SIZE;
@@ -50,10 +53,22 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 		ErrorUtils_includeReason(model, REASON_BIG_BIN);
 	}
 
+	// (Keep user informed).
+	string infoStr = "Program = " +
+			         to_string(binSize) +
+					 "/" +
+					 to_string(TARGETUTILS_MAX_BIN_SIZE) +
+					 " bytes (Text = " +
+					 to_string(textSize) +
+					 ")";
+	Printer::getInst()->log(LOG_INFO, infoStr);
+
 	// Handle "outputs" of step.
 	Printer::getInst()->printLog();
 	if (model->m_firstReason != REASON_SUCCESS) { // failure occurred
 		// Program failed- terminate for listed reason.
+		Printer::getInst()->printSummary(*model);
+		Printer::getInst()->printLog();
 		Terminate::getInst()->exit(model->m_firstReason);
 	}
 }

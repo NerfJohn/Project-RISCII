@@ -20,6 +20,10 @@ using namespace std;
 void ReadFilesStep_readFiles(DataModel_t* model) {
 	// Read each file- scanning, parsing, and analyzing each as its own unit.
 	for (string inFile : model->m_inFiles) {
+		// (Keep user informed).
+		string infoStr = string("Reading \"") + inFile + "\"...";
+		Printer::getInst()->log(LOG_INFO, infoStr);
+
 		// Open the file for reading.
 		FileReader* readFile = new FileReader(model, inFile);
 
@@ -43,8 +47,10 @@ void ReadFilesStep_readFiles(DataModel_t* model) {
 		}
 
 		// "File" parsed and analyzed- add to cumulative program.
-		for (IBuildItem* item : *buildItems) {
-			model->m_items.push_back(item);
+		if (buildItems != nullptr) {
+			for (IBuildItem* item : *buildItems) {
+				model->m_items.push_back(item);
+			}
 		}
 
 		// (Clean up memory). // TODO- STLs should be safe/good to "de-ptr-ize"
@@ -56,6 +62,8 @@ void ReadFilesStep_readFiles(DataModel_t* model) {
 		Printer::getInst()->printLog();
 		if (model->m_firstReason != REASON_SUCCESS) { // failure occurred
 			// Program failed- terminate for listed reason.
+			Printer::getInst()->printSummary(*model);
+			Printer::getInst()->printLog();
 			Terminate::getInst()->exit(model->m_firstReason);
 		}
 	}

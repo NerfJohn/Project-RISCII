@@ -8,6 +8,7 @@
 #define SRC_UTILS_PRINTUTILS_H_
 
 #include <string>
+#include "DomainLayer/DataModel_t.h"
 #include "DomainLayer/LogType_e.h"
 
 /*
@@ -64,5 +65,18 @@ bool PrintUtils_formatLog(LogType_e type,
  * @param msg custom message to re-format into assert message
  */
 void PrintUtils_formatAssert(std::string* msg);
+
+/*
+ * Formats model data into a summary of the assembly process. Info type msg.
+ *
+ * Creates a message that can be directly printed. Messages (INFO type) include
+ * number of found warnings/errors and if image will be created. Intended to be
+ * called just before termination. Defensively programmed function.
+ *
+ * @param model data model of the program
+ * @msg string to populate with the printable info message
+ * @return zero for success, non-zero otherwise
+ */
+int PrintUtils_formatSummary(DataModel_t const& model, std::string& msg);
 
 #endif /* SRC_UTILS_PRINTUTILS_H_ */

@@ -44,6 +44,14 @@ InstructionItem::InstructionItem(std::queue<ScanToken_t*>* tokens) {
 		// And pop it from queue.
 		tokens->pop();
 	}
+
+	// (Inform debugging users).
+	string dbgStr = "Instruction Item created";
+	Printer::getInst()->log(LOG_DEBUG,
+			                m_opcode->m_orignFile,
+							m_opcode->m_originLine,
+							dbgStr
+						   );
 }
 
 //==============================================================================
@@ -119,8 +127,15 @@ void InstructionItem::doLocalAnalysis(DataModel_t* model) {
 		uint32_t lineLoc = m_immediate->m_originLine;
 
 		// Get register value.
-		int32_t regInt;
+		int32_t regInt = 0;
 		bool inRange = StringUtils_asInt(rawStr, &regInt);
+
+		// (Inform debugging users).
+		string dbgStr = string("\"") +
+				        rawStr +
+						"\" -toInt-> " +
+						to_string(regInt);
+		Printer::getInst()->log(LOG_DEBUG, fileLoc, lineLoc, dbgStr);
 
 		// Report any "out-of-bounds" immediate.
 		if (!inRange || !TargetUtils_isValidImm(instrType, regInt)) {

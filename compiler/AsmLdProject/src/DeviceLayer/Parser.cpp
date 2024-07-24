@@ -129,6 +129,10 @@ std::vector<IBuildItem*>* Parser::parseTokens(DataModel_t* model,
 		Terminate::getInst()->exit(REASON_ASSERT);
 	}
 
+	// (Inform debugging users).
+	string dbgStr = to_string(retItems->size()) + " items created";
+	Printer::getInst()->log(LOG_DEBUG, dbgStr);
+
 	// Successfully finished parsing- return items (and pointer ownership).
 	return retItems;
 }
