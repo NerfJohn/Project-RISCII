@@ -10,16 +10,16 @@
 #include "DomainLayer/DataModel_t.h"
 
 /*
- * Parses options and filename inputs into the data model.
+ * Parses CLI input into data model, implementing select flags immediately.
  *
- * At the moment, the parser assumes all inputs (except for the assembler
- * executable name) are input filenames. It simply copies each name into the
- * model's input filename location.
+ * Parses files, flags, and flag arguments into the data model. Once parsed,
+ * it processes select flags/options (namely those that should be handled prior
+ * to parsing the input files).
  *
- * @param argc the number of elements in argv
- * @param argv the tokens passed to the assembler via the command line
- * @param model the program's data model
+ * @param argc number of CLI tokens in argv
+ * @param argv CLI tokens passed to assembler
+ * @param model data model of the program
  */
-void ParseCliStep_parseCli(int argc, char* argv[], DataModel_t* model);
+void ParseCliStep_parseCli(int argc, char* argv[], DataModel_t& model);
 
 #endif /* SRC_APPLAYER_PARSECLISTEP_H_ */

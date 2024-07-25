@@ -130,14 +130,14 @@ int PrintUtils_formatSummary(DataModel_t const& model, std::string& msg) {
 // Formats a help menu string that can be directly printed.
 std::string PrintUtils_formatHelp(void) {
 	// Help menu (for now) is a manually updated constant.
-	return string("asmld.exe [OPTIONS...] <input files...>\n") +
-			      "assembler/linker for project riscii hardware\n" +
+	return string("Assembler/Linker for Project RISCII hardware\n") +
+			      "Usage: asmld.exe [Options...] <input files...>\n" +
 				  "\n" +
 				  "Options:\n" +
-				  "    -h        print this help menu and exit\n" +
-				  "    -ll <arg> set stdout log level to:\n" +
-				  "                error   errors only\n" +
-				  "                warning errors and warnings (default)\n" +
-				  "                info    process related info\n" +
-				  "                debug   all available output\n";
+				  "  -h        print this help menu and exit\n" +
+				  "  -ll <arg> set stdout log level to:\n" +
+				  "              error   errors only\n" +
+				  "              warning errors and warnings (default)\n" +
+				  "              info    process related info\n" +
+				  "              debug   all available output\n";
 }

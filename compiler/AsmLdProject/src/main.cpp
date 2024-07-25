@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
 	// Handle the command line inputs before formal assembling.
 	Printer::getInst()->log(LOG_INFO, "Step 1/4- Parsing CLI Inputs");
-	ParseCliStep_parseCli(argc, argv, &prgmData);
+	ParseCliStep_parseCli(argc, argv, prgmData);
 
 	// Read in the input files, parsing them into the model.
 	Printer::getInst()->log(LOG_INFO, "Step 2/4- Reading Input Files");
