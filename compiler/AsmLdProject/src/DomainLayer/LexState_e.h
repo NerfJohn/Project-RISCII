@@ -21,6 +21,7 @@ typedef enum {
 	LEX_START = TOKEN_LEX_MAX + 1, // Start of all lex/regex paths
 	LEX_ERROR,                     // "Bad" end state for lexed value
 	LEX_COMMENT_LOOP,              // Comment valid- greedy
+	LEX_COMMENT_NEWLINE,           // Include newline in comment
 	LEX_FLAG_START,                // Prefix of flag peeked
 	LEX_FLAG_LOOP,                 // Flag valid- greedy
 	LEX_REG_START,                 // Prefix of register peeked

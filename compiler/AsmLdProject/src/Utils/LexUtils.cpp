@@ -58,9 +58,12 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IS('S')      TO(LEX_S)
 			break;
 		case LEX_COMMENT_LOOP:                   // greedy grab comment
-			IS('\n')     HAVE(TOKEN_COMMENT)
+			IS('\n')     TO(LEX_COMMENT_NEWLINE)
 			EOF          HAVE(TOKEN_COMMENT)
 			ELSE         TO(LEX_COMMENT_LOOP)
+			break;
+		case LEX_COMMENT_NEWLINE:                // end of comment with newline
+			ELSE         HAVE(TOKEN_COMMENT)
 			break;
 		case LEX_FLAG_START:                     // %...
 			IN('a', 'z') TO(LEX_FLAG_LOOP)

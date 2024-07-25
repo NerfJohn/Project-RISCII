@@ -136,15 +136,15 @@ void ParseCliStep_parseCli(int argc, char* argv[], DataModel_t& model) {
 		Terminate::getInst()->exit(REASON_SUCCESS);
 	}
 
-	// (Inform debugging users).
+	// (Inform info users).
 	string dbgStr = "Options = {outFile = \"" + model.m_outFile + "\"}";
-	Printer::getInst()->log(LOG_DEBUG, dbgStr);
+	Printer::getInst()->log(LOG_INFO, dbgStr);
 
 	// Handle additional "outputs" of the step.
 	Printer::getInst()->printLog();
 	if (model.m_firstReason != REASON_SUCCESS) { // failure occurred
 		// Program failed- terminate for listed reason.
-		Printer::getInst()->printSummary(model);
+		Printer::getInst()->printSummary(model);         // log(LOG_INFO, ...)
 		Printer::getInst()->printLog();
 		Terminate::getInst()->exit(model.m_firstReason);
 	}

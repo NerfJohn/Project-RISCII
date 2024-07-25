@@ -20,7 +20,7 @@ using namespace std;
 void ReadFilesStep_readFiles(DataModel_t* model) {
 	// Read each file- scanning, parsing, and analyzing each as its own unit.
 	for (string inFile : model->m_inFiles) {
-		// (Keep user informed).
+		// (Inform info users).
 		string infoStr = string("Reading \"") + inFile + "\"...";
 		Printer::getInst()->log(LOG_INFO, infoStr);
 

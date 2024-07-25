@@ -11,8 +11,6 @@
 #include "DeviceLayer/Printer.h"
 #include "DeviceLayer/Terminate.h"
 
-#include <iostream> // TODO- delete after development
-
 using namespace std;
 
 //==============================================================================
@@ -36,24 +34,23 @@ int main(int argc, char* argv[]) {
 	};
 
 	// Handle the command line inputs before formal assembling.
-	Printer::getInst()->log(LOG_INFO, "Step 1/4- Parsing CLI Inputs");
 	ParseCliStep_parseCli(argc, argv, prgmData);
 
 	// Read in the input files, parsing them into the model.
-	Printer::getInst()->log(LOG_INFO, "Step 2/4- Reading Input Files");
+	Printer::getInst()->log(LOG_INFO, "Reading inputs files...");
 	ReadFilesStep_readFiles(&prgmData);
 
 	// Analyze/check entire program before starting translation.
-	Printer::getInst()->log(LOG_INFO, "Step 3/4- Running Final Checks");
+	Printer::getInst()->log(LOG_INFO, "Running program level checks...");
 	CheckProgramStep_checkProgram(&prgmData);
 
 	// Generate the binary image.
-	Printer::getInst()->log(LOG_INFO, "Step 4/4- Generating Binary Image");
+	Printer::getInst()->log(LOG_INFO, "Generating binary image...");
 	GenerateImageStep_generateImage(prgmData);
 
 	// Assembled successfully- return as such.
-	Printer::getInst()->printSummary(prgmData);
-	Printer::getInst()->printLog();
+	Printer::getInst()->printSummary(prgmData); // log(LOG_INFO, ...)
+	Printer::getInst()->printLog();             // empty out log prior to exit
 	Terminate::getInst()->exit(REASON_SUCCESS);
 }
 
