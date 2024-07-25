@@ -1,0 +1,36 @@
+================================================================================
+Project RISCII: Cliff Notes
+PRT0000
+"General notes to be converted to formal document or temporarily saved"
+================================================================================
+General Project Notes:
+
+Project RISCII- Challenge to design a dev kit system (vs buying or off shelf)
+	- Demonstrate knowledge via design levels of systems together
+	- Should try to design pieces vs relying on 3rd party hardware/software
+	- Exact "design vs 3rd party" choices are subjective to personal preference
+		(Generally guided by involvement with binary image run by dev kit)
+
+Levels of Design
+	- Source Code/Libraries (C/asm files- drivers and basic RTOS, bootloader?)
+	- Compiler (multi files, preprocessor directives, C/IR/asm languages)
+	- Microprocessor (16-bit processing, JTAG+debugging, interrupts+circuits)
+	- Circuit Board (power regulated, programmable, devices to use MPU circuits)
+
+================================================================================
+MPU Interfaces:
+
+Binary Image (Interpretation)
+	- read on word (ie 2 byte) basis
+	- contains separate text and data sections
+	- includes metadata word per section
+	- all fits within 64 KB
+	
+	(Low Addr)
+	<text metadata- last used RAM address for text (word per address)>
+	<text section- 1+ words indicating instruction values>
+	<data metadata- last used RAM address for data (word per address)>
+	<data section- 1+ words indicating data values>
+	(High Addr)
+
+================================================================================
