@@ -25,19 +25,22 @@ typedef enum {
 	REASON_WARNING_MAX = 0x7F, // Sentinel value for warning range
 
 	// Error values (0x80 - 0xBF).
-	REASON_ERROR_MIN   = 0x80, // Sentinel value for error range
-	REASON_NO_FILE     = 0x80, // Could not file or open file
-	REASON_BAD_SCAN    = 0x81, // Byte sequence wasn't a known token
-	REASON_EXP_PARSE   = 0x82, // Expected token, received different token
-	REASON_UNEXP_PARSE = 0x83, // Unexpected token during parsing
-	REASON_BAD_FLAG    = 0x84, // Flag not supported by instruction
-	REASON_BAD_REG     = 0x85, // Register value was bad/out of bounds
-	REASON_BAD_IMM     = 0x86, // Immediate value was bad/out of bounds
-	REASON_BIG_TEXT    = 0x87, // Text section is too big for binary
-	REASON_BIG_BIN     = 0x88, // Binary image is too big for target
-	REASON_NO_WRITE    = 0x89, // Couldn't create/open write file
-	REASON_NO_INPUTS   = 0x8A, // No input files provided
-	REASON_ERROR_MAX   = 0xBF  // Sentinel value for error range
+	REASON_ERROR_MIN    = 0x80, // Sentinel value for error range
+	REASON_NO_FILE      = 0x80, // Could not file or open file
+	REASON_BAD_SCAN     = 0x81, // Byte sequence wasn't a known token
+	REASON_EXP_PARSE    = 0x82, // Expected token, received different token
+	REASON_UNEXP_PARSE  = 0x83, // Unexpected token during parsing
+	REASON_BAD_FLAG     = 0x84, // Flag not supported by instruction
+	REASON_BAD_REG      = 0x85, // Register value was bad/out of bounds
+	REASON_BAD_IMM      = 0x86, // Immediate value was bad/out of bounds
+	REASON_BIG_TEXT     = 0x87, // Text section is too big for binary
+	REASON_BIG_BIN      = 0x88, // Binary image is too big for target
+	REASON_NO_WRITE     = 0x89, // Couldn't create/open write file
+	REASON_NO_INPUTS    = 0x8A, // No input files provided
+	REASON_FLAG_ARG     = 0x8B, // Argument for CLI flag is invalid
+	REASON_INVALID_FLAG = 0x8C, // CLI flag is not recognized
+	REASON_NO_FLAG_ARG  = 0x8D, // CLI flag requires arg- none given
+	REASON_ERROR_MAX    = 0xBF  // Sentinel value for error range
 } ExitReasonType_e;
 
 #endif /* SRC_DOMAINLAYER_EXITREASONTYPE_E_H_ */

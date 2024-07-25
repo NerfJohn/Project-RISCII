@@ -21,16 +21,18 @@ int main(int argc, char* argv[]) {
 	// Initialize program's data model.
 	DataModel_t prgmData = {
 		// Values related to warning and error detection/reporting.
-		.m_numWarnings = 0,                    // # of warnings found
-		.m_numErrors   = 0,                    // # of errors found
-		.m_firstReason = REASON_SUCCESS,       // reason for build failure
+		.m_numWarnings = 0,                    // no warnings at start
+		.m_numErrors   = 0,                    // no errors at start
+		.m_firstReason = REASON_SUCCESS,       // innocent till guilty
 
 		// Values related to parsed command line input.
-		.m_inFiles     = vector<string>(),     // passed in input files
-		.m_outFile     = "",                   // filename to use for binary
+		.m_helpFlag    = false,                // don't print help menu
+		.m_logLevel    = LOG_WARN,             // print errors/warnings
+		.m_inFiles     = vector<string>(),     // no inputs files at start
+		.m_outFile     = "",                   // no specific binary name
 
 		// Values related to parsing/analyzing/checking the entire program.
-		.m_items       = vector<IBuildItem*>() // item-ized program
+		.m_items       = vector<IBuildItem*>() // no items at start
 	};
 
 	// Handle the command line inputs before formal assembling.

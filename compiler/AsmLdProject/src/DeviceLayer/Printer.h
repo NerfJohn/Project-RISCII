@@ -32,6 +32,13 @@ public:
 	void operator=(Printer const&) = delete;
 
 	/*
+	 * Sets the log level used to filter which messages may be printed.
+	 *
+	 * @param level maximum log level that may be printed.
+	 */
+	void setLogLevel(LogType_e level);
+
+	/*
 	 * Logs (but does not output) basic message.
 	 *
 	 * Formats and saves message. Message is printed once Printer::printLog is
@@ -96,10 +103,21 @@ public:
 	 */
 	void printSummary(DataModel_t const& model);
 
+	/*
+	 * Prints special help menu message immediately. Does NOT empty log.
+	 *
+	 * Intended to be called just before successful termination of the program
+	 * (though relies on caller to terminate the program).
+	 */
+	void printHelp(void);
+
 private:
 	// Limit construction/destruction to internal scope.
 	Printer()  {}
 	~Printer() {}
+
+	// Keep track of allowed log level.
+	static LogType_e m_threshLevel;
 
 	// Keep track of logged messages.
 	static std::queue<std::string> m_log;

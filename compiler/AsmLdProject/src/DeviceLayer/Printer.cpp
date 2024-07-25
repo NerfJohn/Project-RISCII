@@ -19,6 +19,9 @@ using namespace std;
 
 //==============================================================================
 
+// Log level threshold for printing.
+LogType_e Printer::m_threshLevel = LOG_WARN;
+
 // Logged messages awaiting printing.
 std::queue<std::string> Printer::m_log = queue<string>();
 
@@ -30,6 +33,12 @@ Printer* Printer::getInst(void) {
 
 	// Return pointer to instance.
 	return &instance;
+}
+
+//==============================================================================
+// Sets the log level used to filter which messages may be printed.
+void Printer::setLogLevel(LogType_e level) {
+	m_threshLevel = level;
 }
 
 //==============================================================================
@@ -45,8 +54,8 @@ void Printer::log(LogType_e type, std::string msg) {
 		Terminate::getInst()->exit(REASON_ASSERT);
 	}
 
-	// Message formatted- save to log for now.
-	m_log.push(logStr);
+	// Message formatted- save to log (if applicable).
+	if (type <= m_threshLevel) {m_log.push(logStr);}
 
 #ifdef DEV_PRINT_ON_LOG
 	// Immediately print logged information.
@@ -67,8 +76,8 @@ void Printer::log(LogType_e type, std::string file, std::string msg) {
 		Terminate::getInst()->exit(REASON_ASSERT);
 	}
 
-	// Message formatted- save to log for now.
-	m_log.push(logStr);
+	// Message formatted- save to log (if applicable).
+	if (type <= m_threshLevel) {m_log.push(logStr);}
 
 #ifdef DEV_PRINT_ON_LOG
 	// Immediately print logged information.
@@ -93,8 +102,8 @@ void Printer::log(LogType_e type,
 		Terminate::getInst()->exit(REASON_ASSERT);
 	}
 
-	// Message formatted- save to log for now.
-	m_log.push(logStr);
+	// Message formatted- save to log (if applicable).
+	if (type <= m_threshLevel) {m_log.push(logStr);}
 
 #ifdef DEV_PRINT_ON_LOG
 	// Immediately print logged information.
@@ -143,11 +152,21 @@ void Printer::printSummary(DataModel_t const& model) {
 		Terminate::getInst()->exit(REASON_ASSERT);
 	}
 
-	// Message formatted- save to log for now.
-	m_log.push(logStr);
+	// Message formatted- save to log (if applicable).
+	if (LOG_INFO <= m_threshLevel) {m_log.push(logStr);}
 
 #ifdef DEV_PRINT_ON_LOG
 	// Immediately print logged information.
 	this->printLog();
 #endif // DEV_PRINT_ON_LOG
+}
+
+//==============================================================================
+// Prints special help menu message immediately. Does NOT empty log.
+void Printer::printHelp(void) {
+	// Get help menu string.
+	string msg = PrintUtils_formatHelp();
+
+	// Aaaand print it- pretty simple.
+	OsStdout_printStringLn(msg);
 }

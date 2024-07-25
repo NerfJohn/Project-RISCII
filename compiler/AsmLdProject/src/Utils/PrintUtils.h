@@ -79,4 +79,11 @@ void PrintUtils_formatAssert(std::string* msg);
  */
 int PrintUtils_formatSummary(DataModel_t const& model, std::string& msg);
 
+/*
+ * Formats a help menu string that can be directly printed.
+ *
+ * @return help menu string ready for printing
+ */
+std::string PrintUtils_formatHelp(void);
+
 #endif /* SRC_UTILS_PRINTUTILS_H_ */

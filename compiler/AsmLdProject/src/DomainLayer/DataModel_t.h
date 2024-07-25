@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include "DomainLayer/ExitReasonType_e.h"
+#include "DomainLayer/LogType_e.h"
 
 // Forward declaration- keep data model "independent".
 class IBuildItem;
@@ -28,6 +29,8 @@ typedef struct {
 	ExitReasonType_e         m_firstReason;     // reason for build failure
 
 	// Values related to parsed command line input.
+	bool                     m_helpFlag;        // help flag presence
+	LogType_e                m_logLevel;        // granularity of printing
 	std::vector<std::string> m_inFiles;         // passed in input files
 	std::string              m_outFile;         // filename to use for binary
 
