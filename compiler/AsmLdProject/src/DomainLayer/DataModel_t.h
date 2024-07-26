@@ -30,6 +30,7 @@ typedef struct {
 
 	// Values related to parsed command line input.
 	bool                     m_helpFlag;        // help flag presence
+	bool                     m_weFlag;          // warn as errors flag presence
 	LogType_e                m_logLevel;        // granularity of printing
 	std::vector<std::string> m_inFiles;         // passed in input files
 	std::string              m_outFile;         // filename to use for binary

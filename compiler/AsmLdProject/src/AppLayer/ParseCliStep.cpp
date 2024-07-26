@@ -127,6 +127,11 @@ void ParseCliStep_parseCli(int argc, char* argv[], DataModel_t& model) {
 				           + OUT_FILE_TYPE;
 	}
 
+	// Handle "Warns as errors" flag by ensuring log level shows warnings.
+	if (model.m_weFlag && (model.m_logLevel < LOG_WARN)) {
+		model.m_logLevel = LOG_WARN;
+	}
+
 	// Handle CLI log requests by setting the printer.
 	Printer::getInst()->setLogLevel(model.m_logLevel);
 
@@ -137,7 +142,11 @@ void ParseCliStep_parseCli(int argc, char* argv[], DataModel_t& model) {
 	}
 
 	// (Inform info users).
-	string dbgStr = "Options = {outFile = \"" + model.m_outFile + "\"}";
+	string dbgStr = "Options = {outFile = \"" +
+			        model.m_outFile +
+					"\", fatalWarns = " +
+                    ((model.m_weFlag) ? "on" : "off") +
+                    "}";
 	Printer::getInst()->log(LOG_INFO, dbgStr);
 
 	// Handle additional "outputs" of the step.

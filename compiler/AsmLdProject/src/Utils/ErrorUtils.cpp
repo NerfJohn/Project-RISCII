@@ -9,17 +9,19 @@
 //==============================================================================
 // Handles business logic of recording warnings/error in data model.
 void ErrorUtils_includeReason(DataModel_t* model, ExitReasonType_e reason) {
-	// Handle reason based on which grouping it is in.
-	if ((REASON_WARNING_MIN <= reason) && (reason <= REASON_WARNING_MAX)) {
-		// A warning- track count, but not a reason to fail building.
-		model->m_numWarnings++;
-	}
-	else if ((REASON_ERROR_MIN <= reason) && (reason <= REASON_ERROR_MAX)) {
-		// An error- track count and, if the first error, record reason.
-		model->m_numErrors++;
-		if (model->m_firstReason == REASON_SUCCESS) { // ie not a failure
-			model->m_firstReason = reason;
-		}
+	// Gather details on reason.
+	bool isWarn = (REASON_WARNING_MIN <= reason) &&
+			      (reason <= REASON_WARNING_MAX);
+	bool isErr  = (REASON_ERROR_MIN <= reason) && (reason <= REASON_ERROR_MAX);
+
+	// Increment correct counters.
+	if (isWarn) {model->m_numWarnings++;}
+	else if (isErr) {model->m_numErrors++;}
+
+	// Record reason if it is the first fatal reason.
+	if ((isErr || (isWarn && model->m_weFlag)) &&
+	    (model->m_firstReason == REASON_SUCCESS)) {
+		model->m_firstReason = reason;
 	}
 
 	/* Otherwise- given reason has no effect on error handling */

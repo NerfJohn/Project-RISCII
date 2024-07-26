@@ -11,10 +11,11 @@ using namespace std;
 //==============================================================================
 
 // Definitions to distinguish flags.
-#define FLAG_PREFIX    ('-')
-#define FLAG_HELP      ("-h")
-#define FLAG_OUT_FILE  ("-o")
-#define FLAG_LOG_LEVEL ("-ll")
+#define FLAG_PREFIX     ('-')
+#define FLAG_HELP       ("-h")
+#define FLAG_OUT_FILE   ("-o")
+#define FLAG_LOG_LEVEL  ("-ll")
+#define FLAG_WARN_ERROR ("-we")
 
 // Definitions to distinguish "-ll" options.
 #define LL_ERROR   ("error")
@@ -29,7 +30,8 @@ CliType_e CliUtils_asCliType(std::string token) {
 	CliType_e retType = CLI_FILE; // "default" assumption for strings
 
 	// Check token against known flags.
-	if (token.compare(FLAG_HELP) == 0) {
+	if ((token.compare(FLAG_HELP) == 0) ||
+		(token.compare(FLAG_WARN_ERROR) == 0)) {
 		retType = CLI_LONE_FLAG;
 	}
 	else if ((token.compare(FLAG_LOG_LEVEL) == 0) ||
@@ -57,6 +59,7 @@ RetErr_e CliUtils_saveToModel(DataModel_t& model, std::string flagStr) {
 
 	// Save result based on given flag.
 	if (flagStr.compare(FLAG_HELP) == 0) {model.m_helpFlag = true;}
+	else if (flagStr.compare(FLAG_WARN_ERROR) == 0) {model.m_weFlag = true;}
 	else {
 		// No matching flag? Indicate the poor input flag.
 		retCode = RET_FAIL;

@@ -140,5 +140,7 @@ std::string PrintUtils_formatHelp(void) {
 				  "              error   errors only\n" +
 				  "              warning errors and warnings (default)\n" +
 				  "              info    process related info\n" +
-				  "              debug   all available output\n";
+				  "              debug   all available output\n" +
+				  "  -we       treat warnings as errors\n" +
+				  "            (prints warnings with error priority)\n";
 }
