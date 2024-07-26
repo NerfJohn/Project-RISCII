@@ -135,6 +135,7 @@ std::string PrintUtils_formatHelp(void) {
 				  "\n" +
 				  "Options:\n" +
 				  "  -h        print this help menu and exit\n" +
+				  "  -o  <arg> sets filename to use for output file\n" +
 				  "  -ll <arg> set stdout log level to:\n" +
 				  "              error   errors only\n" +
 				  "              warning errors and warnings (default)\n" +

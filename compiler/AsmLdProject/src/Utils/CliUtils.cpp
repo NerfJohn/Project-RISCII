@@ -13,6 +13,7 @@ using namespace std;
 // Definitions to distinguish flags.
 #define FLAG_PREFIX    ('-')
 #define FLAG_HELP      ("-h")
+#define FLAG_OUT_FILE  ("-o")
 #define FLAG_LOG_LEVEL ("-ll")
 
 // Definitions to distinguish "-ll" options.
@@ -31,7 +32,8 @@ CliType_e CliUtils_asCliType(std::string token) {
 	if (token.compare(FLAG_HELP) == 0) {
 		retType = CLI_LONE_FLAG;
 	}
-	else if (token.compare(FLAG_LOG_LEVEL) == 0) {
+	else if ((token.compare(FLAG_LOG_LEVEL) == 0) ||
+			 (token.compare(FLAG_OUT_FILE) == 0)) {
 		retType = CLI_ARG_FLAG;
 	}
 
@@ -74,7 +76,11 @@ RetErr_e CliUtils_saveToModel(DataModel_t& model,
 	RetErr_e retCode = RET_GOOD; // innocent till guilty
 
 	// Save result based on given flag.
-	if (flagStr.compare(FLAG_LOG_LEVEL) == 0) {
+	if (flagStr.compare(FLAG_OUT_FILE) == 0) {
+		// Out filename- save it for later.
+		model.m_outFile = argStr;
+	}
+	else if (flagStr.compare(FLAG_LOG_LEVEL) == 0) {
 		// Log Level- set based on recognized options.
 		if (argStr.compare(LL_ERROR) == 0) {model.m_logLevel = LOG_ERR;}
 		else if (argStr.compare(LL_WARNING) == 0) {model.m_logLevel = LOG_WARN;}
