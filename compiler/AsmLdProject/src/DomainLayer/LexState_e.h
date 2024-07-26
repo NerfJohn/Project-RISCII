@@ -31,6 +31,8 @@ typedef enum {
 	LEX_HEX_START,                 // Prefix of hex peeked
 	LEX_HEX_LOOP,                  // Hex valid- greedy
 	LEX_DECIMAL_LOOP,              // Decimal valid- greedy
+	LEX_LABEL_LOOP,                // Label valid- greedy
+	LEX_COLON_FOUND,               // Colon found- confirmed 1 char token
 	LEX_S,                         // "S" keywords
 	LEX_SH,
 	LEX_SHR

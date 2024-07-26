@@ -55,7 +55,9 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IS('0')      TO(LEX_ZERO_HANDLE)
 			IS('-')      TO(LEX_MINUS_HANDLE)
 			IN('1', '9') TO(LEX_DECIMAL_LOOP)
+			IS(':')      TO(LEX_COLON_FOUND)
 			IS('S')      TO(LEX_S)
+			LABEL        TO(LEX_LABEL_LOOP)      // check after specifics chars
 			break;
 		case LEX_COMMENT_LOOP:                   // greedy grab comment
 			IS('\n')     TO(LEX_COMMENT_NEWLINE)
@@ -98,14 +100,23 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IN('0', '9') TO(LEX_DECIMAL_LOOP)
 			ELSE         HAVE(TOKEN_IMMEDIATE)
 			break;
+		case LEX_LABEL_LOOP:                     // greedy grab label chars
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_LABEL)
+			break;
+		case LEX_COLON_FOUND:                    // guaranteed colon token
+			ELSE         HAVE(TOKEN_COLON)
+			break;
 		case LEX_S:                              // "S" keywords
 			IS('H')      TO(LEX_SH)
+			LABEL        TO(LEX_LABEL_LOOP)
 			break;
 		case LEX_SH:
 			IS('R')      TO(LEX_SHR)
+			LABEL        TO(LEX_LABEL_LOOP)
 			break;
 		case LEX_SHR:
-			LABEL        TO(LEX_ERROR)
+			LABEL        TO(LEX_LABEL_LOOP)
 			ELSE         HAVE(TOKEN_SHR)
 			break;
 		default:

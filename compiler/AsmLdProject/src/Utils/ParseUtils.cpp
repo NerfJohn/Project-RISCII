@@ -24,6 +24,10 @@ using namespace std;
 // Constants containing replacements for parsed states.
 STATES(PATTERN_EPSILON)     = {};
 STATES(PATTERN_REGISTER)    = {ITEM(TOKEN_REGISTER)};
+STATES(PATTERN_LABEL_DECL)  = {ITEM(PARSE_START),
+                               ITEM(ACTION_BUILD_LABEL_DECL),
+                               ITEM(TOKEN_COLON)
+                              };
 STATES(PATTERN_SHR_INSTR)   = {ITEM(PARSE_START),
 		                       ITEM(ACTION_BUILD_INSTRUCTION),
 		                       ITEM(PARSE_3RD_OP),
@@ -81,6 +85,7 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 		case PARSE_START:                                // sequence start
 			IS(TOKEN_SHR)       USE(PATTERN_SHR_INSTR)
 			IS(TOKEN_EOF)       USE(PATTERN_EPSILON)
+			IS(TOKEN_LABEL)     USE(PATTERN_LABEL_DECL)
 			break;
 		case PARSE_OPT_FLAG:                             // optional flag
 			IS(TOKEN_FLAGS)     USE(PATTERN_REGISTER)

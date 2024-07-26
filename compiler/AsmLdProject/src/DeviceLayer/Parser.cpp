@@ -7,6 +7,7 @@
 #include "DeviceLayer/Printer.h"
 #include "DeviceLayer/Terminate.h"
 #include "Items/InstructionItem.h"
+#include "Items/LabelDeclItem.h"
 #include "Utils/ErrorUtils.h"
 #include "Utils/ParseUtils.h"
 
@@ -51,6 +52,9 @@ std::vector<IBuildItem*>* Parser::parseTokens(DataModel_t* model,
 			switch (newAction) {
 				case ACTION_BUILD_INSTRUCTION:
 					newItem = new InstructionItem(&buildTkns);
+					break;
+				case ACTION_BUILD_LABEL_DECL:
+					newItem = new LabelDeclItem(&buildTkns);
 					break;
 				default:
 					// Unexpected action- design flaw. Assert!

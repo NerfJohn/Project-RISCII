@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
 
 		// Values related to parsed command line input.
 		.m_helpFlag    = false,                // don't print help menu
+		.m_weFlag      = false,                // warnings aren't errors
 		.m_logLevel    = LOG_WARN,             // print errors/warnings
 		.m_inFiles     = vector<string>(),     // no inputs files at start
 		.m_outFile     = "",                   // no specific binary name
