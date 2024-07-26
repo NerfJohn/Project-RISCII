@@ -22,8 +22,7 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 		item->doGlobalAnalysis(model);
 	}
 
-	// (Inform debugging users).
-	Printer::getInst()->log(LOG_DEBUG, "Items checked- now checking sizing");
+	//
 
 	// Check if projected text section will fit.
 	uint32_t textSize    = model->m_numTextBytes;
@@ -53,15 +52,27 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 		ErrorUtils_includeReason(model, REASON_BIG_BIN);
 	}
 
-	// (Keep user informed).
-	string infoStr = "Program = " +
+	// (Inform info users...)
+	string infoStr1 = string("Image = ") +
 			         to_string(binSize) +
 					 "/" +
 					 to_string(TARGETUTILS_MAX_BIN_SIZE) +
 					 " bytes (Text = " +
 					 to_string(textSize) +
+					 ", Data = " +
+					 "0" +
 					 ")";
-	Printer::getInst()->log(LOG_INFO, infoStr);
+	string infoStr2 = string("RAM = ") +
+			          "0" +
+					  "/" +
+					  "0" +
+					  " bytes (Data = " +
+					  "0" +
+					  ", Bss = " +
+					  "0" +
+					  ")";
+	Printer::getInst()->log(LOG_INFO, infoStr1);
+	Printer::getInst()->log(LOG_INFO, infoStr2);
 
 	// Handle "outputs" of step.
 	Printer::getInst()->printLog();
