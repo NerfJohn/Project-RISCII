@@ -8,6 +8,7 @@
 #include "DeviceLayer/Terminate.h"
 #include "Items/InstructionItem.h"
 #include "Items/LabelDeclItem.h"
+#include "Items/LoadAddrItem.h"
 #include "Utils/ErrorUtils.h"
 #include "Utils/ParseUtils.h"
 
@@ -55,6 +56,9 @@ std::vector<IBuildItem*>* Parser::parseTokens(DataModel_t* model,
 					break;
 				case ACTION_BUILD_LABEL_DECL:
 					newItem = new LabelDeclItem(&buildTkns);
+					break;
+				case ACTION_BUILD_LOAD_ADDR:
+					newItem = new LoadAddrItem(&buildTkns);
 					break;
 				default:
 					// Unexpected action- design flaw. Assert!

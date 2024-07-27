@@ -23,6 +23,7 @@ typedef enum {
 	TOKEN_EOF,                       // End-of-File character
 	TOKEN_LABEL,                     // Label/Address Identifier
 	TOKEN_COLON,                     // Colon (used to denote label decls)
+	TOKEN__la,                       // Function keyword "_la"
 	TOKEN_SHR,                       // SHR instruction keyword
 
 	// Special values.

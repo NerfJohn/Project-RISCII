@@ -20,6 +20,7 @@ typedef enum {
 	// Core values (extend LexToken_e values).
 	ACTION_BUILD_INSTRUCTION = TOKEN_LEX_MAX + 1, // Build instruction item
 	ACTION_BUILD_LABEL_DECL,                      // Build label decl item
+	ACTION_BUILD_LOAD_ADDR,                       // Build load addr item
 
 	// Special values.
 	ACTION_INVALID,                               // Unknown/Invalid action
