@@ -4,8 +4,10 @@
  * "Item defining a binary instruction written in assembly"
  */
 
+#include "DeviceLayer/LabelTable.h"
 #include "DeviceLayer/Printer.h"
 #include "DeviceLayer/Terminate.h"
+#include "DomainLayer/LabelData_t.h"
 #include "Utils/BinaryUtils.h"
 #include "Utils/ErrorUtils.h"
 #include "Utils/StringUtils.h"
@@ -29,6 +31,7 @@ InstructionItem::InstructionItem(std::queue<ScanToken_t*>* tokens) {
 	m_flag      = nullptr;
 	m_regs      = {};
 	m_immediate = nullptr;
+	m_textIdx   = 0;
 
 	// Filter each token type into its appropriate slot.
 	while (!tokens->empty()) {
@@ -147,6 +150,22 @@ void InstructionItem::doLocalAnalysis(DataModel_t* model) {
 			ErrorUtils_includeReason(model, REASON_BAD_REG);
 		}
 	}
+
+	// "Claim" any open labels- defining where the label points to.
+	for (string labelName : model->m_openLabels) {
+		// Claim the label.
+		model->m_labelTable.setItem(labelName, *this);
+
+		// (Inform debugging users).
+		string dbgStr = "Label \"" +
+				        labelName +
+						"\" paired";
+		Printer::getInst()->log(LOG_DEBUG,
+				                m_opcode->m_orignFile,
+								m_opcode->m_originLine,
+								dbgStr);
+	}
+	model->m_openLabels.clear();
 }
 
 //==============================================================================
@@ -202,8 +221,19 @@ void InstructionItem::generateBinaryValue(DataModel_t* model) {
 		Terminate::getInst()->exit(REASON_ASSERT);
 	}
 
-	// Append instruction to translated text section.
+	// Save instruction to text section vector.
+	m_textIdx = model->m_textSection.size();    // save instruction index
 	model->m_textSection.push_back(binInstr);
+}
+
+//==============================================================================
+// Returns the generated address of item (if item has address).
+RetErr_e InstructionItem::getAddress(uint32_t& addr) {
+	// Instructions has (text) addresses.
+	addr = m_textIdx * sizeof(uint16_t);
+
+	// Indicate success/presence of address.
+	return RET_GOOD;
 }
 
 //==============================================================================

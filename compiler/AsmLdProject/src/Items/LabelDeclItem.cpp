@@ -4,7 +4,10 @@
  * "Item defining a declaration of a labeled address/item"
  */
 
+#include "DeviceLayer/LabelTable.h"
 #include "DeviceLayer/Printer.h"
+#include "DomainLayer/LabelData_t.h"
+#include "Utils/ErrorUtils.h"
 
 #include "Items/LabelDeclItem.h"
 
@@ -35,19 +38,46 @@ LabelDeclItem::LabelDeclItem(std::queue<ScanToken_t*>* tokens) {
 //==============================================================================
 // Performs analysis and checks available before entire program is parsed.
 void LabelDeclItem::doLocalAnalysis(DataModel_t* model) {
-	// TODO
+	// Define the new label.
+	LabelData_t newEntry = {
+		.m_isDefined   = true,
+		.m_isUsed      = false,
+		.m_origFileLoc = m_label->m_orignFile,
+		.m_origLineLoc = m_label->m_originLine,
+		.m_labelItem   = nullptr
+	};
+	model->m_labelTable.defineLabel(*model, m_label->m_rawStr, newEntry);
+
+	// (Inform debugging users).
+	string dbgStr = "Label \"" +
+			        m_label->m_rawStr +
+					"\" defined";
+	Printer::getInst()->log(LOG_DEBUG,
+			                m_label->m_orignFile,
+							m_label->m_originLine,
+							dbgStr);
+
+	// New label declared- needs to be assigned an item.
+	model->m_openLabels.push_back(m_label->m_rawStr);
 }
 
 //==============================================================================
 // Performs analysis and checks with respect to the entire given program.
 void LabelDeclItem::doGlobalAnalysis(DataModel_t* model) {
-	// TODO
+	// No global analysis- done with respect to symbol table //
 }
 
 //==============================================================================
 // Translates item's values into binary words. Populates model's sections.
 void LabelDeclItem::generateBinaryValue(DataModel_t* model) {
-	// TODO
+	// No direct binary value //
+}
+
+//==============================================================================
+// Returns the generated address of item (if item has address).
+RetErr_e LabelDeclItem::getAddress(uint32_t& addr) {
+	// Declarations do not have a direct address.
+	return RET_FAIL;
 }
 
 //==============================================================================

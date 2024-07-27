@@ -8,12 +8,14 @@
 #define SRC_DOMAINLAYER_DATAMODEL_T_H_
 
 #include <string>
+#include <queue>
 #include <vector>
 #include "DomainLayer/ExitReasonType_e.h"
 #include "DomainLayer/LogType_e.h"
 
-// Forward declaration- keep data model "independent".
+// Forward declarations- keep data model "independent".
 class IBuildItem;
+class LabelTable;
 
 /*
  * Data shared between the program's different stages.
@@ -36,6 +38,8 @@ typedef struct {
 	std::string              m_outFile;         // filename to use for binary
 
 	// Values related to parsing/analyzing/checking the entire program.
+	std::vector<std::string> m_openLabels;      // labels to assign items to
+	LabelTable&              m_labelTable;      // labels within the program
 	std::vector<IBuildItem*> m_items;           // item-ized program
 	uint32_t                 m_numTextBytes;    // bytes needed for text section
 

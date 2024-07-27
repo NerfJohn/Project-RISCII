@@ -41,13 +41,24 @@ void ReadFilesStep_readFiles(DataModel_t* model) {
 
 		// Analyze tokens locally (as able to).
 		if (buildItems != nullptr) {
+			// Analyze each item.
 			for (IBuildItem* item : *buildItems) {
 				item->doLocalAnalysis(model);
+			}
+
+			// Report any un-paired labels.
+			for (string label : model->m_openLabels) {
+				string errStr = "Label \"" +
+						        label +
+								"\" does not pair to anything";
+				Printer::getInst()->log(LOG_ERR, inFile, errStr);
+				ErrorUtils_includeReason(model, REASON_NO_PAIRING);
 			}
 		}
 
 		// "File" parsed and analyzed- add to cumulative program.
 		if (buildItems != nullptr) {
+			// Add  analyzed file items.
 			for (IBuildItem* item : *buildItems) {
 				model->m_items.push_back(item);
 			}

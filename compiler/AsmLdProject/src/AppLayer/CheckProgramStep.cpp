@@ -4,6 +4,7 @@
  * "Step of checking/analyzing parsed program as one unit"
  */
 
+#include "DeviceLayer/LabelTable.h"
 #include "DeviceLayer/Printer.h"
 #include "DeviceLayer/Terminate.h"
 #include "Items/IBuildItem.h"
@@ -22,7 +23,8 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 		item->doGlobalAnalysis(model);
 	}
 
-	//
+	// Check label table for error/warnings.
+	model->m_labelTable.validateTable(*model);
 
 	// Check if projected text section will fit.
 	uint32_t textSize    = model->m_numTextBytes;

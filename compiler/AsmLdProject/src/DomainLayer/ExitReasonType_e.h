@@ -22,6 +22,7 @@ typedef enum {
 	// Warning values (0x40 - 0x7F).
 	REASON_WARNING_MIN = 0x40, // Sentinel value for warning range
 	REASON_REPEAT_FLAG = 0x40, // Repeated flag in flag token
+	REASON_NOUSE_LABEL = 0x41, // Label is defined, but unused
 	REASON_WARNING_MAX = 0x7F, // Sentinel value for warning range
 
 	// Error values (0x80 - 0xBF).
@@ -40,6 +41,9 @@ typedef enum {
 	REASON_FLAG_ARG     = 0x8B, // Argument for CLI flag is invalid
 	REASON_INVALID_FLAG = 0x8C, // CLI flag is not recognized
 	REASON_NO_FLAG_ARG  = 0x8D, // CLI flag requires arg- none given
+	REASON_MULTI_DEFINE = 0x8E, // Label is multiply defined
+	REASON_NO_PAIRING   = 0x8F, // Label has nothing to pair/address to
+	REASON_NO_DEF_LABEL = 0x90, // Label is used, but not defined
 	REASON_ERROR_MAX    = 0xBF  // Sentinel value for error range
 } ExitReasonType_e;
 
