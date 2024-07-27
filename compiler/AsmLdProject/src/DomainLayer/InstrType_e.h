@@ -16,6 +16,7 @@
  */
 typedef enum {
 	// Cores values.
+	INSTR_LBI = 0xA,           // Load Byte Immediate
 	INSTR_SHR = 0xD,           // Shift Right
 
 	// Special values.
