@@ -126,8 +126,6 @@ void LoadAddrItem::resolveBinaryLabels(DataModel_t& model) {
 	uint32_t regInt;
 	StringUtils_asUint(m_reg->m_rawStr.substr(REG_VAL_IDX), &regInt);
 
-	Printer::getInst()->printAssert(to_string(addr));
-
 	// Generate the "set top byte" instruction.
 	int binErr = 0;
 	uint16_t firstInstr = 0x0000;
