@@ -74,6 +74,12 @@ void LabelDeclItem::generateBinaryValue(DataModel_t* model) {
 }
 
 //==============================================================================
+// Resolves any binary generations reliant on label resolution.
+void LabelDeclItem::resolveBinaryLabels(DataModel_t& model) {
+	// Instructions do not require additional generation //
+}
+
+//==============================================================================
 // Returns the generated address of item (if item has address).
 RetErr_e LabelDeclItem::getAddress(uint32_t& addr) {
 	// Declarations do not have a direct address.

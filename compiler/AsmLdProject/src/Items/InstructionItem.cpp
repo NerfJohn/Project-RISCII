@@ -227,10 +227,17 @@ void InstructionItem::generateBinaryValue(DataModel_t* model) {
 }
 
 //==============================================================================
+// Resolves any binary generations reliant on label resolution.
+void InstructionItem::resolveBinaryLabels(DataModel_t& model) {
+	// Instructions do not require additional generation //
+	return;
+}
+
+//==============================================================================
 // Returns the generated address of item (if item has address).
 RetErr_e InstructionItem::getAddress(uint32_t& addr) {
-	// Instructions has (text) addresses.
-	addr = m_textIdx * sizeof(uint16_t);
+	// Instructions have (text) addresses.
+	addr = m_textIdx * TARGETUTILS_INSTR_SIZE;
 
 	// Indicate success/presence of address.
 	return RET_GOOD;

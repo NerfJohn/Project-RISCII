@@ -27,6 +27,9 @@ void GenerateImageStep_generateImage(DataModel_t& model) {
 	for (IBuildItem* item : model.m_items) {
 		item->generateBinaryValue(&model);
 	}
+	for (IBuildItem* item : model.m_items) {
+		item->resolveBinaryLabels(model);
+	}
 
 	// Open the file to become the binary image.
 	FileWriter* writeFile = new FileWriter(model, model.m_outFile);

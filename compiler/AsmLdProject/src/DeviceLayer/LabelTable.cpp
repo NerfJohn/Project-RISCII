@@ -13,7 +13,7 @@
 using namespace std;
 
 //==============================================================================
-// TODO
+// Defines the given label with a given data (if not already defined).
 void LabelTable::defineLabel(DataModel_t& model,
 			                 std::string const label,
 					         LabelData_t const& data) {
@@ -44,7 +44,7 @@ void LabelTable::defineLabel(DataModel_t& model,
 }
 
 //==============================================================================
-// TODO
+// Marks given label as used in the table. Creates entry as needed.
 void LabelTable::useLabel(std::string const label) {
 	// Create a new entry if not already present.
 	if (m_table.find(label) == m_table.end()) {
@@ -66,7 +66,7 @@ void LabelTable::useLabel(std::string const label) {
 }
 
 //==============================================================================
-// TODO
+// Sets the item associated with the given label. Label must exist.
 void LabelTable::setItem(std::string const label, IBuildItem& item) {
 	// Set the label's paired item (if label exists).
 	if (m_table.find(label) != m_table.end()) {
@@ -75,6 +75,7 @@ void LabelTable::setItem(std::string const label, IBuildItem& item) {
 }
 
 //==============================================================================
+// Runs checks on current entries. Reports any errors or warnings.
 void LabelTable::validateTable(DataModel_t& model) {
 	// Iterate over each entry to validate the entry.
 	map<string, LabelData_t>::iterator entry;
@@ -103,4 +104,24 @@ void LabelTable::validateTable(DataModel_t& model) {
 			ErrorUtils_includeReason(&model, REASON_NOUSE_LABEL);
 		}
 	}
+}
+
+//==============================================================================
+// Gets the generated address associated with the given label.
+RetErr_e LabelTable::getAddress(std::string const label, uint32_t& addr) {
+	// Return code to indicate process success/failure.
+	RetErr_e retCode = RET_GOOD; // innocent till guilty
+
+	// Attempt to get the labelled item's address.
+	map<string, LabelData_t>::iterator entry = m_table.find(label);
+	if ((entry == m_table.end()) ||
+		(entry->second.m_labelItem == nullptr) ||
+		(entry->second.m_labelItem->getAddress(addr) == RET_FAIL)) {
+		// Wasn't able to get an address.
+		retCode = RET_FAIL;
+	}
+	// else- item->getAddress() call already updated address.
+
+	// Return result of process.
+	return retCode;
 }
