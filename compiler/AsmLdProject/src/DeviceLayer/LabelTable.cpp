@@ -7,10 +7,18 @@
 #include "DeviceLayer/Printer.h"
 #include "Items/IBuildItem.h"
 #include "Utils/ErrorUtils.h"
+#include "Utils/LabelUtils.h"
 
 #include "DeviceLayer/LabelTable.h"
 
 using namespace std;
+
+//==============================================================================
+// Initializes label table with assembler's pre-defined values.
+LabelTable::LabelTable(void) {
+	// Initialize core table with pre-defined values.
+	LabelUtils_initPreDefs(m_table);
+}
 
 //==============================================================================
 // Defines the given label with a given data (if not already defined).
@@ -108,19 +116,26 @@ void LabelTable::validateTable(DataModel_t& model) {
 
 //==============================================================================
 // Gets the generated address associated with the given label.
-RetErr_e LabelTable::getAddress(std::string const label, uint32_t& addr) {
+RetErr_e LabelTable::getAddress(DataModel_t const& model,
+		                        std::string const label,
+								uint32_t& addr) {
 	// Return code to indicate process success/failure.
 	RetErr_e retCode = RET_GOOD; // innocent till guilty
 
-	// Attempt to get the labelled item's address.
-	map<string, LabelData_t>::iterator entry = m_table.find(label);
-	if ((entry == m_table.end()) ||
-		(entry->second.m_labelItem == nullptr) ||
-		(entry->second.m_labelItem->getAddress(addr) == RET_FAIL)) {
-		// Wasn't able to get an address.
-		retCode = RET_FAIL;
+	// Attempt to get the label's address.
+	RetErr_e retErr = LabelUtils_getPreDefAddr(model, label, addr);
+	if (retErr) {
+		// Not a predefined label- check label's item address.
+		map<string, LabelData_t>::iterator entry = m_table.find(label);
+		if ((entry == m_table.end()) ||
+			(entry->second.m_labelItem == nullptr) ||
+			(entry->second.m_labelItem->getAddress(addr) == RET_FAIL)) {
+			// Wasn't able to get an address.
+			retCode = RET_FAIL;
+		}
+		// else- item->getAddress() call already updated address.
 	}
-	// else- item->getAddress() call already updated address.
+	// else- getPreDefAddr() call already updated address.
 
 	// Return result of process.
 	return retCode;

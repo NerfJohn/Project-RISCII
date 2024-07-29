@@ -24,6 +24,14 @@ class LabelTable {
 public:
 
 	/*
+	 * Initializes label table with assembler's pre-defined values.
+	 *
+	 * Creates a new label table populated only with special labels defined
+	 * and/or used by the assembler.
+	 */
+	LabelTable(void);
+
+	/*
 	 * Defines the given label with a given data (if not already defined).
 	 *
 	 * Data given to define label is only used if label is not already defined.
@@ -81,7 +89,9 @@ public:
 	 * @param addr location to put the address associated with the label
 	 * @return zero if successful, non-zero otherwise
 	 */
-	RetErr_e getAddress(std::string const label, uint32_t& addr);
+	RetErr_e getAddress(DataModel_t const& model,
+			            std::string const label,
+						uint32_t& addr);
 
 private:
 	// Core data structure used to store label data.

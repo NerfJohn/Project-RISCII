@@ -18,7 +18,7 @@ using namespace std;
 // The RISCII assembler/linker- Host PC runs entire program from here.
 int main(int argc, char* argv[]) {
 	// Initialize label table (for data model).
-	LabelTable labelTable;
+	LabelTable labelTable = LabelTable();
 
 	// Initialize program's data model.
 	DataModel_t prgmData = {
@@ -39,6 +39,8 @@ int main(int argc, char* argv[]) {
 		.m_labelTable   = labelTable,            // empty table
 		.m_items        = vector<IBuildItem*>(), // no items at start
 		.m_numTextBytes = 0,                     // no initial bytes
+		.m_numDataBytes = 0,                     // no initial bytes
+		.m_numBssBytes  = 0,                     // no initial bytes
 
 		// Values related to prepping for file writing.
 		.m_textSection  = vector<uint16_t>()     // no initial section

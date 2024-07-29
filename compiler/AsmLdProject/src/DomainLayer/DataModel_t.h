@@ -42,6 +42,8 @@ typedef struct {
 	LabelTable&              m_labelTable;      // labels within the program
 	std::vector<IBuildItem*> m_items;           // item-ized program
 	uint32_t                 m_numTextBytes;    // bytes needed for text section
+	uint32_t                 m_numDataBytes;    // bytes needed for data section
+	uint32_t                 m_numBssBytes;     // bytes needed for bss section
 
 	// Values related to prepping for file writing.
 	std::vector<uint16_t>    m_textSection;     // translated text section

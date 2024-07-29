@@ -115,7 +115,9 @@ void LoadAddrItem::generateBinaryValue(DataModel_t* model) {
 void LoadAddrItem::resolveBinaryLabels(DataModel_t& model) {
 	// Get the resolved label address.
 	uint32_t addr = 0x0000;
-	RetErr_e retErr = model.m_labelTable.getAddress(m_label->m_rawStr, addr);
+	RetErr_e retErr = model.m_labelTable.getAddress(model,
+			                                        m_label->m_rawStr,
+													addr);
 	if (retErr) {
 		// By this point, un-paired items should be filtered.
 		Printer::getInst()->printAssert("unable to get address for label");

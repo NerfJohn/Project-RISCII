@@ -26,6 +26,10 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 	// Check label table for error/warnings.
 	model->m_labelTable.validateTable(*model);
 
+	// TODO- adjust data size in event of no data (BEFORE sizing checks)
+	// TODO- check data+bss fits in RAM
+	// TODO- check __START refers to instruction or load address
+
 	// Check if projected text section will fit.
 	uint32_t textSize    = model->m_numTextBytes;
 	uint32_t maxTextSize = TARGETUTILS_MAX_TEXT_SIZE;
