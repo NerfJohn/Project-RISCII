@@ -45,6 +45,14 @@ LoadAddrItem::LoadAddrItem(std::queue<ScanToken_t*>* tokens) {
 	// Record label to use/reference for function operation.
 	m_label = tokens->front();
 	tokens->pop();
+
+	// (Inform debugging users).
+	string dbgStr = " Load Address Item created";
+	Printer::getInst()->log(LOG_DEBUG,
+			                m_label->m_orignFile,
+							m_label->m_originLine,
+							dbgStr
+						   );
 }
 
 //==============================================================================

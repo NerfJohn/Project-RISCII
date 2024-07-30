@@ -24,6 +24,7 @@ typedef enum {
 	TOKEN_LABEL,                     // Label/Address Identifier
 	TOKEN_COLON,                     // Colon (used to denote label decls)
 	TOKEN__la,                       // Function keyword "_la"
+	TOKEN_dbss,                      // keyword ".bss"
 	TOKEN_SHR,                       // SHR instruction keyword
 
 	// Special values.

@@ -57,6 +57,7 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IN('1', '9') TO(LEX_DECIMAL_LOOP)
 			IS(':')      TO(LEX_COLON_FOUND)
 			IS('_')      TO(LEX__)
+			IS('.')      TO(LEX_d)
 			IS('S')      TO(LEX_S)
 			LABEL        TO(LEX_LABEL_LOOP)      // check after specifics chars
 			break;
@@ -119,6 +120,18 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 		case LEX__la:
 			LABEL        TO(LEX_LABEL_LOOP)
 			ELSE         HAVE(TOKEN__la)
+			break;
+		case LEX_d:                              // ".data/.bss" keywords
+			IS('b')      TO(LEX_db)
+			break;
+		case LEX_db:
+			IS('s')      TO(LEX_dbs)
+			break;
+		case LEX_dbs:
+			IS('s')      TO(LEX_dbss)
+			break;
+		case LEX_dbss:
+			ELSE         HAVE(TOKEN_dbss)
 			break;
 		case LEX_S:                              // "S" keywords
 			IS('H')      TO(LEX_SH)
