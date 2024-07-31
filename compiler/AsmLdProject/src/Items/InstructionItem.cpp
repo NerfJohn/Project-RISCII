@@ -129,7 +129,7 @@ void InstructionItem::doLocalAnalysis(DataModel_t* model) {
 		string fileLoc = m_immediate->m_orignFile;
 		uint32_t lineLoc = m_immediate->m_originLine;
 
-		// Get register value.
+		// Get immediate value.
 		int32_t regInt = 0;
 		bool inRange = StringUtils_asInt(rawStr, &regInt);
 
@@ -147,7 +147,7 @@ void InstructionItem::doLocalAnalysis(DataModel_t* model) {
 							+ "' must be in range "
 							+ TargetUtils_getImmType(instrType);
 			Printer::getInst()->log(LOG_ERR, fileLoc, lineLoc, errStr);
-			ErrorUtils_includeReason(model, REASON_BAD_REG);
+			ErrorUtils_includeReason(model, REASON_BAD_IMM);
 		}
 	}
 

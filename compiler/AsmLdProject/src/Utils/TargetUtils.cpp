@@ -14,13 +14,18 @@ using namespace std;
 #define SHR_FLAGS string("a")
 
 // Definitions for limits on int/uint values.
-#define IN_UINT3_RANGE(x) ((0 <= (x)) && ((x) <= 7))
-#define IN_UINT4_RANGE(x) ((0 <= (x)) && ((x) <= 15))
+#define IN_UINT3_RANGE(x)  ((0 <= (x)) && ((x) <= 7))
+#define IN_UINT4_RANGE(x)  ((0 <= (x)) && ((x) <= 15))
+#define IN_UINT16_RANGE(x) ((0 <= (x)) && ((x) <= 65536))
+#define IN_INT16_RANGE(x)  ((-32768 <= (x)) && ((x) <= 32767))
 
 // Definitions for types of int/uint values.
-#define NO_TYPE string("NULL")
-#define UINT3   string("uint3")
-#define UINT4   string("uint4")
+#define NO_TYPE  string("NULL")
+#define UINT3    string("uint3")
+#define UINT4    string("uint4")
+#define UINT16   string("uint16")
+#define ANYINT16 string("(u)int16")
+
 
 // Definitions for sizes of elements.
 #define INSTR_SIZE_BYTES (2)
@@ -115,6 +120,44 @@ std::string TargetUtils_getImmType(InstrType_e instr) {
 	switch (instr) {
 	    case INSTR_SHR: retStr = UINT4; break;
 		default:  retStr = NO_TYPE; break; // no immediate type supported
+	}
+
+	// Return available flags.
+	return retStr;
+}
+
+//==============================================================================
+// Validates if int is within valid range for given data word.
+bool TargetUtils_isValidWord(DataWordType_e range, int32_t word) {
+	// Result of check to return.
+	bool retBool = false; // guilty till proven innocent
+
+	// Use instruction to determine check/result.
+	switch (range) {
+		case DATA_WORD_UNSIGNED:
+			retBool = IN_UINT16_RANGE(word);
+			break;
+		case DATA_WORD_ANY:
+			retBool = IN_UINT16_RANGE(word) | IN_INT16_RANGE(word);
+			break;
+		default: retBool = false; // instruction doesn't support word
+	}
+
+	// Return result.
+	return retBool;
+}
+
+//==============================================================================
+// Gets type/range specified as a string.
+std::string TargetUtils_getWordType(DataWordType_e range) {
+	// String to return.
+	string retStr;
+
+	// Get instruction's range type.
+	switch (range) {
+	    case DATA_WORD_UNSIGNED: retStr = UINT16; break;
+	    case DATA_WORD_ANY:      retStr = ANYINT16; break;
+		default:  retStr = NO_TYPE; break; // no word type supported
 	}
 
 	// Return available flags.

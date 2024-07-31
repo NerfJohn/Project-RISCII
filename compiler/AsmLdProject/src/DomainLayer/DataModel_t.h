@@ -47,6 +47,7 @@ typedef struct {
 
 	// Values related to prepping for file writing.
 	std::vector<uint16_t>    m_textSection;     // translated text section
+	uint32_t                 m_bssSection;      // byte size of bss section
 } DataModel_t;
 
 

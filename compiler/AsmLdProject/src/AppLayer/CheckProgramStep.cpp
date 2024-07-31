@@ -27,7 +27,6 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 	model->m_labelTable.validateTable(*model);
 
 	// TODO- adjust data size in event of no data (BEFORE sizing checks)
-	// TODO- check data+bss fits in RAM
 	// TODO- check __START refers to instruction or load address
 
 	// Check if projected text section will fit.
@@ -42,6 +41,20 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 						+ " bytes";
 		Printer::getInst()->log(LOG_ERR, errStr);
 		ErrorUtils_includeReason(model, REASON_BIG_TEXT);
+	}
+
+	// Check if projected data section will fit (in memory/RAM).
+	uint32_t dataSize    = model->m_numDataBytes + model->m_numBssBytes;
+	uint32_t maxMemSize = TARGETUTILS_MAX_MEM_SIZE;
+	if (dataSize > maxMemSize) {
+		// Report sizing of text section.
+		string errStr = string("Data/Bss section(s) are too large- ")
+				        + to_string(dataSize)
+						+ " > "
+						+ to_string(maxMemSize)
+						+ " bytes";
+		Printer::getInst()->log(LOG_ERR, errStr);
+		ErrorUtils_includeReason(model, REASON_BIG_DATABSS);
 	}
 
 	// Check if projected binary image is within target's size.
@@ -69,13 +82,13 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 					 "0" +
 					 ")";
 	string infoStr2 = string("RAM = ") +
-			          "0" +
+			          to_string(dataSize) +
 					  "/" +
-					  "0" +
+					  to_string(TARGETUTILS_MAX_MEM_SIZE) +
 					  " bytes (Data = " +
 					  "0" +
 					  ", Bss = " +
-					  "0" +
+					  to_string(model->m_numBssBytes) +
 					  ")";
 	Printer::getInst()->log(LOG_INFO, infoStr1);
 	Printer::getInst()->log(LOG_INFO, infoStr2);

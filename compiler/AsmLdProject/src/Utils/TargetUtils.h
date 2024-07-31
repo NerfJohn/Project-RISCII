@@ -8,6 +8,7 @@
 #define SRC_UTILS_TARGETUTILS_H_
 
 #include <string>
+#include "DomainLayer/DataWordType_e.h"
 #include "DomainLayer/InstrType_e.h"
 #include "DomainLayer/LexToken_e.h"
 
@@ -76,7 +77,7 @@ bool TargetUtils_isValidReg(uint32_t reg);
 std::string TargetUtils_getRegType(void);
 
 /*
- * Validates if int can is within valid range for a given instruction.
+ * Validates if int is within valid range for a given instruction.
  *
  * @param instr instruction containing the immediate
  * @param imm immediate value being evaluated
@@ -94,5 +95,25 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm);
  * @return type/range of immediate supported by instruction
  */
 std::string TargetUtils_getImmType(InstrType_e instr);
+
+/*
+ * Validates if int is within valid range for given data word.
+ *
+ * @param range specifies intended range of data word
+ * @param word word value being evaluated
+ * @return true if word is within range, false otherwise
+ */
+bool TargetUtils_isValidWord(DataWordType_e range, int32_t word);
+
+/*
+ * Gets type/range specified as a string.
+ *
+ * Returns type/range as a string. This function is primarily meant for making
+ * printed messages more verbose.
+ *
+ * @param range range to string-ify
+ * @return type/range of specified range
+ */
+std::string TargetUtils_getWordType(DataWordType_e range);
 
 #endif /* SRC_UTILS_TARGETUTILS_H_ */

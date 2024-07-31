@@ -43,7 +43,8 @@ int main(int argc, char* argv[]) {
 		.m_numBssBytes  = 0,                     // no initial bytes
 
 		// Values related to prepping for file writing.
-		.m_textSection  = vector<uint16_t>()     // no initial section
+		.m_textSection  = vector<uint16_t>(),    // no initial section
+		.m_bssSection   = 0                      // no initial bytes
 	};
 
 	// Handle the command line inputs before formal assembling.
