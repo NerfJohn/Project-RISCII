@@ -53,6 +53,17 @@ public:
 	void doGlobalAnalysis(DataModel_t* model);
 
 	/*
+	 * Confirms if item's contents are placed in text section of binary.
+	 *
+	 * Indicates if the item is used to generate values for the text section
+	 * (ie generates instructions). Intended use is to determine if a label is
+	 * referencing the program address space (vs data address space).
+	 *
+	 * @return true if text section content, false otherwise
+	 */
+	bool isTextContent(void);
+
+	/*
 	 * Translates item's values into binary words. Populates model's sections.
 	 *
 	 * Has the item convert its contents to its binary representation (as used

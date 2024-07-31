@@ -23,10 +23,21 @@ using namespace std;
 //==============================================================================
 // Translates model's items into binary image- creating the file in the process.
 void GenerateImageStep_generateImage(DataModel_t& model) {
-	// First translate all items into binary sections.
-	for (IBuildItem* item : model.m_items) {
-		item->generateBinaryValue(&model);
+	// Find "start" of program.
+	size_t startIdx = 0;
+	for (size_t i = 0; i < model.m_items.size(); i++) {
+		if (model.m_items[i] == model.m_prgmStart) {startIdx = i;}
 	}
+
+	// Do 1st pass translation (in program order to generate addresses).
+	for (size_t i = startIdx; i < model.m_items.size(); i++) {
+		model.m_items[i]->generateBinaryValue(&model);
+	}
+	for (size_t i = 0; i < startIdx; i++) {
+		model.m_items[i]->generateBinaryValue(&model);
+	}
+
+	// Do 2nd pass translation (to resolve labels- thus generating all values).
 	for (IBuildItem* item : model.m_items) {
 		item->resolveBinaryLabels(model);
 	}

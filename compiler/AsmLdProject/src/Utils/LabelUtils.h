@@ -26,6 +26,25 @@
 RetErr_e LabelUtils_initPreDefs(std::map<std::string, LabelData_t>& table);
 
 /*
+ * Simple getter for program start label name.
+ *
+ * @return name of program start label.
+ */
+std::string LabelUtils_getStartName(void);
+
+/*
+ * Checks if pre-defined "program start" label is valid for translation.
+ *
+ * Returns based on info available in given table, primarily checking that the
+ * label points to an item taht generates text section contents (ie "start of
+ * program" label points to program address space contents).
+ *
+ * @param table "table" object to search for starting label in
+ * @return true if program start label is valid, false otherwise
+ */
+bool LabelUtils_isStartValid(std::map<std::string, LabelData_t>& table);
+
+/*
  * Gets address associated with an assembler defined label.
  *
  * Computes address value for a given predefined value (these labels require

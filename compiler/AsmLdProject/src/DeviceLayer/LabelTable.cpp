@@ -112,6 +112,16 @@ void LabelTable::validateTable(DataModel_t& model) {
 			ErrorUtils_includeReason(&model, REASON_NOUSE_LABEL);
 		}
 	}
+
+	// Ensure "start" label is valid for translation.
+	if(!LabelUtils_isStartValid(m_table)) {
+		// Start label invalid.
+		string errStr = "Program Start label \"" +
+				        LabelUtils_getStartName() +
+						"\" not used correctly";
+		Printer::getInst()->log(LOG_ERR, errStr);
+		ErrorUtils_includeReason(&model, REASON_BAD_START);
+	}
 }
 
 //==============================================================================

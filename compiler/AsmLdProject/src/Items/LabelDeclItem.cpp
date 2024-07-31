@@ -8,6 +8,7 @@
 #include "DeviceLayer/Printer.h"
 #include "DomainLayer/LabelData_t.h"
 #include "Utils/ErrorUtils.h"
+#include "Utils/LabelUtils.h"
 
 #include "Items/LabelDeclItem.h"
 
@@ -64,7 +65,17 @@ void LabelDeclItem::doLocalAnalysis(DataModel_t* model) {
 //==============================================================================
 // Performs analysis and checks with respect to the entire given program.
 void LabelDeclItem::doGlobalAnalysis(DataModel_t* model) {
-	// No global analysis- done with respect to symbol table //
+	// Claim "program start" title as appropriate.
+	if (LabelUtils_getStartName().compare(m_label->m_rawStr) == 0) {
+		model->m_prgmStart = this;
+	}
+}
+
+//==============================================================================
+// Confirms if item's contents are placed in text section of binary.
+bool LabelDeclItem::isTextContent(void) {
+	// Label declarations don't generate any section values.
+	return false;
 }
 
 //==============================================================================

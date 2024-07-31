@@ -27,7 +27,6 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 	model->m_labelTable.validateTable(*model);
 
 	// TODO- adjust data size in event of no data (BEFORE sizing checks)
-	// TODO- check __START refers to instruction or load address
 
 	// Check if projected text section will fit.
 	uint32_t textSize    = model->m_numTextBytes;

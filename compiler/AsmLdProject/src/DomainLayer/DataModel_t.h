@@ -41,6 +41,7 @@ typedef struct {
 	std::vector<std::string> m_openLabels;      // labels to assign items to
 	LabelTable&              m_labelTable;      // labels within the program
 	std::vector<IBuildItem*> m_items;           // item-ized program
+	IBuildItem*              m_prgmStart;       // program's "first" item
 	uint32_t                 m_numTextBytes;    // bytes needed for text section
 	uint32_t                 m_numDataBytes;    // bytes needed for data section
 	uint32_t                 m_numBssBytes;     // bytes needed for bss section

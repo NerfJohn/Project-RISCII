@@ -114,6 +114,13 @@ void BssItem::doGlobalAnalysis(DataModel_t* model) {
 }
 
 //==============================================================================
+// Confirms if item's contents are placed in text section of binary.
+bool BssItem::isTextContent(void) {
+	// Bss section is within data address space- NOT text section!
+	return false;
+}
+
+//==============================================================================
 // Translates item's values into binary words. Populates model's sections.
 void BssItem::generateBinaryValue(DataModel_t* model) {
 	// Get immediate value as integer (rounded UP to word address.

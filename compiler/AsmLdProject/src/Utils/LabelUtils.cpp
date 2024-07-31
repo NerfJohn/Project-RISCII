@@ -1,10 +1,12 @@
 /*
  * LabelUtils.cpp
  *
- *  Created on: Jul 27, 2024
- *      Author: John
+ * "Helper functions for working with (special) labels"
  */
 
+#include "DeviceLayer/Printer.h"
+#include "DeviceLayer/Terminate.h"
+#include "Items/IBuildItem.h"
 #include "Utils/TargetUtils.h"
 
 #include "Utils/LabelUtils.h"
@@ -49,6 +51,38 @@ RetErr_e LabelUtils_initPreDefs(std::map<std::string, LabelData_t>& table) {
 
 	// Return result of process.
 	return retCode;
+}
+
+//==============================================================================
+// Simple getter for program start label name.
+std::string LabelUtils_getStartName(void) {
+	// Simple getter- simple return.
+	return START_LABEL;
+}
+
+//==============================================================================
+// Checks if pre-defined "program start" label is valid for translation.
+bool LabelUtils_isStartValid(std::map<std::string, LabelData_t>& table) {
+	// Returned boolean- indicating validity of start label.
+	bool retBool = true; // assume valid till proven otherwise
+
+	// Get the item associate with the start label.
+	if (table.find(START_LABEL) == table.end()) {
+		// Table's pre-defs weren't initialized? Design flaw!
+		string assertStr = START_LABEL + " missing from table";
+		Printer::getInst()->printAssert(assertStr);
+		Terminate::getInst()->exit(REASON_ASSERT);
+	}
+	IBuildItem* startItem = table.at(START_LABEL).m_labelItem;
+
+	// Start item must exist and be within text section.
+	if ((startItem == nullptr) || !startItem->isTextContent()) {
+		// NOT a valid item for start label.
+		retBool = false;
+	}
+
+	// Return result of checks.
+	return retBool;
 }
 
 //==============================================================================

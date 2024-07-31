@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
 		.m_openLabels   = vector<string>(),      // no open labels to start
 		.m_labelTable   = labelTable,            // empty table
 		.m_items        = vector<IBuildItem*>(), // no items at start
+		.m_prgmStart    = nullptr,               // no initial program start
 		.m_numTextBytes = 0,                     // no initial bytes
 		.m_numDataBytes = 0,                     // no initial bytes
 		.m_numBssBytes  = 0,                     // no initial bytes

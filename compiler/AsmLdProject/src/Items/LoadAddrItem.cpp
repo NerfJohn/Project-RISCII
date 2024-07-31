@@ -106,6 +106,13 @@ void LoadAddrItem::doGlobalAnalysis(DataModel_t* model) {
 }
 
 //==============================================================================
+// Confirms if item's contents are placed in text section of binary.
+bool LoadAddrItem::isTextContent(void) {
+	// Function generates instructions in text section.
+	return true;
+}
+
+//==============================================================================
 // Translates item's values into binary words. Populates model's sections.
 void LoadAddrItem::generateBinaryValue(DataModel_t* model) {
 	// Requires label resolution to generate- add placeholders.

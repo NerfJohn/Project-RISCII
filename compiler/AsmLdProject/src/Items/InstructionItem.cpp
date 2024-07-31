@@ -176,6 +176,13 @@ void InstructionItem::doGlobalAnalysis(DataModel_t* model) {
 }
 
 //==============================================================================
+// Confirms if item's contents are placed in text section of binary.
+bool InstructionItem::isTextContent(void) {
+	// Instruction are placed in text section.
+	return true;
+}
+
+//==============================================================================
 // Translates item's values into binary words. Populates model's sections.
 void InstructionItem::generateBinaryValue(DataModel_t* model) {
 	// Fields to populate with instruction data.
