@@ -51,6 +51,7 @@ typedef enum {
 	LEX_ddata,
 	LEX_S,                         // "S" keywords
 	LEX_SH,
+	LEX_SHL,
 	LEX_SHR
 } LexState_e;
 

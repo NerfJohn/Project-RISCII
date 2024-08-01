@@ -175,8 +175,13 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			LABEL        TO(LEX_LABEL_LOOP)
 			break;
 		case LEX_SH:
+			IS('L')      TO(LEX_SHL)
 			IS('R')      TO(LEX_SHR)
 			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_SHL:
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_SHL)
 			break;
 		case LEX_SHR:
 			LABEL        TO(LEX_LABEL_LOOP)

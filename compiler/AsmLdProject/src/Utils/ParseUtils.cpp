@@ -42,6 +42,12 @@ STATES(PATTERN_DATA)        = {ITEM(PARSE_START),
 							   ITEM(PARSE_DATA_VALUE)
                               };
 STATES(PATTERN_ARRAY)       = {ITEM(PARSE_DATA_ELEMENT)};
+STATES(PATTERN_DATA_INSTR)  = {ITEM(PARSE_START),
+		                       ITEM(ACTION_BUILD_INSTRUCTION),
+							   ITEM(PARSE_3RD_OP),
+							   ITEM(TOKEN_REGISTER),
+							   ITEM(TOKEN_REGISTER)
+                              };
 STATES(PATTERN_SHR_INSTR)   = {ITEM(PARSE_START),
 		                       ITEM(ACTION_BUILD_INSTRUCTION),
 		                       ITEM(PARSE_3RD_OP),
@@ -97,6 +103,7 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 	vector<ParseState_e> const * nextStates = nullptr;
 	switch (stack->top()) {
 		case PARSE_START:                                // sequence start
+			IS(TOKEN_SHL)       USE(PATTERN_DATA_INSTR)
 			IS(TOKEN_SHR)       USE(PATTERN_SHR_INSTR)
 			IS(TOKEN_EOF)       USE(PATTERN_EPSILON)
 			IS(TOKEN_LABEL)     USE(PATTERN_LABEL_DECL)

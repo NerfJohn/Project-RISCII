@@ -40,6 +40,7 @@ InstrType_e TargetUtils_asInstr(LexToken_e token) {
 
 	// Determine matching instruction (switch in case tokens not contiguous).
 	switch(token) {
+		case TOKEN_SHL: retInstr = INSTR_SHL; break;
 		case TOKEN_SHR: retInstr = INSTR_SHR; break;
 		default: retInstr = INSTR_INVALID; break; // No matching instruction
 	}
@@ -57,6 +58,7 @@ bool TargetUtils_isValidFlag(InstrType_e instr, uint8_t flag) {
 	// Check flag against instruction's available flags.
 	switch (instr) {
 	    case INSTR_SHR: retBool = (SHR_FLAGS.find(flag) != string::npos); break;
+	    case INSTR_SHL: // fall-through
 		default:        retBool = false; // no flags supported
 	}
 
@@ -73,6 +75,7 @@ std::string TargetUtils_getInstrFlags(InstrType_e instr) {
 	// Get instruction's available flags.
 	switch (instr) {
 	    case INSTR_SHR: retStr = SHR_FLAGS; break;
+	    case INSTR_SHL: // fall-through
 		default: break; // no flags supported
 	}
 
@@ -102,6 +105,7 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm) {
 
 	// Use instruction to determine check/result.
 	switch (instr) {
+		case INSTR_SHL: // fall-through
 		case INSTR_SHR: retBool = IN_UINT4_RANGE(imm); break;
 		default: retBool = false; // instruction doesn't support immediate
 	}
@@ -118,6 +122,7 @@ std::string TargetUtils_getImmType(InstrType_e instr) {
 
 	// Get instruction's range type.
 	switch (instr) {
+		case INSTR_SHL: // fall-through
 	    case INSTR_SHR: retStr = UINT4; break;
 		default:  retStr = NO_TYPE; break; // no immediate type supported
 	}

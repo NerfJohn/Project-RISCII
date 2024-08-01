@@ -12,6 +12,17 @@
 #include "Items/IBuildItem.h"
 
 /*
+ * TODO- Implement rest of insstructions.
+ *
+ * Places to update/of note:
+ * -> Lexing files (Lex Utils/State/Token)
+ * -> Parsing files (ParseUtils/State)
+ * -> InstrType.h
+ * -> TargetUtils (InstrType and flag conversions/lookups)
+ * -> BinaryUtils (generation of actual instruction)
+ */
+
+/*
  * Class to hold data and functions related to binary instructions.
  *
  * Created from a parser's output, the instruction item implements the functions

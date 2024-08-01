@@ -100,6 +100,7 @@ int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
 
 	// Format non-flag items (ie instruction format base).
 	switch (fields.m_opcode) {
+		case INSTR_SHL: // fall-through
      	case INSTR_SHR:
      		// Shift instruction- format based on 3rd operand.
      		retInstr = (fields.m_imm == INSTRFIELDS_NO_IMM) ?
