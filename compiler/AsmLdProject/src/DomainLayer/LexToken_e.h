@@ -23,8 +23,11 @@ typedef enum {
 	TOKEN_EOF,                       // End-of-File character
 	TOKEN_LABEL,                     // Label/Address Identifier
 	TOKEN_COLON,                     // Colon (used to denote label decls)
+	TOKEN_LCURLY,                    // Left Curly brace (for data array)
+	TOKEN_RCURLY,                    // Right Cury brace (for data arrray)
 	TOKEN__la,                       // Function keyword "_la"
 	TOKEN_dbss,                      // keyword ".bss"
+	TOKEN_ddata,                     // keyword ".data"
 	TOKEN_SHR,                       // SHR instruction keyword
 
 	// Special values.

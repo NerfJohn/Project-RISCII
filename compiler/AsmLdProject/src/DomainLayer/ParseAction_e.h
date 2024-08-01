@@ -22,6 +22,7 @@ typedef enum {
 	ACTION_BUILD_LABEL_DECL,                      // Build label decl item
 	ACTION_BUILD_LOAD_ADDR,                       // Build load addr item
 	ACTION_BUILD_BSS,                             // Build Bss item
+	ACTION_BUILD_DATA,                            // Build Data item
 
 	// Special values.
 	ACTION_INVALID,                               // Unknown/Invalid action

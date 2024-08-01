@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
 
 		// Values related to prepping for file writing.
 		.m_textSection  = vector<uint16_t>(),    // no initial section
+		.m_dataSection  = vector<uint16_t>(),    // no initial section
 		.m_bssSection   = 0                      // no initial bytes
 	};
 

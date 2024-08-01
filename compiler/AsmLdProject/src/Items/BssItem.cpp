@@ -123,7 +123,7 @@ bool BssItem::isTextContent(void) {
 //==============================================================================
 // Translates item's values into binary words. Populates model's sections.
 void BssItem::generateBinaryValue(DataModel_t* model) {
-	// Get immediate value as integer (rounded UP to word address.
+	// Get immediate value as integer (rounded UP to word address).
 	int32_t immInt = 0;
 	StringUtils_asInt(m_imm->m_rawStr, &immInt);
 	if (immInt % 2) {immInt++;}

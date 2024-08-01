@@ -37,6 +37,10 @@ STATES(PATTERN_BSS)         = {ITEM(PARSE_START),
 		                       ITEM(ACTION_BUILD_BSS),
 							   ITEM(TOKEN_IMMEDIATE)
                               };
+STATES(PATTERN_DATA)        = {ITEM(PARSE_START),
+		                       ITEM(ACTION_BUILD_DATA),
+							   ITEM(TOKEN_IMMEDIATE)
+                              };
 STATES(PATTERN_SHR_INSTR)   = {ITEM(PARSE_START),
 		                       ITEM(ACTION_BUILD_INSTRUCTION),
 		                       ITEM(PARSE_3RD_OP),
@@ -97,6 +101,7 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 			IS(TOKEN_LABEL)     USE(PATTERN_LABEL_DECL)
 			IS(TOKEN__la)       USE(PATTERN_FUNC_LA)
 			IS(TOKEN_dbss)      USE(PATTERN_BSS)
+			IS(TOKEN_ddata)     USE(PATTERN_DATA)
 			break;
 		case PARSE_OPT_FLAG:                             // optional flag
 			IS(TOKEN_FLAGS)     USE(PATTERN_REGISTER)

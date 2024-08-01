@@ -7,6 +7,7 @@
 #include "DeviceLayer/Printer.h"
 #include "DeviceLayer/Terminate.h"
 #include "Items/BssItem.h"
+#include "Items/DataItem.h"
 #include "Items/InstructionItem.h"
 #include "Items/LabelDeclItem.h"
 #include "Items/LoadAddrItem.h"
@@ -63,6 +64,9 @@ std::vector<IBuildItem*>* Parser::parseTokens(DataModel_t* model,
 					break;
 				case ACTION_BUILD_BSS:
 					newItem = new BssItem(&buildTkns);
+					break;
+				case ACTION_BUILD_DATA:
+					newItem = new DataItem(&buildTkns);
 					break;
 				default:
 					// Unexpected action- design flaw. Assert!

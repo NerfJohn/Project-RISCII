@@ -47,10 +47,10 @@ void GenerateImageStep_generateImage(DataModel_t& model) {
 
 	// Populate the binary image (as applicable).
 	if (writeFile->isOpen()) {
-		// Text section meta data (last RAM address for text).
-		uint16_t textMeta = TARGETUTILS_TEXT_META_BASE
-				            + model.m_numTextBytes
-							- TARGETUTILS_WORD_SIZE;
+		// Text section meta data (last used RAM address for text).
+		uint16_t textMeta = TARGETUTILS_TEXT_META_BASE +
+				            ((model.m_numTextBytes - TARGETUTILS_WORD_SIZE) /
+							TARGETUTILS_WORD_SIZE);
 		writeFile->writeByte((uint8_t)(UPPER_BYTE(textMeta)));
 		writeFile->writeByte((uint8_t)(LOWER_BYTE(textMeta)));
 
@@ -64,12 +64,18 @@ void GenerateImageStep_generateImage(DataModel_t& model) {
 			writeFile->writeByte((uint8_t)(LOWER_BYTE(instr)));
 		}
 
-		// Data section + meta data // TODO- implement
-		uint16_t dataMeta = TARGETUTILS_DATA_META_BASE;
+		// Data section meta data (last used RAM address for data).
+		uint16_t dataMeta = TARGETUTILS_DATA_META_BASE +
+				            ((model.m_numDataBytes - TARGETUTILS_WORD_SIZE) /
+							TARGETUTILS_WORD_SIZE);
 		writeFile->writeByte((uint8_t)(UPPER_BYTE(dataMeta)));
 		writeFile->writeByte((uint8_t)(LOWER_BYTE(dataMeta)));
-		writeFile->writeByte(0x00);
-		writeFile->writeByte(0x00);
+
+		// Data section.
+		for (uint16_t value : model.m_dataSection) {
+			writeFile->writeByte((uint8_t)(UPPER_BYTE(value)));
+			writeFile->writeByte((uint8_t)(LOWER_BYTE(value)));
+		}
 
 		// (Inform debugging users).
 		dbgStr = string("Written data metadata: ") + to_string(dataMeta);

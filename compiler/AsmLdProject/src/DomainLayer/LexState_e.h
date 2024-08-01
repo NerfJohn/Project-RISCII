@@ -36,10 +36,14 @@ typedef enum {
 	LEX__,                         // "_la" keyword
 	LEX__l,
 	LEX__la,
-	LEX_d,                         // ".bss" keyword
+	LEX_d,                         // "dot" keywords/directives
 	LEX_db,
 	LEX_dbs,
 	LEX_dbss,
+	LEX_dd,
+	LEX_dda,
+	LEX_ddat,
+	LEX_ddata,
 	LEX_S,                         // "S" keywords
 	LEX_SH,
 	LEX_SHR

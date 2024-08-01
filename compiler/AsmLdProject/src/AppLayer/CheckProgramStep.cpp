@@ -26,7 +26,17 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 	// Check label table for error/warnings.
 	model->m_labelTable.validateTable(*model);
 
-	// TODO- adjust data size in event of no data (BEFORE sizing checks)
+	// Ensure at least one data word exists (requirement of binary/hardware).
+	if (model->m_numDataBytes == 0) {
+		// Add dummy word.
+		model->m_dataSection.push_back(0);
+		model->m_numDataBytes += TARGETUTILS_WORD_SIZE;
+
+		// (Inform debugging users).
+		string dbgStr = string("No data section- adding \"0x0000\" to meet ") +
+				        "target's binary requirements";
+		Printer::getInst()->log(LOG_DEBUG, dbgStr);
+	}
 
 	// Check if projected text section will fit.
 	uint32_t textSize    = model->m_numTextBytes;
@@ -57,7 +67,9 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 	}
 
 	// Check if projected binary image is within target's size.
-	uint32_t binSize    = model->m_numTextBytes + TARGETUTILS_METADATA_SIZE;
+	uint32_t binSize    = model->m_numTextBytes +
+			              model->m_numDataBytes +
+						  TARGETUTILS_METADATA_SIZE;
 	uint32_t maxBinSize = TARGETUTILS_MAX_BIN_SIZE;
 	if (binSize > maxBinSize) {
 		// Report sizing of text section.
@@ -76,16 +88,16 @@ void CheckProgramStep_checkProgram(DataModel_t* model) {
 					 "/" +
 					 to_string(TARGETUTILS_MAX_BIN_SIZE) +
 					 " bytes (Text = " +
-					 to_string(textSize) +
+					 to_string(model->m_numTextBytes) +
 					 ", Data = " +
-					 "0" +
+					 to_string(model->m_numDataBytes) +
 					 ")";
 	string infoStr2 = string("RAM = ") +
 			          to_string(dataSize) +
 					  "/" +
 					  to_string(TARGETUTILS_MAX_MEM_SIZE) +
 					  " bytes (Data = " +
-					  "0" +
+					  to_string(model->m_numDataBytes) +
 					  ", Bss = " +
 					  to_string(model->m_numBssBytes) +
 					  ")";

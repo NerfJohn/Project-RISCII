@@ -123,6 +123,7 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			break;
 		case LEX_d:                              // ".data/.bss" keywords
 			IS('b')      TO(LEX_db)
+			IS('d')      TO(LEX_dd)
 			break;
 		case LEX_db:
 			IS('s')      TO(LEX_dbs)
@@ -132,6 +133,18 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			break;
 		case LEX_dbss:
 			ELSE         HAVE(TOKEN_dbss)
+			break;
+		case LEX_dd:
+			IS('a')      TO(LEX_dda)
+			break;
+		case LEX_dda:
+			IS('t')      TO(LEX_ddat)
+			break;
+		case LEX_ddat:
+			IS('a')      TO(LEX_ddata)
+			break;
+		case LEX_ddata:
+			ELSE         HAVE(TOKEN_ddata)
 			break;
 		case LEX_S:                              // "S" keywords
 			IS('H')      TO(LEX_SH)
