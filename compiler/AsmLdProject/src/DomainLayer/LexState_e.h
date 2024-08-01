@@ -33,6 +33,8 @@ typedef enum {
 	LEX_DECIMAL_LOOP,              // Decimal valid- greedy
 	LEX_LABEL_LOOP,                // Label valid- greedy
 	LEX_COLON_FOUND,               // Colon found- confirmed 1 char token
+	LEX_LCURLY_FOUND,              // Left curly found- confirmed 1 char token
+	LEX_RCURLY_FOUND,              // Right curly found- confirmed 1 char token
 	LEX__,                         // "_la" keyword
 	LEX__l,
 	LEX__la,

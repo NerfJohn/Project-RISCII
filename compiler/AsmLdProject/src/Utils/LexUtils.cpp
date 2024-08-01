@@ -56,6 +56,8 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IS('-')      TO(LEX_MINUS_HANDLE)
 			IN('1', '9') TO(LEX_DECIMAL_LOOP)
 			IS(':')      TO(LEX_COLON_FOUND)
+			IS('{')      TO(LEX_LCURLY_FOUND)
+			IS('}')      TO(LEX_RCURLY_FOUND)
 			IS('_')      TO(LEX__)
 			IS('.')      TO(LEX_d)
 			IS('S')      TO(LEX_S)
@@ -108,6 +110,12 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			break;
 		case LEX_COLON_FOUND:                    // guaranteed colon token
 			ELSE         HAVE(TOKEN_COLON)
+			break;
+		case LEX_LCURLY_FOUND:                   // guaranteed left curly token
+			ELSE         HAVE(TOKEN_LCURLY)
+			break;
+		case LEX_RCURLY_FOUND:                   // guaranteed right curly token
+			ELSE         HAVE(TOKEN_RCURLY)
 			break;
 		case LEX__:                              // "_la" keyword
 			IS('l')      TO(LEX__l)

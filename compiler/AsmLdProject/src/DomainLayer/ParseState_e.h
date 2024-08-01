@@ -21,8 +21,10 @@
 typedef enum {
 	// Cores values (extended from ParseAction_e).
 	PARSE_START = ACTION_PARSE_MAX + 1, // Start of assembly file parsing
-	PARSE_OPT_FLAG,
-	PARSE_3RD_OP
+	PARSE_OPT_FLAG,                     // Instr w/ optional flag (vs reg)
+	PARSE_3RD_OP,                       // Instr w/ imm vs reg for 3rd operand
+	PARSE_DATA_VALUE,                   // Data value to init in data section
+	PARSE_DATA_ELEMENT                  // Element in data init array
 } ParseState_e;
 
 #endif /* SRC_DOMAINLAYER_PARSESTATE_E_H_ */
