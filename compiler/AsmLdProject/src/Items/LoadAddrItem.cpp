@@ -173,6 +173,16 @@ void LoadAddrItem::resolveBinaryLabels(DataModel_t& model) {
 	// Overwrite placeholders with actual values.
 	model.m_textSection.at(m_textIdx)     = firstInstr;
 	model.m_textSection.at(m_textIdx + 1) = secondInstr;
+
+	// (Inform debugging users).
+	string dbgStr = "Label \"" +
+			        m_label->m_rawStr +
+					"\" resolved to address " +
+					to_string(addr);
+	Printer::getInst()->log(LOG_DEBUG,
+			                m_label->m_orignFile,
+							m_label->m_originLine,
+							dbgStr);
 }
 
 //==============================================================================

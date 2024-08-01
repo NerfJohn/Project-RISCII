@@ -216,6 +216,16 @@ void DataItem::resolveBinaryLabels(DataModel_t& model) {
 
 			// Pop index to get next label's index.
 			m_labelValIdx.pop();
+
+			// (Inform debugging users).
+			string dbgStr = "Label \"" +
+					        value->m_rawStr +
+							"\" resolved to address " +
+							to_string(addr);
+			Printer::getInst()->log(LOG_DEBUG,
+					                value->m_orignFile,
+									value->m_originLine,
+									dbgStr);
 		}
 	}
 }
