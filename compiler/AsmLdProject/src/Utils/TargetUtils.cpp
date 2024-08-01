@@ -16,7 +16,7 @@ using namespace std;
 // Definitions for limits on int/uint values.
 #define IN_UINT3_RANGE(x)  ((0 <= (x)) && ((x) <= 7))
 #define IN_UINT4_RANGE(x)  ((0 <= (x)) && ((x) <= 15))
-#define IN_UINT16_RANGE(x) ((0 <= (x)) && ((x) <= 65536))
+#define IN_UINT16_RANGE(x) ((0 <= (x)) && ((x) <= 65535))
 #define IN_INT16_RANGE(x)  ((-32768 <= (x)) && ((x) <= 32767))
 
 // Definitions for types of int/uint values.

@@ -47,7 +47,7 @@ LoadAddrItem::LoadAddrItem(std::queue<ScanToken_t*>* tokens) {
 	tokens->pop();
 
 	// (Inform debugging users).
-	string dbgStr = " Load Address Item created";
+	string dbgStr = "Load Address Item created";
 	Printer::getInst()->log(LOG_DEBUG,
 			                m_label->m_orignFile,
 							m_label->m_originLine,
