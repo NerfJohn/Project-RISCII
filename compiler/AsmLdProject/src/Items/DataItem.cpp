@@ -22,7 +22,7 @@ DataItem::DataItem(std::queue<ScanToken_t*>* tokens) {
 	m_origFile    = "";
 	m_origLine    = 0;
 	m_vals        = vector<ScanToken_t*>();
-	m_labelValIdx = vector<uint32_t>();
+	m_labelValIdx = queue<uint32_t>();
 	m_dataIdx     = 0;
 
 	// Use the keyword to denote item's location.
@@ -92,6 +92,19 @@ void DataItem::doLocalAnalysis(DataModel_t* model) {
 				ErrorUtils_includeReason(model, REASON_BAD_IMM);
 			}
 		}
+		else if (value->m_lexTkn == TOKEN_LABEL) {
+			// Use of label- record usage.
+			model->m_labelTable.useLabel(value->m_rawStr);
+
+			// (Inform debugging users).
+			string dbgStr = "Label \"" +
+					        value->m_rawStr +
+							"\" referenced";
+			Printer::getInst()->log(LOG_DEBUG,
+					                value->m_orignFile,
+									value->m_originLine,
+									dbgStr);
+		}
 		else {
 			// Unknown value type- assert!.
 			string assertStr = "unknown value type analyzed in data item";
@@ -125,6 +138,10 @@ void DataItem::doGlobalAnalysis(DataModel_t* model) {
 		// Run appropriate check based on type.
 		if (value->m_lexTkn == TOKEN_IMMEDIATE) {
 			// Immediates are always resolved to one word.
+			model->m_numDataBytes += TARGETUTILS_WORD_SIZE;
+		}
+		else if (value->m_lexTkn == TOKEN_LABEL) {
+			// Labels/addresses are always 16-bits.
 			model->m_numDataBytes += TARGETUTILS_WORD_SIZE;
 		}
 		else {
@@ -161,6 +178,12 @@ void DataItem::generateBinaryValue(DataModel_t* model) {
 			// "Allocate" word in data section.
 			model->m_dataSection.push_back(immWord);
 		}
+		else if (value->m_lexTkn == TOKEN_LABEL) {
+			// Add placeholder (of known location) until label can be realized.
+			uint16_t placeholder = 0x0000;
+			m_labelValIdx.push(model->m_dataSection.size());
+			model->m_dataSection.push_back(placeholder);
+		}
 		else {
 			// Unknown value type- assert!.
 			string assertStr = "unknown value type translated in data item";
@@ -173,7 +196,28 @@ void DataItem::generateBinaryValue(DataModel_t* model) {
 //==============================================================================
 // Resolves any binary generations reliant on label resolution.
 void DataItem::resolveBinaryLabels(DataModel_t& model) {
-	// TODO- implement with labels
+	// Search values for labels to resolve.
+	for (ScanToken_t* value : m_vals) {
+		// Only resolve labels.
+		if (value->m_lexTkn == TOKEN_LABEL) {
+			// Get the resolved label address.
+			uint32_t addr = 0x0000;
+			RetErr_e retErr = model.m_labelTable.getAddress(model,
+					                                        value->m_rawStr,
+															addr);
+			if (retErr) {
+				// By this point, un-paired items should be filtered.
+				Printer::getInst()->printAssert("unable to get label address");
+				Terminate::getInst()->exit(REASON_ASSERT);
+			}
+
+			// Replace placeholder with address.
+			model.m_dataSection[m_labelValIdx.front()] = addr;
+
+			// Pop index to get next label's index.
+			m_labelValIdx.pop();
+		}
+	}
 }
 
 //==============================================================================

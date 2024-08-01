@@ -110,7 +110,7 @@ private:
 	std::vector<ScanToken_t*> m_vals;
 
 	// Indices needed for label resolution.
-	std::vector<uint32_t>     m_labelValIdx;
+	std::queue<uint32_t>      m_labelValIdx;
 	uint32_t                  m_dataIdx;
 };
 
