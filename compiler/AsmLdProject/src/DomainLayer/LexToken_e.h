@@ -20,6 +20,7 @@ typedef enum {
 	TOKEN_FLAGS,                     // Flag bit(s) variable
 	TOKEN_REGISTER,                  // Register file variable
 	TOKEN_IMMEDIATE,                 // Constant integer value (decimal or hex)
+	TOKEN_STR_LIT,                   // String literal
 	TOKEN_EOF,                       // End-of-File character
 	TOKEN_LABEL,                     // Label/Address Identifier
 	TOKEN_COLON,                     // Colon (used to denote label decls)

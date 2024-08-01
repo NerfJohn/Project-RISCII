@@ -13,7 +13,11 @@
 #include "Items/IBuildItem.h"
 
 /*
- * TODO
+ * Class to hold data and functions related to initialized data.
+ *
+ * Created from a parser's output, the data item implements the function needed
+ * to check and translate the given tokens into initialized data in the data
+ * section. Class assumes it is the final owner of the given scan tokens.
  */
 class DataItem: public IBuildItem {
 public:

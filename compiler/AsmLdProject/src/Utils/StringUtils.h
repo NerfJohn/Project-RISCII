@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include "DomainLayer/RetErr_e.h"
 
 /*
  * Generates list of repeated chars in given string.
@@ -33,6 +34,33 @@ std::vector<uint8_t> StringUtils_getRepeatChars(std::string inText);
  * @return string with same char as input, but without repeated chars
  */
 std::string StringUtils_getNoRepeats(std::string inText);
+
+/*
+ * Creates list of chars used for unrecognized escapes in given string.
+ *
+ * Intended to find unrecognized escape sequences in parsed string literals.
+ * Unresolved escapes (ie backslash at end of string) cannot be indicated
+ * directly, but will result in a failed return code.
+ *
+ * @param strLit string literal to scan for bad escapes
+ * @param chars created list of found bad escapes
+ * @return zero for success, non-zero otherwise
+ */
+RetErr_e StringUtils_getBadEscapes(std::string strLit, std::string& chars);
+
+/*
+ * Converts string into bytes. Handles escape chars and ignores wrapping quotes.
+ *
+ * Intended to get true byte values of a string literal. Escape chars are
+ * converted into one character, and wrapping quotes are ignored for
+ * convenience. Bytes are in same order as they appear in string literal.
+ *
+ * @param strLit string literal to convert to bytes
+ * @param bytes list of bytes created from string literal
+ * @return zero for success, non-zero otherwise
+ */
+RetErr_e StringUtils_asBytes(std::string const strLit,
+		                     std::vector<uint8_t>& bytes);
 
 /*
  * Converts string-ified uint into a typical uint. Handles decimal and hex.

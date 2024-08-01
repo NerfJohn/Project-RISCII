@@ -115,11 +115,13 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 		case PARSE_DATA_VALUE:                           // initial data value
 			IS(TOKEN_IMMEDIATE) USE(PATTERN_EPSILON)
 			IS(TOKEN_LABEL)     USE(PATTERN_EPSILON)
+			IS(TOKEN_STR_LIT)   USE(PATTERN_EPSILON)
 			IS(TOKEN_LCURLY)    USE(PATTERN_ARRAY)
 			break;
 		case PARSE_DATA_ELEMENT:                         // "n" elements
 			IS(TOKEN_IMMEDIATE) USE(PATTERN_ARRAY)
 			IS(TOKEN_LABEL)     USE(PATTERN_ARRAY)
+			IS(TOKEN_STR_LIT)   USE(PATTERN_ARRAY)
 			IS(TOKEN_RCURLY)    USE(PATTERN_EPSILON)
 			break;
 		default:

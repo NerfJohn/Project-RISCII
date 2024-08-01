@@ -46,6 +46,7 @@ typedef enum {
 	REASON_NO_DEF_LABEL = 0x90, // Label is used, but not defined
 	REASON_BIG_DATABSS  = 0x91, // Data + Bss cannot fit in RAM
 	REASON_BAD_START    = 0x92, // Start label not tied to text section
+	REASON_BAD_ESCAPE   = 0x93, // Unrecognized escape char in string literal
 	REASON_ERROR_MAX    = 0xBF  // Sentinel value for error range
 } ExitReasonType_e;
 

@@ -17,6 +17,14 @@ using namespace std;
 #define HEX_BASE       (16)
 #define DEC_BASE       (10)
 
+// Definitions for recognized escape chars.
+#define ESC_NULL       ('0')
+#define ESC_BSLASH     ('\\')
+#define ESC_QUOTE      ('"')
+#define ESC_NEWLINE    ('n')
+#define ESC_RETURN     ('r')
+#define ESC_TAB        ('t')
+
 // Definitions for extracting parts of filenames.
 #define FILE_DELIMITER ('.')
 
@@ -72,6 +80,87 @@ std::string StringUtils_getNoRepeats(std::string inText) {
 
 	// Return "slimmed" string.
 	return retStr;
+}
+
+//==============================================================================
+// Creates list of chars used for unrecognized escapes in given string.
+RetErr_e StringUtils_getBadEscapes(std::string strLit, std::string& chars) {
+	// Return code indicating success of process.
+	RetErr_e retCode = RET_GOOD; // innocent till guilty
+
+	// Search string for escape chars.
+	bool prevCharBslash = false; // no char checked yet
+	for (size_t i = 0; i < strLit.size(); i++) {
+		// Get char from string.
+		char curChar = strLit[i];
+
+		// Add bad escape chars to the list (as applicable).
+		if (prevCharBslash &&
+			(curChar != ESC_NULL) &&
+			(curChar != ESC_BSLASH) &&
+			(curChar != ESC_QUOTE) &&
+			(curChar != ESC_NEWLINE) &&
+			(curChar != ESC_RETURN) &&
+			(curChar != ESC_TAB)) {
+			// Add escape char.
+			chars += curChar;
+		}
+
+		// Factor for backslashes (skipping over escaped ones).
+		prevCharBslash = (!prevCharBslash && (curChar == ESC_BSLASH));
+	}
+
+	// Catch "open escapes" (can't directly imply with string).
+	if (prevCharBslash) {retCode = RET_FAIL;}
+
+	// Return indication of process result.
+	return retCode;
+}
+
+//==============================================================================
+// Converts string into bytes. Handles escape chars and ignores wrapping quotes.
+RetErr_e StringUtils_asBytes(std::string const strLit,
+		                     std::vector<uint8_t>& bytes) {
+	// Return code indicating success of process.
+	RetErr_e retCode = RET_GOOD; // innocent till guilty
+
+	// Add each byte in order.
+	bool prevCharBslash = false; // no char checked yet
+	for (size_t i = 0; i < strLit.size(); i++) {
+		// Get char from string.
+		char curChar = strLit[i];
+
+		// Add char (factoring for escaped chars as needed).
+		if (!prevCharBslash) {
+			// Typical char (unless start of escape or 'wrapping' quotes).
+			if ((curChar != ESC_BSLASH) && (curChar != ESC_QUOTE)) {
+				bytes.push_back((uint8_t)(curChar));
+			}
+		}
+		else {
+			// Escaped char- append "translated" escape.
+			switch (curChar) {
+				case ESC_NULL:    bytes.push_back('\0'); break;
+				case ESC_BSLASH:  bytes.push_back('\\'); break;
+				case ESC_QUOTE:   bytes.push_back('\"'); break;
+				case ESC_NEWLINE: bytes.push_back('\n'); break;
+				case ESC_RETURN:  bytes.push_back('\r'); break;
+				case ESC_TAB:     bytes.push_back('\t'); break;
+				default:
+					// Unrecognized escape- failure.
+					retCode = RET_FAIL;
+			}
+		}
+
+		// Factor for backslashes (skipping over escaped ones).
+		prevCharBslash = (!prevCharBslash && (curChar == ESC_BSLASH));
+	}
+
+	// Catch "open escapes" (can't directly imply with string).
+	if (prevCharBslash) {retCode = RET_FAIL;}
+
+	// Return indication of process result.
+	return retCode;
 }
 
 //==============================================================================

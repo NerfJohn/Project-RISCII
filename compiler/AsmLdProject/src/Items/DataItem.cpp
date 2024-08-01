@@ -64,8 +64,6 @@ void DataItem::doLocalAnalysis(DataModel_t* model) {
 	for (ScanToken_t* value : m_vals) {
 		// Run appropriate check based on type.
 		if (value->m_lexTkn == TOKEN_IMMEDIATE) {
-			// Immediate value //
-
 			// Get common accessed values.
 			string rawStr = value->m_rawStr;
 			string fileLoc = value->m_orignFile;
@@ -104,6 +102,28 @@ void DataItem::doLocalAnalysis(DataModel_t* model) {
 					                value->m_orignFile,
 									value->m_originLine,
 									dbgStr);
+		}
+		else if (value->m_lexTkn == TOKEN_STR_LIT) {
+			// Report any bad escape chars.
+			string badEscapes = "";
+			RetErr_e retErr = StringUtils_getBadEscapes(value->m_rawStr,
+					                                    badEscapes);
+			if (retErr) {
+				// String likely not lexed correctly- assert!
+				string assertStr = "Couldn't search string lit for bad escapes";
+				Printer::getInst()->printAssert(assertStr);
+				Terminate::getInst()->exit(REASON_ASSERT);
+			}
+			for (size_t i = 0; i < badEscapes.size(); i++) {
+				string errStr = string("Unrecognized escape char \"\\") +
+						        badEscapes[i] +
+								"\"";
+				Printer::getInst()->log(LOG_ERR,
+						                value->m_orignFile,
+										value->m_originLine,
+										errStr);
+				ErrorUtils_includeReason(model, REASON_BAD_ESCAPE);
+			}
 		}
 		else {
 			// Unknown value type- assert!.
@@ -144,6 +164,36 @@ void DataItem::doGlobalAnalysis(DataModel_t* model) {
 			// Labels/addresses are always 16-bits.
 			model->m_numDataBytes += TARGETUTILS_WORD_SIZE;
 		}
+		else if (value->m_lexTkn == TOKEN_STR_LIT) {
+			// Get the number of bytes in string literal.
+			vector<uint8_t> bytes;
+			RetErr_e retErr = StringUtils_asBytes(value->m_rawStr, bytes);
+			if (retErr) {
+				// String hasn't been checked? Design flaw...
+				string assertStr = "couldn't get string lit length";
+				Printer::getInst()->printAssert(assertStr);
+				Terminate::getInst()->exit(REASON_ASSERT);
+			}
+
+			// Report length (factoring for possible packing).
+			uint32_t strLen = bytes.size();
+			if (strLen % 2) {
+				// (Inform debugging users.)
+				string dbgStr = "Rounding string literal length \"" +
+						        to_string(strLen) +
+								"\" to word boundary (ie = " +
+								to_string(strLen + 1) +
+								")";
+				Printer::getInst()->log(LOG_DEBUG,
+						                value->m_orignFile,
+										value->m_originLine,
+										dbgStr);
+
+				// Round up.
+				strLen++;
+			}
+			model->m_numDataBytes += strLen;
+		}
 		else {
 			// Unknown value type- assert!.
 			string assertStr = "unknown value type checked in data item";
@@ -183,6 +233,31 @@ void DataItem::generateBinaryValue(DataModel_t* model) {
 			uint16_t placeholder = 0x0000;
 			m_labelValIdx.push(model->m_dataSection.size());
 			model->m_dataSection.push_back(placeholder);
+		}
+		else if (value->m_lexTkn == TOKEN_STR_LIT) {
+			// Translate string literal.
+			vector<uint8_t> bytes;
+			RetErr_e retErr = StringUtils_asBytes(value->m_rawStr, bytes);
+			if (retErr) {
+				// String hasn't been checked? Design flaw...
+				string assertStr = "couldn't translate string lit length";
+				Printer::getInst()->printAssert(assertStr);
+				Terminate::getInst()->exit(REASON_ASSERT);
+			}
+
+			// Add packing byte if not word aligned.
+			if (bytes.size() % 2) {bytes.push_back((uint8_t)(0x00));}
+
+			// Allocate as packed words in data section (little endian).
+			for (size_t i = 0; (i+1) < bytes.size(); i += 2) {
+				// Create word.
+				uint16_t newWord = 0x0000;
+				newWord |= bytes[i];          // low bits == low address
+				newWord |= (bytes[i+1] << 8); // high bits == high address
+
+				// Allocate word.
+				model->m_dataSection.push_back(newWord);
+			}
 		}
 		else {
 			// Unknown value type- assert!.

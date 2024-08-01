@@ -32,6 +32,9 @@ typedef enum {
 	LEX_HEX_LOOP,                  // Hex valid- greedy
 	LEX_DECIMAL_LOOP,              // Decimal valid- greedy
 	LEX_LABEL_LOOP,                // Label valid- greedy
+	LEX_STR_LOOP,                  // String invalid, but greedy
+	LEX_STR_ESC,                   // Escape char in string
+	LEX_STR_END,                   // End of valid string
 	LEX_COLON_FOUND,               // Colon found- confirmed 1 char token
 	LEX_LCURLY_FOUND,              // Left curly found- confirmed 1 char token
 	LEX_RCURLY_FOUND,              // Right curly found- confirmed 1 char token

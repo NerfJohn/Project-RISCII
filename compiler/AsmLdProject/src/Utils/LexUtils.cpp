@@ -55,6 +55,7 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IS('0')      TO(LEX_ZERO_HANDLE)
 			IS('-')      TO(LEX_MINUS_HANDLE)
 			IN('1', '9') TO(LEX_DECIMAL_LOOP)
+			IS('"')      TO(LEX_STR_LOOP)
 			IS(':')      TO(LEX_COLON_FOUND)
 			IS('{')      TO(LEX_LCURLY_FOUND)
 			IS('}')      TO(LEX_RCURLY_FOUND)
@@ -107,6 +108,21 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 		case LEX_LABEL_LOOP:                     // greedy grab label chars
 			LABEL        TO(LEX_LABEL_LOOP)
 			ELSE         HAVE(TOKEN_LABEL)
+			break;
+		case LEX_STR_LOOP:                       // string lit- loop over chars
+			IS('\\')     TO(LEX_STR_ESC)
+			IS('"')      TO(LEX_STR_END)
+			IS('\n')     TO(LEX_ERROR)
+			EOF          TO(LEX_ERROR)
+			ELSE         TO(LEX_STR_LOOP)
+			break;
+		case LEX_STR_ESC:                        // string escaped char
+			IS('\n')     TO(LEX_ERROR)
+			EOF          TO(LEX_ERROR)
+			ELSE         TO(LEX_STR_LOOP)
+			break;
+		case LEX_STR_END:                        // valid string literal found
+			ELSE         HAVE(TOKEN_STR_LIT)
 			break;
 		case LEX_COLON_FOUND:                    // guaranteed colon token
 			ELSE         HAVE(TOKEN_COLON)
