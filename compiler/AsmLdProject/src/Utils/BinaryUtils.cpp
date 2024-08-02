@@ -18,6 +18,7 @@ using namespace std;
 #define OPCODE_MASK (0xF)  // 4-bit
 #define REG_MASK    (0x7)  // 3-bit
 #define IMM4_MASK   (0xF)  // 4-bit
+#define IMM5_MASK   (0x1F) // 5-bit
 #define IMM8_MASK   (0xFF) // 8-bit
 
 // Macros to position bit fields.
@@ -75,6 +76,28 @@ uint16_t BinaryUtils_asInstrRRI4(InstrFields_t const& fields) {
 }
 
 //==============================================================================
+// Helper function to format "data action with imm5" instructions.
+uint16_t BinaryUtils_asInstrRRI5(InstrFields_t const& fields) {
+	// Returned formatted instruction.
+	uint16_t retInstr = 0x0000; // implicit 0s for unset bits
+
+	// Size arguments to bit fields.
+	uint16_t op  = OPCODE_MASK & (uint16_t)(fields.m_opcode);
+	uint16_t r1  = REG_MASK & fields.m_r1;
+	uint16_t r2  = REG_MASK & fields.m_r2;
+	uint16_t imm = IMM5_MASK & (uint16_t)(fields.m_imm);
+
+	// Format instruction.
+	retInstr = TO_BIT12(op) | TO_BIT9(r1) | TO_BIT6(r2) | TO_BIT0(imm);
+
+	// Immediate format requires flag (implied by immediate in assembly).
+	retInstr |= TO_BIT5(0x1);
+
+	// Return formatted instruction.
+	return retInstr;
+}
+
+//==============================================================================
 // Helper function to format "data action with imm8" instructions.
 uint16_t BinaryUtils_asInstrRI8(InstrFields_t const& fields) {
 	// Returned formatted instruction.
@@ -100,6 +123,14 @@ int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
 
 	// Format non-flag items (ie instruction format base).
 	switch (fields.m_opcode) {
+		case INSTR_AND: // fall-through
+		case INSTR_ORR: // fall-through
+		case INSTR_XOR:
+     		// Generic data instruction- format based on 3rd operand.
+     		retInstr = (fields.m_imm == INSTRFIELDS_NO_IMM) ?
+     				   BinaryUtils_asInstrRRR(fields) :
+					   BinaryUtils_asInstrRRI5(fields);
+     		break;
 		case INSTR_SHL: // fall-through
      	case INSTR_SHR:
      		// Shift instruction- format based on 3rd operand.

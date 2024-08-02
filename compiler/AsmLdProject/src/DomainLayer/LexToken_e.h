@@ -29,6 +29,9 @@ typedef enum {
 	TOKEN__la,                       // Function keyword "_la"
 	TOKEN_dbss,                      // keyword ".bss"
 	TOKEN_ddata,                     // keyword ".data"
+	TOKEN_AND,                       // AND instruction keyword
+	TOKEN_ORR,                       // ORR instruction keyword
+	TOKEN_XOR,                       // XOR instruction keyword
 	TOKEN_SHL,                       // SHL instruction keyword
 	TOKEN_SHR,                       // SHR instruction keyword
 

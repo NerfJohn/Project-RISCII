@@ -61,7 +61,10 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IS('}')      TO(LEX_RCURLY_FOUND)
 			IS('_')      TO(LEX__)
 			IS('.')      TO(LEX_d)
+			IS('A')      TO(LEX_A)
+			IS('O')      TO(LEX_O)
 			IS('S')      TO(LEX_S)
+			IS('X')      TO(LEX_X)
 			LABEL        TO(LEX_LABEL_LOOP)      // check after specifics chars
 			break;
 		case LEX_COMMENT_LOOP:                   // greedy grab comment
@@ -170,6 +173,30 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 		case LEX_ddata:
 			ELSE         HAVE(TOKEN_ddata)
 			break;
+		case LEX_A:                              // "A" keywords
+			IS('N')      TO(LEX_AN)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_AN:
+			IS('D')      TO(LEX_AND)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_AND:
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_AND)
+			break;
+		case LEX_O:                              // "O" keywords
+			IS('R')      TO(LEX_OR)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_OR:
+			IS('R')      TO(LEX_ORR)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_ORR:
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_ORR)
+			break;
 		case LEX_S:                              // "S" keywords
 			IS('H')      TO(LEX_SH)
 			LABEL        TO(LEX_LABEL_LOOP)
@@ -186,6 +213,18 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 		case LEX_SHR:
 			LABEL        TO(LEX_LABEL_LOOP)
 			ELSE         HAVE(TOKEN_SHR)
+			break;
+		case LEX_X:                              // "X" keywords
+			IS('O')      TO(LEX_XO)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_XO:
+			IS('R')      TO(LEX_XOR)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_XOR:
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_XOR)
 			break;
 		default:
 			// Transition from non-transition state- error.

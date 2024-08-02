@@ -49,10 +49,19 @@ typedef enum {
 	LEX_dda,
 	LEX_ddat,
 	LEX_ddata,
+	LEX_A,                         // "A" keywords
+	LEX_AN,
+	LEX_AND,
+	LEX_O,                         // "O" keywords
+	LEX_OR,
+	LEX_ORR,
 	LEX_S,                         // "S" keywords
 	LEX_SH,
 	LEX_SHL,
-	LEX_SHR
+	LEX_SHR,
+	LEX_X,                         // "X" keywords
+	LEX_XO,
+	LEX_XOR
 } LexState_e;
 
 #endif /* SRC_DOMAINLAYER_LEXSTATE_E_H_ */

@@ -103,6 +103,9 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 	vector<ParseState_e> const * nextStates = nullptr;
 	switch (stack->top()) {
 		case PARSE_START:                                // sequence start
+			IS(TOKEN_AND)       USE(PATTERN_DATA_INSTR)
+			IS(TOKEN_ORR)       USE(PATTERN_DATA_INSTR)
+			IS(TOKEN_XOR)       USE(PATTERN_DATA_INSTR)
 			IS(TOKEN_SHL)       USE(PATTERN_DATA_INSTR)
 			IS(TOKEN_SHR)       USE(PATTERN_SHR_INSTR)
 			IS(TOKEN_EOF)       USE(PATTERN_EPSILON)

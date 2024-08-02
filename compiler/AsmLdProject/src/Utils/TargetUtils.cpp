@@ -17,6 +17,7 @@ using namespace std;
 #define IN_UINT3_RANGE(x)  ((0 <= (x)) && ((x) <= 7))
 #define IN_UINT4_RANGE(x)  ((0 <= (x)) && ((x) <= 15))
 #define IN_UINT16_RANGE(x) ((0 <= (x)) && ((x) <= 65535))
+#define IN_INT5_RANGE(x)   ((-16 <= (x)) && ((x) <= 15))
 #define IN_INT16_RANGE(x)  ((-32768 <= (x)) && ((x) <= 32767))
 
 // Definitions for types of int/uint values.
@@ -24,6 +25,7 @@ using namespace std;
 #define UINT3    string("uint3")
 #define UINT4    string("uint4")
 #define UINT16   string("uint16")
+#define INT5     string("int5")
 #define ANYINT16 string("(u)int16")
 
 
@@ -40,6 +42,9 @@ InstrType_e TargetUtils_asInstr(LexToken_e token) {
 
 	// Determine matching instruction (switch in case tokens not contiguous).
 	switch(token) {
+		case TOKEN_AND: retInstr = INSTR_AND; break;
+		case TOKEN_ORR: retInstr = INSTR_ORR; break;
+		case TOKEN_XOR: retInstr = INSTR_XOR; break;
 		case TOKEN_SHL: retInstr = INSTR_SHL; break;
 		case TOKEN_SHR: retInstr = INSTR_SHR; break;
 		default: retInstr = INSTR_INVALID; break; // No matching instruction
@@ -58,6 +63,9 @@ bool TargetUtils_isValidFlag(InstrType_e instr, uint8_t flag) {
 	// Check flag against instruction's available flags.
 	switch (instr) {
 	    case INSTR_SHR: retBool = (SHR_FLAGS.find(flag) != string::npos); break;
+	    case INSTR_AND: // fall-through
+	    case INSTR_ORR: // fall-through
+	    case INSTR_XOR: // fall-through
 	    case INSTR_SHL: // fall-through
 		default:        retBool = false; // no flags supported
 	}
@@ -75,6 +83,9 @@ std::string TargetUtils_getInstrFlags(InstrType_e instr) {
 	// Get instruction's available flags.
 	switch (instr) {
 	    case INSTR_SHR: retStr = SHR_FLAGS; break;
+	    case INSTR_AND: // fall-through
+	    case INSTR_ORR: // fall-through
+	    case INSTR_XOR: // fall-through
 	    case INSTR_SHL: // fall-through
 		default: break; // no flags supported
 	}
@@ -105,6 +116,9 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm) {
 
 	// Use instruction to determine check/result.
 	switch (instr) {
+		case INSTR_AND: // fall-through
+	    case INSTR_ORR: // fall-through
+	    case INSTR_XOR: retBool = IN_INT5_RANGE(imm); break;
 		case INSTR_SHL: // fall-through
 		case INSTR_SHR: retBool = IN_UINT4_RANGE(imm); break;
 		default: retBool = false; // instruction doesn't support immediate
@@ -122,6 +136,9 @@ std::string TargetUtils_getImmType(InstrType_e instr) {
 
 	// Get instruction's range type.
 	switch (instr) {
+		case INSTR_AND: // fall-through
+		case INSTR_ORR: // fall-through
+		case INSTR_XOR: retStr = INT5; break;
 		case INSTR_SHL: // fall-through
 	    case INSTR_SHR: retStr = UINT4; break;
 		default:  retStr = NO_TYPE; break; // no immediate type supported

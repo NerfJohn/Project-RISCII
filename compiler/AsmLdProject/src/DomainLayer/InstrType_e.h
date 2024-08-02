@@ -17,8 +17,11 @@
 typedef enum {
 	// Cores values.
 	INSTR_LBI = 0xA,           // Load Byte Immediate
+	INSTR_XOR = 0xB,           // Bitwise XOR
 	INSTR_SHL = 0xC,           // Shift Left
 	INSTR_SHR = 0xD,           // Shift Right (Arithmetic/Logical)
+	INSTR_ORR = 0xE,           // Bitwise ORR
+	INSTR_AND = 0xF,           // Bitwise AND
 
 	// Special values.
 	INSTR_INVALID              // Invalid/Unknown instruction

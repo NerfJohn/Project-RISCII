@@ -11,8 +11,8 @@
 #include "DomainLayer/InstrType_e.h"
 
 // Starting/default values of InstrFields_t members.
-#define INSTRFIELDS_NO_REG ((uint32_t)(0xFFFFFFFF)) // "-1" value
-#define INSTRFIELDS_NO_IMM ((int32_t)(0xFFFFFFFF)) // "-1" value
+#define INSTRFIELDS_NO_REG ((uint32_t)(0x7FFFFFFF)) // big, not 16-bit number
+#define INSTRFIELDS_NO_IMM ((int32_t)(0x7FFFFFFF))  // big, not 16-bit number
 
 /*
  * Contains potential fields for an instruction in purest form.
