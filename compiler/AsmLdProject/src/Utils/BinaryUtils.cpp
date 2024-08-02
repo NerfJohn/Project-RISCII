@@ -125,7 +125,9 @@ int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
 	switch (fields.m_opcode) {
 		case INSTR_AND: // fall-through
 		case INSTR_ORR: // fall-through
-		case INSTR_XOR:
+		case INSTR_XOR: // fall-through
+		case INSTR_ADD: // fall-through
+		case INSTR_SUB:
      		// Generic data instruction- format based on 3rd operand.
      		retInstr = (fields.m_imm == INSTRFIELDS_NO_IMM) ?
      				   BinaryUtils_asInstrRRR(fields) :

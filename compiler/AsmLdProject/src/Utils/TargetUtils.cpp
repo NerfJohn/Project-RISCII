@@ -47,6 +47,8 @@ InstrType_e TargetUtils_asInstr(LexToken_e token) {
 		case TOKEN_XOR: retInstr = INSTR_XOR; break;
 		case TOKEN_SHL: retInstr = INSTR_SHL; break;
 		case TOKEN_SHR: retInstr = INSTR_SHR; break;
+		case TOKEN_ADD: retInstr = INSTR_ADD; break;
+		case TOKEN_SUB: retInstr = INSTR_SUB; break;
 		default: retInstr = INSTR_INVALID; break; // No matching instruction
 	}
 
@@ -67,6 +69,8 @@ bool TargetUtils_isValidFlag(InstrType_e instr, uint8_t flag) {
 	    case INSTR_ORR: // fall-through
 	    case INSTR_XOR: // fall-through
 	    case INSTR_SHL: // fall-through
+	    case INSTR_ADD: // fall-through
+	    case INSTR_SUB: // fall-through
 		default:        retBool = false; // no flags supported
 	}
 
@@ -87,6 +91,8 @@ std::string TargetUtils_getInstrFlags(InstrType_e instr) {
 	    case INSTR_ORR: // fall-through
 	    case INSTR_XOR: // fall-through
 	    case INSTR_SHL: // fall-through
+	    case INSTR_ADD: // fall-through
+	    case INSTR_SUB: // fall-through
 		default: break; // no flags supported
 	}
 
@@ -118,6 +124,8 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm) {
 	switch (instr) {
 		case INSTR_AND: // fall-through
 	    case INSTR_ORR: // fall-through
+	    case INSTR_ADD: // fall-through
+	    case INSTR_SUB: // fall-through
 	    case INSTR_XOR: retBool = IN_INT5_RANGE(imm); break;
 		case INSTR_SHL: // fall-through
 		case INSTR_SHR: retBool = IN_UINT4_RANGE(imm); break;
@@ -138,6 +146,8 @@ std::string TargetUtils_getImmType(InstrType_e instr) {
 	switch (instr) {
 		case INSTR_AND: // fall-through
 		case INSTR_ORR: // fall-through
+		case INSTR_ADD: // fall-through
+		case INSTR_SUB: // fall-through
 		case INSTR_XOR: retStr = INT5; break;
 		case INSTR_SHL: // fall-through
 	    case INSTR_SHR: retStr = UINT4; break;

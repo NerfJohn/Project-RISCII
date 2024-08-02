@@ -16,6 +16,8 @@
  */
 typedef enum {
 	// Cores values.
+	INSTR_ADD = 0x8,           // Arithmetic Addition
+	INSTR_SUB = 0x9,           // Arithmetic Subtraction
 	INSTR_LBI = 0xA,           // Load Byte Immediate
 	INSTR_XOR = 0xB,           // Bitwise XOR
 	INSTR_SHL = 0xC,           // Shift Left

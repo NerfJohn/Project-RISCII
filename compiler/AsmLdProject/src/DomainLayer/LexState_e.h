@@ -51,14 +51,18 @@ typedef enum {
 	LEX_ddata,
 	LEX_A,                         // "A" keywords
 	LEX_AN,
+	LEX_AD,
 	LEX_AND,
+	LEX_ADD,
 	LEX_O,                         // "O" keywords
 	LEX_OR,
 	LEX_ORR,
 	LEX_S,                         // "S" keywords
 	LEX_SH,
+	LEX_SU,
 	LEX_SHL,
 	LEX_SHR,
+	LEX_SUB,
 	LEX_X,                         // "X" keywords
 	LEX_XO,
 	LEX_XOR

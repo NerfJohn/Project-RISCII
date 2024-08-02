@@ -175,15 +175,24 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			break;
 		case LEX_A:                              // "A" keywords
 			IS('N')      TO(LEX_AN)
+			IS('D')      TO(LEX_AD)
 			LABEL        TO(LEX_LABEL_LOOP)
 			break;
 		case LEX_AN:
 			IS('D')      TO(LEX_AND)
 			LABEL        TO(LEX_LABEL_LOOP)
 			break;
+		case LEX_AD:
+			IS('D')      TO(LEX_ADD)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
 		case LEX_AND:
 			LABEL        TO(LEX_LABEL_LOOP)
 			ELSE         HAVE(TOKEN_AND)
+			break;
+		case LEX_ADD:
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_ADD)
 			break;
 		case LEX_O:                              // "O" keywords
 			IS('R')      TO(LEX_OR)
@@ -199,11 +208,16 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			break;
 		case LEX_S:                              // "S" keywords
 			IS('H')      TO(LEX_SH)
+			IS('U')      TO(LEX_SU)
 			LABEL        TO(LEX_LABEL_LOOP)
 			break;
 		case LEX_SH:
 			IS('L')      TO(LEX_SHL)
 			IS('R')      TO(LEX_SHR)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_SU:
+			IS('B')      TO(LEX_SUB)
 			LABEL        TO(LEX_LABEL_LOOP)
 			break;
 		case LEX_SHL:
@@ -213,6 +227,10 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 		case LEX_SHR:
 			LABEL        TO(LEX_LABEL_LOOP)
 			ELSE         HAVE(TOKEN_SHR)
+			break;
+		case LEX_SUB:
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_SUB)
 			break;
 		case LEX_X:                              // "X" keywords
 			IS('O')      TO(LEX_XO)
