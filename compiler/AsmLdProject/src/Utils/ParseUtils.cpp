@@ -59,6 +59,17 @@ STATES(PATTERN_LBI_INSTR)   = {ITEM(PARSE_START),
 							   ITEM(TOKEN_IMMEDIATE),
 							   ITEM(PARSE_OPT_FLAG)
                               };
+STATES(PATTERN_MEM_INSTR)   = {ITEM(PARSE_START),
+		                       ITEM(ACTION_BUILD_INSTRUCTION),
+							   ITEM(TOKEN_IMMEDIATE),
+							   ITEM(TOKEN_REGISTER),
+							   ITEM(TOKEN_REGISTER)
+                              };
+STATES(PATTERN_BRC_INSTR)   = {ITEM(PARSE_START),
+		                       ITEM(ACTION_BUILD_INSTRUCTION),
+							   ITEM(TOKEN_IMMEDIATE),
+							   ITEM(TOKEN_FLAGS)
+                              };
 
 //==============================================================================
 // Returns the given state as a LexToken. Returns TOKEN_INVALID if not a token.
@@ -116,6 +127,10 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 			IS(TOKEN_ADD)       USE(PATTERN_DATA_INSTR)
 			IS(TOKEN_SUB)       USE(PATTERN_DATA_INSTR)
 			IS(TOKEN_LBI)       USE(PATTERN_LBI_INSTR)
+			IS(TOKEN_LDR)       USE(PATTERN_MEM_INSTR)
+			IS(TOKEN_STR)       USE(PATTERN_MEM_INSTR)
+			IS(TOKEN_BRC)       USE(PATTERN_BRC_INSTR)
+			IS(TOKEN_SWP)       USE(PATTERN_MEM_INSTR)
 			IS(TOKEN_EOF)       USE(PATTERN_EPSILON)
 			IS(TOKEN_LABEL)     USE(PATTERN_LABEL_DECL)
 			IS(TOKEN__la)       USE(PATTERN_FUNC_LA)

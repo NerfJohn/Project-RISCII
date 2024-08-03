@@ -19,10 +19,13 @@ using namespace std;
 #define REG_MASK    (0x7)  // 3-bit
 #define IMM4_MASK   (0xF)  // 4-bit
 #define IMM5_MASK   (0x1F) // 5-bit
+#define IMM6_MASK   (0x3F) // 6-bit
 #define IMM8_MASK   (0xFF) // 8-bit
 
 // Macros to position bit fields.
 #define TO_BIT12(x) ((x) << 12)
+#define TO_BIT11(x) ((x) << 11)
+#define TO_BIT10(x) ((x) << 10)
 #define TO_BIT9(x)  ((x) << 9)
 #define TO_BIT8(x)  ((x) << 8)
 #define TO_BIT6(x)  ((x) << 6)
@@ -33,6 +36,10 @@ using namespace std;
 // Definitions of bit flags in assembly.
 #define ARITH_FLAG  'a'
 #define SHIFT_FLAG  's'
+#define COND_N_FLAG 'n'
+#define COND_Z_FLAG 'z'
+#define COND_P_FLAG 'p'
+#define COND_C_FLAG 'c'
 
 //==============================================================================
 // Helper function to format "data action with regs" instructions.
@@ -116,6 +123,42 @@ uint16_t BinaryUtils_asInstrRI8(InstrFields_t const& fields) {
 }
 
 //==============================================================================
+// Helper function to format "memory" instructions.
+uint16_t BinaryUtils_asInstrMem(InstrFields_t const& fields) {
+	// Returned formatted instruction.
+	uint16_t retInstr = 0x0000; // implicit 0s for unset bits
+
+	// Size arguments to bit fields.
+	uint16_t op  = OPCODE_MASK & (uint16_t)(fields.m_opcode);
+	uint16_t r1  = REG_MASK & fields.m_r1;
+	uint16_t r2  = REG_MASK & fields.m_r2;
+	uint16_t imm = IMM6_MASK & (uint16_t)(fields.m_imm);
+
+	// Format instruction.
+	retInstr = TO_BIT12(op) | TO_BIT9(r1) | TO_BIT6(r2) | TO_BIT0(imm);
+
+	// Return formatted instruction.
+	return retInstr;
+}
+
+//==============================================================================
+// Helper function to format "branch" instructions.
+uint16_t BinaryUtils_asInstrBranch(InstrFields_t const& fields) {
+	// Returned formatted instruction.
+	uint16_t retInstr = 0x0000; // implicit 0s for unset bits
+
+	// Size arguments to bit fields.
+	uint16_t op  = OPCODE_MASK & (uint16_t)(fields.m_opcode);
+	uint16_t imm = IMM8_MASK & (uint16_t)(fields.m_imm);
+
+	// Format instruction.
+	retInstr = TO_BIT12(op) | TO_BIT0(imm);
+
+	// Return formatted instruction.
+	return retInstr;
+}
+
+//==============================================================================
 // Generates binary instruction from fields. Doesn't check field accuracy.
 int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
 	// Return code- asserted for unexpected failures.
@@ -144,6 +187,16 @@ int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
      		// Load byte instruction.
      		retInstr = BinaryUtils_asInstrRI8(fields);
      		break;
+     	case INSTR_LDR: // fall-through
+     	case INSTR_STR: // fall-through
+     	case INSTR_SWP:
+     		// Memory access instruction.
+     		retInstr = BinaryUtils_asInstrMem(fields);
+     		break;
+     	case INSTR_BRC:
+     		// Branch instruction.
+     		retInstr = BinaryUtils_asInstrBranch(fields);
+     		break;
 		default:
 			// Unexpected opcode.
 			retCode = RET_ERR;
@@ -154,8 +207,12 @@ int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
 	for (size_t i = 0; i < fields.m_flags.size(); i++) {
 		// Set bit based on flag.
 		switch (fields.m_flags.at(i)) {
-			case ARITH_FLAG: retInstr |= TO_BIT4(0x1); break;
-			case SHIFT_FLAG: retInstr |= TO_BIT8(0x1); break;
+			case ARITH_FLAG:  retInstr |= TO_BIT4(0x1); break;
+			case SHIFT_FLAG:  retInstr |= TO_BIT8(0x1); break;
+			case COND_N_FLAG: retInstr |= TO_BIT11(0x1); break;
+			case COND_Z_FLAG: retInstr |= TO_BIT10(0x1); break;
+			case COND_P_FLAG: retInstr |= TO_BIT9(0x1); break;
+			case COND_C_FLAG: retInstr |= TO_BIT8(0x1); break;
 			default:
 				// Unexpected flag.
 				retCode = RET_ERR;
