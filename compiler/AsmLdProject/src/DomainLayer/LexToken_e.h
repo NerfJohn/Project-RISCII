@@ -40,6 +40,8 @@ typedef enum {
 	TOKEN_LDR,                       // LDR instruction keyword
 	TOKEN_STR,                       // STR instruction keyword
 	TOKEN_BRC,                       // BRC instruction keyword
+	TOKEN_JPR,                       // JPR instruction keyword
+	TOKEN_JLR,                       // JLR instruction keyword
 	TOKEN_SWP,                       // SWP instruction keyword
 
 	// Special values.

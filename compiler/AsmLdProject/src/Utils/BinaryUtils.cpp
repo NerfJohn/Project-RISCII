@@ -40,6 +40,7 @@ using namespace std;
 #define COND_Z_FLAG 'z'
 #define COND_P_FLAG 'p'
 #define COND_C_FLAG 'c'
+#define RTI_FLAG    'r'
 
 //==============================================================================
 // Helper function to format "data action with regs" instructions.
@@ -159,6 +160,59 @@ uint16_t BinaryUtils_asInstrBranch(InstrFields_t const& fields) {
 }
 
 //==============================================================================
+// Helper function to format "jump" instructions.
+uint16_t BinaryUtils_asInstrJump(InstrFields_t const& fields) {
+	// Returned formatted instruction.
+	uint16_t retInstr = 0x0000; // implicit 0s for unset bits
+
+	// Size arguments to bit fields.
+	uint16_t op  = OPCODE_MASK & (uint16_t)(fields.m_opcode);
+	uint16_t r1  = REG_MASK & fields.m_r1;
+	uint16_t imm = IMM5_MASK & (uint16_t)(fields.m_imm);
+
+	// Format instruction.
+	retInstr = TO_BIT12(op) | TO_BIT6(r1) | TO_BIT0(imm);
+
+	// Return formatted instruction.
+	return retInstr;
+}
+
+//==============================================================================
+// Helper function to format "link" instructions.
+uint16_t BinaryUtils_asInstrLink(InstrFields_t const& fields) {
+	// Returned formatted instruction.
+	uint16_t retInstr = 0x0000; // implicit 0s for unset bits
+
+	// Size arguments to bit fields.
+	uint16_t op  = OPCODE_MASK & (uint16_t)(fields.m_opcode);
+	uint16_t r1  = REG_MASK & fields.m_r1;
+	uint16_t r2  = REG_MASK & fields.m_r2;
+	uint16_t imm = IMM5_MASK & (uint16_t)(fields.m_imm);
+
+	// Format instruction.
+	retInstr = TO_BIT12(op) | TO_BIT9(r1) | TO_BIT6(r2) | TO_BIT0(imm);
+
+	// Return formatted instruction.
+	return retInstr;
+}
+
+//==============================================================================
+// Helper function to format "command" instructions.
+uint16_t BinaryUtils_asInstrCmd(InstrFields_t const& fields) {
+	// Returned formatted instruction.
+	uint16_t retInstr = 0x0000; // implicit 0s for unset bits
+
+	// Size arguments to bit fields.
+	uint16_t op  = OPCODE_MASK & (uint16_t)(fields.m_opcode);
+
+	// Format instruction.
+	retInstr = TO_BIT12(op);
+
+	// Return formatted instruction.
+	return retInstr;
+}
+
+//==============================================================================
 // Generates binary instruction from fields. Doesn't check field accuracy.
 int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
 	// Return code- asserted for unexpected failures.
@@ -197,6 +251,16 @@ int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
      		// Branch instruction.
      		retInstr = BinaryUtils_asInstrBranch(fields);
      		break;
+     	case INSTR_JPR:
+     		// Jump Register instruction- flag presence affects best format.
+     		retInstr = (fields.m_flags.size()) ?
+     				   BinaryUtils_asInstrCmd(fields) :
+					   BinaryUtils_asInstrJump(fields);
+     		break;
+     	case INSTR_JLR:
+     		// Jump/Link instruction.
+     		retInstr = BinaryUtils_asInstrLink(fields);
+     		break;
 		default:
 			// Unexpected opcode.
 			retCode = RET_ERR;
@@ -213,6 +277,7 @@ int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
 			case COND_Z_FLAG: retInstr |= TO_BIT10(0x1); break;
 			case COND_P_FLAG: retInstr |= TO_BIT9(0x1); break;
 			case COND_C_FLAG: retInstr |= TO_BIT8(0x1); break;
+			case RTI_FLAG:    retInstr |= TO_BIT5(0x1); break;
 			default:
 				// Unexpected flag.
 				retCode = RET_ERR;

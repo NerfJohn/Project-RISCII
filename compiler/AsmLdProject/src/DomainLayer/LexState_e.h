@@ -57,6 +57,11 @@ typedef enum {
 	LEX_B,                         // "B" keywords
 	LEX_BR,
 	LEX_BRC,
+	LEX_J,                         // "J" keywords
+	LEX_JP,
+	LEX_JL,
+	LEX_JPR,
+	LEX_JLR,
 	LEX_L,                         // "L" keywords
 	LEX_LB,
 	LEX_LD,

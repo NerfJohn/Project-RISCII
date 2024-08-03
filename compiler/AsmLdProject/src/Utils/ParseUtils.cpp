@@ -24,6 +24,7 @@ using namespace std;
 // Constants containing replacements for parsed states.
 STATES(PATTERN_EPSILON)     = {};
 STATES(PATTERN_REGISTER)    = {ITEM(TOKEN_REGISTER)};
+STATES(PATTERN_IMMEDIATE)   = {ITEM(TOKEN_IMMEDIATE)};
 STATES(PATTERN_LABEL_DECL)  = {ITEM(PARSE_START),
                                ITEM(ACTION_BUILD_LABEL_DECL),
                                ITEM(TOKEN_COLON)
@@ -69,6 +70,10 @@ STATES(PATTERN_BRC_INSTR)   = {ITEM(PARSE_START),
 		                       ITEM(ACTION_BUILD_INSTRUCTION),
 							   ITEM(TOKEN_IMMEDIATE),
 							   ITEM(TOKEN_FLAGS)
+                              };
+STATES(PATTERN_JPR_INSTR)   = {ITEM(PARSE_START),
+		                       ITEM(ACTION_BUILD_INSTRUCTION),
+							   ITEM(PARSE_ONLY_FLAG)
                               };
 
 //==============================================================================
@@ -130,6 +135,8 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 			IS(TOKEN_LDR)       USE(PATTERN_MEM_INSTR)
 			IS(TOKEN_STR)       USE(PATTERN_MEM_INSTR)
 			IS(TOKEN_BRC)       USE(PATTERN_BRC_INSTR)
+			IS(TOKEN_JPR)       USE(PATTERN_JPR_INSTR)
+			IS(TOKEN_JLR)       USE(PATTERN_MEM_INSTR)   // (tech. same format)
 			IS(TOKEN_SWP)       USE(PATTERN_MEM_INSTR)
 			IS(TOKEN_EOF)       USE(PATTERN_EPSILON)
 			IS(TOKEN_LABEL)     USE(PATTERN_LABEL_DECL)
@@ -156,6 +163,10 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 			IS(TOKEN_LABEL)     USE(PATTERN_ARRAY)
 			IS(TOKEN_STR_LIT)   USE(PATTERN_ARRAY)
 			IS(TOKEN_RCURLY)    USE(PATTERN_EPSILON)
+			break;
+		case PARSE_ONLY_FLAG:
+			IS(TOKEN_FLAGS)     USE(PATTERN_EPSILON)
+			IS(TOKEN_REGISTER)  USE(PATTERN_IMMEDIATE);
 			break;
 		default:
 			// Failed to replace the state- failed to parse.

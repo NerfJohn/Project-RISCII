@@ -14,6 +14,7 @@ using namespace std;
 #define SHR_FLAGS string("a")
 #define LBI_FLAGS string("s")
 #define BRC_FLAGS string("nzpc")
+#define JPR_FLAGS string("r")
 
 // Definitions for limits on int/uint values.
 #define IN_UINT3_RANGE(x)  ((0 <= (x)) && ((x) <= 7))
@@ -58,6 +59,8 @@ InstrType_e TargetUtils_asInstr(LexToken_e token) {
 		case TOKEN_LBI: retInstr = INSTR_LBI; break;
 		case TOKEN_LDR: retInstr = INSTR_LDR; break;
 		case TOKEN_STR: retInstr = INSTR_STR; break;
+		case TOKEN_JPR: retInstr = INSTR_JPR; break;
+		case TOKEN_JLR: retInstr = INSTR_JLR; break;
 		case TOKEN_SWP: retInstr = INSTR_SWP; break;
 		case TOKEN_BRC: retInstr = INSTR_BRC; break;
 		default: retInstr = INSTR_INVALID; break; // No matching instruction
@@ -78,6 +81,7 @@ bool TargetUtils_isValidFlag(InstrType_e instr, uint8_t flag) {
 	    case INSTR_SHR: retBool = (SHR_FLAGS.find(flag) != string::npos); break;
 	    case INSTR_LBI: retBool = (LBI_FLAGS.find(flag) != string::npos); break;
 	    case INSTR_BRC: retBool = (BRC_FLAGS.find(flag) != string::npos); break;
+	    case INSTR_JPR: retBool = (JPR_FLAGS.find(flag) != string::npos); break;
 	    case INSTR_AND: // fall-through
 	    case INSTR_ORR: // fall-through
 	    case INSTR_XOR: // fall-through
@@ -86,6 +90,7 @@ bool TargetUtils_isValidFlag(InstrType_e instr, uint8_t flag) {
 	    case INSTR_SUB: // fall-through
 	    case INSTR_LDR: // fall-through
 	    case INSTR_STR: // fall-through
+	    case INSTR_JLR: // fall-through
 	    case INSTR_SWP: // fall-through
 		default:        retBool = false; // no flags supported
 	}
@@ -105,6 +110,7 @@ std::string TargetUtils_getInstrFlags(InstrType_e instr) {
 	    case INSTR_SHR: retStr = SHR_FLAGS; break;
 	    case INSTR_LBI: retStr = LBI_FLAGS; break;
 	    case INSTR_BRC: retStr = BRC_FLAGS; break;
+	    case INSTR_JPR: retStr = JPR_FLAGS; break;
 	    case INSTR_AND: // fall-through
 	    case INSTR_ORR: // fall-through
 	    case INSTR_XOR: // fall-through
@@ -147,6 +153,8 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm) {
 	    case INSTR_ORR: // fall-through
 	    case INSTR_ADD: // fall-through
 	    case INSTR_SUB: // fall-through
+	    case INSTR_JPR: // fall-through
+	    case INSTR_JLR: // fall-through
 	    case INSTR_XOR: retBool = IN_INT5_RANGE(imm); break;
 		case INSTR_SHL: // fall-through
 		case INSTR_SHR: retBool = IN_UINT4_RANGE(imm); break;
@@ -174,6 +182,8 @@ std::string TargetUtils_getImmType(InstrType_e instr) {
 		case INSTR_ORR: // fall-through
 		case INSTR_ADD: // fall-through
 		case INSTR_SUB: // fall-through
+	    case INSTR_JPR: // fall-through
+	    case INSTR_JLR: // fall-through
 		case INSTR_XOR: retStr = INT5; break;
 		case INSTR_SHL: // fall-through
 	    case INSTR_SHR: retStr = UINT4; break;

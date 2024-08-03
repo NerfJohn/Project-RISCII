@@ -63,6 +63,7 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 			IS('.')      TO(LEX_d)
 			IS('A')      TO(LEX_A)
 			IS('B')      TO(LEX_B)
+			IS('J')      TO(LEX_J)
 			IS('L')      TO(LEX_L)
 			IS('O')      TO(LEX_O)
 			IS('S')      TO(LEX_S)
@@ -207,6 +208,27 @@ LexState_e LexUtils_nextState(LexState_e state, uint8_t byte) {
 		case LEX_BRC:
 			LABEL        TO(LEX_LABEL_LOOP)
 			ELSE         HAVE(TOKEN_BRC)
+			break;
+		case LEX_J:                              // "J" keywords
+			IS('P')      TO(LEX_JP)
+			IS('L')      TO(LEX_JL)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_JP:
+			IS('R')      TO(LEX_JPR)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_JL:
+			IS('R')      TO(LEX_JLR)
+			LABEL        TO(LEX_LABEL_LOOP)
+			break;
+		case LEX_JPR:
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_JPR)
+			break;
+		case LEX_JLR:
+			LABEL        TO(LEX_LABEL_LOOP)
+			ELSE         HAVE(TOKEN_JLR)
 			break;
 		case LEX_L:                              // "L" keywords
 			IS('B')      TO(LEX_LB)

@@ -20,6 +20,8 @@ typedef enum {
 	INSTR_BRC = 0x2,           // Branch Conditional
 	INSTR_STR = 0x4,           // Store Memory Word
 	INSTR_LDR = 0x5,           // Load Memory Word
+	INSTR_JPR = 0x6,           // Jump Base Register (+ Return from Interrupt)
+	INSTR_JLR = 0x7,           // Jump and Link Register
 	INSTR_ADD = 0x8,           // Arithmetic Addition
 	INSTR_SUB = 0x9,           // Arithmetic Subtraction
 	INSTR_LBI = 0xA,           // Load Byte Immediate

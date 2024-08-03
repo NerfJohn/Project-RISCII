@@ -24,7 +24,8 @@ typedef enum {
 	PARSE_OPT_FLAG,                     // Instr w/ optional flag (vs reg)
 	PARSE_3RD_OP,                       // Instr w/ imm vs reg for 3rd operand
 	PARSE_DATA_VALUE,                   // Data value to init in data section
-	PARSE_DATA_ELEMENT                  // Element in data init array
+	PARSE_DATA_ELEMENT,                 // Element in data init array
+	PARSE_ONLY_FLAG                     // JPR flag can replace all other args
 } ParseState_e;
 
 #endif /* SRC_DOMAINLAYER_PARSESTATE_E_H_ */
