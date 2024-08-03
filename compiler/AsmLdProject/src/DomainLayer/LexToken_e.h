@@ -36,6 +36,7 @@ typedef enum {
 	TOKEN_SHR,                       // SHR instruction keyword
 	TOKEN_ADD,                       // ADD instruction keyword
 	TOKEN_SUB,                       // SUB instruction keyword
+	TOKEN_LBI,                       // LBI instruction keyword
 
 	// Special values.
 	TOKEN_INVALID,                   // Unknown/Invalid lex token

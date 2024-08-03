@@ -12,12 +12,14 @@ using namespace std;
 
 // Definitions for checking/reporting flags per instruction.
 #define SHR_FLAGS string("a")
+#define LBI_FLAGS string("s")
 
 // Definitions for limits on int/uint values.
 #define IN_UINT3_RANGE(x)  ((0 <= (x)) && ((x) <= 7))
 #define IN_UINT4_RANGE(x)  ((0 <= (x)) && ((x) <= 15))
 #define IN_UINT16_RANGE(x) ((0 <= (x)) && ((x) <= 65535))
 #define IN_INT5_RANGE(x)   ((-16 <= (x)) && ((x) <= 15))
+#define IN_INT8_RANGE(x)   ((-128 <= (x)) && ((x) <= 127))
 #define IN_INT16_RANGE(x)  ((-32768 <= (x)) && ((x) <= 32767))
 
 // Definitions for types of int/uint values.
@@ -26,6 +28,7 @@ using namespace std;
 #define UINT4    string("uint4")
 #define UINT16   string("uint16")
 #define INT5     string("int5")
+#define INT8     string("int8")
 #define ANYINT16 string("(u)int16")
 
 
@@ -49,6 +52,7 @@ InstrType_e TargetUtils_asInstr(LexToken_e token) {
 		case TOKEN_SHR: retInstr = INSTR_SHR; break;
 		case TOKEN_ADD: retInstr = INSTR_ADD; break;
 		case TOKEN_SUB: retInstr = INSTR_SUB; break;
+		case TOKEN_LBI: retInstr = INSTR_LBI; break;
 		default: retInstr = INSTR_INVALID; break; // No matching instruction
 	}
 
@@ -65,6 +69,7 @@ bool TargetUtils_isValidFlag(InstrType_e instr, uint8_t flag) {
 	// Check flag against instruction's available flags.
 	switch (instr) {
 	    case INSTR_SHR: retBool = (SHR_FLAGS.find(flag) != string::npos); break;
+	    case INSTR_LBI: retBool = (LBI_FLAGS.find(flag) != string::npos); break;
 	    case INSTR_AND: // fall-through
 	    case INSTR_ORR: // fall-through
 	    case INSTR_XOR: // fall-through
@@ -87,6 +92,7 @@ std::string TargetUtils_getInstrFlags(InstrType_e instr) {
 	// Get instruction's available flags.
 	switch (instr) {
 	    case INSTR_SHR: retStr = SHR_FLAGS; break;
+	    case INSTR_LBI: retStr = LBI_FLAGS; break;
 	    case INSTR_AND: // fall-through
 	    case INSTR_ORR: // fall-through
 	    case INSTR_XOR: // fall-through
@@ -129,6 +135,7 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm) {
 	    case INSTR_XOR: retBool = IN_INT5_RANGE(imm); break;
 		case INSTR_SHL: // fall-through
 		case INSTR_SHR: retBool = IN_UINT4_RANGE(imm); break;
+		case INSTR_LBI: retBool = IN_INT8_RANGE(imm); break;
 		default: retBool = false; // instruction doesn't support immediate
 	}
 
@@ -151,6 +158,7 @@ std::string TargetUtils_getImmType(InstrType_e instr) {
 		case INSTR_XOR: retStr = INT5; break;
 		case INSTR_SHL: // fall-through
 	    case INSTR_SHR: retStr = UINT4; break;
+	    case INSTR_LBI: retStr = INT8; break;
 		default:  retStr = NO_TYPE; break; // no immediate type supported
 	}
 

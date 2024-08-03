@@ -54,6 +54,9 @@ typedef enum {
 	LEX_AD,
 	LEX_AND,
 	LEX_ADD,
+	LEX_L,                         // "L" keywords
+	LEX_LB,
+	LEX_LBI,
 	LEX_O,                         // "O" keywords
 	LEX_OR,
 	LEX_ORR,
