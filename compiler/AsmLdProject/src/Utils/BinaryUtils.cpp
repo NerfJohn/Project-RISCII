@@ -261,6 +261,11 @@ int BinaryUtils_genInstr(uint16_t& retInstr, InstrFields_t const& fields) {
      		// Jump/Link instruction.
      		retInstr = BinaryUtils_asInstrLink(fields);
      		break;
+     	case INSTR_NOP: // fall-through
+     	case INSTR_HLT:
+     		// Command instruction.
+     		retInstr = BinaryUtils_asInstrCmd(fields);
+     		break;
 		default:
 			// Unexpected opcode.
 			retCode = RET_ERR;

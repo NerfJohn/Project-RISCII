@@ -43,6 +43,8 @@ typedef enum {
 	TOKEN_JPR,                       // JPR instruction keyword
 	TOKEN_JLR,                       // JLR instruction keyword
 	TOKEN_SWP,                       // SWP instruction keyword
+	TOKEN_NOP,                       // NOP instruction keyword
+	TOKEN_HLT,                       // HLT instruction keyword
 
 	// Special values.
 	TOKEN_INVALID,                   // Unknown/Invalid lex token

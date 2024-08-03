@@ -75,6 +75,9 @@ STATES(PATTERN_JPR_INSTR)   = {ITEM(PARSE_START),
 		                       ITEM(ACTION_BUILD_INSTRUCTION),
 							   ITEM(PARSE_ONLY_FLAG)
                               };
+STATES(PATTERN_CMD_INSTR)   = {ITEM(PARSE_START),
+		                       ITEM(ACTION_BUILD_INSTRUCTION)
+                              };
 
 //==============================================================================
 // Returns the given state as a LexToken. Returns TOKEN_INVALID if not a token.
@@ -138,6 +141,8 @@ bool ParseUtils_parseTop(std::stack<ParseState_e>* stack, LexToken_e token) {
 			IS(TOKEN_JPR)       USE(PATTERN_JPR_INSTR)
 			IS(TOKEN_JLR)       USE(PATTERN_MEM_INSTR)   // (tech. same format)
 			IS(TOKEN_SWP)       USE(PATTERN_MEM_INSTR)
+			IS(TOKEN_NOP)       USE(PATTERN_CMD_INSTR)
+			IS(TOKEN_HLT)       USE(PATTERN_CMD_INSTR)
 			IS(TOKEN_EOF)       USE(PATTERN_EPSILON)
 			IS(TOKEN_LABEL)     USE(PATTERN_LABEL_DECL)
 			IS(TOKEN__la)       USE(PATTERN_FUNC_LA)

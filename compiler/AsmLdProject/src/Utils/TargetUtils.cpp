@@ -63,6 +63,8 @@ InstrType_e TargetUtils_asInstr(LexToken_e token) {
 		case TOKEN_JLR: retInstr = INSTR_JLR; break;
 		case TOKEN_SWP: retInstr = INSTR_SWP; break;
 		case TOKEN_BRC: retInstr = INSTR_BRC; break;
+		case TOKEN_NOP: retInstr = INSTR_NOP; break;
+		case TOKEN_HLT: retInstr = INSTR_HLT; break;
 		default: retInstr = INSTR_INVALID; break; // No matching instruction
 	}
 
@@ -92,6 +94,8 @@ bool TargetUtils_isValidFlag(InstrType_e instr, uint8_t flag) {
 	    case INSTR_STR: // fall-through
 	    case INSTR_JLR: // fall-through
 	    case INSTR_SWP: // fall-through
+	    case INSTR_NOP: // fall-through
+	    case INSTR_HLT: // fall-through
 		default:        retBool = false; // no flags supported
 	}
 
@@ -120,6 +124,8 @@ std::string TargetUtils_getInstrFlags(InstrType_e instr) {
 	    case INSTR_LDR: // fall-through
 	    case INSTR_STR: // fall-through
 	    case INSTR_SWP: // fall-through
+	    case INSTR_NOP: // fall-through
+	    case INSTR_HLT: // fall-through
 		default: break; // no flags supported
 	}
 
@@ -163,6 +169,8 @@ bool TargetUtils_isValidImm(InstrType_e instr, int32_t imm) {
 	    case INSTR_LDR: // fall-through
 	    case INSTR_STR: // fall-through
 	    case INSTR_SWP: retBool = IN_INT6_RANGE(imm); break;
+	    case INSTR_NOP: // fall-through
+	    case INSTR_HLT: // fall-through
 		default: retBool = false; // instruction doesn't support immediate
 	}
 
@@ -192,6 +200,8 @@ std::string TargetUtils_getImmType(InstrType_e instr) {
 	    case INSTR_LDR: // fall-through
 	    case INSTR_STR: // fall-through
 	    case INSTR_SWP: retStr = INT6; break;
+	    case INSTR_NOP: // fall-through
+	    case INSTR_HLT: // fall-through
 		default:  retStr = NO_TYPE; break; // no immediate type supported
 	}
 
