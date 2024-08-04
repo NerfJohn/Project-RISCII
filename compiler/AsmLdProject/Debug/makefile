@@ -8,6 +8,11 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include src/Utils/subdir.mk
+-include src/OsLayer/subdir.mk
+-include src/Items/subdir.mk
+-include src/DeviceLayer/subdir.mk
+-include src/AppLayer/subdir.mk
 -include src/subdir.mk
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(C++_DEPS)),)
@@ -38,7 +43,7 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := AsmLdProject
+BUILD_ARTIFACT_NAME := AsmldProject
 BUILD_ARTIFACT_EXTENSION := exe
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
@@ -49,19 +54,19 @@ BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ART
 all: main-build
 
 # Main-build Target
-main-build: AsmLdProject.exe
+main-build: AsmldProject.exe
 
 # Tool invocations
-AsmLdProject.exe: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
+AsmldProject.exe: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MinGW C++ Linker'
-	g++  -o "AsmLdProject.exe" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++  -o "AsmldProject.exe" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) AsmLdProject.exe
+	-$(RM) AsmldProject.exe
 	-@echo ' '
 
 .PHONY: all clean dependents main-build

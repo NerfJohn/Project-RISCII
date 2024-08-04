@@ -1,0 +1,62 @@
+================================================================================
+Project RISCII: Asm (Assembler) Design [Cliff Notes]
+PR0004
+"Description of internal and external design of RISCII assembler"
+================================================================================
+Info Already Present:
+
+================================================================================
+Info To Integrate:
+
+SW Arch Layers
+	App Layer    - business logic/high-level logic beign performed
+	Device Layer - key processes and data structures of program
+	Os Layer     - interface to OS ("Driver" layer for non embedded program)
+	Domain Layer - various data structures/types conecting other layers
+	Utils        - generic utilities/processes (basically abstracted procs)
+
+Note:
+Assembler is large process- state is effectively baked in business logic
+Also, "input-process-output" model is less applicable (beyond basic use)
+
+High-Level Assembler Process (Control):
+- parse cmd line args
+- read files
+	- scan file to tokens
+	- parse tokens to items
+	- analyze items
+	(per file- business logic reasons)
+- check overall program
+- translate program
+	- last preps/checks for binary streaming
+	- binary streaming to file
+
+High-Level Assembler Process (Data):
+- Cmd Line Parse : Get command line info into data model
+- Read/Scan      : Get scan tokens (internal- saved raw vars)
+- Read/Parse     : Get items (into model- vars still in raw-ish state)
+- Read/Analyze   : Get info (into model- vars raw, focus on labels) 
+- Checks         : Adjust info w/ checks (non-labels adjusted, but raw-ish)
+- Trans/Prep     : To new struct (all in ordered struct and to binary)
+- Trans/Bin      : --- (model is just outputting to a file)
+
+Skeleton Code Approach: Get SHR instructions parsed/working
+	many files can be provided
+	SHR instructions scannable/parseable
+	flags, registers, immediates bounds checked as needed
+	binary image created based on inputs
+
+Printing responsibilities
+	Direct Caller- provides message specific info
+	General Caller- configures Printer and implements behavioral/business logic
+	PrintUtils- formats any message intended for printing directly
+	Printer- directs process of silencing/formatting/printing (ie message traffic)
+
+BuildItem Plan
+	items have ScanToken_t fields (separated by purpose in sequence)
+	token (raw values) are checked, but not saved, during check phase
+	tokens are converted into 16-bit binary during pre translation phase
+	
+Translation
+	BinayUtils_genInstruction
+================================================================================
