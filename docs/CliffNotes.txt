@@ -18,19 +18,195 @@ Levels of Design
 	- Circuit Board (power regulated, programmable, devices to use MPU circuits)
 
 ================================================================================
-MPU Interfaces:
+uP Interfaces:
 
-Binary Image (Interpretation)
-	- read on word (ie 2 byte) basis
-	- contains separate text and data sections
-	- includes metadata word per section
-	- all fits within 64 KB
+uP Pinout
+	(63 total pins)
+	[1]  o_memEn      (runtime memory chip- 34 pins) 
+	[1]  o_memWr
+	[16] o_memAddr
+	[16] io_memData
+	[1]  i_spiMISO    (storage memory chip- 4 pins)
+	[1]  o_spiMOSI
+	[1]  o_spiCLK
+	[1]  o_spiCSn
+	[16] io_gpio      (gpio/mapped pins- 16 pins)
+	[1]  i_jtagCLK    (jtag connector- 4 pins)
+	[1]  i_jtagTMS
+	[1]  i_jtagTDI
+	[1]  o_jtagTDO
+	[1]  i_smDoPause  (state machine abstract- 3 pins)
+	[1]  o_smIsBooted
+	[1]  o_smIsPaused
+	[1]  i_comClk     (common signals- 2 pins)
+	[1]  i_comRstn
+
+Binary Image
+	(Start of file)
+	<text metadata>: last runtime chip text address (16-bits per address)
+	<text section >: 1+ 16-bit instructions         (incremental order)
+	<data metadata>: last runtime chip data address (16-bits per address)
+	<data section >: 1+ 16-bit initialized data     (incremental order)
+	(End of file)
+
+================================================================================
+uP States + Abilities // TODO shape up:
+
+uP States
+	BOOTING - loading binary into runtime chip; blocking, though always terminates
+	RUNNING - core running code
+	PAUSED  - core paused, jtag given control to perform debug+programming
+
+uP Blocks
+	CORE - 16-bit processor core
+	JTAG - hardware access port
+	BOOT - memory bootloader
+	SCAN - boundary scan
+	PC   - (mapped) program counter (read only)
+	OFD  - (mapped) overflow detector (+read only stack pointer)
+	WDT  - (mapped) watchdog timer
+	INT  - (mapped) interrupt vector
+	TMRx - (mapped) timers (4 timers- 2 generic, 2 PWM generators)
+	GPIO - (mapped) 16 generic pins (some with alternate functions)
+	UART - (mapped) uart port
+	I2C  - (mapped) i2c master port
+	SPI  - (mapped) spi master port (only connected to storage chip)
+
+uP Interrupt Vector
+	(High Priority)
+	---- - reset vector (no direct interrupt)
+	OFD  - stack overflow
+	GPIO - interrupt pin 1
+	UART - rx byte
+	TMR0 - counter overflow
+	TMR1 - counter overflow
+	TMR2 - counter overflow
+	TMR3 - counter overflow
+	SPI  - byte sent
+	I2C  - byte sent
+	UART - tx byte
+	GPIO - interrupt pin 2
+	(Low Priority)
+
+General Notes on States/Controls
+	-> BOOT only has control during BOOTING of anything
+	-> BOOT requires control of both memory chips
+	-> BOOT, for safety should NOT have mapped access (eg corrupt boot hits SPI poorly)
+		(ie BOOTING state = mapped access disabled)
+	-> JTAG should have access to memory chips (and mapped registers)
+	-> JTAG should have access to SCAN register
+	-> Consider SCAN safety mechs (dumbing down to reads only, but nevertheless)
+	-> JTAG has access/controls while PAUSED
+	-> CORE has memory chip control while RUNNING
+	-> When entering PAUSED, all blocks must enter decent pause state
+		(eg timers must freeze unless JTAG restarts them)
+		(eg serials must finish transmitting before system is considered PAUSED)
+	-> CORE must be in dormant state while not RUNNING
+	-> Interrupts triggering should be defined for PAUSED/BOOTING
+		(all pulses? some pulse some till deassert?)
+	---
+	-> In effect:
+		BOOTING = BOOT in control, mapped access denied
+		RUNNING = CORE in control
+		PAUSED  = JTAG in control
+		
+		Must define interrupt/peripheral behaviors when not in RUNNING
+		Must define CORE behavior when not in RUNNING
+		Must define how transitions between larger states work per cycle
+		Must define how interrupts/peripherals operate under PAUSED
+
+Pause Network
+	doPause- output of circuits that can cause a pause
+	startPause- request to circuits needing pausing to pause
+	nowPaused- response from "lenghty pause" circuits that tehy are now paused
+	isPaused- confirmation all circuits are now paused
 	
-	(Low Addr)
-	<text metadata- last used RAM address for text (word per address)>
-	<text section- 1+ words indicating instruction values>
-	<data metadata- last used RAM address for data (word per address)>
-	<data section- 1+ words indicating data values>
-	(High Addr)
+	General Cycle Plan
+		> a device emits "doPause", which reaches the pause controller
+		> 1 clock cycle after, "startPause" is emitted to all circuits
+		> 1+ clock cycles expected to pass by before "nowPaused" signals return
+		> Eventually all "nowPaused" signals return
+		> 1 clock cycle later, "isPaused" is emitted
+		(4 cycle minimum from call to final pausing)
+		(ensures full cycle available to capture or use signals)
+		(circuits expected to add 1+ cycle delay between "start" and "now" signals)
+		(circuits with start/now signals should use "now" as their "isPaused" signal)
+
+Core Design
+	2(ish) stages (FETCH, EXECUTE{RUN, MEM})
+	Hazard Controls: frzPC, frzEXE, clrEXE
+	State Controls: startPause, doPause, nowPaused, isBooted
+	
+	Define: BOOTING Idle
+		> PC = 0, EXE = 0
+		> frzPC, clrEXE
+	
+	Define: PAUSED Idle
+		> EXE = 0
+		> frzPC, clrEXE
+	
+	Define: RUNNING Data Op
+		(no special controls)
+	
+	Define: RUNNING Jump Op
+		> While Jump == EXECUTE-RUN, clrEXE to ignore fetched instruction
+		> Control signals will handle passing of new PC
+	
+	Define: RUNNING Mem Op
+		> While Mem == EXECUTE-MEM (or otherwise not exiting), frzPC and frzEXE
+		> When Mem == EXECUTE-RUN (ie exiting), likely frzPC and clrEXE (due to used mem path)
+	
+	Define: RUNNING Interrupt (on Data? Mem mid stall? Jmp mid jumping? In FETCH?)
+		> Wait until NOT frzPC
+		> When NOT frzPC, save CC and {PC/newPC based on jump control} while setting IL (and clrEXE)
+		
+	Define RUNNING HLT Operation
+	
+	Define: <reset> -> BOOTING
+		> PC = 0, EXE = 0 (ie NOP) (both startings)
+		> frzPC, clrEXE
+		> becomes "BOOTING Idle" after 1 cycle
+	
+	Define: BOOTING -> PAUSED
+	
+	Define: BOOTING -> RUNNING
+		> isBooted rises, technically in RUNNING now
+		> thus, isBooted rises, frzPC and clrEXE fall
+	
+	Define: RUNNING -> PAUSED
+		> startPause rises, wait until NOT frzPC
+		> When NOT frzPC, begin PAUSED transfer by prepping to set nowPaused
+		> Meanwhile, clrEXE (and frzPC if NOT jumping)
+		(Will need to differ frzPC to begin switch vs frzPC used to get there)
+	
+	Define: PAUSED -> RUNNING
+	
+	Define: PAUSED Interrupt
+	
+	Define: RUNNING -> PAUSED Interrupt
+	
+	Define: PAUSED -> RUNNING Interrupt
+	
+	Define: RUNNING Interrupt on HLT Operation
+
+CORE design: 
+	2-ish stage (FETCH, EXECUTE{RUN,MEM})
+	Main Controls: freezePC, freezeEXE, clearEXE (soft clear before using)
+	State Controls: i_startPause, o_doPause, isPaused
+	
+	BOOTING/PAUSED:
+	freezePC, clearEXE (PC stays still, NOPs injected into stream for no effect)
+	
+	RUNNING Data:
+	No specific signals- 2 stage execution w/ last stage shared with previous
+	
+	RUNNING Jump:
+	While EXECUTE-EXE, controls redirect to proper jump PC, need to turn fetched into NOP
+	
+	RUNNING Memory:
+	While EXECUTE-MEM, PC/EXE freezes while memory updates (lower state machine for this)
+	
+	Interrupt:
+	Likely run EXECUTE to completion,
 
 ================================================================================
