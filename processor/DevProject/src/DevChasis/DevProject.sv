@@ -44,182 +44,130 @@ module DevProject (
  * includes both the core microprocessor deign (as the "device under test/DUT")
  * and a chasis to set it up on the FPGA. Below describes the FPGA controls.
  *
- * == Additional Controls/Signals ==
- * control name | location | defined with | desc.
- * -------------+----------+--------------+------
- * reset button | KEY[0]   | Chasis sigs  | External reset pin on MCU design
- * switch clks  | KEY[1]   | Chasis sigs  | Switch between 8.333 MHz and 8 Hz
- * reset LED    | LEDG[0]  | DUT sigs     | visual confirmation of reset state
- * switch LED   | LEDG[1]  | Chasis sigs  | visual confirmation of switch press
- * clk LED      | LEDG[2]  | Chasis sigs  | visual confirmation of clk input
- * JTAG TCK LED | LEDG[3]  | DUT sigs     | visual check of JTAG's TCK
- * RAM En LED   | LEDG[4]  | DUT sigs     | visual check of RAM access
- * SPI EN LED   | LEDG[5]  | DUT sigs     | visual check of SPI access
- * isBooted Pin | LEDG[6]  | DUT sigs     | visual check on "Boot" status pin
- * isPaused Pin | LEDG[7]  | DUT sigs     | visual check on "Paused" status pin
+ * "PCB" Controls:
+ * control name | location   | desc.
+ * -------------|------------|------
+ * reset pin    | SW[0]      | connection to uP's reset pin
+ * pause pin    | SW[1]      | connection to uP's "doPause" pin
+ * boot state   | LEDR[0]    | connection to uP's "isBooted" pin
+ * pause state  | LEDR[1]    | connection to uP's "isPaused" pin
+ *
+ * "Special" Controls:
+ * control name | location | desc.
+ * -------------|----------|------
+ * switch freq  | KEY[0]   | debug control to switch DUT's input clk frequency
+ * clk freq     | LEDG[0]  | value/frequency of DUT's input clk signal
+ * RAM enable   | LEDG[7]  | value of enable signal to RAM chip
+ * SPI enable   | LEDG[6]  | value of enable signal to EEPROM chip
+ * JTAG clk     | LEDG[5]  | value/frequency of DUT's input TCK signal
+ * RAM address  | HEX4-7   | value output from DUT's RAM address pins
+ * RAM value    | HEX0-3   | value in/output to/from DUT's RAM data pins
  */
 
-/////////////////////////////////////////////
-// -- CHASIS Signals/Internal Registers -- //
-/////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// -- DEV_CHASIS Internal Signals/Wires -- //
+////////////////////////////////////////////////////////////////////////////////
 
-// PLL block wires.
-wire pll_clkD, pll_clkQ;
-wire pll_selPulse;
+// Lazy PLL wires.
+wire pllClkD, pllClkQ;
+wire pllSwitchFreq;
 
-// Segment Display "Debug Words" wires.
-wire [27:0] seg_ctrl0, seg_ctrl1;
-wire [15:0] seg_word0, seg_word1;
+// 16-bit Segment Display wires.
+wire [27:0] segLeftCtrl, segRightCtrl;
+wire [15:0] segLeftWord, segRightWord;
 
-//////////////////////////////////////////////////////
-// -- CHASIS Behavioral Blocks/Functional Instances //
-//////////////////////////////////////////////////////
+// DUT connector wires (sans bidirectionals).
+wire [15:0] dutMemAddr;
+wire        dutMemEn;
+wire        dutSpiCSn;
+wire        dutJtagTCK;
+
+////////////////////////////////////////////////////////////////////////////////
+// -- DEV_CHASIS Large Blocks/Instances -- //
+////////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------------------
 // PLL Block- generates 8.333 MHz and 4 Hz clocks for development.
 LazyPll PLL (
     // Input 50 MHz clock.
-    .i_clock50(pll_clkD),
+    .i_clock50(pllClkD),
     
     // Pulsing freq. selector.
-    .i_switchFreq(pll_selPulse),
+    .i_switchFreq(pllSwitchFreq),
     
     // Generated clock.
-    .o_genClk(pll_clkQ)
+    .o_genClk(pllClkQ)
 );
 
 //------------------------------------------------------------------------------
 // Segment Displays- organized as two 16-bit words (for debugging).
-SegDisplay DBG_WORD0[3:0] (
+SegDisplay DBG_LEFT_WORD[3:0] (
     // Basic Encoder I/O.
-    .i_segNibble(seg_word0),
-    .o_segControls(seg_ctrl0)
+    .i_segNibble(segLeftWord),
+    .o_segControls(segLeftCtrl)
 );
-SegDisplay DBG_WORD1[3:0] (
+SegDisplay DBG_RIGHT_WORD[3:0] (
     // Basic Encoder I/O.
-    .i_segNibble(seg_word1),
-    .o_segControls(seg_ctrl1)
+    .i_segNibble(segRightWord),
+    .o_segControls(segRightCtrl)
 );
 
-//////////////////////////////////////////////////
-// -- CHASIS Connections/Combinational Logic -- //
-//////////////////////////////////////////////////
-
-//------------------------------------------------------------------------------
-// Generate proper clock signal for DUT.
-assign pll_clkD     = CLOCK_50;
-assign pll_selPulse = ~KEY[1];  // Pushbutton 2nd from the right
-
-//------------------------------------------------------------------------------
-// Create feedback for PLL control.
-assign LEDG[1] = ~KEY[1];   // Pushbutton/Green LED 2nd from the right
-assign LEDG[2] = pll_clkQ;  // LED 3rd from the right
-
-//------------------------------------------------------------------------------
-// Create feedback for "debug words" for development.
-assign HEX0 = seg_ctrl0[6:0];
-assign HEX1 = seg_ctrl0[13:7];
-assign HEX2 = seg_ctrl0[20:14];
-assign HEX3 = seg_ctrl0[27:21];
-assign HEX4 = seg_ctrl1[6:0];
-assign HEX5 = seg_ctrl1[13:7];
-assign HEX6 = seg_ctrl1[20:14];
-assign HEX7 = seg_ctrl1[27:21];
-
 ////////////////////////////////////////////////////////////////////////////////
-// -- Device Under Test (DUT) -- //
-////////////////////////////////////////////////////////////////////////////////
-
-/*
- * CHASIS Resources available:
- * == Expected/Production Signals ==
- * -> pll_clkQ             : Input Clock Signal
- * -> SRAM_<sigs>          : RAM chip signals
- * -> GPIO_0, GPIO_1       : Generic pins (for JTAG, SPI, etc)
- *
- * == Debug/Test Signals ==
- * -> seg_word0, seg_word1 : Words sent to hex displays
- */
-
-//------------------------------------------------------------------------------
-// Broken out SRAM signals (to handle specifc SRAM chip interface).
-wire dut_sramWr, dut_sramEn;
-
-//------------------------------------------------------------------------------
-// Microprocessor DUT Incarnate...
-UProc DUT (
-    // Memory/SRAM chip connections (IO due to B-Scan).
-    .io_memAddr(SRAM_ADDR),
-    .io_memData(SRAM_DQ),
-    .io_memWr(dut_sramWr),
-    .io_memEn(dut_sramEn),
-
-    // Storage/EEPROM SPI connections (IO due to B-Scan).
-    .io_storeSCK(GPIO_0[29]),
-    .io_storeSDI(GPIO_0[28]), // TODO- "data in"to slave- refactor naming...
-    .io_storeSDO(GPIO_0[33]),
-    .io_storeSCS(GPIO_0[32]),
-
-    // GPIO connections.
-    .io_gpioPin({GPIO_1[35:28], GPIO_1[7:0]}),
-
-    // State/Status connections (IO due to B-Scan).
-    .io_isBooted(LEDG[6]),
-    .io_isPaused(LEDG[7]),
-    
-    // JTAG port connections.
-    .i_jtagTCK(GPIO_0[0]), // "Upper" 3 pins of GPIO_0 connector
-    .i_jtagTDI(GPIO_0[1]),
-    .o_jtagTDO(GPIO_0[2]),
-    .i_jtagTMS(GPIO_0[3]),
-
-    // Common signals.
-    .i_clk(pll_clkQ),
-    .i_rstn(KEY[0]),  // Rightmost Pushbutton
-
-    // TODO- Test signals for development; DELETE FOR PRODUCTION!!!
-    .o_test_word0(seg_word0),
-    .o_test_word1(seg_word1)
-);
-
-//------------------------------------------------------------------------------
-// Connect to specific SRAM chip signals.
-assign SRAM_WE_N = ~dut_sramWr;             // Inverted write/read signal
-assign SRAM_OE_N = dut_sramWr;              // Allow output on read request
-assign SRAM_UB_N = dut_sramWr & ~pll_clkQ;  // Write trigger- sync w/ clk
-assign SRAM_LB_N = dut_sramWr & ~pll_clkQ;  // Write trigger- sync w/ clk
-assign SRAM_CE_N = ~dut_sramEn;             // Inverted enable signal
-
-//------------------------------------------------------------------------------
-// Handle EEPROM specific signals.
-assign GPIO_0[35] = 1'b0; // GND
-assign GPIO_0[34] = 1'b1; // Write Protect disabled
-assign GPIO_0[31] = 1'b1; // VDD
-assign GPIO_0[30] = 1'b1; // Hold disabled
-
-//------------------------------------------------------------------------------
-// TODO- Additional feedback signals for development- TO DELETE!!!
-assign LEDG[0]   = KEY[0];      // Input to reset pin
-assign LEDG[3]   = GPIO_0[0];   // JTAG's TCK signal
-assign LEDG[4]   = dut_sramEn;  // RAM En signal
-assign LEDG[5]   = ~GPIO_0[32]; // EEPROM/SPI En signal
-
-////////////////////////////////////////////////////////////////////////////////
-// -- Disabled/Unconnected Ports -- //
+// -- DEV_CHASIS Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------------------
-// Direct I/O Devices.
-assign LEDR [17:0] = 16'b0;
-assign LEDG [8]    = 1'b0;
+// Generate desired clock signal for DUT.
+assign pllClkD       = CLOCK_50;
+assign pllSwitchFreq = ~KEY[0];
+assign LEDG[0]       = pllClkQ;  // clk freq feedback
 
 //------------------------------------------------------------------------------
-// SRAM Signals.
-assign SRAM_ADDR[17:16] = 2'b0;
+// Display "special/debugging" data from DUT.
+assign segLeftWord  = dutMemAddr;  // RAM address line
+assign HEX4 = segLeftCtrl[6:0];
+assign HEX5 = segLeftCtrl[13:7];
+assign HEX6 = segLeftCtrl[20:14];
+assign HEX7 = segLeftCtrl[27:21];
+assign segRightWord = SRAM_DQ;     // RAM data line
+assign HEX0 = segRightCtrl[6:0];
+assign HEX1 = segRightCtrl[13:7];
+assign HEX2 = segRightCtrl[20:14];
+assign HEX3 = segRightCtrl[27:21];
+assign LEDG[7]      = dutMemEn;    // RAM enable
+assign LEDG[6]      = dutSpiCSn;   // SPI enable
+assign LEDG[5]      = dutJtagTCK;  // JTAG clock
 
 //------------------------------------------------------------------------------
-// GPIO Ports.
-assign GPIO_0 [27:4] = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
-assign GPIO_1 [27:8] = 20'bZZZZZZZZZZZZZZZZZZZZ;
+// Connect DUT to external pins.
+
+// TODO- implement.
+
+//------------------------------------------------------------------------------
+// ("Disconnect" unused FPGA output interface components.)
+assign LEDR[17:2]       = 16'b0000000000000000;
+assign LEDG[8]          = 1'b0;
+assign LEDG[4:1]        = 4'b0000;
+assign SRAM_ADDR[17:16] = 2'b00;
+assign SRAM_WE_N        = 1'b1;
+assign SRAM_OE_N        = 1'b1;
+assign SRAM_UB_N        = 1'b1;
+assign SRAM_LB_N        = 1'b1;
+assign SRAM_CE_N        = 1'b1;
+assign GPIO_0[35:0]     = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_1[35:0]     = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
+
+////////////////////////////////////////////////////////////////////////////////
+// -- DUT_INSTANCE Wires/Blocks/Logic -- //
+////////////////////////////////////////////////////////////////////////////////
+
+// TODO- implement.
+assign SRAM_DQ    = 16'bZZZZZZZZZZZZZZZZ;
+assign dutMemAddr = 16'b0000000000000000;
+assign dutMemEn   = 1'b0;
+assign dutSpiCSn  = 1'b1;
+assign dutJtagTCK = 1'b0;
+assign LEDR[1:0]  = 2'b00;
+assign SRAM_ADDR  = 16'b0000000000000000;
 
 endmodule
