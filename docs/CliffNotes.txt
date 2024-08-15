@@ -50,12 +50,7 @@ Binary Image
 	(End of file)
 
 ================================================================================
-uP States + Abilities // TODO shape up:
-
-uP States
-	BOOTING - loading binary into runtime chip; blocking, though always terminates
-	RUNNING - core running code
-	PAUSED  - core paused, jtag given control to perform debug+programming
+uP Internals:
 
 uP Blocks
 	CORE - 16-bit processor core
@@ -72,7 +67,7 @@ uP Blocks
 	I2C  - (mapped) i2c master port
 	SPI  - (mapped) spi master port (only connected to storage chip)
 
-uP Interrupt Vector
+uP Interrupt Vector (12/16 possible vectors used)
 	(High Priority)
 	---- - reset vector (no direct interrupt)
 	OFD  - stack overflow
@@ -88,125 +83,98 @@ uP Interrupt Vector
 	GPIO - interrupt pin 2
 	(Low Priority)
 
-General Notes on States/Controls
-	-> BOOT only has control during BOOTING of anything
-	-> BOOT requires control of both memory chips
-	-> BOOT, for safety should NOT have mapped access (eg corrupt boot hits SPI poorly)
-		(ie BOOTING state = mapped access disabled)
-	-> JTAG should have access to memory chips (and mapped registers)
-	-> JTAG should have access to SCAN register
-	-> Consider SCAN safety mechs (dumbing down to reads only, but nevertheless)
-	-> JTAG has access/controls while PAUSED
-	-> CORE has memory chip control while RUNNING
-	-> When entering PAUSED, all blocks must enter decent pause state
-		(eg timers must freeze unless JTAG restarts them)
-		(eg serials must finish transmitting before system is considered PAUSED)
-	-> CORE must be in dormant state while not RUNNING
-	-> Interrupts triggering should be defined for PAUSED/BOOTING
-		(all pulses? some pulse some till deassert?)
+uP States
+	BOOTING - loading binary into runtime chip; blocking, though terminates
+	RUNNING - core running code
+	PAUSED  - core paused, jtag given control to perform debug+programming
+
+uP Pause Network
+	> PAUSED state requires sequencing pause of many circuits
+	> Sources of pausing have "doPause" signal
+	> Signal "startPause" is used to begin pausing all circuits
+	> Circuits that can't pause within 1 posedge have "nowPaused" feedback
+	> Once all circuits are paused, "isPaused" is asserted to finalize PAUSED
 	---
-	-> In effect:
-		BOOTING = BOOT in control, mapped access denied
-		RUNNING = CORE in control
-		PAUSED  = JTAG in control
+	> "nowPaused" acts as localized PAUSED state as applicable
+	> One posedge between "do-start-now-is" signals enforced (ie 4+ cycle pause)
+	> uP CAN be paused while in BOOTING, but not in PAUSED until boot finishes
+
+uP Pause Sequencing
+	1) after clk posedge, a pause source asserts "doPause"
+	2) after clk posedge, network asserts "startPause", but locks "isPaused" low
+	3) after clk posedge, "isPaused" is unlocked, but still low
+	4) after some time, all "nowPaused" signals are received
+	5) after clk posedge, "isPaused" is asserted
+
+================================================================================
+uP Core Design:
+
+Pertinent Signals
+	Hazard Sigs
+		> hzdStallPC    stop PC inc, but not jump (2nd/extern compute)
+		> hzdFreezeEXE  prevent EXE update (2nd compute)
+		> hzdClearEXE   set EXE to NOP unless hzdFreezeEXE (2nd/extern compute)
+	uP State Sigs
+		> smIsBooted    result to BOOT/state signal (extern compute)
+		> smStartPause  input to begin pausing (extern output)
+		> smNowPaused   local PAUSED state output (output)
+		> smDoPause     request for PAUSED state (output)
 		
-		Must define interrupt/peripheral behaviors when not in RUNNING
-		Must define CORE behavior when not in RUNNING
-		Must define how transitions between larger states work per cycle
-		Must define how interrupts/peripherals operate under PAUSED
+	Control Sigs
+		> ctrlDoBranch  force SW jump (compute)
+		> ctrlMemEn     mem op in EXE (compute)
+		> ctrlNewCC     data op in EXE (compute)
+		> ctrlIsHLT     HLT op in EXE (compute)
+		> memDEnd       last cycle of mem op (semi-local compute)
+		> intDoInt      trigger interrupt (extern compute)
 
-Pause Network
-	doPause- output of circuits that can cause a pause
-	startPause- request to circuits needing pausing to pause
-	nowPaused- response from "lenghty pause" circuits that tehy are now paused
-	isPaused- confirmation all circuits are now paused
+Scenario Signal Responses
+	BOOTING/PAUSED Idle
+		> hzdStallPC, hzdClearEXE (run NOPs)
 	
-	General Cycle Plan
-		> a device emits "doPause", which reaches the pause controller
-		> 1 clock cycle after, "startPause" is emitted to all circuits
-		> 1+ clock cycles expected to pass by before "nowPaused" signals return
-		> Eventually all "nowPaused" signals return
-		> 1 clock cycle later, "isPaused" is emitted
-		(4 cycle minimum from call to final pausing)
-		(ensures full cycle available to capture or use signals)
-		(circuits expected to add 1+ cycle delay between "start" and "now" signals)
-		(circuits with start/now signals should use "now" as their "isPaused" signal)
-
-Core Design
-	2(ish) stages (FETCH, EXECUTE{RUN, MEM})
-	Hazard Controls: frzPC, frzEXE, clrEXE
-	State Controls: startPause, doPause, nowPaused, isBooted
-	
-	Define: BOOTING Idle
-		> PC = 0, EXE = 0
-		> frzPC, clrEXE
-	
-	Define: PAUSED Idle
-		> EXE = 0
-		> frzPC, clrEXE
-	
-	Define: RUNNING Data Op
-		(no special controls)
-	
-	Define: RUNNING Jump Op
-		> While Jump == EXECUTE-RUN, clrEXE to ignore fetched instruction
-		> Control signals will handle passing of new PC
-	
-	Define: RUNNING Mem Op
-		> While Mem == EXECUTE-MEM (or otherwise not exiting), frzPC and frzEXE
-		> When Mem == EXECUTE-RUN (ie exiting), likely frzPC and clrEXE (due to used mem path)
-	
-	Define: RUNNING Interrupt (on Data? Mem mid stall? Jmp mid jumping? In FETCH?)
-		> Wait until NOT frzPC
-		> When NOT frzPC, save CC and {PC/newPC based on jump control} while setting IL (and clrEXE)
+	RUNNING Data Operation
+		> (no specific signal controls- just run data op)
 		
-	Define RUNNING HLT Operation
+	RUNNING Memory Operation
+		> While ctrlMemEn and ~memDEnd, hzdStallPC and hzdFreezeEXE (stall)
+		> When memDEnd, hzdStallPC and hzdClearEXE (NOP to cover used mem path)
 	
-	Define: <reset> -> BOOTING
-		> PC = 0, EXE = 0 (ie NOP) (both startings)
-		> frzPC, clrEXE
-		> becomes "BOOTING Idle" after 1 cycle
-	
-	Define: BOOTING -> PAUSED
-	
-	Define: BOOTING -> RUNNING
-		> isBooted rises, technically in RUNNING now
-		> thus, isBooted rises, frzPC and clrEXE fall
-	
-	Define: RUNNING -> PAUSED
-		> startPause rises, wait until NOT frzPC
-		> When NOT frzPC, begin PAUSED transfer by prepping to set nowPaused
-		> Meanwhile, clrEXE (and frzPC if NOT jumping)
-		(Will need to differ frzPC to begin switch vs frzPC used to get there)
-	
-	Define: PAUSED -> RUNNING
-	
-	Define: PAUSED Interrupt
-	
-	Define: RUNNING -> PAUSED Interrupt
-	
-	Define: PAUSED -> RUNNING Interrupt
-	
-	Define: RUNNING Interrupt on HLT Operation
+	RUNNING Jump Operation
+		> When ctrlDoBranch, hzdClearEXE (NOP mispredicted fetch)
+		
+	RUNNING Halt Operation
+		> hzdStallPC and hzdFreezeEXE on EXECUTE (keep)
+		> prep set smDoPause on EXECUTE (report)
 
-CORE design: 
-	2-ish stage (FETCH, EXECUTE{RUN,MEM})
-	Main Controls: freezePC, freezeEXE, clearEXE (soft clear before using)
-	State Controls: i_startPause, o_doPause, isPaused
+	Interrupt (Any State, Any Operation)
+		> When intDoInt and ~IL and ~smNowPaused and ~smIsBooted:
+			- Save PC or newPC (based on ctrlDoBranch)
+			- Save CC or newCC (based on ctrlNewCC)
+			- Set IL
+			- hzdClearEXE (interrupted fetch- overriden if hzdFreezeEXE)
+
+	<reset> -> BOOTING
+		> PC, EXE = 0 (address 0x0000, NOP on reset)
+		> "BOOTING Idle" reached/entered immediately
+		
+	RUNNING -> PAUSED
+		> When smStartPause and ~ctrlMemEn, hzdStallPC and set smNowPaused
 	
-	BOOTING/PAUSED:
-	freezePC, clearEXE (PC stays still, NOPs injected into stream for no effect)
-	
-	RUNNING Data:
-	No specific signals- 2 stage execution w/ last stage shared with previous
-	
-	RUNNING Jump:
-	While EXECUTE-EXE, controls redirect to proper jump PC, need to turn fetched into NOP
-	
-	RUNNING Memory:
-	While EXECUTE-MEM, PC/EXE freezes while memory updates (lower state machine for this)
-	
-	Interrupt:
-	Likely run EXECUTE to completion,
+	PAUSED/BOOTING -> RUNNING
+		> When ~smNowPaused, no longer locally paused/in PAUSED
+
+	(Effects)
+		> Interrupts only take effect in RUNNING (local PAUSED doesn't count)
+		> Executing HLT doesn't immediately cause local PAUSED state
+		> External flag needed to keep uP in PAUSED after HLT is run
+		> "smNowPaused" effectively RUNNING/PAUSED switch for CORE
+		> BOOTING == PAUSED locally for CORE
+		
+Hazard Signal Computations
+	hzdStallPC   = ~smIsBooted | smNowPaused | 
+	               ctrlMemEn | ctrlIsHLT | smStartPause;
+	hzdFreezeEXE = (ctrlMemEn & ~memDEnd) | ctrlIsHLT;
+	hzdClearEXE  = ~smIsBooted | smNowPaused | 
+	               ctrlDoBranch | memDEnd | intDoInt;
 
 ================================================================================
