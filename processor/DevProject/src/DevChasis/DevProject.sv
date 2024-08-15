@@ -78,9 +78,11 @@ wire [15:0] segLeftWord, segRightWord;
 
 // DUT connector wires (sans bidirectionals).
 wire [15:0] dutMemAddr;
-wire        dutMemEn;
-wire        dutSpiCSn;
-wire        dutJtagTCK;
+wire        dutMemWr, dutMemEn;
+wire        dutSpiMISO, dutSpiMOSI, dutSpiCLK, dutSpiCSn;
+wire        dutJtagTCK, dutJtagTMS, dutJtagTDI, dutJtagTDO;
+wire        dutSmDoPause, dutSmIsBooted, dutSmIsPaused;
+wire        dutSysClk, dutSysRstn;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- DEV_CHASIS Large Blocks/Instances -- //
@@ -139,9 +141,30 @@ assign LEDG[6]      = dutSpiCSn;   // SPI enable
 assign LEDG[5]      = dutJtagTCK;  // JTAG clock
 
 //------------------------------------------------------------------------------
-// Connect DUT to external pins.
-
-// TODO- implement.
+// Connect DUT to external pins/chasis clock (+ "PCB" controls).
+assign SRAM_ADDR    = dutMemAddr;          // Runtime Chip <-> SRAM
+assign SRAM_WE_N    = ~dutMemWr;              // Inverted write/read signal
+assign SRAM_OE_N    = dutMemWr;               // Allow output on read request
+assign SRAM_UB_N    = dutMemWr & ~pllClkQ;    // Write trigger- sync w/ clk
+assign SRAM_LB_N    = dutMemWr & ~pllClkQ;    // Write trigger- sync w/ clk
+assign SRAM_CE_N    = ~dutMemEn;              // Inverted enable signal
+assign GPIO_0[28]   = dutSpiMOSI;          // Storage Chip <-> SPI EEPROM
+assign GPIO_0[29]   = dutSpiCLK;
+assign GPIO_0[30]   = 1'b1;                   // Hold Disabled
+assign GPIO_0[31]   = 1'b1;                   // VDD
+assign GPIO_0[32]   = dutSpiCSn;
+assign dutSpiMISO   = GPIO_0[33];
+assign GPIO_0[34]   = 1'b1;                   // Write Protect Disabled
+assign GPIO_0[35]   = 1'b0;                   // GND
+assign dutJtagTCK   = GPIO_0[0];           // JTAG Port <-> JTAG Pins
+assign dutJtagTMS   = GPIO_0[3];
+assign dutJtagTDI   = GPIO_0[1];
+assign GPIO_0[2]    = dutJtagTDO;
+assign dutSmDoPause = SW[1];               // State Signals <-> State Pins
+assign LEDR[0]      = dutSmIsBooted;
+assign LEDR[1]      = dutSmIsPaused;
+assign dutSysClk    = pllClkQ;             // System Signals <-> System Pins
+assign dutSysRstn   = SW[0];
 
 //------------------------------------------------------------------------------
 // ("Disconnect" unused FPGA output interface components.)
@@ -149,25 +172,45 @@ assign LEDR[17:2]       = 16'b0000000000000000;
 assign LEDG[8]          = 1'b0;
 assign LEDG[4:1]        = 4'b0000;
 assign SRAM_ADDR[17:16] = 2'b00;
-assign SRAM_WE_N        = 1'b1;
-assign SRAM_OE_N        = 1'b1;
-assign SRAM_UB_N        = 1'b1;
-assign SRAM_LB_N        = 1'b1;
-assign SRAM_CE_N        = 1'b1;
-assign GPIO_0[35:0]     = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
-assign GPIO_1[35:0]     = 36'bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_0[27:4]     = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
+assign GPIO_1[27:8]     = 20'bZZZZZZZZZZZZZZZZZZZZ;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- DUT_INSTANCE Wires/Blocks/Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
 
-// TODO- implement.
-assign SRAM_DQ    = 16'bZZZZZZZZZZZZZZZZ;
-assign dutMemAddr = 16'b0000000000000000;
-assign dutMemEn   = 1'b0;
-assign dutSpiCSn  = 1'b1;
-assign dutJtagTCK = 1'b0;
-assign LEDR[1:0]  = 2'b00;
-assign SRAM_ADDR  = 16'b0000000000000000;
+//------------------------------------------------------------------------------
+// DUT Instance for development/testing/debugging.
+UProc DUT (
+	// Runtime Chip (Parallel Port SRAM) Connections.
+	.o_memAddr(dutMemAddr),
+	.o_memWr(dutMemWr),
+	.o_memEn(dutMemEn),
+	.io_memData(SRAM_DQ),                       // inout- direct connect net
+	
+	// Storage Chip (SPI Port EEPROM) Connections.
+	.i_spiMISO(dutSpiMISO),
+	.o_spiMOSI(dutSpiMOSI),
+	.o_spiCLK(dutSpiCLK),
+	.o_spiCSn(dutSpiCSn),
+	
+	// GPIO Pin Connections.
+	.io_gpioPins({GPIO_1[35:28], GPIO_1[7:0]}), // inout- direct connect net
+	
+	// JTAG(esque) Port Connections.
+	.i_jtagTCK(dutJtagTCK),
+	.i_jtagTMS(dutJtagTMS),
+	.i_jtagTDI(dutJtagTDI),
+	.o_jtagTDO(dutJtagTDO),
+	
+	// State Machine Connections.
+	.i_smDoPause(dutSmDoPause),
+	.o_smIsBooted(dutSmIsBooted),
+	.o_smIsPaused(dutSmIsPaused),
+	
+	// Common System Connections.
+	.i_sysClk(dutSysClk),
+	.i_sysRstn(dutSysRstn)
+);
 
 endmodule
