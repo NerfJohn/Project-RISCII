@@ -4,37 +4,37 @@
  * "Top level of 'chasis' connecting processor design to development FPGA pins"
  */
 module DevProject (
-    // Direct I/O Devices.
-    input  [17:0] SW,
-    input  [3:0]  KEY,
-    output [17:0] LEDR,
-    output [8:0]  LEDG,
+   // Direct I/O Devices.
+   input  [17:0] SW,
+   input  [3:0]  KEY,
+   output [17:0] LEDR,
+   output [8:0]  LEDG,
+   
+   // 7-Segment Displays.
+   output [6:0]  HEX0,
+   output [6:0]  HEX1,
+   output [6:0]  HEX2,
+   output [6:0]  HEX3,
+   output [6:0]  HEX4,
+   output [6:0]  HEX5,
+   output [6:0]  HEX6,
+   output [6:0]  HEX7,
     
-    // 7-Segment Displays.
-    output [6:0]  HEX0,
-    output [6:0]  HEX1,
-    output [6:0]  HEX2,
-    output [6:0]  HEX3,
-    output [6:0]  HEX4,
-    output [6:0]  HEX5,
-    output [6:0]  HEX6,
-    output [6:0]  HEX7,
+   // 50 MHz Clock Input.
+   input         CLOCK_50,
+   
+   // SRAM Signals.
+   output [17:0] SRAM_ADDR,
+   inout  [15:0] SRAM_DQ,
+   output        SRAM_WE_N,
+   output        SRAM_OE_N,
+   output        SRAM_UB_N,
+   output        SRAM_LB_N,
+   output        SRAM_CE_N,
     
-    // 50 MHz Clock Input.
-    input         CLOCK_50,
-    
-    // SRAM Signals.
-    output [17:0] SRAM_ADDR,
-    inout  [15:0] SRAM_DQ,
-    output        SRAM_WE_N,
-    output        SRAM_OE_N,
-    output        SRAM_UB_N,
-    output        SRAM_LB_N,
-    output        SRAM_CE_N,
-    
-    // GPIO Ports.
-    inout  [35:0] GPIO_0,
-    inout  [35:0] GPIO_1
+   // GPIO Ports.
+   inout  [35:0] GPIO_0,
+   inout  [35:0] GPIO_1
 );
 
 /*
