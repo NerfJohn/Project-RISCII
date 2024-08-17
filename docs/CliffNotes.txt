@@ -20,27 +20,6 @@ Levels of Design
 ================================================================================
 uP Interfaces:
 
-uP Pinout
-	(63 total pins)
-	[1]  o_memEn      (runtime memory chip- 34 pins) 
-	[1]  o_memWr
-	[16] o_memAddr
-	[16] io_memData
-	[1]  i_spiMISO    (storage memory chip- 4 pins)
-	[1]  o_spiMOSI
-	[1]  o_spiCLK
-	[1]  o_spiCSn
-	[16] io_gpio      (gpio/mapped pins- 16 pins)
-	[1]  i_jtagCLK    (jtag connector- 4 pins)
-	[1]  i_jtagTMS
-	[1]  i_jtagTDI
-	[1]  o_jtagTDO
-	[1]  i_smDoPause  (state machine abstract- 3 pins)
-	[1]  o_smIsBooted
-	[1]  o_smIsPaused
-	[1]  i_comClk     (common signals- 2 pins)
-	[1]  i_comRstn
-
 Binary Image
 	(Start of file)
 	<text metadata>: last runtime chip text address (16-bits per address)
