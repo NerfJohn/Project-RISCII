@@ -44,9 +44,12 @@ module UProc (
 ////////////////////////////////////////////////////////////////////////////////
 
 // Synchronized wires.
-wire       synchRstnIn, synchRstnOut;
-wire [2:0] synchJtagIn, synchJtagOut;
-wire       synchJtagTCK, synchJtagTMS, synchJtagTDI;
+wire        synchRstnIn, synchRstnOut;
+wire [2:0]  synchJtagIn, synchJtagOut;
+wire        synchJtagTCK, synchJtagTMS, synchJtagTDI;
+
+// Jtag Port wires.
+wire        jtagTCK, jtagTMS, jtagTDI, jtagTDO;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -69,6 +72,18 @@ ClkSynch SYNCH_JTAG[2:0] (
 	.rstn(synchRstnOut)
 );
 
+// JTAG Port- parses JTAG pins for commands/data.
+JtagPort JTAG_PORT(
+	// JTAG pin connections.
+	.i_TCK(jtagTCK),
+	.i_TMS(jtagTMS),
+	.i_TDI(jtagTDI),
+	.o_TDO(jtagTDO),
+	
+	// Common signals.
+	.i_rstn(synchRstnOut)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,9 +96,16 @@ assign synchJtagTCK = synchJtagOut[2];
 assign synchJtagTMS = synchJtagOut[1];
 assign synchJtagTDI = synchJtagOut[0];
 
+//------------------------------------------------------------------------------
+// Interpret/Control JTAG pinout.
+assign jtagTCK   = synchJtagTCK;
+assign jtagTMS   = synchJtagTMS;
+assign jtagTDI   = synchJtagTDI;
+assign o_jtagTDO = jtagTDO;
+
 //------------------------------------------------------------------------------ 
 // TODO- implement.
-assign o_memAddr    = {13'b0000000000000, synchJtagTCK, synchJtagTMS, synchJtagTDI};
+assign o_memAddr    = 16'b0000000000000000;
 assign o_memWr      = 1'b0;
 assign o_memEn      = 1'b0;
 assign io_memData   = 16'bZZZZZZZZZZZZZZZZ;
@@ -91,7 +113,6 @@ assign o_spiMOSI    = 1'b0;
 assign o_spiCLK     = 1'b0;
 assign o_spiCSn     = 1'b1;
 assign io_gpioPins  = 16'bZZZZZZZZZZZZZZZZ;
-assign o_jtagTDO    = 1'b0;
 assign o_smIsBooted = 1'b0;
 assign o_smIsPaused = 1'b0;
  
