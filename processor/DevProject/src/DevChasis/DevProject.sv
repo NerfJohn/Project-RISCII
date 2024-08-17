@@ -57,6 +57,7 @@ module DevProject (
  * -------------|----------|------
  * switch freq  | KEY[0]   | debug control to switch DUT's input clk frequency
  * clk freq     | LEDG[0]  | value/frequency of DUT's input clk signal
+ * rstn signal  | LEDG[1]  | value of reset signal to uP
  * RAM enable   | LEDG[7]  | value of enable signal to RAM chip
  * SPI enable   | LEDG[6]  | value of enable signal to EEPROM chip
  * JTAG clk     | LEDG[5]  | value/frequency of DUT's input TCK signal
@@ -126,19 +127,20 @@ assign LEDG[0]       = pllClkQ;  // clk freq feedback
 
 //------------------------------------------------------------------------------
 // Display "special/debugging" data from DUT.
-assign segLeftWord  = dutMemAddr;  // RAM address line
-assign HEX4 = segLeftCtrl[6:0];
-assign HEX5 = segLeftCtrl[13:7];
-assign HEX6 = segLeftCtrl[20:14];
-assign HEX7 = segLeftCtrl[27:21];
-assign segRightWord = SRAM_DQ;     // RAM data line
-assign HEX0 = segRightCtrl[6:0];
-assign HEX1 = segRightCtrl[13:7];
-assign HEX2 = segRightCtrl[20:14];
-assign HEX3 = segRightCtrl[27:21];
-assign LEDG[7]      = dutMemEn;    // RAM enable
-assign LEDG[6]      = dutSpiCSn;   // SPI enable
-assign LEDG[5]      = dutJtagTCK;  // JTAG clock
+assign segLeftWord  = dutMemAddr;          // RAM address line
+assign HEX4         = segLeftCtrl[6:0];
+assign HEX5         = segLeftCtrl[13:7];
+assign HEX6         = segLeftCtrl[20:14];
+assign HEX7         = segLeftCtrl[27:21];
+assign segRightWord = SRAM_DQ;             // RAM data line
+assign HEX0         = segRightCtrl[6:0];
+assign HEX1         = segRightCtrl[13:7];
+assign HEX2         = segRightCtrl[20:14];
+assign HEX3         = segRightCtrl[27:21];
+assign LEDG[1]      = dutSysRstn;          // Reset signal
+assign LEDG[7]      = dutMemEn;            // RAM enable
+assign LEDG[6]      = dutSpiCSn;           // SPI enable
+assign LEDG[5]      = dutJtagTCK;          // JTAG clock
 
 //------------------------------------------------------------------------------
 // Connect DUT to external pins/chasis clock (+ "PCB" controls).
@@ -170,7 +172,7 @@ assign dutSysRstn   = SW[0];
 // ("Disconnect" unused FPGA output interface components.)
 assign LEDR[17:2]       = 16'b0000000000000000;
 assign LEDG[8]          = 1'b0;
-assign LEDG[4:1]        = 4'b0000;
+assign LEDG[4:2]        = 3'b000;
 assign SRAM_ADDR[17:16] = 2'b00;
 assign GPIO_0[27:4]     = 24'bZZZZZZZZZZZZZZZZZZZZZZZZ;
 assign GPIO_1[27:8]     = 20'bZZZZZZZZZZZZZZZZZZZZ;

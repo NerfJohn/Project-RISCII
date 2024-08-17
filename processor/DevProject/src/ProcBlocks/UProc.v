@@ -43,16 +43,47 @@ module UProc (
 // -- Internal Signals/Wires -- //
 ////////////////////////////////////////////////////////////////////////////////
 
+// Synchronized wires.
+wire       synchRstnIn, synchRstnOut;
+wire [2:0] synchJtagIn, synchJtagOut;
+wire       synchJtagTCK, synchJtagTMS, synchJtagTDI;
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
 ////////////////////////////////////////////////////////////////////////////////
 
+//------------------------------------------------------------------------------
+// Syncrhonizers for ("slower") inputs.
+RstSynch SYNCH_RSTN (
+	// Reset line to synchronize.
+	.i_rstIn(synchRstnIn),
+	.o_rstOut(synchRstnOut),
+	
+	// Common signals.
+	.i_clk(i_sysClk)
+);
+ClkSynch SYNCH_JTAG[2:0] (
+	.A(synchJtagIn),
+	.Y(synchJtagOut),
+	.clk(i_sysClk),
+	.rstn(synchRstnOut)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
- 
+
+//------------------------------------------------------------------------------
+// Syncrhonize ("slower") inputs.
+assign synchRstnIn  = i_sysRstn;
+assign synchJtagIn  = {i_jtagTCK, i_jtagTMS, i_jtagTDI};
+assign synchJtagTCK = synchJtagOut[2];
+assign synchJtagTMS = synchJtagOut[1];
+assign synchJtagTDI = synchJtagOut[0];
+
+//------------------------------------------------------------------------------ 
 // TODO- implement.
-assign o_memAddr    = 16'b0000000000000000;
+assign o_memAddr    = {13'b0000000000000, synchJtagTCK, synchJtagTMS, synchJtagTDI};
 assign o_memWr      = 1'b0;
 assign o_memEn      = 1'b0;
 assign io_memData   = 16'bZZZZZZZZZZZZZZZZ;

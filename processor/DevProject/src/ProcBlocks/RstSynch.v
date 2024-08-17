@@ -1,24 +1,23 @@
 /*
- * ClkSynch.v
+ * RstSynch.v
  *
- * "Two stage synchronizer/metastability blocker for external pins"
+ * "Two stage synchronizer/metastability blocker explicitly for reset signals"
  */
-module ClkSynch (
-	// Serial line to synchronize.
-	input  i_asynchLine,
-	output o_synchLine,
+module RstSynch (
+	// Reset line to synchronize.
+	input  i_rstIn,
+	output o_rstOut,
 	
 	// Common signals.
-	input  i_clk,
-	input  i_rstn
+	input  i_clk
 );
 
 /*
- * Clock synchronizer used to synchronize line with a clock signal.
+ * Clock synchronizer (and metastability blocker) for reset (low) signal.
  *
- * Moreover, synchronizer acts as a means of containing metastability. Given
- * line must be directional and be able to tolerate the 2 clk posedges needed to
- * synchronize the line. Reset is synchronous for this module.
+ * Module runs active low reset signal through 2 synchronous dffs to properly
+ * synchronize/capture input. Designed specifically for active low resets such
+ * that it passes the signal through in a way that can be reversed by the input.
  */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,16 +35,16 @@ wire stage1D, stage1Q;
 //------------------------------------------------------------------------------
 // Dffs implementing two stages of syncrhonizer.
 DffSynch STAGE0 (
-    .D(stage0D),
+    .D(1'b1),      // Defaults to "inactive" reset value
     .Q(stage0Q),
     .clk(i_clk),
-    .rstn(i_rstn)
+    .rstn(stage0D)
 );
 DffSynch STAGE1 (
-    .D(stage1D),
+    .D(1'b1),      // Defaults to "inactive" reset value
     .Q(stage1Q),
     .clk(i_clk),
-    .rstn(i_rstn)
+    .rstn(stage1D)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,8 +53,8 @@ DffSynch STAGE1 (
 
 //------------------------------------------------------------------------------
 // Create "pipeline" through each stage.
-assign stage0D     = i_asynchLine;
+assign stage0D     = i_rstIn; // Reset triggers series of forced resets
 assign stage1D     = stage0Q;
-assign o_synchLine = stage1Q;
+assign o_rstOut    = stage1Q;
 
 endmodule
