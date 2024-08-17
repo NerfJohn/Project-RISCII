@@ -80,6 +80,13 @@ JtagPort JTAG_PORT(
 	.i_TDI(jtagTDI),
 	.o_TDO(jtagTDO),
 	
+	// Current state of the uP.
+	.i_isBooted(1'b1),        // TODO- implement
+	.i_isPaused(i_smDoPause), // TODO- implement
+	
+	// TODO- remove/refactor.
+	.o_addr(o_memAddr),       // TODO- remove/refactor
+	
 	// Common signals.
 	.i_rstn(synchRstnOut)
 );
@@ -105,7 +112,7 @@ assign o_jtagTDO = jtagTDO;
 
 //------------------------------------------------------------------------------ 
 // TODO- implement.
-assign o_memAddr    = 16'b0000000000000000;
+// TODO- assign o_memAddr    = 16'b0000000000000000;
 assign o_memWr      = 1'b0;
 assign o_memEn      = 1'b0;
 assign io_memData   = 16'bZZZZZZZZZZZZZZZZ;

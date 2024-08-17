@@ -10,6 +10,13 @@ module JtagPort (
 	input         i_TDI,
 	output        o_TDO,
 	
+	// Current state of the uP.
+	input         i_isBooted,
+	input         i_isPaused,
+	
+	// TODO- remove/refactor.
+	output [15:0] o_addr,
+	
 	// Common signals.
 	input         i_rstn
 );
@@ -23,9 +30,18 @@ module JtagPort (
 ////////////////////////////////////////////////////////////////////////////////
 
 // State Machine wires.
-wire [2:0] stateD, stateQ;
-wire [2:0] nextState1XX, nextState0XX;
-wire [2:0] nextState10X, nextState00X;
+wire [2:0]  stateD, stateQ;
+wire [2:0]  nextState1XX, nextState0XX;
+wire [2:0]  nextState10X, nextState00X;
+
+// Computed controls (based on state machine).
+wire        inDSHFT;
+wire        loadStatus;
+
+// Shift Registers wires.
+wire [7:0]  cmdD, cmdQ;
+wire [15:0] dataD, dataQ;
+wire        dataEn;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -36,6 +52,22 @@ wire [2:0] nextState10X, nextState00X;
 DffAsynch STATE[2:0] (
 	.D(stateD),
 	.Q(stateQ),
+	.clk(i_TCK),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Shift registers- directly affected by JTAG pin inputs.
+DffAsynch CMD[7:0] (
+	.D(cmdD),
+	.Q(cmdQ),
+	.clk(i_TCK),
+	.rstn(i_rstn)
+);
+DffAsynchEn DATA[15:0] (
+	.D(dataD),
+	.Q(dataQ),
+	.S(dataEn),
 	.clk(i_TCK),
 	.rstn(i_rstn)
 );
@@ -78,7 +110,30 @@ Mux2 M4[2:0] (
 );
 
 //------------------------------------------------------------------------------
+// Compute state machine based controls.
+assign inDSHFT    = ~stateQ[2] & stateQ[1];
+assign loadStatus = ~stateQ[2] & ~stateQ[1] & stateQ[0] & ~i_TMS;
+
+//------------------------------------------------------------------------------
+// Handle shift registers- shifted vs set inputs.
+Mux2 M5[7:0] (
+	.A({6'b000000, i_isPaused, i_isBooted}), // Enter ISHFT? Load uP Status
+	.B({cmdQ[6:0], i_TDI}),                  // No?          Left shift in TDI
+	.S(loadStatus),
+	.Y(cmdD)
+);
+assign dataD  = {dataQ[14:0], i_TDI};
+assign dataEn = inDSHFT;
+
+
+//------------------------------------------------------------------------------
 // TODO- remove/refactor.
-assign o_TDO  = 1'b0;
+assign o_addr = {cmdQ, dataQ[7:0]};
+Mux2 M99 (
+	.A(dataQ[15]),
+	.B(cmdQ[7]),
+	.S(inDSHFT),
+	.Y(o_TDO)
+);
 
 endmodule
