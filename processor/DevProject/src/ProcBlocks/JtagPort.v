@@ -14,8 +14,12 @@ module JtagPort (
 	input         i_isBooted,
 	input         i_isPaused,
 	
-	// TODO- remove/refactor.
-	output [15:0] o_addr,
+	// Runtime memory connection.
+	input  [15:0] i_memDataIn,
+	output [15:0] o_memAddr,
+	output [15:0] o_memDataOut,
+	output        o_memWr,
+	output        o_memEn,
 	
 	// Common signals.
 	input         i_rstn
@@ -23,6 +27,9 @@ module JtagPort (
 
 /*
  * TODO- desc.
+ * 1) updating all regs on TCK (including in UPDATE).
+ * 2) technically may hold MEM + other at same time (though they don't touch).
+ * 3) pause input reflects true PAUSED state (ie should be low in BOOTING).
  */
  
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,13 +42,21 @@ wire [2:0]  nextState1XX, nextState0XX;
 wire [2:0]  nextState10X, nextState00X;
 
 // Computed controls (based on state machine).
-wire        inDSHFT;
+wire        inDSHFT, inUPDATE;
 wire        loadStatus;
 
 // Shift Registers wires.
 wire [7:0]  cmdD, cmdQ;
 wire [15:0] dataD, dataQ;
 wire        dataEn;
+
+// Computed controls (based on shift inputs + state).
+wire        is3BitCmd;
+wire        exeAddrCmd, exeMemCmd;
+
+// Address register wires.
+wire [15:0] addrD, addrQ;
+wire        addrEn;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -68,6 +83,16 @@ DffAsynchEn DATA[15:0] (
 	.D(dataD),
 	.Q(dataQ),
 	.S(dataEn),
+	.clk(i_TCK),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Address register- stores address for (runtime) memory accesses.
+DffAsynchEn ADDR[15:0] (
+	.D(addrD),
+	.Q(addrQ),
+	.S(addrEn),
 	.clk(i_TCK),
 	.rstn(i_rstn)
 );
@@ -111,8 +136,9 @@ Mux2 M4[2:0] (
 
 //------------------------------------------------------------------------------
 // Compute state machine based controls.
-assign inDSHFT    = ~stateQ[2] & stateQ[1];
-assign loadStatus = ~stateQ[2] & ~stateQ[1] & stateQ[0] & ~i_TMS;
+assign inDSHFT    = ~stateQ[2] &  stateQ[1];
+assign inUPDATE   =  stateQ[2] &  stateQ[1]  & ~stateQ[0];
+assign loadStatus = ~stateQ[2] & ~stateQ[1]  &  stateQ[0] & ~i_TMS;
 
 //------------------------------------------------------------------------------
 // Handle shift registers- shifted vs set inputs.
@@ -122,13 +148,34 @@ Mux2 M5[7:0] (
 	.S(loadStatus),
 	.Y(cmdD)
 );
-assign dataD  = {dataQ[14:0], i_TDI};
-assign dataEn = inDSHFT;
+Mux2 M6[15:0] (
+	.A(i_memDataIn),
+	.B({dataQ[14:0], i_TDI}),
+	.S(inUPDATE),
+	.Y(dataD)
+);
+assign dataEn = inDSHFT | exeMemCmd;
 
+//------------------------------------------------------------------------------
+// Compute shift based controls.
+assign is3BitCmd  = ~(|cmdQ[7:3]);
+assign exeAddrCmd = is3BitCmd & ~cmdQ[2] & ~cmdQ[1] & cmdQ[0] & inUPDATE;
+assign exeMemCmd  = is3BitCmd & ~cmdQ[2] &  cmdQ[1] & inUPDATE & i_isPaused;           
+
+//------------------------------------------------------------------------------
+// Set address as commanded.
+assign addrD  = dataQ;
+assign addrEn = exeAddrCmd;
+
+//------------------------------------------------------------------------------
+// Set runtime memory outputs.
+assign o_memAddr    = addrQ;
+assign o_memDataOut = dataQ;
+assign o_memWr      = cmdQ[0];   // read vs. write cmd bit
+assign o_memEn      = exeMemCmd;
 
 //------------------------------------------------------------------------------
 // TODO- remove/refactor.
-assign o_addr = {cmdQ, dataQ[7:0]};
 Mux2 M99 (
 	.A(dataQ[15]),
 	.B(cmdQ[7]),

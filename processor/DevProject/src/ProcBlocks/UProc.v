@@ -50,6 +50,8 @@ wire        synchJtagTCK, synchJtagTMS, synchJtagTDI;
 
 // Jtag Port wires.
 wire        jtagTCK, jtagTMS, jtagTDI, jtagTDO;
+wire        jtagMemWr;
+wire [15:0] jtagMemData;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -81,11 +83,15 @@ JtagPort JTAG_PORT(
 	.o_TDO(jtagTDO),
 	
 	// Current state of the uP.
-	.i_isBooted(1'b1),        // TODO- implement
-	.i_isPaused(i_smDoPause), // TODO- implement
+	.i_isBooted(1'b1),          // TODO- implement
+	.i_isPaused(i_smDoPause),   // TODO- implement
 	
-	// TODO- remove/refactor.
-	.o_addr(o_memAddr),       // TODO- remove/refactor
+	// Runtime memory connection.
+	.i_memDataIn(io_memData),   // TODO- implement
+	.o_memAddr(o_memAddr),      // TODO- implement
+	.o_memDataOut(jtagMemData),
+	.o_memWr(jtagMemWr),
+	.o_memEn(o_memEn),          // TODO- implement
 	
 	// Common signals.
 	.i_rstn(synchRstnOut)
@@ -113,15 +119,23 @@ assign o_jtagTDO = jtagTDO;
 //------------------------------------------------------------------------------ 
 // TODO- implement.
 // TODO- assign o_memAddr    = 16'b0000000000000000;
-assign o_memWr      = 1'b0;
-assign o_memEn      = 1'b0;
-assign io_memData   = 16'bZZZZZZZZZZZZZZZZ;
+//assign o_memWr      = 1'b0;
+//assign o_memEn      = 1'b0;
+//assign io_memData   = 16'bZZZZZZZZZZZZZZZZ;
 assign o_spiMOSI    = 1'b0;
 assign o_spiCLK     = 1'b0;
 assign o_spiCSn     = 1'b1;
 assign io_gpioPins  = 16'bZZZZZZZZZZZZZZZZ;
 assign o_smIsBooted = 1'b0;
 assign o_smIsPaused = 1'b0;
+
+// TODO- implement.
+assign o_memWr = jtagMemWr;
+Tristate TRI[15:0] (
+	.A(jtagMemData),
+	.Y(io_memData),
+	.S(jtagMemWr)
+);
  
 endmodule
  
