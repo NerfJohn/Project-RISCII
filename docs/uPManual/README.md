@@ -77,12 +77,16 @@ Below is a table of the JTAG's supported commands:
 |MEM Write   |0x03        |Paused      |Write data register to MEM address |
 |Access SCAN |0x04        |Paused      |Map SCAN register to data register |
 |Access SPI  |0x05        |Paused      |Map SPI storage to data register   |
+|Run uP      |0x06        |Booted      |De-asserts JTAG's pause request    |
+|Pause uP    |0x07        |Booted      |Asserts JTAG's pause request       |
 
 Note that some commands have requirements. These requirements center around the uP's current overall state (i.e. BOOTING, RUNNING, or PAUSED). If the uP state does not meet the requirements, the commands is not executed.
 
 For MEM read/write (ie runtime chip accesses), it is worth noting the 16-bit address provided is word addressable. That is, addresses 0x0000 and 0x0001 access completely different bits/bytes/words in the memory. With respect to the application software, addresses 0x0000-0x7FFF correspond to the program address space while addresses 0x8000-0xFFFF correspond to the data address space.
 
 For SCAN/SPI accesses, it is worth noting that the "masking/mapping" of each device only lasts until another command is given (even if the given command is inavlid/has no effect).
+
+For uP pause commands, the commands only control the JTAG's pause request- not other sources. That said, other sources (except for the "SM Do Pause Pin") are typically memory mapped and can be overwritten by the JTAG's MEM write command.
 
 ## Integration Considerations
 ---
@@ -93,7 +97,7 @@ As stated before, this document focuses on describing the software uP design, NO
 
 For better FPGA/uP integration, it is recommended a "wrapper module" be made per specific FPGA used. This module should instantiate the uP design, then route the physical FPGA pins to the uP's "pins", thus integrating the design without changing its source logic.
 
-### Additional Controls
+### Additional Interface Controls
 
 Interfaced chips (eg memory chips) may have more control signals than the uP design specifies. Additional controls should be tied to power/ground rails or handled using a "wrapper module" on the FPGA. The uP design should have sufficent controls for most interfaced chips.
 

@@ -52,6 +52,7 @@ wire        synchJtagTCK, synchJtagTMS, synchJtagTDI;
 wire        jtagTCK, jtagTMS, jtagTDI, jtagTDO;
 wire        jtagMemWr;
 wire [15:0] jtagMemData;
+wire        jtagDoPause;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -83,8 +84,8 @@ JtagPort JTAG_PORT(
 	.o_TDO(jtagTDO),
 	
 	// Current state of the uP.
-	.i_isBooted(1'b1),          // TODO- implement
-	.i_isPaused(i_smDoPause),   // TODO- implement
+	.i_isBooted(1'b1),                        // TODO- implement
+	.i_isPaused(i_smDoPause | jtagDoPause),   // TODO- implement
 	
 	// Runtime memory connection.
 	.i_memDataIn(io_memData),   // TODO- implement
@@ -96,6 +97,9 @@ JtagPort JTAG_PORT(
 	// Access enable connections.
 	.o_spiAccess(o_smIsBooted),
 	.o_scanAccess(o_smIsPaused),
+	
+	// Pause sequence trigger.
+	.o_doPause(jtagDoPause),
 	
 	// Common signals.
 	.i_rstn(synchRstnOut)

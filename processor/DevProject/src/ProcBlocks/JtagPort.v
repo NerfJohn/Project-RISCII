@@ -25,16 +25,25 @@ module JtagPort (
 	output        o_spiAccess,
 	output        o_scanAccess,
 	
+	// Pause sequence trigger.
+	output        o_doPause,
+	
 	// Common signals.
 	input         i_rstn
 );
 
 /*
- * TODO- desc.
- * 1) updating all regs on TCK (including in UPDATE).
- * 2) technically may hold MEM + other at same time (though they don't touch).
- * 3) pause input reflects true PAUSED state (ie should be low in BOOTING).
- * 4) access signals used to mux TDO and enable (ie shifting/chip select).
+ * Parses JTAG pin inputs into internal/external outputs.
+ *
+ * Implements available JTAG commands, asserting control signals used by the uP.
+ * Also uses inputs to provide the host insight into the uP's status and the
+ * contents of the directly accessible shift registers.
+ *
+ * Design Notes:
+ * 1) All registers update on TCK- NOT the uP system clock
+ * 2) Internal control registers updates in UPDATE state
+ * 3) SCAN/SPI control signals intended for enable + TDO selection
+ * 4) Input pause signal should reflect true PAUSED state (vs paused in BOOTING)
  */
  
 ////////////////////////////////////////////////////////////////////////////////
@@ -57,15 +66,18 @@ wire        dataEn;
 
 // Computed controls (based on shift inputs + state).
 wire        is3BitCmd;
-wire        exeAddrCmd, exeMemCmd, exeAccessCmd;
+wire        exeAddrCmd, exeMemCmd, exeAccessCmd, exeStateCmd;
 
 // Address register wires.
 wire [15:0] addrD, addrQ;
 wire        addrEn;
 
-// Access enable registers.
+// Access enable registers wires.
 wire        spiSelD, spiSelQ, spiSelEn;
 wire        scanSelD, scanSelQ, scanSelEn;
+
+// Pause trigger register wires.
+wire        pauseD, pauseQ, pauseEn;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -119,6 +131,16 @@ DffAsynchEn SCAN_SEL (
 	.D(scanSelD),
 	.Q(scanSelQ),
 	.S(scanSelEn),
+	.clk(i_TCK),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Pause trigger register- stores driving signal to pause uP.
+DffAsynchEn PAUSE (
+	.D(pauseD),
+	.Q(pauseQ),
+	.S(pauseEn),
 	.clk(i_TCK),
 	.rstn(i_rstn)
 );
@@ -188,6 +210,7 @@ assign is3BitCmd    = ~(|cmdQ[7:3]);
 assign exeAddrCmd   = is3BitCmd & ~cmdQ[2] & ~cmdQ[1] & cmdQ[0] & inUPDATE;
 assign exeMemCmd    = is3BitCmd & ~cmdQ[2] &  cmdQ[1] & inUPDATE & i_isPaused;
 assign exeAccessCmd = is3BitCmd &  cmdQ[2] & ~cmdQ[1] & inUPDATE & i_isPaused;
+assign exeStateCmd  = is3BitCmd &  cmdQ[2] &  cmdQ[1] & inUPDATE & i_isBooted;
 
 //------------------------------------------------------------------------------
 // Set address as commanded.
@@ -197,9 +220,23 @@ assign addrEn = exeAddrCmd;
 //------------------------------------------------------------------------------
 // Record access control selection.
 assign spiSelD   = exeAccessCmd & cmdQ[0];  // Enable for access command...
-assign spiSelEn  = inUPDATE;                // Updates for any command
-assign scanSelD  = exeAccessCmd & ~cmdQ[0]; // Enable for access command...
-assign scanSelEn = inUPDATE;                // Updates for any command
+assign spiSelEn  = inUPDATE;                // ...updates for any command
+assign scanSelD  = exeAccessCmd & ~cmdQ[0];
+assign scanSelEn = inUPDATE;
+
+//------------------------------------------------------------------------------
+// Record "PauseUnpause" actions.
+assign pauseD  = cmdQ[0];
+assign pauseEn = exeStateCmd;
+
+//------------------------------------------------------------------------------
+// Source TDO from shift registers.
+Mux2 M7 (
+	.A(dataQ[15]),
+	.B(cmdQ[7]),
+	.S(inDSHFT),
+	.Y(o_TDO)
+);
 
 //------------------------------------------------------------------------------
 // Set runtime memory outputs.
@@ -214,12 +251,7 @@ assign o_spiAccess  = inDSHFT & spiSelQ;
 assign o_scanAccess = inDSHFT & scanSelQ;
 
 //------------------------------------------------------------------------------
-// TODO- remove/refactor.
-Mux2 M99 (
-	.A(dataQ[15]),
-	.B(cmdQ[7]),
-	.S(inDSHFT),
-	.Y(o_TDO)
-);
+// Pause uP as commanded.
+assign o_doPause = pauseQ;
 
 endmodule
