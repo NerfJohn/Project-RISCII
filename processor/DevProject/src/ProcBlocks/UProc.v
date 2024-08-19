@@ -93,6 +93,10 @@ JtagPort JTAG_PORT(
 	.o_memWr(jtagMemWr),
 	.o_memEn(o_memEn),          // TODO- implement
 	
+	// Access enable connections.
+	.o_spiAccess(o_smIsBooted),
+	.o_scanAccess(o_smIsPaused),
+	
 	// Common signals.
 	.i_rstn(synchRstnOut)
 );
@@ -126,8 +130,8 @@ assign o_spiMOSI    = 1'b0;
 assign o_spiCLK     = 1'b0;
 assign o_spiCSn     = 1'b1;
 assign io_gpioPins  = 16'bZZZZZZZZZZZZZZZZ;
-assign o_smIsBooted = 1'b0;
-assign o_smIsPaused = 1'b0;
+//assign o_smIsBooted = 1'b0;
+//assign o_smIsPaused = 1'b0;
 
 // TODO- implement.
 assign o_memWr = jtagMemWr;

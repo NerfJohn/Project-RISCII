@@ -73,12 +73,16 @@ Below is a table of the JTAG's supported commands:
 |------------|------------|------------|-----------------------------------|
 |No Operation|0x00        |None        |No action taken- "get status" cmd  |
 |Set MEM Addr|0x01        |None        |Saves data register as MEM address |
-|MEM Read    |0x02        |Paused      |Reads MEM address to data register |
+|MEM Read    |0x02        |Paused      |Reads MEM Address to data register |
 |MEM Write   |0x03        |Paused      |Write data register to MEM address |
+|Access SCAN |0x04        |Paused      |Map SCAN register to data register |
+|Access SPI  |0x05        |Paused      |Map SPI storage to data register   |
 
 Note that some commands have requirements. These requirements center around the uP's current overall state (i.e. BOOTING, RUNNING, or PAUSED). If the uP state does not meet the requirements, the commands is not executed.
 
-For MEM access (ie runtime chip accesses), it is worth noting the 16-bit address provided is word addressable. That is, addresses 0x0000 and 0x0001 access completely different bits/bytes/words in the memory. With respect to the application software, addresses 0x0000-0x7FFF correspond to the program address space while addresses 0x8000-0xFFFF correspond to the data address space.
+For MEM read/write (ie runtime chip accesses), it is worth noting the 16-bit address provided is word addressable. That is, addresses 0x0000 and 0x0001 access completely different bits/bytes/words in the memory. With respect to the application software, addresses 0x0000-0x7FFF correspond to the program address space while addresses 0x8000-0xFFFF correspond to the data address space.
+
+For SCAN/SPI accesses, it is worth noting that the "masking/mapping" of each device only lasts until another command is given (even if the given command is inavlid/has no effect).
 
 ## Integration Considerations
 ---
@@ -92,6 +96,8 @@ For better FPGA/uP integration, it is recommended a "wrapper module" be made per
 ### Additional Controls
 
 Interfaced chips (eg memory chips) may have more control signals than the uP design specifies. Additional controls should be tied to power/ground rails or handled using a "wrapper module" on the FPGA. The uP design should have sufficent controls for most interfaced chips.
+
+Furthermore, specific interface requirements (eg commands for the SPI storage chip) will need to be considered while integrating chips with the uP. At present, the uP makes no assumptions on these interfaces beyond its pinout and inferred use (eg the "MEM Address" pins are used to give an address, etc).
 
 ### Pin Pulling
 

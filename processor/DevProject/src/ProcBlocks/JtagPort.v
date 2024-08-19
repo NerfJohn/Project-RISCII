@@ -21,6 +21,10 @@ module JtagPort (
 	output        o_memWr,
 	output        o_memEn,
 	
+	// Access enable connections.
+	output        o_spiAccess,
+	output        o_scanAccess,
+	
 	// Common signals.
 	input         i_rstn
 );
@@ -30,6 +34,7 @@ module JtagPort (
  * 1) updating all regs on TCK (including in UPDATE).
  * 2) technically may hold MEM + other at same time (though they don't touch).
  * 3) pause input reflects true PAUSED state (ie should be low in BOOTING).
+ * 4) access signals used to mux TDO and enable (ie shifting/chip select).
  */
  
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,11 +57,15 @@ wire        dataEn;
 
 // Computed controls (based on shift inputs + state).
 wire        is3BitCmd;
-wire        exeAddrCmd, exeMemCmd;
+wire        exeAddrCmd, exeMemCmd, exeAccessCmd;
 
 // Address register wires.
 wire [15:0] addrD, addrQ;
 wire        addrEn;
+
+// Access enable registers.
+wire        spiSelD, spiSelQ, spiSelEn;
+wire        scanSelD, scanSelQ, scanSelEn;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -93,6 +102,23 @@ DffAsynchEn ADDR[15:0] (
 	.D(addrD),
 	.Q(addrQ),
 	.S(addrEn),
+	.clk(i_TCK),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Access enable registers- stores options used to control TDO output source.
+DffAsynchEn SPI_SEL (
+	.D(spiSelD),
+	.Q(spiSelQ),
+	.S(spiSelEn),
+	.clk(i_TCK),
+	.rstn(i_rstn)
+);
+DffAsynchEn SCAN_SEL (
+	.D(scanSelD),
+	.Q(scanSelQ),
+	.S(scanSelEn),
 	.clk(i_TCK),
 	.rstn(i_rstn)
 );
@@ -158,9 +184,10 @@ assign dataEn = inDSHFT | exeMemCmd;
 
 //------------------------------------------------------------------------------
 // Compute shift based controls.
-assign is3BitCmd  = ~(|cmdQ[7:3]);
-assign exeAddrCmd = is3BitCmd & ~cmdQ[2] & ~cmdQ[1] & cmdQ[0] & inUPDATE;
-assign exeMemCmd  = is3BitCmd & ~cmdQ[2] &  cmdQ[1] & inUPDATE & i_isPaused;           
+assign is3BitCmd    = ~(|cmdQ[7:3]);
+assign exeAddrCmd   = is3BitCmd & ~cmdQ[2] & ~cmdQ[1] & cmdQ[0] & inUPDATE;
+assign exeMemCmd    = is3BitCmd & ~cmdQ[2] &  cmdQ[1] & inUPDATE & i_isPaused;
+assign exeAccessCmd = is3BitCmd &  cmdQ[2] & ~cmdQ[1] & inUPDATE & i_isPaused;
 
 //------------------------------------------------------------------------------
 // Set address as commanded.
@@ -168,11 +195,23 @@ assign addrD  = dataQ;
 assign addrEn = exeAddrCmd;
 
 //------------------------------------------------------------------------------
+// Record access control selection.
+assign spiSelD   = exeAccessCmd & cmdQ[0];  // Enable for access command...
+assign spiSelEn  = inUPDATE;                // Updates for any command
+assign scanSelD  = exeAccessCmd & ~cmdQ[0]; // Enable for access command...
+assign scanSelEn = inUPDATE;                // Updates for any command
+
+//------------------------------------------------------------------------------
 // Set runtime memory outputs.
 assign o_memAddr    = addrQ;
 assign o_memDataOut = dataQ;
 assign o_memWr      = cmdQ[0];   // read vs. write cmd bit
 assign o_memEn      = exeMemCmd;
+
+//------------------------------------------------------------------------------
+// Set access enable outputs.
+assign o_spiAccess  = inDSHFT & spiSelQ;
+assign o_scanAccess = inDSHFT & scanSelQ;
 
 //------------------------------------------------------------------------------
 // TODO- remove/refactor.
