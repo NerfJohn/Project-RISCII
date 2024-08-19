@@ -42,7 +42,9 @@ For info about integrating these pins with the FPGA/board design, see the "Integ
 
 The JTAG interface is the uP's "maintenance hatch", allowing hardware access and control to an external host. It is intended to provide, among other features: partial boundary scan (ie hardware debugging), programming, and software debugging.
 
-Similar, though not compliant, to the formal JTAG standard, the interface consists of 4 pins, transfering data between the uP and host. The pins themselves are used similar to SPI pins, except the select pin is used to navigate a state machine (instead of being a simple on/off switch). The uP JTAG state machine is as follows:
+### Basic Usage
+
+Similar, though not compliant, to the formal JTAG standard, the interface consists of 4 pins, transfering data between the uP and host. The pins themselves are used similar to SPI (CPOL/CPHA = 0) pins, except the select pin is used to navigate a state machine (instead of being a simple on/off switch). The uP JTAG state machine is as follows:
 
 |Curent State|Next State on TCK Posedge|Current State Summary              |
 |------------|-------------------------|-----------------------------------|
@@ -62,6 +64,21 @@ Additionally, when shifting in a command, an 8-bit status byte will be shifted o
 |reserved  |7:2      |reserved for future use- default value(s) = 0        |
 |isPaused  |1        |set if uP hardware is currently paused               |
 |isBooted  |0        |set if uP hardware has finished booting              |
+
+### Commands
+
+Below is a table of the JTAG's supported commands:
+
+|Command Name|Command Code|Requirements|Desciption                         |
+|------------|------------|------------|-----------------------------------|
+|No Operation|0x00        |None        |No action taken- "get status" cmd  |
+|Set MEM Addr|0x01        |None        |Saves data register as MEM address |
+|MEM Read    |0x02        |Paused      |Reads MEM address to data register |
+|MEM Write   |0x03        |Paused      |Write data register to MEM address |
+
+Note that some commands have requirements. These requirements center around the uP's current overall state (i.e. BOOTING, RUNNING, or PAUSED). If the uP state does not meet the requirements, the commands is not executed.
+
+For MEM access (ie runtime chip accesses), it is worth noting the 16-bit address provided is word addressable. That is, addresses 0x0000 and 0x0001 access completely different bits/bytes/words in the memory. With respect to the application software, addresses 0x0000-0x7FFF correspond to the program address space while addresses 0x8000-0xFFFF correspond to the data address space.
 
 ## Integration Considerations
 ---
