@@ -31,7 +31,13 @@ module BoundaryScan (
 );
 
 /*
- * TODO- desc.
+ * Read-only shift register of various probed sources.
+ *
+ * Acts as larger shift register- sampling the sources when not being shifted.
+ * Intended to explicitly be used by the JTAG reading the uP's pinout. Includes
+ * dummy register (that sample GND) to be equal to 8 bytes (64) long.
+ *  
+ * Design Notes:
  * 1) Register are Asynch reset as clock is likely TCK, not sys clk
  * 2) Dummy registers added to make overall register byte aligned (ie 8 bytes)
  */

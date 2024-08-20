@@ -47,6 +47,7 @@ module UProc (
 wire        synchRstnIn, synchRstnOut;
 wire [2:0]  synchJtagIn, synchJtagOut;
 wire        synchJtagTCK, synchJtagTMS, synchJtagTDI;
+wire        synchPauseIn, synchPauseOut;
 
 // Jtag Port wires.
 wire        jtagTCK, jtagTMS, jtagTDI, jtagTDO;
@@ -75,6 +76,10 @@ wire        scanMemWr, scanMemEn;
 wire        scanSpiMISO, scanSpiMOSI, scanSpiCLK, scanSpiCSn;
 wire        scanSmDoPause, scanSmIsBooted, scanSmIsPaused;
 
+// Pause Network wires.
+wire        pauseStartPauseD, pauseStartPauseQ;
+wire        pauseIsPausedD, pauseIsPausedQ;
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -92,6 +97,12 @@ RstSynch SYNCH_RSTN (
 ClkSynch SYNCH_JTAG[2:0] (
 	.A(synchJtagIn),
 	.Y(synchJtagOut),
+	.clk(i_sysClk),
+	.rstn(synchRstnOut)
+);
+ClkSynch SYNCH_PAUSE (
+	.A(synchPauseIn),
+	.Y(synchPauseOut),
 	.clk(i_sysClk),
 	.rstn(synchRstnOut)
 );
@@ -189,6 +200,21 @@ BoundaryScan BOUNDARY_SCAN (
 	.i_rstn(synchRstnOut)
 );
 
+//------------------------------------------------------------------------------
+// Pause Network Registers- directs "traffic" of pausing uP.
+DffSynch PAUSE_START (
+	.D(pauseStartPauseD),
+	.Q(pauseStartPauseQ),
+	.clk(i_sysClk),
+	.rstn(synchRstnOut)
+);
+DffSynch PAUSE_STATE (
+	.D(pauseIsPausedD),
+	.Q(pauseIsPausedQ),
+	.clk(i_sysClk),
+	.rstn(synchRstnOut)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -200,6 +226,7 @@ assign synchJtagIn  = {i_jtagTCK, i_jtagTMS, i_jtagTDI}; // Group synch for ease
 assign synchJtagTCK = synchJtagOut[2];
 assign synchJtagTMS = synchJtagOut[1];
 assign synchJtagTDI = synchJtagOut[0];
+assign synchPauseIn = i_smDoPause;
 
 //------------------------------------------------------------------------------
 // Handle JTAG inputs.
@@ -207,7 +234,7 @@ assign jtagTCK      = synchJtagTCK;
 assign jtagTMS      = synchJtagTMS;
 assign jtagTDI      = synchJtagTDI;
 assign jtagIsBooted = 1'b1;                      // TODO- implement
-assign jtagIsPaused = i_smDoPause | jtagDoPause; // TODO- implement
+assign jtagIsPaused = pauseIsPausedQ;
 
 //------------------------------------------------------------------------------
 // Handle Memory Controller inputs.
@@ -238,6 +265,11 @@ assign scanSmIsBooted = o_smIsBooted;
 assign scanSmIsPaused = o_smIsPaused;
 
 //------------------------------------------------------------------------------
+// Handle Pause Network inputs.
+assign pauseStartPauseD = synchPauseOut | jtagDoPause;
+assign pauseIsPausedD   = pauseStartPauseQ;            // TODO- implement
+
+//------------------------------------------------------------------------------
 // Drive external memory bus (to runtime chip).
 assign o_memAddr = memMemAddr;
 assign o_memWr   = memMemWr;
@@ -264,11 +296,14 @@ Mux2 M1 (
 	.Y(o_jtagTDO)
 );
 
+//------------------------------------------------------------------------------
+// Drive state machine indicator pins.
+assign o_smIsBooted = 1'b1;           // TODO- implement
+assign o_smIsPaused = pauseIsPausedQ;
+
 //------------------------------------------------------------------------------ 
 // TODO- implement.
 assign io_gpioPins  = 16'bZZZZZZZZZZZZZZZZ;
-assign o_smIsBooted = spiSpiMOSI;
-assign o_smIsPaused = spiSpiCLK;
  
 endmodule
  
