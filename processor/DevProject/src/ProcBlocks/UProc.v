@@ -50,9 +50,21 @@ wire        synchJtagTCK, synchJtagTMS, synchJtagTDI;
 
 // Jtag Port wires.
 wire        jtagTCK, jtagTMS, jtagTDI, jtagTDO;
-wire        jtagMemWr;
-wire [15:0] jtagMemData;
+wire        jtagIsBooted, jtagIsPaused;
+wire [15:0] jtagMemAddr, jtagMemDataOut;
+wire        jtagMemWr, jtagMemEn;
+wire        jtagSpiAccess, jtagScanAccess;
 wire        jtagDoPause;
+
+// Memory Controller wires.
+wire [15:0] memJtagAddr, memJtagDataIn;
+wire        memJtagWr, memJtagEn;
+wire [15:0] memMemAddr;
+wire        memMemWr, memMemEn;
+
+// Storage Controller wires.
+wire        spiJtagTCK, spiJtagTDI, spiJtagSpiEn;
+wire        spiSpiCLK, spiSpiMOSI, spiSpiCSn;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -75,6 +87,7 @@ ClkSynch SYNCH_JTAG[2:0] (
 	.rstn(synchRstnOut)
 );
 
+//------------------------------------------------------------------------------
 // JTAG Port- parses JTAG pins for commands/data.
 JtagPort JTAG_PORT(
 	// JTAG pin connections.
@@ -84,22 +97,55 @@ JtagPort JTAG_PORT(
 	.o_TDO(jtagTDO),
 	
 	// Current state of the uP.
-	.i_isBooted(1'b1),                        // TODO- implement
-	.i_isPaused(i_smDoPause | jtagDoPause),   // TODO- implement
+	.i_isBooted(jtagIsBooted),
+	.i_isPaused(jtagIsPaused),
 	
 	// Runtime memory connection.
-	.i_memDataIn(io_memData),   // TODO- implement
-	.o_memAddr(o_memAddr),      // TODO- implement
-	.o_memDataOut(jtagMemData),
+	.i_memDataIn(io_memData),      // inout- direct connect net
+	.o_memAddr(jtagMemAddr),
+	.o_memDataOut(jtagMemDataOut),
 	.o_memWr(jtagMemWr),
-	.o_memEn(o_memEn),          // TODO- implement
+	.o_memEn(jtagMemEn),
 	
 	// Access enable connections.
-	.o_spiAccess(o_smIsBooted),
-	.o_scanAccess(o_smIsPaused),
+	.o_spiAccess(jtagSpiAccess),
+	.o_scanAccess(jtagScanAccess),
 	
 	// Pause sequence trigger.
 	.o_doPause(jtagDoPause),
+	
+	// Common signals.
+	.i_rstn(synchRstnOut)
+);
+
+//------------------------------------------------------------------------------
+// Memory Controller- handles assigning memory bus control/tristating.
+MemController MEM_CTRL(
+	// JTAG port connection.
+	.i_jtagAddr(memJtagAddr),
+	.i_jtagDataIn(memJtagDataIn),
+	.i_jtagWr(memJtagWr),
+	.i_jtagEn(memJtagEn),
+	
+	// Selected/driven memory bus (contains tristated data line).
+	.o_memAddr(memMemAddr),
+	.o_memWr(memMemWr),
+	.o_memEn(memMemEn),
+	.io_memData(io_memData)       // inout- direct connect net
+);
+
+//------------------------------------------------------------------------------
+// Storage Controller- handles assigning storage bus control.
+SpiController SPI_CTRL (
+	// JTAG port connection.
+	.i_jtagTCK(spiJtagTCK),
+	.i_jtagTDI(spiJtagTDI),
+	.i_jtagSpiEn(spiJtagSpiEn),
+	
+	// Selected/driven spi/storage bus.
+	.o_spiCLK(spiSpiCLK),
+	.o_spiMOSI(spiSpiMOSI),
+	.o_spiCSn(spiSpiCSn),
 	
 	// Common signals.
 	.i_rstn(synchRstnOut)
@@ -112,38 +158,58 @@ JtagPort JTAG_PORT(
 //------------------------------------------------------------------------------
 // Syncrhonize ("slower") inputs.
 assign synchRstnIn  = i_sysRstn;
-assign synchJtagIn  = {i_jtagTCK, i_jtagTMS, i_jtagTDI};
+assign synchJtagIn  = {i_jtagTCK, i_jtagTMS, i_jtagTDI}; // Group synch for ease
 assign synchJtagTCK = synchJtagOut[2];
 assign synchJtagTMS = synchJtagOut[1];
 assign synchJtagTDI = synchJtagOut[0];
 
 //------------------------------------------------------------------------------
-// Interpret/Control JTAG pinout.
+// Handle JTAG inputs.
 assign jtagTCK   = synchJtagTCK;
 assign jtagTMS   = synchJtagTMS;
 assign jtagTDI   = synchJtagTDI;
-assign o_jtagTDO = jtagTDO;
+assign jtagIsBooted = 1'b1;                      // TODO- implement
+assign jtagIsPaused = i_smDoPause | jtagDoPause; // TODO- implement
+
+//------------------------------------------------------------------------------
+// Handle Memory Controller inputs.
+assign memJtagAddr   = jtagMemAddr;
+assign memJtagDataIn = jtagMemDataOut;
+assign memJtagWr     = jtagMemWr;
+assign memJtagEn     = jtagMemEn;
+
+//------------------------------------------------------------------------------
+// Handle Storage Controller inputs.
+assign spiJtagTCK   = synchJtagTCK;
+assign spiJtagTDI   = synchJtagTDI;
+assign spiJtagSpiEn = jtagSpiAccess;
+
+//------------------------------------------------------------------------------
+// Drive external memory bus (to runtime chip).
+assign o_memAddr = memMemAddr;
+assign o_memWr = memMemWr;
+assign o_memEn = memMemEn;
+
+//------------------------------------------------------------------------------
+// Drive external spi bus (to storage chip).
+assign o_spiCLK  = spiSpiCLK;
+assign o_spiMOSI = spiSpiMOSI;
+assign o_spiCSn  = spiSpiCSn;
+
+//------------------------------------------------------------------------------
+// Drive JTAG output pin.
+Mux2 M0 (
+	.A(i_spiMISO),     // Accessing SPI? Relay SPI response bit
+	.B(jtagTDO),       // No?            Relay JTAG port shift bit
+	.S(jtagSpiAccess),
+	.Y(o_jtagTDO)
+);
 
 //------------------------------------------------------------------------------ 
 // TODO- implement.
-// TODO- assign o_memAddr    = 16'b0000000000000000;
-//assign o_memWr      = 1'b0;
-//assign o_memEn      = 1'b0;
-//assign io_memData   = 16'bZZZZZZZZZZZZZZZZ;
-assign o_spiMOSI    = 1'b0;
-assign o_spiCLK     = 1'b0;
-assign o_spiCSn     = 1'b1;
 assign io_gpioPins  = 16'bZZZZZZZZZZZZZZZZ;
-//assign o_smIsBooted = 1'b0;
-//assign o_smIsPaused = 1'b0;
-
-// TODO- implement.
-assign o_memWr = jtagMemWr;
-Tristate TRI[15:0] (
-	.A(jtagMemData),
-	.Y(io_memData),
-	.S(jtagMemWr)
-);
+assign o_smIsBooted = spiSpiMOSI;
+assign o_smIsPaused = spiSpiCLK;
  
 endmodule
  

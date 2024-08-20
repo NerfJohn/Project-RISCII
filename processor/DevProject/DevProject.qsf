@@ -274,6 +274,8 @@ set_global_assignment -name SYSTEMVERILOG_FILE src/DevChasis/SegDisplay.sv
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/UProc.v
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/JtagPort.v
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/RstSynch.v
+set_global_assignment -name VERILOG_FILE src/ProcBlocks/MemController.v
+set_global_assignment -name VERILOG_FILE src/ProcBlocks/SpiController.v
 set_global_assignment -name VERILOG_FILE src/Primitives/DffSynch.v
 set_global_assignment -name VERILOG_FILE src/Primitives/DffAsynch.v
 set_global_assignment -name VERILOG_FILE src/Primitives/Tristate.v

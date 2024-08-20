@@ -93,15 +93,19 @@ For uP pause commands, the commands only control the JTAG's pause request- not o
 
 As stated before, this document focuses on describing the software uP design, NOT the the physical, FPGA implemented feature. However, to ensure proper implementation, the following sections cover FPGA related details the softcore uP design expects to be handled.
 
+### Additional Interface Controls
+
+Interfaced chips (eg memory chips) may have more control signals than the uP design specifies. Additional controls should be tied to power/ground rails or handled using a "wrapper module" on the FPGA (see subsection "Wrapper Module"). The uP design should have sufficent controls for most interfaced chips.
+
+Furthermore, specific interface requirements (eg commands for the SPI storage chip) will need to be considered while integrating chips with the uP. At present, the uP makes little to no assumptions on these interfaces beyond its pinout and inferred use (eg the "MEM Address" pins are used to give an address, etc).
+
+While unlikely, be aware of niche timing considerations (ie advice given from experience).
+
 ### Wrapper module
 
 For better FPGA/uP integration, it is recommended a "wrapper module" be made per specific FPGA used. This module should instantiate the uP design, then route the physical FPGA pins to the uP's "pins", thus integrating the design without changing its source logic.
 
-### Additional Interface Controls
-
-Interfaced chips (eg memory chips) may have more control signals than the uP design specifies. Additional controls should be tied to power/ground rails or handled using a "wrapper module" on the FPGA. The uP design should have sufficent controls for most interfaced chips.
-
-Furthermore, specific interface requirements (eg commands for the SPI storage chip) will need to be considered while integrating chips with the uP. At present, the uP makes no assumptions on these interfaces beyond its pinout and inferred use (eg the "MEM Address" pins are used to give an address, etc).
+A wrapper module may also be needed for pins that exist on both the uP and external elements, but have different active edges. See subsection "Pin Pulling" for more details on such pins.
 
 ### Pin Pulling
 
@@ -112,3 +116,5 @@ For safety/reliability, some pins are expected to explicitly have a pullup or pu
 |JTAG TCK      |down/LOW     |prevent errant clock ticks (due to noise)    |
 |JTAG TMS      |up/HIGH      |prevent errant state traversal (due to noise)|
 |SYS Reset     |up/HIGH      |keep active-low signal "off" when not in use |
+|MEM Enable    |down/LOW     |prevent errant memory accesses               |
+|SPI CSn       |up/HIGH      |prevent errant storage accesses              |

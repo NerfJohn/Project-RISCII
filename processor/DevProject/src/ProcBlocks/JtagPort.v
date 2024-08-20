@@ -197,8 +197,8 @@ Mux2 M5[7:0] (
 	.Y(cmdD)
 );
 Mux2 M6[15:0] (
-	.A(i_memDataIn),
-	.B({dataQ[14:0], i_TDI}),
+	.A(i_memDataIn),                         // Updating? Load memory bus
+	.B({dataQ[14:0], i_TDI}),                // NO?       Left shift in TDI
 	.S(inUPDATE),
 	.Y(dataD)
 );
@@ -219,7 +219,7 @@ assign addrEn = exeAddrCmd;
 
 //------------------------------------------------------------------------------
 // Record access control selection.
-assign spiSelD   = exeAccessCmd & cmdQ[0];  // Enable for access command...
+assign spiSelD   = exeAccessCmd & cmdQ[0];  // Set for access command...
 assign spiSelEn  = inUPDATE;                // ...updates for any command
 assign scanSelD  = exeAccessCmd & ~cmdQ[0];
 assign scanSelEn = inUPDATE;
@@ -232,8 +232,8 @@ assign pauseEn = exeStateCmd;
 //------------------------------------------------------------------------------
 // Source TDO from shift registers.
 Mux2 M7 (
-	.A(dataQ[15]),
-	.B(cmdQ[7]),
+	.A(dataQ[15]), // in DSHFT? Report data register
+	.B(cmdQ[7]),   // No?       Report command register
 	.S(inDSHFT),
 	.Y(o_TDO)
 );
