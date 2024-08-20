@@ -88,6 +88,26 @@ For SCAN/SPI accesses, it is worth noting that the "masking/mapping" of each dev
 
 For uP pause commands, the commands only control the JTAG's pause request- not other sources. That said, other sources (except for the "SM Do Pause Pin") are typically memory mapped and can be overwritten by the JTAG's MEM write command.
 
+### Boundary Scan Register
+
+Similar to the formal JTAG standard, the JTAG interface implements a special boundary scan register to access the uP's raw pins (albeit in a read only mode). The register acts as one larger shift register, with following bit interpretation/behavior:
+
+|Field Name|Bit Field|Description                                          |
+|----------|---------|-----------------------------------------------------|
+|reserved  |63:57    |reserved for future use- default value(s) = 0        |
+|smIsPaused|56       |indicator output that uP is paused                   |
+|smIsBooted|55       |indicator output that uP is booted                   |
+|smDoPause |54       |external input to pause uP                           |
+|gpioPins  |53:38    |generic digital pins for software use                |
+|spiCSn    |37       |enable to trigger storage chip access                |
+|spiCLK    |36       |clock synching storage chip access                   |
+|spiMOSI   |35       |output data going to storage chip                    |
+|spiMISO   |34       |input data coming from storage chip                  |
+|memEn     |33       |enable to trigger runtime chip access                |
+|memWr     |32       |read/write runtime chip specifier                    |
+|memData   |31:16    |16-bit runtime chip data (read/write)                |
+|memAddr   |15:0     |16-bit word address to runtime chip                  |
+
 ## Integration Considerations
 ---
 

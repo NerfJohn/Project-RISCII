@@ -44,8 +44,7 @@ CMD_MEM_READ    = '(?:mr|mem_read) 0x[0-9a-fA-F]{1,4}'
 CMD_MEM_WRITE   = '(?:mw|mem_write) 0x[0-9a-fA-F]{1,4} 0x[0-9a-fA-F]{1,4}'
 CMD_STORE_READ  = '(?:sr|store_read) 0x[0-9a-fA-F]{1,4} [0-9]+'
 CMD_STORE_WRITE = '(?:sw|store_write) 0x[0-9a-fA-F]{1,4} 0x(?:[0-9a-fA-F]{2})+'
-CMD_SCAN_SET    = '(?:bs|bscan_set) [0-9]+ [10zZ]'
-CMD_SCAN_RESET  = '(?:br|bscan_reset)'
+CMD_SCAN_READ   = '(?:br|bscan_read)'
 CMD_JTAG_PAUSE  = '(?:jp|jtag_pause)'
 CMD_JTAG_RUN    = '(?:jr|jtag_run)'
 
@@ -78,9 +77,6 @@ MCU_BOOTING     = 0
 MCU_RUNNING     = 1
 MCU_PAUSED      = 3
 
-# Static variable needed for boundary scanning purposes.
-g_bscanSetting = list('0' * 168) # 56 pins * 3 bit settings each
-
 ################################################################################
 ## -- Public/Library Functions --
 ################################################################################
@@ -90,16 +86,15 @@ Prints help blurb for available CLI commands.
 '''
 def print_help():
     # Print out summary of available commands.
-    print("q|quit                          : exit CLI program")
-    print("h|print_help                    : print this blurb")
-    print("c|set_com <num>                 : set COM port of RISCII 'J-Link'")
-    print("p|set_period <num>              : set JTAG's TCK period (in ms)")
+    print("q |quit                         : exit CLI program")
+    print("h |print_help                   : print this blurb")
+    print("c |set_com <num>                : set COM port of RISCII 'J-Link'")
+    print("p |set_period <num>             : set JTAG's TCK period (in ms)")
     print("mr|mem_read 0x<addr>            : read word to memory")
     print("mw|mem_write 0x<addr> 0x<val>   : write word to memory")
     print("sr|store_read 0x<addr> <val>    : read bytes from MCU's storage")
     print("sw|store_write 0x<addr> 0x<val> : write bytes to MCU's storage")
-    print("bs|bscan_set <num> <0|1|z>      : set boundary scan pin")
-    print("br|bscan_reset                  : reset all boundary scan pins")
+    print("br|bscan_read                   : read boundary scan register")
     print("jp|jtag_pause                   : pause MCU using JTAG")
     print("jr|jtag_run                     : run MCU using JTAG")
 
@@ -302,46 +297,24 @@ def store_write(tkns, isSilent = True):
 
 ## -----------------------------------------------------------------------------
 '''
-Sets boundary scan register for given pin to given value.
+Reads boundary scan register for given pin to given value.
 
-Updates local copy of boundary scan register and shifts it into MCU's boundary
-scan register. Previous value of changed pin is reported along with change.
+Reads out boundary scan register and reads out the desired bit.
 
 @param tkns list of stringified token variables (includes command name)
 @param isSilent bool controlling if results print to stdout- True by default
 @return returned bytes from J-Link is successful, None otherwise
 '''
-def scan_set(tkns, isSilent = True):
+def scan_read(tkns, isSilent = True):
     # Make sure JTAG/MCU is in state to run necessary commands.
     if not _inMCUState(MCU_PAUSED, isSilent):
         if not isSilent: print("MCU not in 'paused' state")
         return None
     
-    # Determine mask created by pin change request.
-    newMask = ''
-    if (tkns[2] == '1'):   newMask = '110'
-    elif (tkns[2] == '0'): newMask = '010'
-    else:                  newMask = '000'
-    
-    # Update local copy of bscan settings
-    global g_bscanSetting
-    basdIdx = min(int(tkns[1]) * 3, 165)
-    g_bscanSetting[basdIdx + 0] = newMask[2] # input field
-    g_bscanSetting[basdIdx + 1] = newMask[1] # tristate field
-    g_bscanSetting[basdIdx + 2] = newMask[0] # output field
-    
-    # Get byte array from settings to update MCU.
-    scanData = bytearray()
-    for i in range(int(len(g_bscanSetting) / 8)):
-        newByte = 0
-        for j in range(7, -1, -1):
-            newByte = newByte << 1
-            if (g_bscanSetting[8 * i + j] == '1'): newByte = newByte | 0x1
-        scanData = newByte.to_bytes(1, 'little') + scanData
-    
     # Determine bytes to send.
+    scanData = "0".zfill(16)
     scanCmd  = LINK_CMD_INSTR + JTAG_SCAN
-    dataCmd  = LINK_CMD_DATA + scanData
+    dataCmd  = LINK_CMD_DATA + bytearray.fromhex(scanData)
     
     # Enable scan mode.
     _transferBytes(scanCmd)
@@ -350,59 +323,9 @@ def scan_set(tkns, isSilent = True):
     retBytes = _transferBytes(dataCmd)
     
     # Report results.
-    byteIdx = int(basdIdx / 8)
-    bitIdx  = basdIdx - (8 * byteIdx)
-    readValue = (int(retBytes[20 - byteIdx + 1]) >> bitIdx) & 0x1
+    retHex = "0x" + retBytes[1:-1].hex()
     if not isSilent:
-        print("%s => bscan[%d] (last read = %d)"%(tkns[2],
-                                                  int(tkns[1]), 
-                                                  readValue)
-                                                 )
-    return retBytes
-
-## -----------------------------------------------------------------------------
-'''
-Resets boundary scan register (local copy and MCU copy).
-
-Updates local copy of boundary scan register and shifts it into MCU's boundary
-scan register. Previous value of changed pin is reported along with change.
-
-@param tkns list of stringified token variables (includes command name)
-@param isSilent bool controlling if results print to stdout- True by default
-@return returned bytes from J-Link is successful, None otherwise
-'''
-def scan_reset(tkns, isSilent = True):
-    # Make sure JTAG/MCU is in state to run necessary commands.
-    if not _inMCUState(MCU_PAUSED, isSilent):
-        if not isSilent: print("MCU not in 'paused' state")
-        return None
-
-    # Update local copy of bscan settings.
-    global g_bscanSetting
-    g_bscanSetting = list('0' * 168) # 56 pins * 3 bit settings each
-    
-    # Get byte array from settings to update MCU.
-    scanData = bytearray()
-    for i in range(int(len(g_bscanSetting) / 8)):
-        newByte = 0
-        for j in range(7, -1, -1):
-            newByte = newByte << 1
-            if (g_bscanSetting[8 * i + j] == '1'): newByte = newByte | 0x1
-        scanData = newByte.to_bytes(1, 'little') + scanData
-    
-    # Determine bytes to send.
-    scanCmd  = LINK_CMD_INSTR + JTAG_SCAN
-    dataCmd  = LINK_CMD_DATA + scanData
-    
-    # Enable scan mode.
-    _transferBytes(scanCmd)
-    
-    # Send over data.
-    retBytes = _transferBytes(dataCmd)
-    
-    # Report results.
-    if not isSilent:
-        print("BScan register reset to 0x0")
+        print("bscan = %s"%(retHex))
     return retBytes
 
 ## -----------------------------------------------------------------------------
@@ -564,8 +487,7 @@ def _doCli():
         elif re.fullmatch(CMD_MEM_WRITE, rawInput)   : mem_write(tkns, False)
         elif re.fullmatch(CMD_STORE_READ, rawInput)  : store_read(tkns, False)
         elif re.fullmatch(CMD_STORE_WRITE, rawInput) : store_write(tkns, False)
-        elif re.fullmatch(CMD_SCAN_SET, rawInput)    : scan_set(tkns,False)
-        elif re.fullmatch(CMD_SCAN_RESET, rawInput)  : scan_reset(tkns, False)
+        elif re.fullmatch(CMD_SCAN_READ, rawInput)   : scan_read(tkns,False)
         elif re.fullmatch(CMD_JTAG_PAUSE, rawInput)  : jtag_pause(tkns, False)
         elif re.fullmatch(CMD_JTAG_RUN, rawInput)    : jtag_run(tkns, False)
         else: print("Unknown/Malformed command: \"%s\""%(rawInput))

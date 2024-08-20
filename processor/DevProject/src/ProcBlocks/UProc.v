@@ -55,6 +55,7 @@ wire [15:0] jtagMemAddr, jtagMemDataOut;
 wire        jtagMemWr, jtagMemEn;
 wire        jtagSpiAccess, jtagScanAccess;
 wire        jtagDoPause;
+wire        jtagNotSpiTDO;
 
 // Memory Controller wires.
 wire [15:0] memJtagAddr, memJtagDataIn;
@@ -65,6 +66,14 @@ wire        memMemWr, memMemEn;
 // Storage Controller wires.
 wire        spiJtagTCK, spiJtagTDI, spiJtagSpiEn;
 wire        spiSpiCLK, spiSpiMOSI, spiSpiCSn;
+
+// Boundary scan wires.
+wire        scanShiftIn, scanShiftOut;
+wire        scanDoShift;
+wire [15:0] scanMemAddr;
+wire        scanMemWr, scanMemEn;
+wire        scanSpiMISO, scanSpiMOSI, scanSpiCLK, scanSpiCSn;
+wire        scanSmDoPause, scanSmIsBooted, scanSmIsPaused;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -151,6 +160,35 @@ SpiController SPI_CTRL (
 	.i_rstn(synchRstnOut)
 );
 
+//------------------------------------------------------------------------------
+// Boundary Scan- provides JTAG read access to most external pins.
+BoundaryScan BOUNDARY_SCAN (
+	// Shift connections.
+	.i_shiftIn(scanShiftIn),
+	.o_shiftOut(scanShiftOut),
+	
+	// Shift control.
+	.i_doShift(scanDoShift),
+	
+	// Read connections.
+	.i_memAddr(scanMemAddr),
+	.i_memData(io_memData),        // inout- direct connect net
+	.i_memWr(scanMemWr),
+	.i_memEn(scanMemEn),
+	.i_spiMISO(scanSpiMISO),
+	.i_spiMOSI(scanSpiMOSI),
+	.i_spiCLK(scanSpiCLK),
+	.i_spiCSn(scanSpiCSn),
+	.i_gpioPins(io_gpioPins),      // inout- direct connect net
+	.i_smDoPause(scanSmDoPause),
+	.i_smIsBooted(scanSmIsBooted),
+	.i_smIsPaused(scanSmIsPaused),
+	
+	// Common signals.
+	.i_clk(synchJtagTCK),
+	.i_rstn(synchRstnOut)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -165,9 +203,9 @@ assign synchJtagTDI = synchJtagOut[0];
 
 //------------------------------------------------------------------------------
 // Handle JTAG inputs.
-assign jtagTCK   = synchJtagTCK;
-assign jtagTMS   = synchJtagTMS;
-assign jtagTDI   = synchJtagTDI;
+assign jtagTCK      = synchJtagTCK;
+assign jtagTMS      = synchJtagTMS;
+assign jtagTDI      = synchJtagTDI;
 assign jtagIsBooted = 1'b1;                      // TODO- implement
 assign jtagIsPaused = i_smDoPause | jtagDoPause; // TODO- implement
 
@@ -185,10 +223,25 @@ assign spiJtagTDI   = synchJtagTDI;
 assign spiJtagSpiEn = jtagSpiAccess;
 
 //------------------------------------------------------------------------------
+// Handle Boundary Scan inputs.
+assign scanShiftIn    = synchJtagTDI;
+assign scanDoShift    = jtagScanAccess;
+assign scanMemAddr    = o_memAddr;
+assign scanMemWr      = o_memWr;
+assign scanMemEn      = o_memEn;
+assign scanSpiMISO    = i_spiMISO;
+assign scanSpiMOSI    = o_spiMOSI;
+assign scanSpiCLK     = o_spiCLK;
+assign scanSpiCSn     = o_spiCSn;
+assign scanSmDoPause  = i_smDoPause;
+assign scanSmIsBooted = o_smIsBooted;
+assign scanSmIsPaused = o_smIsPaused;
+
+//------------------------------------------------------------------------------
 // Drive external memory bus (to runtime chip).
 assign o_memAddr = memMemAddr;
-assign o_memWr = memMemWr;
-assign o_memEn = memMemEn;
+assign o_memWr   = memMemWr;
+assign o_memEn   = memMemEn;
 
 //------------------------------------------------------------------------------
 // Drive external spi bus (to storage chip).
@@ -199,8 +252,14 @@ assign o_spiCSn  = spiSpiCSn;
 //------------------------------------------------------------------------------
 // Drive JTAG output pin.
 Mux2 M0 (
-	.A(i_spiMISO),     // Accessing SPI? Relay SPI response bit
-	.B(jtagTDO),       // No?            Relay JTAG port shift bit
+	.A(scanShiftOut),   // Accessing Scan? Relay Scan response
+	.B(jtagTDO),        // No?             Relay JTAG port shift bit
+	.S(jtagScanAccess),  
+	.Y(jtagNotSpiTDO)
+);
+Mux2 M1 (
+	.A(i_spiMISO),      // Accessing SPI? Relay SPI response
+	.B(jtagNotSpiTDO),  // No?            Further process bit to send...
 	.S(jtagSpiAccess),
 	.Y(o_jtagTDO)
 );
