@@ -277,6 +277,8 @@ set_global_assignment -name VERILOG_FILE src/ProcBlocks/RstSynch.v
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/MemController.v
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/SpiController.v
 set_global_assignment -name VERILOG_FILE src/ProcBlocks/BoundaryScan.v
+set_global_assignment -name VERILOG_FILE src/ProcBlocks/MappedRegisters.v
+set_global_assignment -name VERILOG_FILE src/MapBlocks/CoreCtrl.v
 set_global_assignment -name VERILOG_FILE src/Primitives/DffSynch.v
 set_global_assignment -name VERILOG_FILE src/Primitives/DffAsynch.v
 set_global_assignment -name VERILOG_FILE src/Primitives/Tristate.v

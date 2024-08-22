@@ -3,10 +3,74 @@
 
 ---
 
-This README is a summary on how to use Project RISCII's (softcore) microprocessor design. At present, these writings refer specifically to the softcore implementation (ie they do not consider details about the FPGA implementing the design). This manual covers the following material:
+This README is a summary on how to use Project RISCII's (softcore) microprocessor design. These writings are primarly focused on the softcore uP design, though offer some insight into the desired FPGA/PCB implementation. This manual covers the following "internal" oriented material:
+- uP Blocks
+- uP State Machine
+- Mapped Registers
+
+Followed by the following "external" oriented material:
 - uP Pinout
 - "JTAG" Interface
 - Integration Considerations
+
+## uP Blocks
+---
+The uP design consists of many internal circuits and components. At a high level, the uP is made up of the following "blocks" of circuits:
+
+|Block Name|Description                                                    |
+|----------|---------------------------------------------------------------|
+|JTAG      | JTAG port/interface for remote hardware access                |
+|SCAN      | Read only boundary scan register accessible only through JTAG |
+|CCTRL     | Mapped CORE registers and stack overflow detection controls   |
+
+These blocks do not cover the entire uP design (ie smaller circuits exist to
+route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
+
+## uP State Machine
+---
+Between various signals, the uP effectively implements a global "state machine" that dictates larger functionality (eg if firmware is running, which circuits control memory, etc). The high level states are as follows:
+
+|State Name|SM Is Booted|SM Is Paused|Summary                              |
+|----------|------------|------------|-------------------------------------|
+|NOT_PAUSED|N/A         |LOW         |uP is not doing anything of note     |
+|PAUSED    |N/A         |HIGH        |uP is "paused", JTAG now in charge   |
+
+As noted above, pins "SM Is Booted" and "SM Is Paused" act as external indicators of the uP's internal state (see "uP Pinout" below for more details about the pins). At present, only pin "SM Is Paused" is meaningful **(ie artifact of uP currently being developed)**.
+
+In the PAUSED state, uP's resources temporarily cease operation (eg firmware execution pauses, timers freeze, etc). In this mode, the JTAG is given general control over the uP's resources. Note that while the PAUSED state is not reached until all resources are paused, some resources may take longer to pause than others (ie frequent pausing may cause performance variation).
+
+The NOT_PAUSED state is currently an **artifact of the uP being developed** at this time. It does not have any intended functionality other than benig distinguished from the PAUSED state.
+
+## Mapped Registers
+---
+Some of the uP's internal resources contain registers that can be accessed using specific addresses in the data address space (ie SW addresses 0x8000-0xFFFF, HW adddresses 0xC000-0xFFFF). The following subsections cover each register in detail, though a summary of each register is as follows:
+
+|Register Name|SW Address|Access|Description                               |
+|-------------|----------|------|------------------------------------------|
+|CCTRL_CTRL   |0x8000    |r/w   |Controls for core processing features     |
+|CCTRL_SETP   |0x8002    |r/w   |Setpoint for stack overflow detection     |
+
+Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
+
+### Core Controls (CCTRL) Registers
+
+**_CCTRL_CTRL (SW Address = 0x8000, HW Address = 0xC000)_**
+
+|Field Name|Bit Field|Description                                          |
+|----------|---------|-----------------------------------------------------|
+|reserved  |15:2     |reserved for future use- default value(s) = 0        |
+|ovdEn     |1        |overflow detection enable                            |
+|doPause   |0        |pauses uP (automatically set by HLT instruction)     |
+
+At present, "ovdEn" and "doPause" have no effect **(ie artifact of uP currently under development)**.
+
+**_CCTRL_SETP (SW Address = 0x8002, HW Address = 0xC001)_**
+
+|Field Name|Bit Field|Description                                          |
+|----------|---------|-----------------------------------------------------|
+|setpoint  |15:0     |lowest valid stack pointer (ie "less than" trigger)  |
+
+At present, "setpoint" has no effect **(ie artifact of uP currently under development)**.
 
 ## uP Pinout
 ---
@@ -39,7 +103,6 @@ For info about integrating these pins with the FPGA/board design, see the "Integ
 
 ## "JTAG" Interface
 ---
-
 The JTAG interface is the uP's "maintenance hatch", allowing hardware access and control to an external host. It is intended to provide, among other features: partial boundary scan (ie hardware debugging), programming, and software debugging.
 
 ### Basic Usage
@@ -110,7 +173,6 @@ Similar to the formal JTAG standard, the JTAG interface implements a special bou
 
 ## Integration Considerations
 ---
-
 As stated before, this document focuses on describing the software uP design, NOT the the physical, FPGA implemented feature. However, to ensure proper implementation, the following sections cover FPGA related details the softcore uP design expects to be handled.
 
 ### Additional Interface Controls

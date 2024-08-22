@@ -61,8 +61,9 @@ wire        jtagNotSpiTDO;
 // Memory Controller wires.
 wire [15:0] memJtagAddr, memJtagDataIn;
 wire        memJtagWr, memJtagEn;
+wire [15:0] memMapReadData;
 wire [15:0] memMemAddr;
-wire        memMemWr, memMemEn;
+wire        memMemRunWr, memMemRunEn, memMemMapWrEn;
 
 // Storage Controller wires.
 wire        spiJtagTCK, spiJtagTDI, spiJtagSpiEn;
@@ -79,6 +80,11 @@ wire        scanSmDoPause, scanSmIsBooted, scanSmIsPaused;
 // Pause Network wires.
 wire        pauseStartPauseD, pauseStartPauseQ;
 wire        pauseIsPausedD, pauseIsPausedQ;
+
+// Mapped Register wires.
+wire [13:0] mapMemAddr;
+wire [15:0] mapMemDataOut;
+wire        mapMemWrEn;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -147,11 +153,15 @@ MemController MEM_CTRL(
 	.i_jtagWr(memJtagWr),
 	.i_jtagEn(memJtagEn),
 	
+	// Mapped read connection.
+	.i_mapReadData(memMapReadData),
+	
 	// Selected/driven memory bus (contains tristated data line).
 	.o_memAddr(memMemAddr),
-	.o_memWr(memMemWr),
-	.o_memEn(memMemEn),
-	.io_memData(io_memData)       // inout- direct connect net
+	.o_memRunWr(memMemRunWr),
+	.o_memRunEn(memMemRunEn),
+	.o_memMapWrEn(memMemMapWrEn),
+	.io_memData(io_memData)        // inout- direct connect net
 );
 
 //------------------------------------------------------------------------------
@@ -215,6 +225,20 @@ DffSynch PAUSE_STATE (
 	.rstn(synchRstnOut)
 );
 
+//------------------------------------------------------------------------------
+// Mapped Registers- memory mapped devices available to uP core.
+MappedRegisters MAPPED_REGS (
+	// Memory Bus connections.
+	.i_memAddr(mapMemAddr),
+	.i_memDataIn(io_memData),     // inout- direct connect net
+	.i_memWrEn(mapMemWrEn),
+	.o_memDataOut(mapMemDataOut),
+	
+	// Common signals.
+	.i_clk(i_sysClk),
+	.i_rstn(synchRstnOut)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -238,10 +262,11 @@ assign jtagIsPaused = pauseIsPausedQ;
 
 //------------------------------------------------------------------------------
 // Handle Memory Controller inputs.
-assign memJtagAddr   = jtagMemAddr;
-assign memJtagDataIn = jtagMemDataOut;
-assign memJtagWr     = jtagMemWr;
-assign memJtagEn     = jtagMemEn;
+assign memJtagAddr    = jtagMemAddr;
+assign memJtagDataIn  = jtagMemDataOut;
+assign memJtagWr      = jtagMemWr;
+assign memJtagEn      = jtagMemEn;
+assign memMapReadData = mapMemDataOut;
 
 //------------------------------------------------------------------------------
 // Handle Storage Controller inputs.
@@ -270,10 +295,15 @@ assign pauseStartPauseD = synchPauseOut | jtagDoPause;
 assign pauseIsPausedD   = pauseStartPauseQ;            // TODO- implement
 
 //------------------------------------------------------------------------------
+// Handle Mapped Registers inputs.
+assign mapMemAddr   = memMemAddr[13:0];
+assign mapMemWrEn   = memMemMapWrEn;
+
+//------------------------------------------------------------------------------
 // Drive external memory bus (to runtime chip).
 assign o_memAddr = memMemAddr;
-assign o_memWr   = memMemWr;
-assign o_memEn   = memMemEn;
+assign o_memWr   = memMemRunWr;
+assign o_memEn   = memMemRunEn;
 
 //------------------------------------------------------------------------------
 // Drive external spi bus (to storage chip).
