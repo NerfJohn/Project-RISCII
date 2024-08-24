@@ -1,13 +1,13 @@
-# Docs
-This folder is focused on storing documentation regarding the project. Below describes the available documents (organized by affiliated purpose).
+# Project RISCII Documents
+*"Documents, descriptions, and manuals for Project RISCII deliverables"*
 
-## Hardware Documents
-- __/InstructionSetArchitecture__: Interface connecting RISCII hardware and software
-- __/McuDesign__: Notes on RISCII microprocessor design
-- __/uPManual__: User manual for the RISCII Microprocessor Design (see "DevProject" under the "processor" root folder).
+---
 
-## Software Documents
-- __/AsmldManual__: User manual for the RISCII assembler/linker program (see "AsmldProject" under the "compiler" root folder).
+This README is a quick summary of the documents contained in this folder. For ease, the documents are arranged by general purpose.
 
-## Support Documents
-- __/RisciiDocTemplate__: Template document for creating new documents
+## Hardware Related Documents
+- __/InstructionSetArchitecture__: Interface between RISCII hardware and software (though primarily focused on hardware constraints)
+- __/uPManual__: User manual for the RISCII Microprocessor Design (see "processor/DevProject" under the repo's root folder)
+
+## Software Related Documents
+- __/AsmldManual__: User manual for the RISCII Assembler/Linker Design (see "compiler/AsmldProject" under the repo's root folder)
