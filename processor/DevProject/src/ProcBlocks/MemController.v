@@ -10,6 +10,15 @@ module MemController (
 	input         i_jtagWr,
 	input         i_jtagEn,
 	
+	// Bootloader connection.
+	input  [15:0] i_bootMemAddr,
+	input  [15:0] i_bootDataIn,
+	input         i_bootMemEn,
+	
+	// uP State connection.
+	input         i_smIsPaused,
+	input         i_smIsBooted,
+	
 	// Mapped read connection.
 	input  [15:0] i_mapReadData,
 	
@@ -24,19 +33,23 @@ module MemController (
 /*
  * Controller determining which circuit is in control of the uP's memory bus.
  *
- * At present, only the JTAG can control the memory bus. As the uP is developed,
- * additional sources (and necessary muxing) will be added.
+ * At present, only the JTAG and bootloader can control the memory bus. For the
+ * bootloader, a write lock is placed on the mapped registers in case of a
+ * corrupted binary image.
  *
  * Design Notes:
  * 1) This module serves as the lone "data line tristate" to ease FPGA use.
  */
  
 // TODO- "1 tick" protection for JTAG write (eg write byte on fast UART).
-// TODO- map protection when booting.
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Internal Signals/Wires -- //
 ////////////////////////////////////////////////////////////////////////////////
+
+// Computed controls (based on potential controllers).
+wire [15:0] curAddr, curDataOut;
+wire        curWr, curEn;
 
 // Computed control wires (based on finalized mem controls).
 wire        isMapAddr;
@@ -63,26 +76,53 @@ Tristate TRISTATE[15:0] (
 ////////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------------------
+// Compute controller/uP state based controls.
+Mux2 M0[15:0] (
+	.A(i_jtagAddr),    // Paused? use JTAG address
+	.B(i_bootMemAddr), // No?     use bootloader address
+	.S(i_smIsPaused),
+	.Y(curAddr)
+);
+Mux2 M1[15:0] (
+	.A(i_jtagDataIn),  // Paused? use JTAG write data
+	.B(i_bootDataIn),  // No?     use bootloader write data
+	.S(i_smIsPaused),
+	.Y(curDataOut)
+);
+Mux2 M2 (
+	.A(i_jtagWr),      // Paused? use JTAG read/write signal
+	.B(1'b1),          // No?     bootloader ALWAYS writes
+	.S(i_smIsPaused),
+	.Y(curWr)
+);
+Mux2 M3 (
+	.A(i_jtagEn),      // Paused? use JTAG enable
+	.B(i_bootMemEn),   // No?     use bootloader enable
+	.S(i_smIsPaused),
+	.Y(curEn)
+);
+
+//------------------------------------------------------------------------------
 // Compute finalized mem control based controls.
-assign isMapAddr = i_jtagAddr[15] & i_jtagAddr[14];
-assign isMapRead = isMapAddr & ~i_jtagWr & i_jtagEn;
+assign isMapAddr = curAddr[15] & curAddr[14];
+assign isMapRead = isMapAddr & ~curWr & curEn;
 
 //------------------------------------------------------------------------------
 // Handle driving of memory data lines.
-Mux2 M0[15:0] (
+Mux2 M4[15:0] (
 	.A(i_mapReadData), // Reading Map? Drive read map data
-	.B(i_jtagDataIn),  // No?          Drive sourced write data
+	.B(curDataOut),    // No?          Drive sourced write data
 	.S(isMapRead),
 	.Y(triA)
 );
-assign triEn = i_jtagWr | isMapRead;
+assign triEn = curWr | isMapRead;
 
 //------------------------------------------------------------------------------
 // Drive memory bus outputs.
-assign o_memAddr    = i_jtagAddr;
-assign o_memRunWr   = i_jtagWr;
-assign o_memRunEn   = i_jtagEn & ~isMapAddr;
-assign o_memMapWrEn = i_jtagWr & i_jtagEn & isMapAddr;
+assign o_memAddr    = curAddr;
+assign o_memRunWr   = curWr;
+assign o_memRunEn   = curEn & ~isMapAddr;
+assign o_memMapWrEn = curWr & curEn & isMapAddr & i_smIsBooted;
 assign io_memData   = triY;
 
 endmodule

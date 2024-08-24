@@ -11,6 +11,7 @@ This README is a summary on how to use Project RISCII's (softcore) microprocesso
 Followed by the following "external" oriented material:
 - uP Pinout
 - "JTAG" Interface
+- Binary Image Layout
 - Integration Considerations
 
 ## uP Blocks
@@ -22,6 +23,7 @@ The uP design consists of many internal circuits and components. At a high level
 |JTAG      | JTAG port/interface for remote hardware access                |
 |SCAN      | Read only boundary scan register accessible only through JTAG |
 |CCTRL     | Mapped CORE registers and stack overflow detection controls   |
+|BOOT      | Circuit to copy stored binary image to runtime memory on reset|
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -32,14 +34,17 @@ Between various signals, the uP effectively implements a global "state machine" 
 
 |State Name|SM Is Booted|SM Is Paused|Summary                              |
 |----------|------------|------------|-------------------------------------|
-|NOT_PAUSED|N/A         |LOW         |uP is not doing anything of note     |
-|PAUSED    |N/A         |HIGH        |uP is "paused", JTAG now in charge   |
+|NOT_PAUSED|HIGH        |LOW         |uP is not doing anything of note     |
+|PAUSED    |HIGH        |HIGH        |uP is "paused", JTAG now in charge   |
+|BOOTING   |LOW         |LOW         |uP is preparing to run binary image  |
 
-As noted above, pins "SM Is Booted" and "SM Is Paused" act as external indicators of the uP's internal state (see "uP Pinout" below for more details about the pins). At present, only pin "SM Is Paused" is meaningful **(ie artifact of uP currently being developed)**.
+Pins "SM Is Booted" and "SM Is Paused" act as external indicators of the uP's internal state (see "uP Pinout" below for more details about the pins).
 
 In the PAUSED state, uP's resources temporarily cease operation (eg firmware execution pauses, timers freeze, etc). In this mode, the JTAG is given general control over the uP's resources. Note that while the PAUSED state is not reached until all resources are paused, some resources may take longer to pause than others (ie frequent pausing may cause performance variation).
 
-The NOT_PAUSED state is currently an **artifact of the uP being developed** at this time. It does not have any intended functionality other than benig distinguished from the PAUSED state.
+In the BOOTING state, the BOOT block is given control over both memory chips (other resources are put on hold). In this mode, the binary image is copied from the storage chip into the runtime chip (see section "Binary Image Format" below). This state cannot be interrupted, though eventually terminates and does not prevent uP resources from being paused (ie prevents formal recognition of uP being paused, but not pause process).
+
+The NOT_PAUSED state is currently an **artifact of the uP being developed** at this time. It does not have any intended functionality other than being distinguished from the PAUSED state.
 
 ## Mapped Registers
 ---
@@ -171,6 +176,23 @@ Similar to the formal JTAG standard, the JTAG interface implements a special bou
 |memData   |31:16    |16-bit runtime chip data (read/write)                |
 |memAddr   |15:0     |16-bit word address to runtime chip                  |
 
+## Binary Image Format
+---
+The uP is designed to store a binary image (up to 64 KB in size) on the storage memory chip between power cycles. Once powered on, it reads the binary image into the runtime chip for execution. To properly facilitate this process, the binary image shall be formatted as follows:
+
+|Section Name  |Length (Bytes)|Description                                 |
+|--------------|--------------|--------------------------------------------|
+|.text metadata|2             |Last valid .text HW address                 |
+|.text section |2+            |.text section of program                    |
+|.data metadata|2             |Last valid .data HW address                 |
+|.data section |2+            |.data section of program                    |
+
+Each section of the software is preceded by a word of metadata describing the last HW address used to store the following section (.text implicitly starting from HW address 0x0000, .data from HW address 0x8000). Neither metadata word is copied to the runtime chip.
+
+The .text section is where the program's instructions are stored while the .data section is where any global initialized program data is stored. Both are better described in documentation about the Instruction Set Architecture (ISA) and Assembler/Linker (asmld) Manuals. Importantly, though, they use SW addresses to refer to the runtime chip instead of HW addresses.
+
+In general, all values in the binary image are, at most precise, 2-byte words. As applicable, big endian (ie MSB first) applies within each word.
+
 ## Integration Considerations
 ---
 As stated before, this document focuses on describing the software uP design, NOT the the physical, FPGA implemented feature. However, to ensure proper implementation, the following sections cover FPGA related details the softcore uP design expects to be handled.
@@ -179,24 +201,31 @@ As stated before, this document focuses on describing the software uP design, NO
 
 Interfaced chips (eg memory chips) may have more control signals than the uP design specifies. Additional controls should be tied to power/ground rails or handled using a "wrapper module" on the FPGA (see subsection "Wrapper Module"). The uP design should have sufficent controls for most interfaced chips.
 
-Furthermore, specific interface requirements (eg commands for the SPI storage chip) will need to be considered while integrating chips with the uP. At present, the uP makes little to no assumptions on these interfaces beyond its pinout and inferred use (eg the "MEM Address" pins are used to give an address, etc).
+Furthermore, specific interface requirements (eg timing, command codes, etc) will need to be considered while integrating chips with the uP. At prsent, Most assumptions made by the uP (beyond inferred use of pinouts) is the SPI interface with the storage chip, which must meet the following criteria:
+- SPI mode 0 (CPOL/CPHA = 0), MSb first
+- 8-bit command codes, 16-bit addresses
+- "read bitstream" command with sequence "command","address","read out"
+- "read bitstream" command of "0x03" (must change design based on chip)
 
-While unlikely, be aware of niche timing considerations (ie advice given from experience).
+As stated, the exact command byte used to trigger a read is hardwired into the design (in file "processor/DevProject/src/ProcBlocks/BootImage.v") and must be changed based on the exact storage chip used.
+
+Lastly, while unlikely, be aware of niche timing considerations (eg hold times on falling edges, specific access times, etc).
 
 ### Wrapper module
 
 For better FPGA/uP integration, it is recommended a "wrapper module" be made per specific FPGA used. This module should instantiate the uP design, then route the physical FPGA pins to the uP's "pins", thus integrating the design without changing its source logic.
 
-A wrapper module may also be needed for pins that exist on both the uP and external elements, but have different active edges. See subsection "Pin Pulling" for more details on such pins.
+A wrapper module may also be needed for pins that exist on both the uP and external elements, but have different active edges. See subsection "Pin Pulling" for more details on pins where active edges/levels are cruical.
 
 ### Pin Pulling
 
-For safety/reliability, some pins are expected to explicitly have a pullup or pulldown resistor. Below summarizes these pins and their expectations:
+For safety/reliability, some pins are expected to explicitly have a pullup or pulldown resistor. Below summarizes these pins and their reasons for desiring a pull:
 
 |Pin Group Name|Expected Pull|Reason                                       |
 |--------------|-------------|---------------------------------------------|
-|JTAG TCK      |down/LOW     |prevent errant clock ticks (due to noise)    |
-|JTAG TMS      |up/HIGH      |prevent errant state traversal (due to noise)|
+|JTAG TCK      |down/LOW     |prevent errant clock ticks on connection     |
+|JTAG TMS      |up/HIGH      |prevent errant state traversal on connection |
 |SYS Reset     |up/HIGH      |keep active-low signal "off" when not in use |
 |MEM Enable    |down/LOW     |prevent errant memory accesses               |
+|SPI CLK       |down/LOW     |prevent errant storage accesses              |
 |SPI CSn       |up/HIGH      |prevent errant storage accesses              |

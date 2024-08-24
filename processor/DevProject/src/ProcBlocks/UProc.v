@@ -38,6 +38,8 @@ module UProc (
 /*
  * TODO- desc.
  */
+// TODO- larger sigs: i_sysClk, synchJtagTDI, pauseIsPausedQ, bootSmNowBooted,
+//                    synchRstnOut
  
 ////////////////////////////////////////////////////////////////////////////////
 // -- Internal Signals/Wires -- //
@@ -61,12 +63,17 @@ wire        jtagNotSpiTDO;
 // Memory Controller wires.
 wire [15:0] memJtagAddr, memJtagDataIn;
 wire        memJtagWr, memJtagEn;
+wire [15:0] memBootAddr, memBootDataIn;
+wire        memBootEn;
+wire        memSmIsPaused, memSmIsBooted;
 wire [15:0] memMapReadData;
 wire [15:0] memMemAddr;
 wire        memMemRunWr, memMemRunEn, memMemMapWrEn;
 
 // Storage Controller wires.
 wire        spiJtagTCK, spiJtagTDI, spiJtagSpiEn;
+wire        spiBootSpiMOSI, spiBootSpiEn;
+wire        spiSmIsPaused;
 wire        spiSpiCLK, spiSpiMOSI, spiSpiCSn;
 
 // Boundary scan wires.
@@ -85,6 +92,12 @@ wire        pauseIsPausedD, pauseIsPausedQ;
 wire [13:0] mapMemAddr;
 wire [15:0] mapMemDataOut;
 wire        mapMemWrEn;
+
+// Bootloader wires.
+wire        bootSpiMISO, bootSpiMOSI, bootSpiEn;
+wire [15:0] bootMemAddr, bootMemDataOut;
+wire        bootMemEn;
+wire        bootSmNowBooted;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -153,6 +166,15 @@ MemController MEM_CTRL(
 	.i_jtagWr(memJtagWr),
 	.i_jtagEn(memJtagEn),
 	
+	// Bootloader connection.
+	.i_bootMemAddr(memBootAddr),
+	.i_bootDataIn(memBootDataIn),
+	.i_bootMemEn(memBootEn),
+	
+	// uP State connection.
+	.i_smIsPaused(memSmIsPaused),
+	.i_smIsBooted(memSmIsBooted),
+	
 	// Mapped read connection.
 	.i_mapReadData(memMapReadData),
 	
@@ -172,12 +194,20 @@ SpiController SPI_CTRL (
 	.i_jtagTDI(spiJtagTDI),
 	.i_jtagSpiEn(spiJtagSpiEn),
 	
+	// Bootloader connections.
+	.i_bootSpiMOSI(spiBootSpiMOSI),
+	.i_bootSpiEn(spiBootSpiEn),
+	
+	// uP State connections.
+	.i_smIsPaused(spiSmIsPaused),
+	
 	// Selected/driven spi/storage bus.
 	.o_spiCLK(spiSpiCLK),
 	.o_spiMOSI(spiSpiMOSI),
 	.o_spiCSn(spiSpiCSn),
 	
 	// Common signals.
+	.i_clk(i_sysClk),
 	.i_rstn(synchRstnOut)
 );
 
@@ -239,6 +269,27 @@ MappedRegisters MAPPED_REGS (
 	.i_rstn(synchRstnOut)
 );
 
+//------------------------------------------------------------------------------
+// Bootloader- reads binary image from storage, copying values to runtime chip.
+BootImage BOOT_IMAGE (
+	// Storage chip connections.
+	.i_spiMISO(bootSpiMISO),
+	.o_spiMOSI(bootSpiMOSI),
+	.o_spiEn(bootSpiEn),
+
+	// Runtime chip connections.
+	.o_memAddr(bootMemAddr),
+	.o_memDataOut(bootMemDataOut),
+	.o_memEn(bootMemEn),
+	
+	// Asserted state signal.
+	.o_smNowBooted(bootSmNowBooted),
+	
+	// Common signals.
+	.i_clk(i_sysClk),
+	.i_rstn(synchRstnOut)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +308,7 @@ assign synchPauseIn = i_smDoPause;
 assign jtagTCK      = synchJtagTCK;
 assign jtagTMS      = synchJtagTMS;
 assign jtagTDI      = synchJtagTDI;
-assign jtagIsBooted = 1'b1;                      // TODO- implement
+assign jtagIsBooted = bootSmNowBooted;
 assign jtagIsPaused = pauseIsPausedQ;
 
 //------------------------------------------------------------------------------
@@ -266,13 +317,21 @@ assign memJtagAddr    = jtagMemAddr;
 assign memJtagDataIn  = jtagMemDataOut;
 assign memJtagWr      = jtagMemWr;
 assign memJtagEn      = jtagMemEn;
+assign memBootAddr    = bootMemAddr;
+assign memBootDataIn  = bootMemDataOut;
+assign memBootEn      = bootMemEn;
+assign memSmIsPaused  = pauseIsPausedQ;
+assign memSmIsBooted  = bootSmNowBooted;
 assign memMapReadData = mapMemDataOut;
 
 //------------------------------------------------------------------------------
 // Handle Storage Controller inputs.
-assign spiJtagTCK   = synchJtagTCK;
-assign spiJtagTDI   = synchJtagTDI;
-assign spiJtagSpiEn = jtagSpiAccess;
+assign spiJtagTCK     = synchJtagTCK;
+assign spiJtagTDI     = synchJtagTDI;
+assign spiJtagSpiEn   = jtagSpiAccess;
+assign spiBootSpiMOSI = bootSpiMOSI; 
+assign spiBootSpiEn   = bootSpiEn;
+assign spiSmIsPaused  = pauseIsPausedQ;
 
 //------------------------------------------------------------------------------
 // Handle Boundary Scan inputs.
@@ -292,12 +351,16 @@ assign scanSmIsPaused = o_smIsPaused;
 //------------------------------------------------------------------------------
 // Handle Pause Network inputs.
 assign pauseStartPauseD = synchPauseOut | jtagDoPause;
-assign pauseIsPausedD   = pauseStartPauseQ;            // TODO- implement
+assign pauseIsPausedD   = pauseStartPauseQ & bootSmNowBooted;
 
 //------------------------------------------------------------------------------
 // Handle Mapped Registers inputs.
 assign mapMemAddr   = memMemAddr[13:0];
 assign mapMemWrEn   = memMemMapWrEn;
+
+//------------------------------------------------------------------------------
+// Handle Bootloader inputs.
+assign bootSpiMISO = i_spiMISO;
 
 //------------------------------------------------------------------------------
 // Drive external memory bus (to runtime chip).
@@ -328,7 +391,7 @@ Mux2 M1 (
 
 //------------------------------------------------------------------------------
 // Drive state machine indicator pins.
-assign o_smIsBooted = 1'b1;           // TODO- implement
+assign o_smIsBooted = bootSmNowBooted;
 assign o_smIsPaused = pauseIsPausedQ;
 
 //------------------------------------------------------------------------------ 

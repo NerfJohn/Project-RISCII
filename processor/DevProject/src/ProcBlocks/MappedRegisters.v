@@ -61,7 +61,7 @@ CoreCtrl CORE_CTRL (
 // Compute mem address based controls.
 assign is6BitAddr = ~(|i_memAddr[13:6]);
 assign isCctrlAddr = is6BitAddr & ~i_memAddr[5] & ~i_memAddr[4]  // ...0000xx
-                                & ~i_memAddr[3] & ~i_memAddr[3];
+                                & ~i_memAddr[3] & ~i_memAddr[2];
 										  
 //------------------------------------------------------------------------------
 // Handle Core Control (cctrl) inputs.
