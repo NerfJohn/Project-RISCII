@@ -65,6 +65,8 @@ wire [15:0] memJtagAddr, memJtagDataIn;
 wire        memJtagWr, memJtagEn;
 wire [15:0] memBootAddr, memBootDataIn;
 wire        memBootEn;
+wire [15:0] memCoreAddr, memCoreDataIn;
+wire        memCoreWr;
 wire        memSmIsPaused, memSmIsBooted;
 wire [15:0] memMapReadData;
 wire [15:0] memMemAddr;
@@ -98,6 +100,11 @@ wire        bootSpiMISO, bootSpiMOSI, bootSpiEn;
 wire [15:0] bootMemAddr, bootMemDataOut;
 wire        bootMemEn;
 wire        bootSmNowBooted;
+
+// Core wires.
+wire [15:0] coreMemAddr, coreMemDataOut;
+wire        coreMemWr;
+wire        coreSmStartPause, coreSmNowPaused;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -170,6 +177,11 @@ MemController MEM_CTRL(
 	.i_bootMemAddr(memBootAddr),
 	.i_bootDataIn(memBootDataIn),
 	.i_bootMemEn(memBootEn),
+	
+	// Core connection.
+	.i_coreMemAddr(memCoreAddr),
+	.i_coreMemDataIn(memCoreDataIn),
+	.i_coreMemWr(memCoreWr),
 	
 	// uP State connection.
 	.i_smIsPaused(memSmIsPaused),
@@ -290,6 +302,23 @@ BootImage BOOT_IMAGE (
 	.i_rstn(synchRstnOut)
 );
 
+//------------------------------------------------------------------------------
+// Processing Core- executes software program and computations.
+Core CORE (
+	// Memory port connections.
+	.o_memAddr(coreMemAddr),
+	.o_memDataOut(coreMemDataOut),
+	.o_memWr(coreMemWr),
+	
+	// uP State connections.
+	.i_smStartPause(coreSmStartPause),
+	.o_smNowPaused(coreSmNowPaused),
+	
+	// Common signals.
+	.i_clk(i_sysClk),
+	.i_rstn(synchRstnOut)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -320,6 +349,9 @@ assign memJtagEn      = jtagMemEn;
 assign memBootAddr    = bootMemAddr;
 assign memBootDataIn  = bootMemDataOut;
 assign memBootEn      = bootMemEn;
+assign memCoreAddr    = coreMemAddr;
+assign memCoreDataIn  = coreMemDataOut;
+assign memCoreWr      = coreMemWr;
 assign memSmIsPaused  = pauseIsPausedQ;
 assign memSmIsBooted  = bootSmNowBooted;
 assign memMapReadData = mapMemDataOut;
@@ -351,7 +383,7 @@ assign scanSmIsPaused = o_smIsPaused;
 //------------------------------------------------------------------------------
 // Handle Pause Network inputs.
 assign pauseStartPauseD = synchPauseOut | jtagDoPause;
-assign pauseIsPausedD   = pauseStartPauseQ & bootSmNowBooted;
+assign pauseIsPausedD   = coreSmNowPaused & bootSmNowBooted;
 
 //------------------------------------------------------------------------------
 // Handle Mapped Registers inputs.
@@ -361,6 +393,10 @@ assign mapMemWrEn   = memMemMapWrEn;
 //------------------------------------------------------------------------------
 // Handle Bootloader inputs.
 assign bootSpiMISO = i_spiMISO;
+
+//------------------------------------------------------------------------------
+// Handle core inputs.
+assign coreSmStartPause = pauseStartPauseQ;
 
 //------------------------------------------------------------------------------
 // Drive external memory bus (to runtime chip).
@@ -396,7 +432,7 @@ assign o_smIsPaused = pauseIsPausedQ;
 
 //------------------------------------------------------------------------------ 
 // TODO- implement.
-assign io_gpioPins  = 16'bZZZZZZZZZZZZZZZZ;
+assign io_gpioPins  = {7'b0000000, coreSmNowPaused, 8'bZZZZZZZZ}; //16'bZZZZZZZZZZZZZZZZ;
  
 endmodule
  

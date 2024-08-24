@@ -15,6 +15,11 @@ module MemController (
 	input  [15:0] i_bootDataIn,
 	input         i_bootMemEn,
 	
+	// Core connection.
+	input  [15:0] i_coreMemAddr,
+	input  [15:0] i_coreMemDataIn,
+	input         i_coreMemWr,
+	
 	// uP State connection.
 	input         i_smIsPaused,
 	input         i_smIsBooted,
@@ -48,6 +53,8 @@ module MemController (
 ////////////////////////////////////////////////////////////////////////////////
 
 // Computed controls (based on potential controllers).
+wire [15:0] curBootedAddr, curBootedDataOut;
+wire        curBootedWr, curBootedEn;
 wire [15:0] curAddr, curDataOut;
 wire        curWr, curEn;
 
@@ -78,27 +85,51 @@ Tristate TRISTATE[15:0] (
 //------------------------------------------------------------------------------
 // Compute controller/uP state based controls.
 Mux2 M0[15:0] (
-	.A(i_jtagAddr),    // Paused? use JTAG address
-	.B(i_bootMemAddr), // No?     use bootloader address
+	.A(i_jtagAddr),       // Paused? use JTAG address
+	.B(i_coreMemAddr),    // No?     use core address
 	.S(i_smIsPaused),
-	.Y(curAddr)
+	.Y(curBootedAddr)
 );
 Mux2 M1[15:0] (
-	.A(i_jtagDataIn),  // Paused? use JTAG write data
-	.B(i_bootDataIn),  // No?     use bootloader write data
+	.A(curBootedAddr),    // Booted? process booted addresses
+	.B(i_bootMemAddr),    // No?     use bootloader address
+	.S(i_smIsBooted),
+	.Y(curAddr)
+);
+Mux2 M2[15:0] (
+	.A(i_jtagDataIn),     // Paused? use JTAG write data
+	.B(i_coreMemDataIn),  // No?     use core write data
 	.S(i_smIsPaused),
+	.Y(curBootedDataOut)
+);
+Mux2 M3[15:0] (
+	.A(curBootedDataOut), // Booted? process booted write data
+	.B(i_bootDataIn),     // No?     use bootloader write data
+	.S(i_smIsBooted),
 	.Y(curDataOut)
 );
-Mux2 M2 (
-	.A(i_jtagWr),      // Paused? use JTAG read/write signal
-	.B(1'b1),          // No?     bootloader ALWAYS writes
+Mux2 M4 (
+	.A(i_jtagWr),         // Paused? use JTAG read/write
+	.B(i_coreMemWr),      // No?     use core read/write
 	.S(i_smIsPaused),
+	.Y(curBootedWr)
+);
+Mux2 M5 (
+	.A(curBootedWr),      // Booted? process booted read/write
+	.B(1'b1),             // No?     bootloader ALWAYS writes
+	.S(i_smIsBooted),
 	.Y(curWr)
 );
-Mux2 M3 (
-	.A(i_jtagEn),      // Paused? use JTAG enable
-	.B(i_bootMemEn),   // No?     use bootloader enable
+Mux2 M6 (
+	.A(i_jtagEn),         // Paused? use JTAG enable
+	.B(1'b1),             // No?     core ALWAYS enabled
 	.S(i_smIsPaused),
+	.Y(curBootedEn)
+);
+Mux2 M7 (
+	.A(curBootedEn),      // Booted? process booted enables
+	.B(i_bootMemEn),      // No?     use bootloader enable
+	.S(i_smIsBooted),
 	.Y(curEn)
 );
 
@@ -109,7 +140,7 @@ assign isMapRead = isMapAddr & ~curWr & curEn;
 
 //------------------------------------------------------------------------------
 // Handle driving of memory data lines.
-Mux2 M4[15:0] (
+Mux2 M8[15:0] (
 	.A(i_mapReadData), // Reading Map? Drive read map data
 	.B(curDataOut),    // No?          Drive sourced write data
 	.S(isMapRead),
