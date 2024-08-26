@@ -94,6 +94,10 @@ wire        pauseIsPausedD, pauseIsPausedQ;
 wire [13:0] mapMemAddr;
 wire [15:0] mapMemDataOut;
 wire        mapMemWrEn;
+wire [15:0] mapReportSP;
+wire [14:0] mapReportPC;
+wire        mapReportHLT;
+wire        mapDoPause;
 
 // Bootloader wires.
 wire        bootSpiMISO, bootSpiMOSI, bootSpiEn;
@@ -104,7 +108,10 @@ wire        bootSmNowBooted;
 // Core wires.
 wire [15:0] coreMemAddr, coreMemDataOut;
 wire        coreMemWr;
-wire        coreSmStartPause, coreSmNowPaused;
+wire        coreSmIsBooted, coreSmStartPause, coreSmNowPaused;
+wire [15:0] coreReportSP;
+wire [14:0] coreReportPC;
+wire        coreReportHLT;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -276,6 +283,14 @@ MappedRegisters MAPPED_REGS (
 	.i_memWrEn(mapMemWrEn),
 	.o_memDataOut(mapMemDataOut),
 	
+	// Reported Info connections.
+	.i_reportSP(mapReportSP),
+	.i_reportPC(mapReportPC),
+	.i_reportHLT(mapReportHLT),
+	
+	// Output Control connections.
+	.o_doPause(mapDoPause),
+	
 	// Common signals.
 	.i_clk(i_sysClk),
 	.i_rstn(synchRstnOut)
@@ -306,13 +321,20 @@ BootImage BOOT_IMAGE (
 // Processing Core- executes software program and computations.
 Core CORE (
 	// Memory port connections.
+	.i_memDataIn(io_memData),          // inout- direct connect net
 	.o_memAddr(coreMemAddr),
 	.o_memDataOut(coreMemDataOut),
 	.o_memWr(coreMemWr),
 	
 	// uP State connections.
+	.i_smIsBooted(coreSmIsBooted),
 	.i_smStartPause(coreSmStartPause),
 	.o_smNowPaused(coreSmNowPaused),
+	
+	// Reported control connections.
+	.o_reportSP(coreReportSP),
+	.o_reportPC(coreReportPC),
+	.o_reportHLT(coreReportHLT),
 	
 	// Common signals.
 	.i_clk(i_sysClk),
@@ -382,13 +404,20 @@ assign scanSmIsPaused = o_smIsPaused;
 
 //------------------------------------------------------------------------------
 // Handle Pause Network inputs.
-assign pauseStartPauseD = synchPauseOut | jtagDoPause;
-assign pauseIsPausedD   = coreSmNowPaused & bootSmNowBooted;
+assign pauseStartPauseD = synchPauseOut      // src: "pause" pin
+                          | jtagDoPause      // src: JTAG's pause request
+								  | mapDoPause;      // src: CCTRL pause bit (ie Core)
+assign pauseIsPausedD   = pauseStartPauseQ   // "unpause" within 1 cycle
+                          & coreSmNowPaused  // core must be locally paused
+								  & bootSmNowBooted; // must be booted to formally pause
 
 //------------------------------------------------------------------------------
 // Handle Mapped Registers inputs.
 assign mapMemAddr   = memMemAddr[13:0];
 assign mapMemWrEn   = memMemMapWrEn;
+assign mapReportSP  = coreReportSP;
+assign mapReportPC  = coreReportPC;
+assign mapReportHLT = coreReportHLT;
 
 //------------------------------------------------------------------------------
 // Handle Bootloader inputs.
@@ -396,6 +425,7 @@ assign bootSpiMISO = i_spiMISO;
 
 //------------------------------------------------------------------------------
 // Handle core inputs.
+assign coreSmIsBooted   = bootSmNowBooted;
 assign coreSmStartPause = pauseStartPauseQ;
 
 //------------------------------------------------------------------------------
@@ -432,7 +462,7 @@ assign o_smIsPaused = pauseIsPausedQ;
 
 //------------------------------------------------------------------------------ 
 // TODO- implement.
-assign io_gpioPins  = {7'b0000000, coreSmNowPaused, 8'bZZZZZZZZ}; //16'bZZZZZZZZZZZZZZZZ;
+assign io_gpioPins  = {7'b0000000, coreReportHLT, 8'bZZZZZZZZ}; //16'bZZZZZZZZZZZZZZZZ;
  
 endmodule
  

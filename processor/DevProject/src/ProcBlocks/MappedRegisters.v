@@ -9,6 +9,14 @@ module MappedRegisters (
 	input  [15:0] i_memDataIn,
 	input         i_memWrEn,
 	output [15:0] o_memDataOut,
+
+	// Reported Info connections.
+	input  [15:0] i_reportSP,
+	input  [14:0] i_reportPC,
+	input         i_reportHLT,
+	
+	// Output Control connections.
+	output        o_doPause,
 	
 	// Common signals.
 	input         i_clk,
@@ -31,6 +39,10 @@ wire        isCctrlAddr;
 wire [1:0]  cctrlMemAddr;
 wire [15:0] cctrlMemDataIn, cctrlMemDataOut;
 wire        cctrlMemWrEn;
+wire [15:0] cctrlReportSP;
+wire [14:0] cctrlReportPC;
+wire        cctrlReportHLT;
+wire        cctrlDoPause;
 
 // Compute data wires (based on mem address).
 wire [15:0] readAddr0X;
@@ -47,6 +59,14 @@ CoreCtrl CORE_CTRL (
 	.i_memDataIn(cctrlMemDataIn),
 	.i_memWrEn(cctrlMemWrEn),
 	.o_memDataOut(cctrlMemDataOut),
+	
+	// Reported Info connections.
+	.i_reportSP(cctrlReportSP),
+	.i_reportPC(cctrlReportPC),
+	.i_reportHLT(cctrlReportHLT),
+	
+	// Output Control connections.
+	.o_doPause(cctrlDoPause),
 	
 	// Common signals.
 	.i_clk(i_clk),
@@ -68,9 +88,16 @@ assign isCctrlAddr = is6BitAddr & ~i_memAddr[5] & ~i_memAddr[4]  // ...0000xx
 assign cctrlMemAddr   = i_memAddr[1:0];
 assign cctrlMemDataIn = i_memDataIn;
 assign cctrlMemWrEn   = isCctrlAddr & i_memWrEn;
+assign cctrlReportSP  = i_reportSP;
+assign cctrlReportPC  = i_reportPC;
+assign cctrlReportHLT = i_reportHLT;
 
 //------------------------------------------------------------------------------
 // Drive data output based on given address.
 assign o_memDataOut = cctrlMemDataOut & {16{isCctrlAddr}};
+
+//------------------------------------------------------------------------------
+// Drive pause output.
+assign o_doPause = cctrlDoPause;
 
 endmodule

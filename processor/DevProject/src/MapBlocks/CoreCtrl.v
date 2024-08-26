@@ -10,6 +10,14 @@ module CoreCtrl (
 	input         i_memWrEn,
 	output [15:0] o_memDataOut,
 	
+	// Reported Info connections.
+	input  [15:0] i_reportSP,
+	input  [14:0] i_reportPC,
+	input         i_reportHLT,
+	
+	// Output Control connections.
+	output        o_doPause,
+	
 	// Common signals.
 	input         i_clk,
 	input         i_rstn
@@ -80,10 +88,10 @@ assign isSetpointAddr = ~i_memAddr[1] &  i_memAddr[0]; // ...01
 
 //------------------------------------------------------------------------------
 // Handle control settings inputs.
-assign overflowD  = i_memDataIn[1];         // Overflow Detect Enable == bit 1
+assign overflowD  = i_memDataIn[1];                         // Overflow Enable
 assign overflowEn = isCtrlAddr & i_memWrEn;
-assign pauseD     = i_memDataIn[0];         // Do Pause == bit 0
-assign pauseEn    = isCtrlAddr & i_memWrEn;
+assign pauseD     = i_memDataIn[0] | i_reportHLT;           // Do Pause
+assign pauseEn    = (isCtrlAddr & i_memWrEn) | i_reportHLT;
 
 //------------------------------------------------------------------------------
 // Handle setpoint inputs.
@@ -92,12 +100,17 @@ assign setpointEn = isSetpointAddr & i_memWrEn;
 
 //------------------------------------------------------------------------------
 // Drive data output based on given address.
-Mux2 M0[15:0] (
-	.A(setpointQ),                               // Address 01? Read setpoint
-	.B({14'b00000000000000, overflowQ, pauseQ}), // No    (00)? Read controls
-	.S(i_memAddr[0]),
-	.Y(readAddr0X)
+Mux4 M0[15:0] (
+	.C({14'b00000000000000, overflowQ, pauseQ}), // Address 00? Read controls
+	.D(setpointQ),                               // Address 01? Read setpoint
+	.E({i_reportPC, 1'b0}),                      // Address 10? Read PC
+	.F(i_reportSP),                              // Address 11? Read SP
+	.S(i_memAddr),
+	.Y(o_memDataOut)
 );
-assign o_memDataOut = readAddr0X & {16{isCtrlAddr | isSetpointAddr}};
+
+//------------------------------------------------------------------------------
+// Drive pause output.
+assign o_doPause = pauseQ;
 
 endmodule

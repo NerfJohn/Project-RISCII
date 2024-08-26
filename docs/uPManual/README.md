@@ -24,6 +24,7 @@ The uP design consists of many internal circuits and components. At a high level
 |SCAN      | Read only boundary scan register accessible only through JTAG |
 |CCTRL     | Mapped CORE registers and stack overflow detection controls   |
 |BOOT      | Circuit to copy stored binary image to runtime memory on reset|
+|CORE      | Core processor responsible for code execution                 |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -34,17 +35,17 @@ Between various signals, the uP effectively implements a global "state machine" 
 
 |State Name|SM Is Booted|SM Is Paused|Summary                              |
 |----------|------------|------------|-------------------------------------|
-|NOT_PAUSED|HIGH        |LOW         |uP is not doing anything of note     |
+|RUNNING   |HIGH        |LOW         |uP is running the binary firmware    |
 |PAUSED    |HIGH        |HIGH        |uP is "paused", JTAG now in charge   |
 |BOOTING   |LOW         |LOW         |uP is preparing to run binary image  |
 
 Pins "SM Is Booted" and "SM Is Paused" act as external indicators of the uP's internal state (see "uP Pinout" below for more details about the pins).
 
+In the RUNNING state, the CORE block executes the loaded firmware, exercising control of the uP's resources. In this mode, code (stored in the runtime chip) is executed, controlling the rest of the uP based on the program/functions being run.
+
 In the PAUSED state, uP's resources temporarily cease operation (eg firmware execution pauses, timers freeze, etc). In this mode, the JTAG is given general control over the uP's resources. Note that while the PAUSED state is not reached until all resources are paused, some resources may take longer to pause than others (ie frequent pausing may cause performance variation).
 
 In the BOOTING state, the BOOT block is given control over both memory chips (other resources are put on hold). In this mode, the binary image is copied from the storage chip into the runtime chip (see section "Binary Image Format" below). This state cannot be interrupted, though eventually terminates and does not prevent uP resources from being paused (ie prevents formal recognition of uP being paused, but not pause process).
-
-The NOT_PAUSED state is currently an **artifact of the uP being developed** at this time. It does not have any intended functionality other than being distinguished from the PAUSED state.
 
 ## Mapped Registers
 ---
@@ -54,6 +55,8 @@ Some of the uP's internal resources contain registers that can be accessed using
 |-------------|----------|------|------------------------------------------|
 |CCTRL_CTRL   |0x8000    |r/w   |Controls for core processing features     |
 |CCTRL_SETP   |0x8002    |r/w   |Setpoint for stack overflow detection     |
+|CCTRL_PC     |0x8004    |r     |Current value of the PC                   |
+|CCTRL_SP     |0x8006    |r     |Current value of the stack pointer (SP)   |
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
@@ -61,21 +64,35 @@ Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardw
 
 **_CCTRL_CTRL (SW Address = 0x8000, HW Address = 0xC000)_**
 
-|Field Name|Bit Field|Description                                          |
-|----------|---------|-----------------------------------------------------|
-|reserved  |15:2     |reserved for future use- default value(s) = 0        |
-|ovdEn     |1        |overflow detection enable                            |
-|doPause   |0        |pauses uP (automatically set by HLT instruction)     |
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:2     |r     |reserved for future use- default value(s) = 0 |
+|ovdEn     |1        |r/w   |overflow detection enable                     |
+|doPause   |0        |r/w   |pauses uP (auto set by HLT instruction)       |
 
-At present, "ovdEn" and "doPause" have no effect **(ie artifact of uP currently under development)**.
+At present, "ovdEn" has no effect **(ie artifact of uP currently under development)**.
 
 **_CCTRL_SETP (SW Address = 0x8002, HW Address = 0xC001)_**
 
-|Field Name|Bit Field|Description                                          |
-|----------|---------|-----------------------------------------------------|
-|setpoint  |15:0     |lowest valid stack pointer (ie "less than" trigger)  |
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|setpoint  |15:0     |r/w   |lowest valid stack pointer (ie "\<" trigger)  |
 
 At present, "setpoint" has no effect **(ie artifact of uP currently under development)**.
+
+**_CCTRL_PC (SW Address = 0x8004, HW Address = 0xC002)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|PC        |15:0     |r     |current PC value- used to fetch instructions  |
+
+**_CCTRL_SP (SW Address = 0x8006, HW Address = 0xC003)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|SP        |15:0     |r     |current stack pointer value- used for overflow|
+
+At present, the "SP" value is not accurate **(ie artifact of uP currently under development)**.
 
 ## uP Pinout
 ---
