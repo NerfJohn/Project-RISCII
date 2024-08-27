@@ -1,0 +1,21 @@
+; Simple test to check LBI works (at least w/ R7- aka "stack pointer").
+
+__START:
+
+; Check general set works.
+LBI $7 5
+HLT
+
+; Check general signed set works.
+LBI $7 -8
+HLT
+
+; Check shift works.
+LBI %s $7 0x0A
+HLT
+
+; Check full on "load address" works.
+_la $7 __SIZE
+HLT
+
+HLT ; Extra HLT for safety

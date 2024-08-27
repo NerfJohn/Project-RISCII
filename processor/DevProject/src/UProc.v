@@ -168,6 +168,7 @@ JtagPort JTAG_PORT(
 	.o_doPause(jtagDoPause),
 	
 	// Common signals.
+	.i_clk(i_sysClk),
 	.i_rstn(synchRstnOut)
 );
 

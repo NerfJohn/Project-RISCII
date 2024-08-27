@@ -29,6 +29,7 @@ module JtagPort (
 	output        o_doPause,
 	
 	// Common signals.
+	input         i_clk,
 	input         i_rstn
 );
 
@@ -58,6 +59,9 @@ wire [2:0]  nextState10X, nextState00X;
 // Computed controls (based on state machine).
 wire        inDSHFT, inUPDATE;
 wire        loadStatus;
+
+// Pulse wires.
+wire        pulseD, pulseQ;
 
 // Shift Registers wires.
 wire [7:0]  cmdD, cmdQ;
@@ -89,6 +93,15 @@ DffAsynch STATE[2:0] (
 	.D(stateD),
 	.Q(stateQ),
 	.clk(i_TCK),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Pulser- ensure 1 system cycle MEM write (else, "multi-write" issues).
+DffSynch PULSE (
+	.D(pulseD),
+	.Q(pulseQ),
+	.clk(i_clk),
 	.rstn(i_rstn)
 );
 
@@ -189,6 +202,10 @@ assign inUPDATE   =  stateQ[2] &  stateQ[1]  & ~stateQ[0];
 assign loadStatus = ~stateQ[2] & ~stateQ[1]  &  stateQ[0] & ~i_TMS;
 
 //------------------------------------------------------------------------------
+// Handle pulser inputs.
+assign pulseD = inUPDATE; // 1 system tick in UPDATE with ~pulseQ
+
+//------------------------------------------------------------------------------
 // Handle shift registers- shifted vs set inputs.
 Mux2 M5[7:0] (
 	.A({6'b000000, i_isPaused, i_isBooted}), // Enter ISHFT? Load uP Status
@@ -242,8 +259,8 @@ Mux2 M7 (
 // Set runtime memory outputs.
 assign o_memAddr    = addrQ;
 assign o_memDataOut = dataQ;
-assign o_memWr      = cmdQ[0];   // read vs. write cmd bit
-assign o_memEn      = exeMemCmd;
+assign o_memWr      = cmdQ[0];             // read vs. write cmd bit
+assign o_memEn      = exeMemCmd & ~pulseQ;
 
 //------------------------------------------------------------------------------
 // Set access enable outputs.

@@ -1,0 +1,31 @@
+/*
+ * ImmBlock.v
+ *
+ * "Generates immediate value based on given opcode"
+ */
+module ImmBlock (
+	// Input instruction connection.
+	input  [7:0]  i_instrImm,
+	//input  [7:0]  i_instrOpcode,
+	
+	// Output immediate connection.
+	output [15:0] o_genImm
+);
+
+/*
+ * TODO- desc.
+ */
+
+////////////////////////////////////////////////////////////////////////////////
+// -- Internal Signals/Wires -- //
+////////////////////////////////////////////////////////////////////////////////
+	
+////////////////////////////////////////////////////////////////////////////////
+// -- Connections/Comb Logic -- //
+////////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------------------
+// TODO- implement.
+assign o_genImm = {{8{i_instrImm[7]}}, i_instrImm};
+
+endmodule
