@@ -6,9 +6,9 @@
 module RegFile (
 	// Read connections.
 	input  [2:0]  i_rAddr1,
-	//input  [2:0]  i_rAddr2,
+	input  [2:0]  i_rAddr2,
 	output [15:0] o_rData1,
-	//output [15:0] o_rData2,
+	output [15:0] o_rData2,
 	
 	// Write connections.
 	input  [15:0] i_wData,
@@ -51,6 +51,7 @@ wire        r7En;
 
 // Read mux nets.
 wire [15:0] data1r0XX, data1r1XX;
+wire [15:0] data2r0XX, data2r1XX;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -161,6 +162,31 @@ Mux2 M2[15:0] (
 	.B(data1r0XX),     // 0XX? Process lower bits for 0XX
 	.S(i_rAddr1[2]),
 	.Y(o_rData1)
+);
+
+//------------------------------------------------------------------------------
+// Drive frist read register.
+Mux4 M3[15:0] (
+	.C(r0Q),           // X00? Get r0 (000)
+	.D(r1Q),           // X01? Get r1 (001)
+	.E(r2Q),           // X10? Get r2 (010)
+	.F(r3Q),           // X11? Get r3 (011)
+	.S(i_rAddr2[1:0]),
+	.Y(data2r0XX)
+);
+Mux4 M4[15:0] (
+	.C(r4Q),           // X00? Get r4 (100)
+	.D(r5Q),           // X01? Get r5 (101)
+	.E(r6Q),           // X10? Get r6 (110)
+	.F(r7Q),           // X11? Get r7 (111)
+	.S(i_rAddr2[1:0]),
+	.Y(data2r1XX)
+);
+Mux2 M5[15:0] (
+	.A(data2r1XX),     // 1XX? Process lower bits for 1XX
+	.B(data2r0XX),     // 0XX? Process lower bits for 0XX
+	.S(i_rAddr2[2]),
+	.Y(o_rData2)
 );
 
 //------------------------------------------------------------------------------

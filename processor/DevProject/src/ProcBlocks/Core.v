@@ -52,13 +52,16 @@ wire [14:0] exePCD, exePCQ;
 
 // Control logic wires.
 wire [3:0]  ctrlOpcode;
+wire [2:0]  ctrlAluOp;
+wire        ctrlAltSrc1, ctrlAltSel;
+wire        ctrlUseImm, ctrlAllowImm;
 wire        ctrlAllowJmp;
 wire        ctrlWrReg, ctrlWrCC;
 wire        ctrlIsHLT;
 
 // Reg file wires.
-wire [2:0]  regRAddr1;
-wire [15:0] regRData1;
+wire [2:0]  regRAddr1, regRAddr2;
+wire [15:0] regRData1, regRData2;
 wire [15:0] regWData;
 wire [2:0]  regWAddr;
 wire        regWEn;
@@ -71,6 +74,7 @@ wire [15:0] immGenImm;
 
 // ALU wires.
 wire [15:0] aluSrcA, aluSrcB;
+wire [2:0]  aluOpCode;
 wire        aluOpSel;
 wire [15:0] aluResult;
 wire [3:0]  aluCcodes;
@@ -137,6 +141,11 @@ CtrlLogic CTRL_LOGIC (
 	.i_opcode(ctrlOpcode),
 	
 	// Control outputs.
+	.o_aluOp(ctrlAluOp),
+	.o_altSrc1(ctrlAltSrc1),
+	.o_altSel(ctrlAltSel),
+	.o_useImm(ctrlUseImm),
+	.o_allowImm(ctrlAllowImm),
 	.o_allowJmp(ctrlAllowJmp),
 	.o_wrReg(ctrlWrReg),
 	.o_wrCC(ctrlWrCC),
@@ -148,7 +157,9 @@ CtrlLogic CTRL_LOGIC (
 RegFile REG_FILE (
 	// Read connections.
 	.i_rAddr1(regRAddr1),
+	.i_rAddr2(regRAddr2),
 	.o_rData1(regRData1),
+	.o_rData2(regRData2),
 	
 	// Write connections.
 	.i_wData(regWData),
@@ -182,6 +193,7 @@ Alu ALU (
 	.i_srcB(aluSrcB),
 	
 	// Opcode connections.
+	.i_opCode(aluOpCode),
 	.i_opSel(aluOpSel),
 	
 	// Results connections.
@@ -249,11 +261,17 @@ assign exePCD = pcAddS;
 
 //------------------------------------------------------------------------------
 // Handle Control logic inputs.
-assign ctrlOpcode = exeQ[15:12];
+assign ctrlOpcode   = exeQ[15:12];
 
 //------------------------------------------------------------------------------
 // Handle Register File inputs.
-assign regRAddr1 = exeQ[11:9];
+Mux2 M1[2:0] (
+	.A(exeQ[11:9]),             // Alt source? read LBI's DST
+	.B(exeQ[8:6]),              // No?         read typical SR1
+	.S(ctrlAltSrc1),
+	.Y(regRAddr1)
+);
+assign regRAddr2 = exeQ[2:0];
 assign regWData  = aluResult;
 assign regWAddr  = exeQ[11:9];
 assign regWEn    = ctrlWrReg;
@@ -265,9 +283,20 @@ assign immInstrOpcode = exeQ[15:12];
 
 //------------------------------------------------------------------------------
 // Handle ALU inputs.
-assign aluSrcA  = regRData1;
-assign aluSrcB  = immGenImm;
-assign aluOpSel = exeQ[8];
+assign aluSrcA   = regRData1;
+Mux2 M2[15:0] (
+	.A(immGenImm),                             // Use Imm? Imm is Src2
+	.B(regRData2),                             // No?      Read 2 is Src2
+	.S(ctrlUseImm | (ctrlAllowImm & exeQ[5])),
+	.Y(aluSrcB)
+);
+assign aluOpCode = ctrlAluOp;
+Mux2 M3 (
+	.A(exeQ[8]),                               // Alt select? Use LBI flag
+	.B(exeQ[4]),                               // No?         Use SHR flag
+	.S(ctrlAltSel),
+	.Y(aluOpSel)
+);
 
 //------------------------------------------------------------------------------
 // Handle CC inputs.
