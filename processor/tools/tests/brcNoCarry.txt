@@ -1,0 +1,36 @@
+; Test to check BRC is implemented correctly (except for carry flag).
+
+__START:
+
+; Check 1) "n" flag and 2) jump forward
+LBI $7 -1
+BRC %n 1
+HLT ; Addr 0x0004
+
+; Check "always" jump
+BRC %nzp 2
+BRC %nzp 3
+HLT ; Addr 0x000A
+
+; Check 1) "p" flag and 2) jump backward
+LBI $7 3
+BRC %p -4
+
+; Check 1) "z" flag and 2) precise jumping.
+LBI $7 0
+BRC %z 1
+HLT ; Addr 0x0014
+BRC %nzp 1
+HLT ; Addr 0x0018
+
+; Check 1) failed flags pass and 2) only LBI updates.
+LBI $7 -1
+NOP               ; likely codes = z
+BRC %z 2
+BRC %p 1
+BRC %n 1
+HLT ; Addr 0x0024
+
+; All Done! Success code.
+LBI $7 0x29
+HLT ; Addr 0x0028

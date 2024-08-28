@@ -48,10 +48,12 @@ wire        pcEn;
 // Execute register wires.
 wire [15:0] exeD, exeQ;
 wire        exeEn;
+wire [14:0] exePCD, exePCQ;
 
 // Control logic wires.
 wire [3:0]  ctrlOpcode;
-wire        ctrlWrReg;
+wire        ctrlAllowJmp;
+wire        ctrlWrReg, ctrlWrCC;
 wire        ctrlIsHLT;
 
 // Reg file wires.
@@ -64,12 +66,24 @@ wire [15:0] regReportSP;
 
 // Immediate block wires.
 wire [7:0]  immInstrImm;
+wire [3:0]  immInstrOpcode;
 wire [15:0] immGenImm;
 
 // ALU wires.
 wire [15:0] aluSrcA, aluSrcB;
 wire        aluOpSel;
 wire [15:0] aluResult;
+wire [3:0]  aluCcodes;
+
+// Condition Code wires.
+wire [3:0]  ccD, ccQ;
+wire        ccEn;
+
+// Jump PC wires.
+wire [14:0] jmpAddA, jmpAddB, jmpAddS;
+wire        jmpAddI;
+wire [14:0] jmpAddr;
+wire        jmpCodeMatch, jmpDoJmp;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -101,11 +115,17 @@ DffSynchEn PC[14:0] (
 );
 
 //------------------------------------------------------------------------------
-// Execute Register- holds instruction being executed.
+// Execute Register- holds instruction (and PC+2) being executed.
 DffSynchEn EXECUTE[15:0] (
 	.D(exeD),
 	.Q(exeQ),
 	.S(exeEn),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+DffSynch EXE_PC[14:0] (
+	.D(exePCD),
+	.Q(exePCQ),
 	.clk(i_clk),
 	.rstn(i_rstn)
 );
@@ -117,7 +137,9 @@ CtrlLogic CTRL_LOGIC (
 	.i_opcode(ctrlOpcode),
 	
 	// Control outputs.
+	.o_allowJmp(ctrlAllowJmp),
 	.o_wrReg(ctrlWrReg),
+	.o_wrCC(ctrlWrCC),
 	.o_isHLT(ctrlIsHLT)
 );
 
@@ -146,6 +168,7 @@ RegFile REG_FILE (
 ImmBlock IMM_BLOCK (
 	// Input instruction connection.
 	.i_instrImm(immInstrImm),
+	.i_instrOpcode(immInstrOpcode),
 	
 	// Output immediate connection.
 	.o_genImm(immGenImm)
@@ -162,7 +185,27 @@ Alu ALU (
 	.i_opSel(aluOpSel),
 	
 	// Results connections.
-	.o_result(aluResult)
+	.o_result(aluResult),
+	.o_ccodes(aluCcodes)
+);
+
+//------------------------------------------------------------------------------
+// Condition Codes- results of previous data operations.
+DffSynchEn CC[3:0] (
+	.D(ccD),
+	.Q(ccQ),
+	.S(ccEn),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Jump PC Adder- calculate "jump" address/computations.
+Add15 JMP_ADDER (
+	.A(jmpAddA),
+	.B(jmpAddB),
+	.I(jmpAddI),
+	.S(jmpAddS)
 );
 	
 ////////////////////////////////////////////////////////////////////////////////
@@ -177,6 +220,7 @@ assign doStallPC   = ~i_smIsBooted                  // preserve 0x0000
 							| ctrlIsHLT;                   // stop core flow
 assign doFreezeEXE = (ctrlIsHLT & ~i_smStartPause); // keep HLT till pause
 assign doClearEXE  = ~i_smIsBooted                  // don't run in booting
+                     | jmpDoJmp                     // jump cancels EXE
                      | pauseQ                       // don't run in paused
 							| i_smStartPause;              // prep to pause
 
@@ -189,13 +233,19 @@ assign pauseD = i_smStartPause;
 assign pcAddA = pcQ;
 assign pcAddB = 15'b000000000000000; // using as incrementor
 assign pcAddI = 1'b1;                // using as incrementor
-assign pcD    = pcAddS;
-assign pcEn   = ~doStallPC;
+Mux2 M0[14:0] (
+	.A(jmpAddr),                      // Jumping? Set PC with new address
+	.B(pcAddS),                       // No?      Just increment
+	.S(jmpDoJmp),
+	.Y(pcD)
+);
+assign pcEn   = ~doStallPC | jmpDoJmp;
 
 //------------------------------------------------------------------------------
 // Handle execute inputs.
-assign exeD  = i_memDataIn & {16{~doClearEXE}}; // "clear"  > "read"
-assign exeEn = ~doFreezeEXE;                    // "freeze" > "clear"
+assign exeD   = i_memDataIn & {16{~doClearEXE}}; // "clear"  > "read"
+assign exeEn  = ~doFreezeEXE;                    // "freeze" > "clear"
+assign exePCD = pcAddS;
 
 //------------------------------------------------------------------------------
 // Handle Control logic inputs.
@@ -210,13 +260,28 @@ assign regWEn    = ctrlWrReg;
 
 //------------------------------------------------------------------------------
 // Handle Immediate Block inputs.
-assign immInstrImm = exeQ[7:0];
+assign immInstrImm    = exeQ[7:0];
+assign immInstrOpcode = exeQ[15:12];
 
 //------------------------------------------------------------------------------
 // Handle ALU inputs.
 assign aluSrcA  = regRData1;
 assign aluSrcB  = immGenImm;
 assign aluOpSel = exeQ[8];
+
+//------------------------------------------------------------------------------
+// Handle CC inputs.
+assign ccD  = aluCcodes;
+assign ccEn = ctrlWrCC;
+
+//------------------------------------------------------------------------------
+// Handle jump adder inputs/jump computations.
+assign jmpAddA      = exePCQ;
+assign jmpAddB      = immGenImm[15:1];
+assign jmpAddI      = 1'b0;
+assign jmpAddr      = jmpAddS;
+assign jmpCodeMatch = (|(exeQ[11:9] & ccQ[3:1])) & (~exeQ[8] | ccQ[0]);
+assign jmpDoJmp     = ctrlAllowJmp & jmpCodeMatch;
 
 //------------------------------------------------------------------------------
 // TODO- implement.

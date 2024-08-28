@@ -182,7 +182,7 @@ The BRC instruction defined 4 flags "nzpc". Both the instruction and the process
 |Negative |n          |Last data operation result, as int16, was negative  |
 |Zero     |z          |Last data operation result, as int16, was zero      |
 |Positive |p          |Last data operation result, as int16, was positive  |
-|Carry    |c          |Last data operation resulted in carry-out           |
+|Carry    |c          |Last data operation (as SUB) resulted in carry-out  |
 
 The processor's copy of these flags are updated everytime one of the following instructions are executed:
 - AND
@@ -193,6 +193,8 @@ The processor's copy of these flags are updated everytime one of the following i
 - ADD
 - SUB
 - LBI
+
+Note that the carry flag "c", while updated for all the above instructions, is only meaningful/valid when the last data operation is a SUB instruction (ie flag "c" only reflects the carry-out status of arithmetic subtraction).
 
 In general, these flags allow the software to conditionally jump for any comparison of 16-bit numbers. For convenience, the below table provides commonly checked conditions:
 
@@ -208,5 +210,5 @@ In general, these flags allow the software to conditionally jump for any compari
 |nzpc     |B - A              |If A <= B (unsigned)                        |
 |z        |B - A              |A == B                                      |
 |np       |B - A              |A != B                                      |
-|nzpc     |Any Op             |Carry-out occurred                          |
+|nzpc     |SUB Op             |Carry-out occurred                          |
 |nzp      |Any Op             |Instruction Relative Jump                   |

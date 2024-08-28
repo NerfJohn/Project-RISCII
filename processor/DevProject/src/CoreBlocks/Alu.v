@@ -13,7 +13,8 @@ module Alu (
 	input         i_opSel,
 	
 	// Results connections.
-	output [15:0] o_result
+	output [15:0] o_result,
+	output [3:0]  o_ccodes
 );
 
 /*
@@ -49,5 +50,6 @@ Mux2 M0[15:0] (
 //------------------------------------------------------------------------------
 // TODO- implement.
 assign o_result = setResult;
+assign o_ccodes = {setResult[15], ~(|setResult), ~setResult[15], 1'b0};
 
 endmodule
