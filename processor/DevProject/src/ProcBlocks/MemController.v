@@ -32,7 +32,10 @@ module MemController (
 	output        o_memRunWr,
 	output        o_memRunEn,
 	output        o_memMapWrEn,
-	inout  [15:0] io_memData
+	inout  [15:0] io_memData,
+	
+	// Common signals.
+	input         i_clk
 );
 
 /*
@@ -151,8 +154,8 @@ assign triEn = curWr | isMapRead;
 //------------------------------------------------------------------------------
 // Drive memory bus outputs.
 assign o_memAddr    = curAddr;
-assign o_memRunWr   = curWr;
-assign o_memRunEn   = curEn & ~isMapAddr;
+assign o_memRunWr   = curWr & i_clk;                            // avoid posedge
+assign o_memRunEn   = curEn & ~isMapAddr & i_clk;               // avoid posedge
 assign o_memMapWrEn = curWr & curEn & isMapAddr & i_smIsBooted;
 assign io_memData   = triY;
 

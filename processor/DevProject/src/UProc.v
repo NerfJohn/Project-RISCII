@@ -203,7 +203,10 @@ MemController MEM_CTRL(
 	.o_memRunWr(memMemRunWr),
 	.o_memRunEn(memMemRunEn),
 	.o_memMapWrEn(memMemMapWrEn),
-	.io_memData(io_memData)        // inout- direct connect net
+	.io_memData(io_memData),       // inout- direct connect net
+	
+	// Common signals.
+	.i_clk(i_sysClk)
 );
 
 //------------------------------------------------------------------------------
