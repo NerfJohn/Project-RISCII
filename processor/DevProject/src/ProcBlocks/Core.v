@@ -53,11 +53,12 @@ wire [14:0] exePCD, exePCQ;
 // Control logic wires.
 wire [3:0]  ctrlOpcode;
 wire [2:0]  ctrlAluOp;
-wire        ctrlAltSrc1, ctrlAltSel;
+wire        ctrlAltSrc1, ctrlAltSrc2, ctrlAltSel;
 wire        ctrlUseImm, ctrlAllowImm;
 wire        ctrlAllowJmp;
-wire        ctrlWrReg, ctrlWrCC;
-wire        ctrlIsHLT;
+wire        ctrlWrReg, ctrlWrCC, ctrlWrMem;
+wire        ctrlIsMemInstr;
+wire        ctrlIsSWP, ctrlIsHLT;
 
 // Reg file wires.
 wire [2:0]  regRAddr1, regRAddr2;
@@ -88,6 +89,14 @@ wire [14:0] jmpAddA, jmpAddB, jmpAddS;
 wire        jmpAddI;
 wire [14:0] jmpAddr;
 wire        jmpCodeMatch, jmpDoJmp;
+
+// Mem controller wires.
+wire [14:0] memIAddr, memDAddr;
+wire [15:0] memDData;
+wire        memDEn, memDWr, memDSwp;
+wire        memDRead, memDEnd;
+wire [15:0] memCoreMemAddr, memCoreMemData;
+wire        memCoreMemWr;
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
@@ -143,12 +152,16 @@ CtrlLogic CTRL_LOGIC (
 	// Control outputs.
 	.o_aluOp(ctrlAluOp),
 	.o_altSrc1(ctrlAltSrc1),
+	.o_altSrc2(ctrlAltSrc2),
 	.o_altSel(ctrlAltSel),
 	.o_useImm(ctrlUseImm),
 	.o_allowImm(ctrlAllowImm),
 	.o_allowJmp(ctrlAllowJmp),
 	.o_wrReg(ctrlWrReg),
 	.o_wrCC(ctrlWrCC),
+	.o_wrMem(ctrlWrMem),
+	.o_isMemInstr(ctrlIsMemInstr),
+	.o_isSWP(ctrlIsSWP),
 	.o_isHLT(ctrlIsHLT)
 );
 
@@ -219,6 +232,33 @@ Add15 JMP_ADDER (
 	.I(jmpAddI),
 	.S(jmpAddS)
 );
+
+//------------------------------------------------------------------------------
+// Core Memory Controller- handles read/writes between instructions and data.
+CoreMem CORE_MEM (
+	// Access connections.
+	.i_iAddr(memIAddr),
+	.i_dAddr(memDAddr),
+	.i_dData(memDData),
+	
+	// "Control" inputs (generally data driven).
+	.i_dEn(memDEn),
+   .i_dWr(memDWr),
+	.i_dSwp(memDSwp),
+	
+	// Status outputs (to core).
+	.o_dRead(memDRead),
+	.o_dEnd(memDEnd),
+	
+	// Controller outputs (to rest of uP).
+	.o_coreMemAddr(memCoreMemAddr),
+	.o_coreMemData(memCoreMemData),
+	.o_coreMemWr(memCoreMemWr),
+	
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
 	
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
@@ -227,11 +267,14 @@ Add15 JMP_ADDER (
 //------------------------------------------------------------------------------
 // Compute core/hazard based controls.
 assign doStallPC   = ~i_smIsBooted                  // preserve 0x0000
+                     | ctrlIsMemInstr               // serving MEM cycles
                      | i_smStartPause               // preserve next instr
 						   | pauseQ                       // officially "paused"
 							| ctrlIsHLT;                   // stop core flow
-assign doFreezeEXE = (ctrlIsHLT & ~i_smStartPause); // keep HLT till pause
+assign doFreezeEXE = (ctrlIsHLT & ~i_smStartPause)  // keep HLT till pause
+                     |(ctrlIsMemInstr & ~memDEnd);  // keep MEM till finishing
 assign doClearEXE  = ~i_smIsBooted                  // don't run in booting
+                     | memDEnd                      // "evict" MEM op
                      | jmpDoJmp                     // jump cancels EXE
                      | pauseQ                       // don't run in paused
 							| i_smStartPause;              // prep to pause
@@ -271,10 +314,20 @@ Mux2 M1[2:0] (
 	.S(ctrlAltSrc1),
 	.Y(regRAddr1)
 );
-assign regRAddr2 = exeQ[2:0];
-assign regWData  = aluResult;
+Mux2 M2[2:0] (
+	.A(exeQ[11:9]),             // Alt source? read STR/SWP SRC
+	.B(exeQ[2:0]),              // No?         read typical SR2
+	.S(ctrlAltSrc2),
+	.Y(regRAddr2)
+);
+Mux2 M3[15:0] (
+	.A(i_memDataIn),            // MEM read?  source from MEM
+	.B(aluResult),              // No?        source from ALU
+	.S(memDRead),
+	.Y(regWData)
+);
 assign regWAddr  = exeQ[11:9];
-assign regWEn    = ctrlWrReg;
+assign regWEn    = ctrlWrReg | memDRead; // MEM handles own permission
 
 //------------------------------------------------------------------------------
 // Handle Immediate Block inputs.
@@ -284,14 +337,14 @@ assign immInstrOpcode = exeQ[15:12];
 //------------------------------------------------------------------------------
 // Handle ALU inputs.
 assign aluSrcA   = regRData1;
-Mux2 M2[15:0] (
+Mux2 M4[15:0] (
 	.A(immGenImm),                             // Use Imm? Imm is Src2
 	.B(regRData2),                             // No?      Read 2 is Src2
 	.S(ctrlUseImm | (ctrlAllowImm & exeQ[5])),
 	.Y(aluSrcB)
 );
 assign aluOpCode = ctrlAluOp;
-Mux2 M3 (
+Mux2 M5 (
 	.A(exeQ[8]),                               // Alt select? Use LBI flag
 	.B(exeQ[4]),                               // No?         Use SHR flag
 	.S(ctrlAltSel),
@@ -313,17 +366,26 @@ assign jmpCodeMatch = (|(exeQ[11:9] & ccQ[3:1])) & (~exeQ[8] | ccQ[0]);
 assign jmpDoJmp     = ctrlAllowJmp & jmpCodeMatch;
 
 //------------------------------------------------------------------------------
-// TODO- implement.
-assign o_memAddr    = {1'b0, pcQ};
-assign o_memDataOut = 16'hfeed;
-assign o_memWr      = 1'b0;
+// Handle memory controller inputs.
+assign memIAddr = pcQ;
+assign memDAddr = aluResult[15:1]; // word addressable access
+assign memDData = regRData2;
+assign memDEn   = ctrlIsMemInstr;
+assign memDWr   = ctrlWrMem;
+assign memDSwp  = ctrlIsSWP;
+
+//------------------------------------------------------------------------------
+// Drive memory controls.
+assign o_memAddr    = memCoreMemAddr;
+assign o_memDataOut = memCoreMemData;
+assign o_memWr      = memCoreMemWr;
 
 //------------------------------------------------------------------------------
 // Drive state machine outputs.
 assign o_smNowPaused = pauseQ;
 
 //------------------------------------------------------------------------------
-// TODO- implement.
+// Drive reported values/signals.
 assign o_reportPC  = pcQ;
 assign o_reportSP  = regReportSP;
 assign o_reportHLT = ctrlIsHLT;

@@ -284,6 +284,7 @@ set_global_assignment -name VERILOG_FILE src/CoreBlocks/CtrlLogic.v
 set_global_assignment -name VERILOG_FILE src/CoreBlocks/ImmBlock.v
 set_global_assignment -name VERILOG_FILE src/CoreBlocks/Alu.v
 set_global_assignment -name VERILOG_FILE src/CoreBlocks/RegFile.v
+set_global_assignment -name VERILOG_FILE src/CoreBlocks/CoreMem.v
 set_global_assignment -name VERILOG_FILE src/MapBlocks/CoreCtrl.v
 set_global_assignment -name VERILOG_FILE src/Primitives/DffSynch.v
 set_global_assignment -name VERILOG_FILE src/Primitives/DffAsynch.v

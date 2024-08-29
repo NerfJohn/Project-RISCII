@@ -21,11 +21,11 @@ module ImmBlock (
 ////////////////////////////////////////////////////////////////////////////////
 
 // Computed controls based on opcode.
-wire        isSize8;
+wire        isSize6, isSize8;
 wire        doShift;
 
 // Base selection wires.
-wire [15:0] baseImm;
+wire [15:0] smallerImm, baseImm;
 
 // Length resolution wires.
 wire [15:0] immSized;
@@ -36,22 +36,28 @@ wire [15:0] immSized;
 
 //------------------------------------------------------------------------------
 // Compute opcode based controls.
-//assign isSize6 = ~i_instrOpcode[3] & ~i_instrOpcode[1];
+assign isSize6 = ~i_instrOpcode[3] & ~i_instrOpcode[1];
 assign isSize8 = ~i_instrOpcode[2] &  i_instrOpcode[1] & ~i_instrOpcode[0];
 assign doShift = ~i_instrOpcode[3];
 
 //------------------------------------------------------------------------------
 // Compute base immediate.
 Mux2 M0[15:0] (
-	.A({{8{i_instrImm[7]}}, i_instrImm}),       // 8-bit imm? generate int8
+	.A({{10{i_instrImm[4]}}, i_instrImm[5:0]}), // 6-bit imm? generate int6
 	.B({{11{i_instrImm[4]}}, i_instrImm[4:0]}), // No?        generate int5
+	.S(isSize6),
+	.Y(smallerImm)
+);
+Mux2 M1[15:0] (
+	.A({{8{i_instrImm[7]}}, i_instrImm}),       // 8-bit imm? generate int8
+	.B(smallerImm),                             // No?        process small imms
 	.S(isSize8),
 	.Y(baseImm)
 );
 
 //------------------------------------------------------------------------------
 // Drive generated immediate (shifting for control opcodes).
-Mux2 M1[15:0] (
+Mux2 M2[15:0] (
 	.A({baseImm[14:0], 1'b0}), // Shift? return base left shifted by 1 bit
 	.B(baseImm),               // No?    return base
 	.S(doShift),

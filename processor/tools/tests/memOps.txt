@@ -1,0 +1,33 @@
+; Test for LDR/STR/SWP functionality.
+
+; Data to play with.
+.data {0x1 0x2 0x3 0x4 0x5 0x6 0x7} ; next word at __FREE
+
+__START: ; All regs begin at 0...
+
+; Check LDR w/ 0 offset
+LDR $7 $0 0 ; R7 now 0x1
+HLT         ; Addr 0x2 -> 0x4
+
+; Check LDR w/ 0+ offset
+LDR $7 $0 1 ; R7 now 0x2
+HLT         ; Addr 0x6 -> 0x8
+
+; Check LDR w/ 0- offset AND double dipping reg
+LDR $7 $7 -1 ; R7 now 0x1
+HLT          ; Addr 0xA -> 0xC
+
+; Check STR w/ various offsets
+LBI $0 0x0A    ; Data Addr of "0x6"
+LBI $1 6
+LBI $2 5
+LBI $3 1
+STR $1 $0 -1
+STR $2 $0 0
+STR $3 $0 1
+HLT            ; Addr 0x1A -> 0x1C
+
+; General Swap Check
+LBI $7 -2
+SWP $7 $7 1    ; -2 + (1 * 2) = 0 (swaps 0x1 and -2)
+HLT            ; Addr 0x20 -> 0x22
