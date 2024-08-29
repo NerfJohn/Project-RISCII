@@ -55,10 +55,10 @@ wire [3:0]  ctrlOpcode;
 wire [2:0]  ctrlAluOp;
 wire        ctrlAltSrc1, ctrlAltSrc2, ctrlAltSel;
 wire        ctrlUseImm, ctrlAllowImm;
-wire        ctrlAllowJmp;
+wire        ctrlUseJmp, ctrlAllowJmp;
 wire        ctrlWrReg, ctrlWrCC, ctrlWrMem;
 wire        ctrlIsMemInstr;
-wire        ctrlIsSWP, ctrlIsHLT;
+wire        ctrlIsSWP, ctrlIsJPR, ctrlIsHLT;
 
 // Reg file wires.
 wire [2:0]  regRAddr1, regRAddr2;
@@ -67,6 +67,7 @@ wire [15:0] regWData;
 wire [2:0]  regWAddr;
 wire        regWEn;
 wire [15:0] regReportSP;
+wire [15:0] regLocalSrc;
 
 // Immediate block wires.
 wire [7:0]  immInstrImm;
@@ -156,12 +157,14 @@ CtrlLogic CTRL_LOGIC (
 	.o_altSel(ctrlAltSel),
 	.o_useImm(ctrlUseImm),
 	.o_allowImm(ctrlAllowImm),
+	.o_useJmp(ctrlUseJmp),
 	.o_allowJmp(ctrlAllowJmp),
 	.o_wrReg(ctrlWrReg),
 	.o_wrCC(ctrlWrCC),
 	.o_wrMem(ctrlWrMem),
 	.o_isMemInstr(ctrlIsMemInstr),
 	.o_isSWP(ctrlIsSWP),
+	.o_isJPR(ctrlIsJPR),
 	.o_isHLT(ctrlIsHLT)
 );
 
@@ -321,8 +324,14 @@ Mux2 M2[2:0] (
 	.Y(regRAddr2)
 );
 Mux2 M3[15:0] (
+	.A({exePCQ, 1'b0}),         // Jumping? source from PC+2
+	.B(aluResult),              // No?      source from ALU
+	.S(jmpDoJmp),
+	.Y(regLocalSrc)
+);
+Mux2 M4[15:0] (
 	.A(i_memDataIn),            // MEM read?  source from MEM
-	.B(aluResult),              // No?        source from ALU
+	.B(regLocalSrc),            // No?        process local sources
 	.S(memDRead),
 	.Y(regWData)
 );
@@ -337,14 +346,14 @@ assign immInstrOpcode = exeQ[15:12];
 //------------------------------------------------------------------------------
 // Handle ALU inputs.
 assign aluSrcA   = regRData1;
-Mux2 M4[15:0] (
+Mux2 M5[15:0] (
 	.A(immGenImm),                             // Use Imm? Imm is Src2
 	.B(regRData2),                             // No?      Read 2 is Src2
 	.S(ctrlUseImm | (ctrlAllowImm & exeQ[5])),
 	.Y(aluSrcB)
 );
 assign aluOpCode = ctrlAluOp;
-Mux2 M5 (
+Mux2 M6 (
 	.A(exeQ[8]),                               // Alt select? Use LBI flag
 	.B(exeQ[4]),                               // No?         Use SHR flag
 	.S(ctrlAltSel),
@@ -361,9 +370,16 @@ assign ccEn = ctrlWrCC;
 assign jmpAddA      = exePCQ;
 assign jmpAddB      = immGenImm[15:1];
 assign jmpAddI      = 1'b0;
-assign jmpAddr      = jmpAddS;
+Mux2 M7[14:0] (
+	.A(jmpAddS),         // Conditional Jump? Use PC+Offset  (BRC)
+	.B(aluResult[15:1]), // No?               Use Ptr+offset (JPR/JLR)
+	.S(ctrlAllowJmp),
+	.Y(jmpAddr)
+);
 assign jmpCodeMatch = (|(exeQ[11:9] & ccQ[3:1])) & (~exeQ[8] | ccQ[0]);
-assign jmpDoJmp     = ctrlAllowJmp & jmpCodeMatch;
+assign jmpDoJmp     = ctrlUseJmp                                        // JLR
+                      | (ctrlAllowJmp & jmpCodeMatch)                   // BRC
+							 | (ctrlIsJPR & ~exeQ[5]); // TODO- implement IL   // JPR
 
 //------------------------------------------------------------------------------
 // Handle memory controller inputs.
