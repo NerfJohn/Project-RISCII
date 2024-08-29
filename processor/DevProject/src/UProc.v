@@ -206,7 +206,8 @@ MemController MEM_CTRL(
 	.io_memData(io_memData),       // inout- direct connect net
 	
 	// Common signals.
-	.i_clk(i_sysClk)
+	.i_clk(i_sysClk),
+	.i_rstn(synchRstnOut)
 );
 
 //------------------------------------------------------------------------------

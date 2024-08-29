@@ -35,7 +35,8 @@ module MemController (
 	inout  [15:0] io_memData,
 	
 	// Common signals.
-	input         i_clk
+	input         i_clk,
+	input         i_rstn
 );
 
 /*
@@ -49,7 +50,7 @@ module MemController (
  * 1) This module serves as the lone "data line tristate" to ease FPGA use.
  */
  
-// TODO- "1 tick" protection for JTAG write (eg write byte on fast UART).
+// TODO- note "read/write on fall edge" stuff- enforces op on 2nd half ONLY
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Internal Signals/Wires -- //
@@ -60,6 +61,13 @@ wire [15:0] curBootedAddr, curBootedDataOut;
 wire        curBootedWr, curBootedEn;
 wire [15:0] curAddr, curDataOut;
 wire        curWr, curEn;
+
+// Update synch wires.
+wire [15:0] addrD, addrQ;
+wire [15:0] dataD, dataQ;
+wire        wrD, wrQ;
+wire        enD, enQ;
+wire        updateClk;
 
 // Computed control wires (based on finalized mem controls).
 wire        isMapAddr;
@@ -72,6 +80,33 @@ wire        triEn;
 ////////////////////////////////////////////////////////////////////////////////
 // -- Large Blocks/Instances -- //
 ////////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------------------
+// Synch wires- ensures wr/en signals update in a manner preventing races.
+DffSynch ADDR[15:0] (
+	.D(addrD),
+	.Q(addrQ),
+	.clk(updateClk),  // custom clock behavior
+	.rstn(i_rstn)
+);
+DffSynch DATA[15:0] (
+	.D(dataD),
+	.Q(dataQ),
+	.clk(updateClk),  // custom clock behavior
+	.rstn(i_rstn)
+);
+DffSynch WR (
+	.D(wrD),
+	.Q(wrQ),
+	.clk(updateClk),  // custom clock behavior
+	.rstn(i_rstn)
+);
+DffSynch EN (
+	.D(enD),
+	.Q(enQ),
+	.clk(updateClk),  // custom clock behavior
+	.rstn(i_rstn)
+);
 
 //------------------------------------------------------------------------------
 // Data Line Tristate- centralized data bus driver for entire uP.
@@ -137,26 +172,34 @@ Mux2 M7 (
 );
 
 //------------------------------------------------------------------------------
+// Handle update synch inputs.
+assign addrD     = curAddr;
+assign dataD     = curDataOut;
+assign wrD       = curWr;
+assign enD       = curEn;
+assign updateClk = ~i_clk; // toggle enable opposite of selected clock
+
+//------------------------------------------------------------------------------
 // Compute finalized mem control based controls.
 assign isMapAddr = curAddr[15] & curAddr[14];
-assign isMapRead = isMapAddr & ~curWr & curEn;
+assign isMapRead = isMapAddr & ~wrQ & enQ;
 
 //------------------------------------------------------------------------------
 // Handle driving of memory data lines.
 Mux2 M8[15:0] (
 	.A(i_mapReadData), // Reading Map? Drive read map data
-	.B(curDataOut),    // No?          Drive sourced write data
+	.B(dataQ),         // No?          Drive sourced write data
 	.S(isMapRead),
 	.Y(triA)
 );
-assign triEn = curWr | isMapRead;
+assign triEn = wrQ | isMapRead;
 
 //------------------------------------------------------------------------------
 // Drive memory bus outputs.
-assign o_memAddr    = curAddr;
-assign o_memRunWr   = curWr & i_clk;                            // avoid posedge
-assign o_memRunEn   = curEn & ~isMapAddr & i_clk;               // avoid posedge
-assign o_memMapWrEn = curWr & curEn & isMapAddr & i_smIsBooted;
+assign o_memAddr    = addrQ;
+assign o_memRunWr   = wrQ;
+assign o_memRunEn   = enQ & ~isMapAddr;
+assign o_memMapWrEn = wrQ & enQ & isMapAddr & i_smIsBooted;
 assign io_memData   = triY;
 
 endmodule
