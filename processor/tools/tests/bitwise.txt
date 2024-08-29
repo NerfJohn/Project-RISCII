@@ -1,0 +1,33 @@
+; Tests for AND, ORR, and XOR instructions.
+
+__START:
+
+; Prep dummy data.
+LBI    $0 0x55 ; $0 = 0x5555
+LBI %s $0 0x55
+LBI    $1 0x33 ; $1 = 0x3333 
+LBI %s $1 0x33
+
+; Test register ops.
+AND $2 $0 $1
+ORR $3 $0 $1
+XOR $4 $0 $1
+
+; Test immediate ops.
+AND $5 $0 0xF
+ORR $6 $0 -16  ;0x10
+XOR $7 $0 0xF
+
+; Share results.
+HLT
+LBI $0 0
+STR $0 $0 0
+STR $1 $0 1
+STR $2 $0 2
+STR $3 $0 3
+STR $4 $0 4
+STR $5 $0 5
+STR $6 $0 6
+STR $7 $0 7
+
+HLT

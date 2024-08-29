@@ -33,6 +33,9 @@ wire [15:0] adderA, adderB, adderS;
 wire        adderI, adderO;
 wire [15:0] adderResult;
 
+// Bitwise computation wires.
+wire [15:0] andResult, orResult, xorResult;
+
 // Selection net wires.
 wire [15:0] select0XX, select1XX;
 wire [15:0] finResult;
@@ -72,20 +75,26 @@ assign adderI      = i_opCode[0];                // SUB's "+1" for inverting
 assign adderResult = adderS;
 
 //------------------------------------------------------------------------------
+// Compute bitwise results.
+assign andResult = i_srcA & i_srcB;
+assign orResult  = i_srcA | i_srcB;
+assign xorResult = i_srcA ^ i_srcB;
+
+//------------------------------------------------------------------------------
 // Drive result selection.
 Mux4 M1[15:0] (
 	.C(adderResult),   // ADD (000)? Select adder result
 	.D(adderResult),   // SUB (001)? Select adder result
 	.E(setResult),     // LBI (010)? Select set result
-	.F(16'b0),         // TODO
+	.F(xorResult),     // XOR (011)? Select XOR result
 	.S(i_opCode[1:0]),
 	.Y(select0XX)
 );
 Mux4 M2[15:0] (
 	.C(16'b0),         // TODO
 	.D(16'b0),         // TODO
-	.E(16'b0),         // TODO
-	.F(16'b0),         // TODO
+	.E(orResult),      // ORR (110)? Select OR result
+	.F(andResult),     // AND (111)? Select AND result
 	.S(i_opCode[1:0]),
 	.Y(select1XX)
 );
