@@ -36,6 +36,12 @@ wire [15:0] adderResult;
 // Bitwise computation wires.
 wire [15:0] andResult, orResult, xorResult;
 
+// Barrel shift computation wires.
+wire [15:0] shftOpValue, shftResult;
+wire [3:0]  shftOpCount;
+wire [1:0]  shftOpCode;
+wire [15:0] shiftResult;
+
 // Selection net wires.
 wire [15:0] select0XX, select1XX;
 wire [15:0] finResult;
@@ -52,6 +58,20 @@ AddCout16 ADDER (
 	.I(adderI),
 	.O(adderO),
 	.S(adderS)
+);
+
+//------------------------------------------------------------------------------
+// Barrel Shifter- shift unit used for various types of 16-bit shifts.
+BarrelShift BARREL_SHIFT (
+	// Operand connections.
+	.i_opValue(shftOpValue),
+	.i_opCount(shftOpCount),
+	
+	// Operation connection.
+	.i_opCode(shftOpCode),
+	
+	// Computed connection.
+	.o_result(shftResult)
 );
 	
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,10 +95,17 @@ assign adderI      = i_opCode[0];                // SUB's "+1" for inverting
 assign adderResult = adderS;
 
 //------------------------------------------------------------------------------
-// Compute bitwise results.
+// Compute bitwise results (ie AND/ORR/XOR).
 assign andResult = i_srcA & i_srcB;
 assign orResult  = i_srcA | i_srcB;
 assign xorResult = i_srcA ^ i_srcB;
+
+//------------------------------------------------------------------------------
+// Compute shift result (ie SHL/SHR).
+assign shftOpValue = i_srcA;
+assign shftOpCount = i_srcB[3:0];
+assign shftOpCode  = {i_opCode[0], ~(i_opCode[0] & i_opSel)};
+assign shiftResult = shftResult;
 
 //------------------------------------------------------------------------------
 // Drive result selection.
@@ -91,8 +118,8 @@ Mux4 M1[15:0] (
 	.Y(select0XX)
 );
 Mux4 M2[15:0] (
-	.C(16'b0),         // TODO
-	.D(16'b0),         // TODO
+	.C(shiftResult),   // SHL (100)? Select shift result
+	.D(shiftResult),   // SHR (101)? Select shift result
 	.E(orResult),      // ORR (110)? Select OR result
 	.F(andResult),     // AND (111)? Select AND result
 	.S(i_opCode[1:0]),

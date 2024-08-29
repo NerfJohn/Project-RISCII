@@ -1,0 +1,51 @@
+; Test to check SHL and SHR were implemented correctly.
+
+__START:
+LBI $0 0
+LBI $1 8
+LBI $2 7
+LBI $3 5
+
+; Test/Save SHL registers
+SHL $4 $3 $0
+SHL $5 $3 $1
+SHL $6 $3 $2
+STR $4 $0 0
+STR $5 $0 1
+STR $6 $0 2
+
+; Test/Save SHL immediates
+SHL $4 $3 0
+SHL $5 $3 8
+SHL $6 $3 7
+STR $4 $0 3
+STR $5 $0 4
+STR $6 $0 5
+
+LBI %s $3 0x0A
+SUB $3 $3 0     ; $3 = 0xFAF6
+
+; Test/Save SHR registers
+SHR $4 $3 $0
+SHR $5 $3 $1
+SHR $6 $3 $2
+STR $4 $0 6
+STR $5 $0 7
+STR $6 $0 8
+
+; Test/Save SHR immediates
+SHR $4 $3 0
+SHR $5 $3 8
+SHR $6 $3 7
+STR $4 $0 9
+STR $5 $0 10
+STR $6 $0 11
+
+; Quick Test SHR arithmetic
+SHR %a $4 $3 8
+SUB $3 $3 0     ; $3 = 0x050A
+SHR %a $5 $3 8
+STR $4 $0 12
+STR $5 $0 13
+
+HLT
