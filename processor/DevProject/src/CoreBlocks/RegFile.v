@@ -24,7 +24,11 @@ module RegFile (
 );
 
 /*
- * TODO- desc.
+ * "Painter's pallet" for processor in terms of accessible memory/values.
+ *
+ * Typical 2-read, 1 write port register file. Comes with eight 16-bit registers
+ * for generic access, though register R7 has a special read port for stack
+ * overflow purposes. Reads cannot get value being written (ie no bypass).
  */
 
 ////////////////////////////////////////////////////////////////////////////////

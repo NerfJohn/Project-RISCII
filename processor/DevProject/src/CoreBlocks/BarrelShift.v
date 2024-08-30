@@ -16,7 +16,18 @@ module BarrelShift (
 );
 
 /*
- * TODO- desc.
+ * Shift module capable of 16-bit Left/Right Logical and Right Arithmetic ops.
+ *
+ * Implements various shifts needed by processor for ISA implementation. Uses
+ * "barrel shift" technique to determine shift result. Allows for all possible
+ * shifts beyond full-on "shift-out" of the original data.
+ *
+ * |Opcode|Operation       |
+ * |------|----------------|
+ * |00    |No shift        |
+ * |01    |Left Logical    |
+ * |10    |Right Arithmetic|
+ * |11    |Right Logical   | 
  */
 
 ////////////////////////////////////////////////////////////////////////////////

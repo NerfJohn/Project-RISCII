@@ -1,0 +1,53 @@
+; General "All/Most Instructions" Test: Fib numbers.
+
+
+; Registers:
+;	R0 = x - 2 input
+;	R1 = x - 1 input
+;	R2 = x output
+;	R3 = moving write address
+;	R4 = count of fib numbers created
+;	R5 = Goal count of fib numbers
+;	R6 = Computational space for checks
+;	R7 = zero
+__START:
+
+; Init registers
+LBI $0 0			; First Fib number: 0
+LBI $1 1			; Second Fib number: 1
+_la $3 __FREE		; Record values in free memory
+LBI $4 2			; Two numbers already computed
+LBI $5 15			; Goal = first 15 fib numbers
+LBI $7 0			; Reference 0
+
+; Init memory
+STR $0 $3 0			; Save 1st number
+STR $1 $3 1			; Save 2nd number
+ADD $3 $3 4			; Move write ptr for 2 values.
+
+
+; Main Computation Loop
+loop:
+
+; Compute/Save
+ADD $2 $0 $1		; Compute new number
+STR $2 $3 0			; Save number
+
+; Shuffle operands/ptr
+ADD $0 $1 0			; Shuffle out now "x-3"
+ADD $1 $2 0			; Shuffle in now "x-2"
+ADD $3 $3 2			; Readjust ptr
+
+; Bookeep
+ADD $4 $4 1			; Inc number counter
+
+; Continue?
+SUB $6 $4 $5		; Update condition codes
+BRC %z 3			; Skip "loop again" if equal
+_la $6 loop			; Get start of loop address (too lazy to count BRC jump)
+JPR $6 0			; Loop again
+
+;(loop end)
+
+; Program finished!
+HLT

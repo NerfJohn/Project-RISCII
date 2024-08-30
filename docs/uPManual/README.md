@@ -226,7 +226,7 @@ Furthermore, specific interface requirements (eg timing, command codes, etc) wil
 
 As stated, the exact command byte used to trigger a read is hardwired into the design (in file "processor/DevProject/src/ProcBlocks/BootImage.v") and must be changed based on the exact storage chip used.
 
-Lastly, while unlikely, be aware of niche timing considerations (eg hold times on falling edges, specific access times, etc).
+Lastly, be aware of any timing considerations (hold times on falling edges, access times, etc). Specifically, note that both memory chip interfaces update pins on the falling edge of the system clock- meaning that memory accesses likely need to happen within half a clock cycle (ie roun trip travel + chip and uP delays).
 
 ### Wrapper module
 

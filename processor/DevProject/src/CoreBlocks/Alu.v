@@ -18,7 +18,24 @@ module Alu (
 );
 
 /*
- * TODO- desc
+ * Computational component of core processor. Calculates data and cond. codes.
+ *
+ * Uses sources to compute value specified by opcode (and select bit for
+ * specific operations). Condition codes are updated based on output result
+ * (though flag "c" is strictly based on the arithmetic operation's carry-out).
+ *
+ * |Opcode|Sel|Operation  |
+ * |------|---|-----------|
+ * |000   |X  |S1 + S2    |
+ * |001   |X  |S2 - S1    |
+ * |010   |0  |S2         |
+ * |010   |1  |{S1,S2}    |
+ * |011   |X  |S1 ^ S2    |
+ * |100   |X  |S1 << S2   |
+ * |101   |0  |S1 >>L S2  |
+ * |101   |1  |S1 >>A S2  |
+ * |110   |X  |S1 | S2    |
+ * |111   |X  |S1 & S2    |
  */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,7 +154,7 @@ assign o_result = finResult;
 // Drive condition code computation.
 assign o_ccodes = {finResult[15],  // (n)egative flag
                    ~(|finResult),  // (z)ero flag
-						 ~finResult[15], // (p)ositive flag
-						 adderO};        // (c)arry-out flag (explicitly for SUB)
+                   ~finResult[15], // (p)ositive flag
+                   adderO};        // (c)arry-out flag (explicitly for SUB)
 
 endmodule

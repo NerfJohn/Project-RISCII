@@ -29,7 +29,17 @@ module CoreMem (
 );
 
 /*
- * TODO- desc. Note: isSwp implies Rd/Wr; isWr can be either
+ * Memory controller explicitly for core processor needs.
+ *
+ * Interlaces instruction and data memory accesses, enforcing SW address to HW
+ * address conversion (and assumptions on text vs data location). Enable forces
+ * full memory access and is ignored until finished.
+ *
+ * Design Notes:
+ * 1) Data accesses override instruction accesses, but data accesses finish
+ * 2) Enable signal is ignored until idle (ie after dEnd pulse)
+ * 3) dEnd pulsed on last "NOT idle" cycle of data memory access
+ * 4) dSwp overrides dWr when enabling a data access
  */
 
 ////////////////////////////////////////////////////////////////////////////////

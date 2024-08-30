@@ -13,7 +13,11 @@ module ImmBlock (
 );
 
 /*
- * TODO- desc.
+ * Generates 16-bit immediate based on opcode and instruction's immediate field.
+ *
+ * Opcode is used to determine the primary size and signedness of immediate to
+ * cast it into a 16-bit value. Opcode also used for additional modifers (eg
+ * shift left by 1). In general, generates int5, int6, and int8 values.
  */
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -26,7 +26,11 @@ module CtrlLogic (
 );
 
 /*
- * TODO- desc.
+ * Control signals needed to execute given opcode (based on opcode).
+ *
+ * Computes control signals based solely on opcode. Controls vary in terms of
+ * "general net to capture a few instructions" and "must capture explicit set".
+ * Note that some instructions require additional control NOT based on opcode.
  */
 
 ////////////////////////////////////////////////////////////////////////////////
