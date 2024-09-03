@@ -97,7 +97,8 @@ wire        mapMemWrEn;
 wire [15:0] mapReportSP;
 wire [14:0] mapReportPC;
 wire        mapReportHLT;
-wire        mapDoPause;
+wire [3:0]  mapIntCode;
+wire        mapIntEn, mapDoPause;
 
 // Bootloader wires.
 wire        bootSpiMISO, bootSpiMOSI, bootSpiEn;
@@ -109,6 +110,8 @@ wire        bootSmNowBooted;
 wire [15:0] coreMemAddr, coreMemDataOut;
 wire        coreMemWr;
 wire        coreSmIsBooted, coreSmStartPause, coreSmNowPaused;
+wire [3:0]  coreIntCode;
+wire        coreIntEn;
 wire [15:0] coreReportSP;
 wire [14:0] coreReportPC;
 wire        coreReportHLT;
@@ -295,6 +298,8 @@ MappedRegisters MAPPED_REGS (
 	
 	// Output Control connections.
 	.o_doPause(mapDoPause),
+	.o_intCode(mapIntCode),
+	.o_intEn(mapIntEn),
 	
 	// Common signals.
 	.i_clk(i_sysClk),
@@ -335,6 +340,10 @@ Core CORE (
 	.i_smIsBooted(coreSmIsBooted),
 	.i_smStartPause(coreSmStartPause),
 	.o_smNowPaused(coreSmNowPaused),
+	
+	// Interrupt connections.
+	.i_intCode(coreIntCode),
+	.i_intEn(coreIntEn),
 	
 	// Reported control connections.
 	.o_reportSP(coreReportSP),
@@ -432,6 +441,8 @@ assign bootSpiMISO = i_spiMISO;
 // Handle core inputs.
 assign coreSmIsBooted   = bootSmNowBooted;
 assign coreSmStartPause = pauseStartPauseQ;
+assign coreIntCode      = mapIntCode;
+assign coreIntEn        = mapIntEn;
 
 //------------------------------------------------------------------------------
 // Drive external memory bus (to runtime chip).

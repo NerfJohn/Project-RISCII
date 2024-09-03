@@ -1,0 +1,121 @@
+; Test to check basic interrupt functionality
+
+; Check
+; 1) Jumping to vector table for stimulus
+; 2) PC properly saved/restored
+; 3) CC properly saved/restored
+; 4) RTI now works
+; NOT checking A) save jump correctly and B) save on mem op correctly
+
+__START:
+_la $6 main ; Vector 0: "Reset"
+JPR $6 0
+NOP
+
+HLT         ; Vector 1: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 2: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 3: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 4: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 5: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 6: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 7: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 8: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 9: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 10: ---
+HLT
+HLT
+HLT
+
+_la $6 ovf  ; Vector 11: OVF
+JPR $6 0
+HLT
+
+; R0   = DUMMY
+; R1   = 0x8000
+; R2-4 = Local data to write
+; R5   = Interrupt local data
+; R6   = vector use only
+; R7   = SP
+
+
+ovf:
+HLT          ; Check status of things
+LBI $5 0     ; Disable detection
+STR $5 $1 0
+STR $5 $1 5  ; Disarm flag
+LBI $5 -6    ; Set CC to non-zero (see if HW trips up)
+JPR %r       ; RTI
+
+
+DUMMY: .data {0x0 0x0 0x0 0x0}
+
+main:
+
+; Set "ptrs"
+_la $0 DUMMY  ; Set R0 = DUMMY
+LBI $1 -128 ; Set R1 = 0x8000
+LBI %s $1 0
+
+; Set Stack at 10 and overflow below 8
+LBI $7 10    ; SP = 10
+LBI $2 8     ; 0x8002 = 8
+STR $2 $1 1
+
+; Enable detection
+LBI $2 0
+LBI $3 -1
+LBI $4 2
+STR $2 $1 5 ; Clear flags
+STR $3 $1 4 ; Enable OVF
+STR $4 $1 0 ; Enable detection
+
+; Check status
+;HLT
+
+; Test trigger + saves/restores
+LBI $7 0    ; STACK OVERFLOW!  Also CC = zero
+STR $4 $0 0 ; RAM affecting stuff that will get interrupted...
+STR $4 $0 1
+STR $4 $0 2
+STR $4 $0 3
+BRC %np 3   ; Taken? "zero" didn't hold
+BRC %z 1    ; Taken? "zero" held
+HLT         ; ???
+STR $5 $0 0 ; RAM evidence of zero
+HLT

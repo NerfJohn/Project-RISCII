@@ -22,9 +22,10 @@ The uP design consists of many internal circuits and components. At a high level
 |----------|---------------------------------------------------------------|
 |JTAG      | JTAG port/interface for remote hardware access                |
 |SCAN      | Read only boundary scan register accessible only through JTAG |
-|CCTRL     | Mapped CORE registers and stack overflow detection controls   |
 |BOOT      | Circuit to copy stored binary image to runtime memory on reset|
 |CORE      | Core processor responsible for code execution                 |
+|CCTRL     | Mapped CORE registers and stack overflow detection controls   |
+|NVIC      | Interrupt Controller for enabling preemptive behavior         |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -51,34 +52,36 @@ In the BOOTING state, the BOOT block is given control over both memory chips (ot
 ---
 Some of the uP's internal resources contain registers that can be accessed using specific addresses in the data address space (ie SW addresses 0x8000-0xFFFF, HW adddresses 0xC000-0xFFFF). The following subsections cover each register in detail, though a summary of each register is as follows:
 
-|Register Name|SW Address|Access|Description                               |
-|-------------|----------|------|------------------------------------------|
-|CCTRL_CTRL   |0x8000    |r/w   |Controls for core processing features     |
-|CCTRL_SETP   |0x8002    |r/w   |Setpoint for stack overflow detection     |
-|CCTRL_PC     |0x8004    |r     |Current value of the PC                   |
-|CCTRL_SP     |0x8006    |r     |Current value of the stack pointer (SP)   |
+|Register Name |SW Address|Access|Description                              |
+|--------------|----------|------|-----------------------------------------|
+|CCTRL_CTRL    |0x8000    |r/w   |Controls for core processing features    |
+|CCTRL_SETPOINT|0x8002    |r/w   |Setpoint for stack overflow detection    |
+|CCTRL_PC      |0x8004    |r     |Current value of the PC                  |
+|CCTRL_SP      |0x8006    |r     |Current value of the stack pointer (SP)  |
+|NVIC_ENABLE   |0x8008    |r/w   |Interrupt enables (per interrupt)        |
+|NVIC_FLAG     |0x800A    |r/w   |Status of interrupt signals              |
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
 ### Core Controls (CCTRL) Registers
+
+The CCTRL registers provide various controls and statuses of the uP's core. Namely, the registers provide a place for the core to pause the uP and allow the user to enable a "stack overflow detector" tied to register 7 (ie R7) of the core's register file. The detector asserts an interrupt when R7 is less than the specified value.
+
+Read only versions of the program counter (PC) and stack pointer (SP- equal to R7) are also provided. They are accurate to the live values within in the core.
 
 **_CCTRL_CTRL (SW Address = 0x8000, HW Address = 0xC000)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |reserved  |15:2     |r     |reserved for future use- default value(s) = 0 |
-|ovdEn     |1        |r/w   |overflow detection enable                     |
+|ovdEn     |1        |r/w   |stack overflow detection enable               |
 |doPause   |0        |r/w   |pauses uP (auto set by HLT instruction)       |
-
-At present, "ovdEn" has no effect **(ie artifact of uP currently under development)**.
 
 **_CCTRL_SETP (SW Address = 0x8002, HW Address = 0xC001)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |setpoint  |15:0     |r/w   |lowest valid stack pointer (ie "\<" trigger)  |
-
-At present, "setpoint" has no effect **(ie artifact of uP currently under development)**.
 
 **_CCTRL_PC (SW Address = 0x8004, HW Address = 0xC002)_**
 
@@ -90,9 +93,34 @@ At present, "setpoint" has no effect **(ie artifact of uP currently under develo
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|SP        |15:0     |r     |current stack pointer value- used for overflow|
+|SP        |15:0     |r     |current stack pointer- checked by detector    |
 
-At present, the "SP" value is not accurate **(ie artifact of uP currently under development)**.
+### Nested Vector Interrupt Controller (NVIC) Registers
+
+The NVIC registers control how to handle the system's various interrupts. Predefined interrupts- with predefined priorities -can be enabled for preempting the application program. Interrupts automatically jump to a program address based on the below equation:
+
+<code>PC = (n \* 8)</code>
+
+where "n" is equal to the interrupt's enable/flag bit field number. Once the jump is taken, the uP is considered to be in "interrupt mode" until a JPR instruction with the "r" flag (see ISA) is executed. Once executed, the uP returns to the previous context (ie PC/CC values) preempted by the interrupt.
+
+Note that while the hardware prioritizes the order to run interrupts, it does not allow one interrupt to preempt another until the current interrupt has finished running. Also note that enabling interrupts often requires setting values in both the NVIC and interrupt's source peripheral.
+
+
+**_NVIC_ENABLE (SW Address = 0x8008, HW Address = 0xC004)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
+|enable OVF|11       |r/w   |stack overflow detection enable (see CCTRL)   |
+|reserved  |10:0     |r     |reserved for future use- default value(s) = 0 |
+
+**_NVIC_FLAG (SW Address = 0x800A, HW Address = 0xC005)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
+|OVF flag  |11       |r/w   |stack overflow detection status (see CCTRL)   |
+|reserved  |10:0     |r     |reserved for future use- default value(s) = 0 |
 
 ## uP Pinout
 ---
@@ -226,7 +254,7 @@ Furthermore, specific interface requirements (eg timing, command codes, etc) wil
 
 As stated, the exact command byte used to trigger a read is hardwired into the design (in file "processor/DevProject/src/ProcBlocks/BootImage.v") and must be changed based on the exact storage chip used.
 
-Lastly, be aware of any timing considerations (hold times on falling edges, access times, etc). Specifically, note that both memory chip interfaces update pins on the falling edge of the system clock- meaning that memory accesses likely need to happen within half a clock cycle (ie roun trip travel + chip and uP delays).
+Lastly, be aware of any timing considerations (hold times on falling edges, access times, etc). Specifically, note that both memory chip interfaces update pins on the falling edge of the system clock- meaning that memory accesses likely need to happen within half a clock cycle (ie round trip travel + chip and uP delays).
 
 ### Wrapper module
 

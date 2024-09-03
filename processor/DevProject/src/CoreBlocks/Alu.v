@@ -152,9 +152,9 @@ assign o_result = finResult;
 
 //------------------------------------------------------------------------------
 // Drive condition code computation.
-assign o_ccodes = {finResult[15],  // (n)egative flag
-                   ~(|finResult),  // (z)ero flag
-                   ~finResult[15], // (p)ositive flag
-                   adderO};        // (c)arry-out flag (explicitly for SUB)
+assign o_ccodes = {finResult[15],                 // (n)egative flag
+                   ~(|finResult),                 // (z)ero flag
+                   ~finResult[15] & (|finResult), // (p)ositive flag
+                   adderO};                       // (c)arry-out flag (SUB)
 
 endmodule

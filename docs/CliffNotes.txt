@@ -18,17 +18,6 @@ Levels of Design
 	- Circuit Board (power regulated, programmable, devices to use MPU circuits)
 
 ================================================================================
-uP Interfaces:
-
-Binary Image
-	(Start of file)
-	<text metadata>: last runtime chip text address (16-bits per address)
-	<text section >: 1+ 16-bit instructions         (incremental order)
-	<data metadata>: last runtime chip data address (16-bits per address)
-	<data section >: 1+ 16-bit initialized data     (incremental order)
-	(End of file)
-
-================================================================================
 uP Internals:
 
 uP Blocks
@@ -84,6 +73,13 @@ uP Pause Sequencing
 	3) after clk posedge, "isPaused" is unlocked, but still low
 	4) after some time, all "nowPaused" signals are received
 	5) after clk posedge, "isPaused" is asserted
+
+uP Interrupt Sequencing
+	1) circuit realizes it should interrupt, sets local DFF to assert
+	2) after posedge, signal reaches NVIC, which sets flag DFF
+	3) after posedge, flag is set and with enable sets current interrupt
+	4) after posedge, signal reaches core and preps to interrupt
+	5) after posedge, core updated to run interrupt/is running interrupt
 
 ================================================================================
 uP Core Design:
