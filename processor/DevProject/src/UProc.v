@@ -287,7 +287,7 @@ DffSynch PAUSE_STATE (
 MappedRegisters MAPPED_REGS (
 	// Memory Bus connections.
 	.i_memAddr(mapMemAddr),
-	.i_memDataIn(io_memData),     // inout- direct connect net
+	.i_memDataIn(io_memData),      // inout- direct connect net
 	.i_memWrEn(mapMemWrEn),
 	.o_memDataOut(mapMemDataOut),
 	
@@ -300,6 +300,9 @@ MappedRegisters MAPPED_REGS (
 	.o_doPause(mapDoPause),
 	.o_intCode(mapIntCode),
 	.o_intEn(mapIntEn),
+	
+	// Driven GPIO connections.
+	.io_gpioPins(io_gpioPins),     // inout- direct connect net
 	
 	// Common signals.
 	.i_clk(i_sysClk),
@@ -475,10 +478,6 @@ Mux2 M1 (
 // Drive state machine indicator pins.
 assign o_smIsBooted = bootSmNowBooted;
 assign o_smIsPaused = pauseIsPausedQ;
-
-//------------------------------------------------------------------------------ 
-// TODO- implement.
-assign io_gpioPins  = {7'b0000000, coreReportHLT, 8'bZZZZZZZZ}; //16'bZZZZZZZZZZZZZZZZ;
  
 endmodule
  

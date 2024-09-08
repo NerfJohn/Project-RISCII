@@ -288,6 +288,7 @@ set_global_assignment -name VERILOG_FILE src/CoreBlocks/CoreMem.v
 set_global_assignment -name VERILOG_FILE src/CoreBlocks/BarrelShift.v
 set_global_assignment -name VERILOG_FILE src/MapBlocks/CoreCtrl.v
 set_global_assignment -name VERILOG_FILE src/MapBlocks/Nvic.v
+set_global_assignment -name VERILOG_FILE src/MapBlocks/Gpio.v
 set_global_assignment -name VERILOG_FILE src/Primitives/DffSynch.v
 set_global_assignment -name VERILOG_FILE src/Primitives/DffAsynch.v
 set_global_assignment -name VERILOG_FILE src/Primitives/Tristate.v

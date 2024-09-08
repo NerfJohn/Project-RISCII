@@ -26,6 +26,7 @@ The uP design consists of many internal circuits and components. At a high level
 |CORE      | Core processor responsible for code execution                 |
 |CCTRL     | Mapped CORE registers and stack overflow detection controls   |
 |NVIC      | Interrupt Controller for enabling preemptive behavior         |
+|GPIO      | General Purpose digital IO pins with some alternate functions |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -60,6 +61,10 @@ Some of the uP's internal resources contain registers that can be accessed using
 |CCTRL_SP      |0x8006    |r     |Current value of the stack pointer (SP)  |
 |NVIC_ENABLE   |0x8008    |r/w   |Interrupt enables (per interrupt)        |
 |NVIC_FLAG     |0x800A    |r/w   |Status of interrupt signals              |
+|GPIO_CFG      |0x8018    |r/w   |Gpio pin alternate functions/configs     |
+|GPIO_INP      |0x801A    |r     |Read value for each GPIO pin             |
+|GPIO_DIR      |0x801C    |r/w   |Controls read/write direction of pin     |
+|GPIO_OUT      |0x801E    |r/w   |Write value for each GPIO pin            |
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
@@ -68,6 +73,8 @@ Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardw
 The CCTRL registers provide various controls and statuses of the uP's core. Namely, the registers provide a place for the core to pause the uP and allow the user to enable a "stack overflow detector" tied to register 7 (ie R7) of the core's register file. The detector asserts an interrupt when R7 is less than the specified value.
 
 Read only versions of the program counter (PC) and stack pointer (SP- equal to R7) are also provided. They are accurate to the live values within in the core.
+
+The CCTRL is still fully operational while the uP is in the PAUSED state.
 
 **_CCTRL_CTRL (SW Address = 0x8000, HW Address = 0xC000)_**
 
@@ -105,6 +112,8 @@ where "n" is equal to the interrupt's enable/flag bit field number. Once the jum
 
 Note that while the hardware prioritizes the order to run interrupts, it does not allow one interrupt to preempt another until the current interrupt has finished running. Also note that enabling interrupts often requires setting values in both the NVIC and interrupt's source peripheral.
 
+The NVIC is still fully operational while the uP is in the PAUSED state. However, the uP core does not process the NVIC's signals until the uP is once again in the RUNNING state.
+
 
 **_NVIC_ENABLE (SW Address = 0x8008, HW Address = 0xC004)_**
 
@@ -121,6 +130,44 @@ Note that while the hardware prioritizes the order to run interrupts, it does no
 |reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
 |OVF flag  |11       |r/w   |stack overflow detection status (see CCTRL)   |
 |reserved  |10:0     |r     |reserved for future use- default value(s) = 0 |
+
+### General Purpose Input/Output (GPIO) Registers
+
+The GPIO registers provide control over the uP's 16 GPIO digital pins. Each pin can be read, configured as an input/output, and set individually (ie read/written 16 at a time- with 1 bit referring to 1 pin each). Bits at the same bit position generally refer to the same pin (eg Bit 5 in the INP, DIR, and OUT registers all relate to GPIO pin 5).
+
+At present, the GPIO only provides basic read/write capabilities (ie no interrupt pins/configurations nor alternate functions). **This is an artifact of the uP currently being developed.** References to these features are planned, but not implemented.
+
+**_GPIO_CFG (SW Address = 0x8018, HW Address = 0xC00C)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15       |r     |reserved for future use- default value(s) = 0 |
+|TODO      |14       |r/w   |not implemented yet, but readable/writable    |
+|reserved  |13       |r     |reserved for future use- default value(s) = 0 |
+|TODO      |12       |r/w   |not implemented yet, but readable/writable    |
+|TODO      |11       |r/w   |not implemented yet, but readable/writable    |
+|TODO      |10       |r/w   |not implemented yet, but readable/writable    |
+|TODO      |9        |r/w   |not implemented yet, but readable/writable    |
+|TODO      |8        |r/w   |not implemented yet, but readable/writable    |
+|reserved  |7:0      |r     |reserved for future use- default value(s) = 0 |
+
+**_GPIO_INP (SW Address = 0x801A, HW Address = 0xC00D)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|read bits |15:0     |r     |read values, regardless of direction          |
+
+**_GPIO_DIR (SW Address = 0x801C, HW Address = 0xC00E)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|direction |15:0     |r/w   |pin direction- read = 0, write = 1            |
+
+**_GPIO_OUT (SW Address = 0x801E, HW Address = 0xC00F)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|write bits|15:0     |r/w   |write values, only used if pin is writing     |
 
 ## uP Pinout
 ---

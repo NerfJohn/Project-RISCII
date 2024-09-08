@@ -1,0 +1,39 @@
+; Simple demo of GPIO usage as basic input and output devices.
+
+; Register Use
+; R0    = Addr 0x8018 (base register of GPIO)
+; R1    = Mask 0x0001 (for getting switch GPIO)
+; R2    = Mask 0x0100 (for setting LED GPIO)
+; R3    = Value to set LED/GPIO to
+; R4    = 0
+; R5    = Intermediate value
+
+__START:
+
+; Setup Constants
+LBI		$0 -128 	; R0 = 0x8018
+LBI %s	$0 0x18
+LBI		$1 0x1		; R1 = 0x0001
+LBI		$2 0x01		; R2 = 0x0100
+LBI %s	$2 0x00
+LBI		$4 0		; R4 = 0
+
+; Initialize GPIO pins
+STR		$4 $0 3 	; Zero out read/write values
+STR 	$2 $0 2		; Switch = input, LED = output
+
+loop:				; loop forever
+
+; Get switch status
+LDR		$3 $0 1 	; Read GPIO_INP register
+AND		$3 $3 $1	; Mask to get just read value
+
+; Set LED based on switch
+SHL		$3 $3 8		; Copy switch bit to LED position
+STR		$3 $0 3		; Level read = level set to
+
+; Loop indefinitely
+_la		$5 loop		; Too lazy to compute BRC jump
+JPR		$5 0		; Jump back to "loop" label
+
+HLT					; Safety net- just in case HW is cracked
