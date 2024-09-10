@@ -81,6 +81,19 @@ uP Interrupt Sequencing
 	4) after posedge, signal reaches core and preps to interrupt
 	5) after posedge, core updated to run interrupt/is running interrupt
 
+uP Memory Mapping (0x80XX):
+	00-06 CTRL
+	08-0E NVIC
+	10-16 WDT
+	18-1E GPIO
+	20-26 TMR0
+	28-2E TMR1
+	30-36 TMR2
+	38-3E TMR3
+	40-46 UART
+	48-4E I2C
+	50-56 SPI
+
 ================================================================================
 uP Core Design:
 

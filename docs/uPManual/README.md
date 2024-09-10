@@ -70,11 +70,13 @@ Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardw
 
 ### Core Controls (CCTRL) Registers
 
-The CCTRL registers provide various controls and statuses of the uP's core. Namely, the registers provide a place for the core to pause the uP and allow the user to enable a "stack overflow detector" tied to register 7 (ie R7) of the core's register file. The detector asserts an interrupt when R7 is less than the specified value.
+The CCTRL registers provide various controls and readings of the uP's core. Controls include interfaces for pausing and detecting stack overflow, whereas readings include copies of the current program counter (PC) and stack pointer (SP- equal to R7 in the core's register file).
 
-Read only versions of the program counter (PC) and stack pointer (SP- equal to R7) are also provided. They are accurate to the live values within in the core.
+The pause bit (active for value of 1) is primarily used by the core to continue pausing once the core itself has been paused, but can be used by software as well. When set, the JTAG or a power reset is required to clear the bit.
 
-The CCTRL is still fully operational while the uP is in the PAUSED state.
+Enabling the stack overflow detector (active for value of 1) compares the SP to a given setpoint. The OVF interrupt is asserted anytime SP is less than the setpoint (compared as uint16 values). Due to this, the OVF interrupt may be active for contiguous cycles.
+
+The CCTRL registers remain fully operational while the uP is in the PAUSED state.
 
 **_CCTRL_CTRL (SW Address = 0x8000, HW Address = 0xC000)_**
 
@@ -104,16 +106,17 @@ The CCTRL is still fully operational while the uP is in the PAUSED state.
 
 ### Nested Vector Interrupt Controller (NVIC) Registers
 
-The NVIC registers control how to handle the system's various interrupts. Predefined interrupts- with predefined priorities -can be enabled for preempting the application program. Interrupts automatically jump to a program address based on the below equation:
+The NVIC registers control which interrupt's have been received an can be forwarded to the core for processing. Controls include individual enable and flag signals for each of the 11 interrupts. Logic shared between the NVIC and core implement priority and behavioral rules for interrupts.
 
-<code>PC = (n \* 8)</code>
+Interrupts cause the core to save the current PC/CC values and enter an "interrupt mode". In this mode, the PC is initialized to a value equal to the serviced interrupt's bit field (ie in the NVIC registers) times 8. The core continues running in interrupt mode, ignoring other interrupts, until a JPR instruction with its "r" flag (see ISA) is executed. Once executed, the uP returns to the previous context (ie PC/CC values) preempted by the interrupt.
 
-where "n" is equal to the interrupt's enable/flag bit field number. Once the jump is taken, the uP is considered to be in "interrupt mode" until a JPR instruction with the "r" flag (see ISA) is executed. Once executed, the uP returns to the previous context (ie PC/CC values) preempted by the interrupt.
+The enable bits determine if an interrupt's flag can be forwarded to the core (a value of 1 allowing passage). The flag bits record if an interrupt signal was detected (a value of 1 equaling detection). These bits are typically updated by hardware, though can be overwritten by the software directly.
 
-Note that while the hardware prioritizes the order to run interrupts, it does not allow one interrupt to preempt another until the current interrupt has finished running. Also note that enabling interrupts often requires setting values in both the NVIC and interrupt's source peripheral.
+If two or more interrupts are enabled and have been detected, the NVIC will forward the interrupt with the higher bit field (ie in the NVIC registers). Thus, while interrupts cannot pre-emptive other interrupts due to the core's "interrupt mode", they are executed in a prioritized manner.
 
-The NVIC is still fully operational while the uP is in the PAUSED state. However, the uP core does not process the NVIC's signals until the uP is once again in the RUNNING state.
+In general, interrupts are expected to be enabled both in the NVIC and at their origin, arriving as pulses captured by the flag bits. It is expected that the flags are handled with care (as both hardware and software write to them- write conflicts are a potential issue).
 
+The NVIC registers remain fully operational while the uP is in the PAUSED state. However, the core prevents interrupts from being processes until in the RUNNING state.
 
 **_NVIC_ENABLE (SW Address = 0x8008, HW Address = 0xC004)_**
 
@@ -121,7 +124,17 @@ The NVIC is still fully operational while the uP is in the PAUSED state. However
 |----------|---------|------|----------------------------------------------|
 |reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
 |enable OVF|11       |r/w   |stack overflow detection enable (see CCTRL)   |
-|reserved  |10:0     |r     |reserved for future use- default value(s) = 0 |
+|enable EXH|10       |r/w   |external high priority pin enable (see GPIO)  |
+|reserved  |9        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |8        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |7        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |6        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |5        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |4        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |3        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
+|enable EXL|1        |r/w   |external low priority pin enable (see GPIO)   |
+|reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
 
 **_NVIC_FLAG (SW Address = 0x800A, HW Address = 0xC005)_**
 
@@ -129,13 +142,29 @@ The NVIC is still fully operational while the uP is in the PAUSED state. However
 |----------|---------|------|----------------------------------------------|
 |reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
 |OVF flag  |11       |r/w   |stack overflow detection status (see CCTRL)   |
-|reserved  |10:0     |r     |reserved for future use- default value(s) = 0 |
+|EXH flag  |10       |r/w   |external high priority pin status (see GPIO)  |
+|reserved  |9        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |8        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |7        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |6        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |5        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |4        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |3        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
+|EXL flag  |1        |r/w   |external low priority pin status (see GPIO)   |
+|reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
 
 ### General Purpose Input/Output (GPIO) Registers
 
-The GPIO registers provide control over the uP's 16 GPIO digital pins. Each pin can be read, configured as an input/output, and set individually (ie read/written 16 at a time- with 1 bit referring to 1 pin each). Bits at the same bit position generally refer to the same pin (eg Bit 5 in the INP, DIR, and OUT registers all relate to GPIO pin 5).
+The GPIO registers controls the uP's 16 general purpose digital pins. Pins can be read, configured as an input/output, and set to digital value. Some pins can also be configured to be used by other peripherals or generate externally sourced interrupts.
 
-At present, the GPIO only provides basic read/write capabilities (ie no interrupt pins/configurations nor alternate functions). **This is an artifact of the uP currently being developed.** References to these features are planned, but not implemented.
+All pins are capable of generic input/output capabilities. Controls are split across 3 registers, with bit field values indicating which pin they correspond to. Writing a value to a pin only works when the pin's direction is outward (ie DIR value of 1). Pins can always be read, regardless of direction.
+
+Two pins (bit field's 8 and 9) has built-in edge detecting interrupts EXL and EXH, respectively. Each interrupt can be configured to trigger on a specific edge and are effectively always enabled (ie will set their NVIC flag bits triggered- exercise caution when first enabling).
+
+At present, the alternate function configurations can be read/written, but have no effect. **This is an artifact of the uP currently being developed.**
+
+The GPIO registers remain fully operational while the uP is in the PAUSED state.
 
 **_GPIO_CFG (SW Address = 0x8018, HW Address = 0xC00C)_**
 
@@ -147,8 +176,8 @@ At present, the GPIO only provides basic read/write capabilities (ie no interrup
 |TODO      |12       |r/w   |not implemented yet, but readable/writable    |
 |TODO      |11       |r/w   |not implemented yet, but readable/writable    |
 |TODO      |10       |r/w   |not implemented yet, but readable/writable    |
-|TODO      |9        |r/w   |not implemented yet, but readable/writable    |
-|TODO      |8        |r/w   |not implemented yet, but readable/writable    |
+|EXH trig  |9        |r/w   |EXH edge trigger- falling = 0, rising = 1     |
+|EXL trig  |8        |r/w   |EXL edge trigger- falling = 0, rising = 1     |
 |reserved  |7:0      |r     |reserved for future use- default value(s) = 0 |
 
 **_GPIO_INP (SW Address = 0x801A, HW Address = 0xC00D)_**

@@ -150,6 +150,6 @@ Mux4 M0[15:0] (
 //------------------------------------------------------------------------------
 // Drive control outputs.
 assign o_doPause = pauseQ;
-assign o_intOVF  = intQ & overflowQ; // Disable interrupt w/ detection
+assign o_intOVF  = intQ & overflowQ; // Disable interrupt w/ enable bit
 
 endmodule

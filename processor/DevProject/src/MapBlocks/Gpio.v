@@ -10,6 +10,10 @@ module Gpio (
 	input         i_memWrEn,
 	output [15:0] o_memDataOut,
 	
+	// Interrupt signal connections.
+	output        o_intEXH,
+	output        o_intEXL,
+	
 	// Raw pinout to outside uP.
 	inout  [15:0] io_gpioPins,
 	
@@ -44,6 +48,14 @@ wire        dirEn;
 // Output register wires.
 wire [15:0] outD, outQ;
 wire        outEn;
+
+// Edge detect wires.
+wire        edgeHD, edgeHQ;
+wire        edgeLD, edgeLQ;
+
+// Interrupt wires.
+wire        intHD, intHQ;
+wire        intLD, intLQ;
 
 // Tristate wires.
 wire [15:0] triA, triY, triEn;
@@ -95,6 +107,36 @@ DffSynchEn OUT_REG[15:0] (
 );
 
 //------------------------------------------------------------------------------
+// Edge Detectors- "saves" of certain pins to detect edges for interrupts.
+DffSynch EDGE_H (
+	.D(edgeHD),
+	.Q(edgeHQ),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+DffSynch EDGE_L (
+	.D(edgeLD),
+	.Q(edgeLQ),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Interrupt registers- formal emission of external pin interrupt signals.
+DffSynch INT_H (
+	.D(intHD),
+	.Q(intHQ),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+DffSynch INT_L (
+	.D(intLD),
+	.Q(intLQ),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
 // Tristate- single driving location for GPIOs (within uP).
 Tristate TRI[15:0] (
 	.A(triA),
@@ -138,6 +180,16 @@ assign outD  = i_memDataIn;
 assign outEn = isOutAddr & i_memWrEn;
 
 //------------------------------------------------------------------------------
+// Handle edge detector inputs.
+assign edgeHD = inpY[9]; // bit 9 (High Int pin)
+assign edgeLD = inpY[8]; // bit 8 (Low Int pin)
+
+//------------------------------------------------------------------------------
+// Handle interrupt inputs.
+assign intHD = (inpY[9] ^ edgeHQ) & (cfgIntH ^ edgeHQ);
+assign intLD = (inpY[8] ^ edgeLQ) & (cfgIntL ^ edgeLQ);
+
+//------------------------------------------------------------------------------
 // Handle tristate inputs.
 assign triA  = outQ; // TODO- implement
 assign triEn = dirQ; // TODO- implement (individual tristates).
@@ -154,13 +206,18 @@ assign readCfgReg = {1'b0,
 							cfgIntL,      // bit 8
 							8'b00000000};
 Mux4 M0[15:0] (
-	.C(readCfgReg),                 // Address 00? Read controls
-	.D(inpY),                       // Address 01? Read setpoint
-	.E(dirQ),                       // Address 10? Read PC
-	.F(outQ),                       // Address 11? Read SP
+	.C(readCfgReg),                 // Address 00? Read cofigs
+	.D(inpY),                       // Address 01? Read pins
+	.E(dirQ),                       // Address 10? Read directions
+	.F(outQ),                       // Address 11? Read outputs
 	.S(i_memAddr),
 	.Y(o_memDataOut)
 );
+
+//------------------------------------------------------------------------------
+// Drive the external pin interrupts.
+assign o_intEXH = intHQ;
+assign o_intEXL = intLQ;
 
 //------------------------------------------------------------------------------
 // Drive gpio pins using tristate.

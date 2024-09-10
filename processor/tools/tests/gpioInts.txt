@@ -1,0 +1,144 @@
+; Simple test of GPIO's interrupt's and of NVIC priority encoder
+
+__START:
+
+_la $0 main			; (Reset Vector)
+JPR $0 0
+HLT
+
+_la $0 exl			; EXL (Low Priority Pin)
+JPR $0 0
+HLT
+
+HLT					; INT 2
+HLT
+HLT
+HLT
+
+HLT					; INT 3
+HLT
+HLT
+HLT
+
+HLT					; INT 4
+HLT
+HLT
+HLT
+
+HLT					; INT 5
+HLT
+HLT
+HLT
+
+HLT					; INT 6
+HLT
+HLT
+HLT
+
+HLT					; INT 7
+HLT
+HLT
+HLT
+
+HLT					; INT 8
+HLT
+HLT
+HLT
+
+HLT					; INT 9
+HLT
+HLT
+HLT
+
+_la $0 exh			; EXH (High Priority Pin)
+JPR $0 0
+HLT
+
+HLT
+HLT
+HLT
+HLT
+
+; Registers:
+; R0 = jump ptrs
+; R1 = Mask 0x0002 (for EXL mask)
+; R2 = Mask 0x0400 (for EXH mask)
+; R3 = Mask 0x0200 (for CFG High mask)
+; R4 = Mask 0x0100 (for CFG Low mask)
+; R5 = Ptr 0x8008  (for map access)
+; R6 = Intermediate
+; R7 = Status (for ease of benchtesting)
+
+; EXL Interrupt
+exl:
+; Clear flag
+LDR $6 $5 1 	; Read NVIC_FLAG
+XOR $7 $1 -1	; Get clear mask for EXL flag
+AND $6 $6 $7	; New flags determined
+STR $6 $5 1		; Write new flags
+
+; Bench test
+ADD $7 $1 0		; Use mask to identify
+HLT
+LBI $7 0
+
+JPR %r
+
+; EXL Interrupt
+exh:
+; Clear flag
+LDR $6 $5 1 	; Read NVIC_FLAG
+XOR $7 $2 -1	; Get clear mask for EXH flag
+AND $6 $6 $7	; New flags determined
+STR $6 $5 1		; Write new flags
+
+; Bench test
+ADD $7 $2 0		; Use mask to identify
+HLT
+LBI $7 0
+
+JPR %r
+
+; Main program
+main:
+; Setup regs
+LBI		$1 2	; R1 = 0x0002
+LBI		$2 4	; R2 = 0x0400
+LBI	%s	$2 0
+LBI		$3 2	; R3 = 0x0200
+LBI	%s	$3 0
+LBI		$4 1	; R4 = 0x0100
+LBI	%s	$4 0
+LBI		$5 -128	; R5 = 0x8008
+LBI	%s	$5 8
+
+; Configure interrupt GPIOs as outputs w/ posedge trigger
+ORR $6 $3 $4	; OR mask for interrupt GPIOs
+STR $6 $5 8 	; Configure interrupt GPIOs as posedge trigger
+STR $6 $5 10	; Set interrupt GPIOs as outputs (by default, at 0)
+
+; Check things are okay
+HLT
+
+; Enable pin interrupts
+ORR	$6 $1 $2	; OR mask for enabling GPIO interrupts
+STR $6 $5 0		; Enable the interrupts
+
+; Trigger BOTH interrupts simultaneously
+LBI $6 -1		; Among others, set interrupt GPIOs
+STR $6 $5 11	; GPIOs set- interrupts should trigger...
+NOP				; Little bit of buffer to ensure trigger before re-config
+NOP
+
+; Reconfigure high interrupt for negedge trigger
+STR $4 $5 8 	; Configure EXH as negedge, EXL as posedge
+
+; Trigger as if both were negedge
+LBI	$6 0
+STR	$6 $5 11
+NOP
+NOP
+
+; Stop w/ unique status
+LBI $7 -1
+HLT

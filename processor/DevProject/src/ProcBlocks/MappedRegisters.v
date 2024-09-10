@@ -53,7 +53,7 @@ wire        cctrlDoPause, cctrlIntOVF;
 wire [1:0]  nvicMemAddr;
 wire [15:0] nvicMemDataIn, nvicMemDataOut;
 wire        nvicMemWrEn;
-wire        nvicIntOVF;
+wire        nvicIntOVF, nvicIntEXH, nvicIntEXL;
 wire [3:0]  nvicIntCode;
 wire        nvicIntEn;
 
@@ -61,6 +61,7 @@ wire        nvicIntEn;
 wire [1:0]  gpioMemAddr;
 wire [15:0] gpioMemDataIn, gpioMemDataOut;
 wire        gpioMemWrEn;
+wire        gpioIntEXH, gpioIntEXL;
 
 // Compute data wires (based on mem address).
 wire [15:0] readData00XX, readData01XX, readData10XX;
@@ -103,6 +104,8 @@ Nvic NVIC (
 	
 	// Input flag connections.
 	.i_intOVF(nvicIntOVF),
+	.i_intEXH(nvicIntEXH),
+	.i_intEXL(nvicIntEXL),
 	
 	// Output interrupt connections.
 	.o_intCode(nvicIntCode),
@@ -121,6 +124,10 @@ Gpio GPIO (
 	.i_memDataIn(gpioMemDataIn),
 	.i_memWrEn(gpioMemWrEn),
 	.o_memDataOut(gpioMemDataOut),
+	
+	// Interrupt signal connections.
+	.o_intEXH(gpioIntEXH),
+	.o_intEXL(gpioIntEXL),
 	
 	// Raw pinout to outside uP.
 	.io_gpioPins(io_gpioPins),     // inout- direct connect net
@@ -159,6 +166,8 @@ assign nvicMemAddr   = i_memAddr[1:0];
 assign nvicMemDataIn = i_memDataIn;
 assign nvicMemWrEn   = isNvicAddr & i_memWrEn;
 assign nvicIntOVF    = cctrlIntOVF;
+assign nvicIntEXH    = gpioIntEXH;
+assign nvicIntEXL    = gpioIntEXL;
 
 //------------------------------------------------------------------------------
 // Handle GPIO inputs.

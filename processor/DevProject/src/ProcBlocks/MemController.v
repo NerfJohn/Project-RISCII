@@ -42,15 +42,13 @@ module MemController (
 /*
  * Controller determining which circuit is in control of the uP's memory bus.
  *
- * At present, only the JTAG and bootloader can control the memory bus. For the
- * bootloader, a write lock is placed on the mapped registers in case of a
- * corrupted binary image.
+ * Control is split between the bootloader, core, and JTAG based on the uP's
+ * state (BOOTING, RUNNING, PAUSED respectively). All have full access except
  *
  * Design Notes:
  * 1) This module serves as the lone "data line tristate" to ease FPGA use.
+ * 2) Accesses are done on falling edge of system clock- ie done at 2x speed
  */
- 
-// TODO- note "read/write on fall edge" stuff- enforces op on 2nd half ONLY
 
 ////////////////////////////////////////////////////////////////////////////////
 // -- Internal Signals/Wires -- //
