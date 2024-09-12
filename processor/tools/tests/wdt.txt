@@ -1,0 +1,54 @@
+; Simple test to check if Watchdog timer features work.
+
+doBeat:
+.data 0x0
+
+doCancel:
+.data 0x0
+
+; Registers:
+; R0 = doBeat Address
+; R1 = doCancel Address
+; R2 = Write data for beat
+; R3 = Intermediate
+; R4 = WDT address
+
+__START:
+
+; Setup
+_la $0 doBeat
+_la $1 doCancel
+LBI $2 0
+LBI 	$4 -128		; 0x8010
+LBI %s 	$4 0x10
+
+; (Burn at least 16 cycles to see WDT count updating)
+SWP $7 $1 10
+SWP $7 $1 10
+SWP $7 $1 10
+SWP $7 $1 10
+
+; Halt to check recovery from reset (and WDT already going, but now paused)
+HLT
+
+; Cancel WDT as directed
+LDR $3 $1 0			; Get cancel bool
+ADD $3 $3 0			; Get codes for bool
+BRC	%z 2			; If true, set cancel bit in WDT
+LBI $3 0x1
+STR $3 $4 0
+
+loop:
+
+; Write beat as directed
+LDR $3 $0 0			; Get beat bool
+ADD $3 $3 0			; Get codes for bool
+BRC %z 1			; If true, write to WDT control (should reset WDT)
+STR $2 $4 0
+
+; Re-loop
+_la $3 loop
+JPR $3 0
+
+; Safety Halt
+HLT

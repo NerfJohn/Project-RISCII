@@ -26,6 +26,7 @@ The uP design consists of many internal circuits and components. At a high level
 |CORE      | Core processor responsible for code execution                 |
 |CCTRL     | Mapped CORE registers and stack overflow detection controls   |
 |NVIC      | Interrupt Controller for enabling preemptive behavior         |
+|WDT       | Watchdog timer for resetting hardware in event of SW failure  |
 |GPIO      | General Purpose digital IO pins with some alternate functions |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
@@ -61,6 +62,8 @@ Some of the uP's internal resources contain registers that can be accessed using
 |CCTRL_SP      |0x8006    |r     |Current value of the stack pointer (SP)  |
 |NVIC_ENABLE   |0x8008    |r/w   |Interrupt enables (per interrupt)        |
 |NVIC_FLAG     |0x800A    |r/w   |Status of interrupt signals              |
+|WDT_CTRL      |0x8010    |r/w   |Controls/Status of Watchdog timer        |
+|WDT_CNT       |0x8012    |r     |Current count of the WDT main counter    |
 |GPIO_CFG      |0x8018    |r/w   |Gpio pin alternate functions/configs     |
 |GPIO_INP      |0x801A    |r     |Read value for each GPIO pin             |
 |GPIO_DIR      |0x801C    |r/w   |Controls read/write direction of pin     |
@@ -154,9 +157,34 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |EXL flag  |1        |r/w   |external low priority pin status (see GPIO)   |
 |reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
 
+### Watchdog Timer (WDT) Registers
+
+The WDT registers control the uP's watchdog timer- a special timer used to reset the automatically reset the hardware for a software error. The timer's "fuse" is implicitly paused when not in the RUNNING mode and can be reset or disarmed using the controls. A manual hardware reset can also be performed.
+
+By default, the timer runs in the RUNNING state, with a 2\^20 cycle fuse before it forces a hardware reset. This fuse can be paused by leaving the RUNNING state, reset (to 2\^20 cycles) by any write to WDT_CTRL, and reset+disarmed by setting the "cancel" bit in WDT_CTRL. A read-only "paused" status bit under WDT_CTRL indicates if the fuse/timer is paused.
+
+Additionally, a manual hardware reset can be performed by setting the "reset" bit under WDT_CTRL. This will force a hardware reset to occur regardless of the uP state and WDT timer's fuse.
+
+The WDT registers are only fully operationl while the uP is in the RUNNING state. The WDT timer is effectively paused in the BOOTING and PAUSED uP states.
+
+**_WDT_CTRL (SW Address = 0x8010, HW Address = 0xC008)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|isPaused  |15       |r     |indicator for WDT being paused (active high)  |
+|reserved  |14:2     |r     |reserved for future use- default value(s) = 0 |
+|reset     |1        |r/w   |manual trigger HW reset (active high)         |
+|cancel    |0        |r/w   |stops the WDT from counting (active high)     |
+
+**_WDT_CNT (SW Address = 0x801A, HW Address = 0xC009)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|count     |15:0     |r     |current count of WDT's main counter           |
+
 ### General Purpose Input/Output (GPIO) Registers
 
-The GPIO registers controls the uP's 16 general purpose digital pins. Pins can be read, configured as an input/output, and set to digital value. Some pins can also be configured to be used by other peripherals or generate externally sourced interrupts.
+The GPIO registers control the uP's 16 general purpose digital pins. Pins can be read, configured as an input/output, and set to digital value. Some pins can also be configured to be used by other peripherals or generate externally sourced interrupts.
 
 All pins are capable of generic input/output capabilities. Controls are split across 3 registers, with bit field values indicating which pin they correspond to. Writing a value to a pin only works when the pin's direction is outward (ie DIR value of 1). Pins can always be read, regardless of direction.
 

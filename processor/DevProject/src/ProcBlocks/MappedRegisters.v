@@ -9,6 +9,10 @@ module MappedRegisters (
 	input  [15:0] i_memDataIn,
 	input         i_memWrEn,
 	output [15:0] o_memDataOut,
+	
+	// State machine connections.
+	input         i_smIsBooted,
+	input         i_smStartPause,
 
 	// Reported Info connections.
 	input  [15:0] i_reportSP,
@@ -19,6 +23,9 @@ module MappedRegisters (
 	output [3:0]  o_intCode,
 	output        o_intEn,
 	output        o_doPause,
+	
+	// Output reset connection.
+	output        o_doReset,
 	
 	// Driven GPIO connections.
 	inout  [15:0] io_gpioPins,
@@ -38,7 +45,7 @@ module MappedRegisters (
 
 // Compute control wires (based on mem address).
 wire        is6BitAddr;
-wire        isCctrlAddr, isNvicAddr, isGpioAddr;
+wire        isCctrlAddr, isNvicAddr, isWdtAddr, isGpioAddr;
 
 // Core Control wires.
 wire [1:0]  cctrlMemAddr;
@@ -56,6 +63,13 @@ wire        nvicMemWrEn;
 wire        nvicIntOVF, nvicIntEXH, nvicIntEXL;
 wire [3:0]  nvicIntCode;
 wire        nvicIntEn;
+
+// WDT wires.
+wire [1:0]  wdtMemAddr;
+wire [15:0] wdtMemDataIn, wdtMemDataOut;
+wire        wdtMemWrEn;
+wire        wdtSmIsBooted, wdtSmStartPause;
+wire        wdtDoReset;
 
 // GPIO wires.
 wire [1:0]  gpioMemAddr;
@@ -117,6 +131,27 @@ Nvic NVIC (
 );
 
 //------------------------------------------------------------------------------
+// Watchdog- special timer that causes a hardware reset when not turned off.
+Watchdog WDT (
+	// Memory Map connections.
+	.i_memAddr(wdtMemAddr),
+	.i_memDataIn(wdtMemDataIn),
+	.i_memWrEn(wdtMemWrEn),
+	.o_memDataOut(wdtMemDataOut),
+	
+	// State input connections.
+	.i_smIsBooted(wdtSmIsBooted),
+	.i_smStartPause(wdtSmStartPause),
+	
+	// Triggered reset connection.
+	.o_doReset(wdtDoReset),
+	
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
 // GPIO- Generic IO pins, some with alternate functions and interrupt settings.
 Gpio GPIO (
 	// Memory Map connections.
@@ -148,6 +183,8 @@ assign isCctrlAddr = is6BitAddr & ~i_memAddr[5] & ~i_memAddr[4]  // ...0000xx
                                 & ~i_memAddr[3] & ~i_memAddr[2];
 assign isNvicAddr  = is6BitAddr & ~i_memAddr[5] & ~i_memAddr[4]  // ...0001xx
                                 & ~i_memAddr[3] &  i_memAddr[2];
+assign isWdtAddr   = is6BitAddr & ~i_memAddr[5] & ~i_memAddr[4]  // ...0010xx
+                                &  i_memAddr[3] & ~i_memAddr[2];
 assign isGpioAddr  = is6BitAddr & ~i_memAddr[5] & ~i_memAddr[4]  // ...0011xx
                                 &  i_memAddr[3] &  i_memAddr[2];
 										  
@@ -170,6 +207,14 @@ assign nvicIntEXH    = gpioIntEXH;
 assign nvicIntEXL    = gpioIntEXL;
 
 //------------------------------------------------------------------------------
+// Handle WDT inputs.
+assign wdtMemAddr      = i_memAddr[1:0];
+assign wdtMemDataIn    = i_memDataIn;
+assign wdtMemWrEn      = isWdtAddr & i_memWrEn;
+assign wdtSmIsBooted   = i_smIsBooted;
+assign wdtSmStartPause = i_smStartPause;
+
+//------------------------------------------------------------------------------
 // Handle GPIO inputs.
 assign gpioMemAddr   = i_memAddr[1:0];
 assign gpioMemDataIn = i_memDataIn;
@@ -180,7 +225,7 @@ assign gpioMemWrEn   = isGpioAddr & i_memWrEn;
 Mux4 M0[15:0] (
 	.C(cctrlMemDataOut),      // Addr 0000-xx? Read CCTRL
 	.D(nvicMemDataOut),       // Addr 0001-xx? Read NVIC
-	.E(16'b0000000000000000), // Addr 0010-xx? TODO- implement
+	.E(wdtMemDataOut),        // Addr 0010-xx? Read WDT
 	.F(gpioMemDataOut),       // Addr 0011-xx? Read GPIO
 	.S(i_memAddr[3:2]),
 	.Y(readData00XX)
@@ -215,5 +260,9 @@ Mux4 M3[15:0] (
 assign o_intCode = nvicIntCode;
 assign o_intEn   = nvicIntEn;
 assign o_doPause = cctrlDoPause;
+
+//------------------------------------------------------------------------------
+// Drive reset outputs.
+assign o_doReset = wdtDoReset;
 
 endmodule

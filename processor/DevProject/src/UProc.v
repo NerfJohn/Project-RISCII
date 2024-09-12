@@ -94,11 +94,13 @@ wire        pauseIsPausedD, pauseIsPausedQ;
 wire [13:0] mapMemAddr;
 wire [15:0] mapMemDataOut;
 wire        mapMemWrEn;
+wire        mapSmIsBooted, mapSmStartPause;
 wire [15:0] mapReportSP;
 wire [14:0] mapReportPC;
 wire        mapReportHLT;
 wire [3:0]  mapIntCode;
 wire        mapIntEn, mapDoPause;
+wire        mapDoReset;
 
 // Bootloader wires.
 wire        bootSpiMISO, bootSpiMOSI, bootSpiEn;
@@ -291,6 +293,10 @@ MappedRegisters MAPPED_REGS (
 	.i_memWrEn(mapMemWrEn),
 	.o_memDataOut(mapMemDataOut),
 	
+	// State machine connections.
+	.i_smIsBooted(mapSmIsBooted),
+	.i_smStartPause(mapSmStartPause),
+	
 	// Reported Info connections.
 	.i_reportSP(mapReportSP),
 	.i_reportPC(mapReportPC),
@@ -300,6 +306,9 @@ MappedRegisters MAPPED_REGS (
 	.o_doPause(mapDoPause),
 	.o_intCode(mapIntCode),
 	.o_intEn(mapIntEn),
+	
+	// Output reset connection.
+	.o_doReset(mapDoReset),
 	
 	// Driven GPIO connections.
 	.io_gpioPins(io_gpioPins),     // inout- direct connect net
@@ -364,7 +373,7 @@ Core CORE (
 
 //------------------------------------------------------------------------------
 // Syncrhonize ("slower") inputs.
-assign synchRstnIn  = i_sysRstn;
+assign synchRstnIn  = i_sysRstn & ~mapDoReset;           // External + Internal
 assign synchJtagIn  = {i_jtagTCK, i_jtagTMS, i_jtagTDI}; // Group synch for ease
 assign synchJtagTCK = synchJtagOut[2];
 assign synchJtagTMS = synchJtagOut[1];
@@ -430,11 +439,13 @@ assign pauseIsPausedD   = pauseStartPauseQ   // "unpause" within 1 cycle
 
 //------------------------------------------------------------------------------
 // Handle Mapped Registers inputs.
-assign mapMemAddr   = memMemAddr[13:0];
-assign mapMemWrEn   = memMemMapWrEn;
-assign mapReportSP  = coreReportSP;
-assign mapReportPC  = coreReportPC;
-assign mapReportHLT = coreReportHLT;
+assign mapMemAddr      = memMemAddr[13:0];
+assign mapMemWrEn      = memMemMapWrEn;
+assign mapSmIsBooted   = bootSmNowBooted;
+assign mapSmStartPause = pauseStartPauseQ;
+assign mapReportSP     = coreReportSP;
+assign mapReportPC     = coreReportPC;
+assign mapReportHLT    = coreReportHLT;
 
 //------------------------------------------------------------------------------
 // Handle Bootloader inputs.
