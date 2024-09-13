@@ -28,6 +28,7 @@ The uP design consists of many internal circuits and components. At a high level
 |NVIC      | Interrupt Controller for enabling preemptive behavior         |
 |WDT       | Watchdog timer for resetting hardware in event of SW failure  |
 |GPIO      | General Purpose digital IO pins with some alternate functions |
+|TMR0-1    | Two 16-bit configurable timers with overflow interrupts       |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -68,6 +69,12 @@ Some of the uP's internal resources contain registers that can be accessed using
 |GPIO_INP      |0x801A    |r     |Read value for each GPIO pin             |
 |GPIO_DIR      |0x801C    |r/w   |Controls read/write direction of pin     |
 |GPIO_OUT      |0x801E    |r/w   |Write value for each GPIO pin            |
+|TMR0_CTRL     |0x8020    |r/w   |Controls of timer 0                      |
+|TMR0_CNT      |0x8022    |r/w   |Current count of timer 0                 |
+|TMR0_MAX      |0x8024    |r/w   |Highest value timer 0 count can be       |
+|TMR1_CTRL     |0x8028    |r/w   |Controls of timer 0                      |
+|TMR1_CNT      |0x802A    |r/w   |Current count of timer 0                 |
+|TMR1_MAX      |0x802C    |r/w   |Highest value timer 0 count can be       |
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
@@ -225,6 +232,60 @@ The GPIO registers remain fully operational while the uP is in the PAUSED state.
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |write bits|15:0     |r/w   |write values, only used if pin is writing     |
+
+### Timer 0 (TMR0) and Timer 1 (TMR1) Registers
+
+The TMR0 and TMR1 registers control timers 0 and 1 respectively. Each timer is a basic count-up timer, featuring an enable bit, a configurable prescale, a configurable max count, and interrupt upon count overflow.
+
+The CTRL register allows for enabling the timer, as well as setting a prescalar value- a ratio between when the timer's CNT increments and the system clock. This effectively creates a "counter for the counter", which is reset anytime the CTRL register is written to or the uP is the PAUSED state.
+
+The MAX register allows for choosing the highest value the timer's CNT can reach before overflowing. The CNT register is reset anytime the MAX register is written to. Note that setting the CNT register value to be above the MAX register value results in undefined behavior.
+
+Upon every overflow, an interrupt pulse is generated and sent to the NVIC (see NVIC). This pulse is always enabled (though not necessarily enabled in the NVIC). This overflow point adjusts with the MAX register.
+
+The TMR0-1 registers are only fully operationl while the uP is in the RUNNING state. The timers are effectively paused in the BOOTING and PAUSED uP states.
+
+**_TMR0_CTRL (SW Address = 0x8020, HW Address = 0xC010)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
+|prescale  |7:4      |r/w   |prescalar- "0000" = 1:1 -\> "1111" = 16:1     |
+|reserved  |3:1      |r     |reserved for future use- default value(s) = 0 |
+|enable    |0        |r/w   |enables timer for incrementing (active high)  |
+
+**_TMR0_CNT (SW Address = 0x8022, HW Address = 0xC011)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:0     |r/w   |current count of the timer                    |
+
+**_TMR0_MAX (SW Address = 0x8024, HW Address = 0xC012)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:0     |r/w   |max value CNT register can increment to       |
+
+**_TMR1_CTRL (SW Address = 0x8028, HW Address = 0xC014)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
+|prescale  |7:4      |r/w   |prescalar- "0000" = 1:1 -\> "1111" = 16:1     |
+|reserved  |3:1      |r     |reserved for future use- default value(s) = 0 |
+|enable    |0        |r/w   |enables timer for incrementing (active high)  |
+
+**_TMR1_CNT (SW Address = 0x802A, HW Address = 0xC015)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:0     |r/w   |current count of the timer                    |
+
+**_TMR1_MAX (SW Address = 0x802C, HW Address = 0xC016)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:0     |r/w   |max value CNT register can increment to       |
 
 ## uP Pinout
 ---

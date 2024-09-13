@@ -46,6 +46,7 @@ module MappedRegisters (
 // Compute control wires (based on mem address).
 wire        is6BitAddr;
 wire        isCctrlAddr, isNvicAddr, isWdtAddr, isGpioAddr;
+wire        isTmr0Addr, isTmr1Addr;
 
 // Core Control wires.
 wire [1:0]  cctrlMemAddr;
@@ -61,6 +62,7 @@ wire [1:0]  nvicMemAddr;
 wire [15:0] nvicMemDataIn, nvicMemDataOut;
 wire        nvicMemWrEn;
 wire        nvicIntOVF, nvicIntEXH, nvicIntEXL;
+wire        nvicIntTM0, nvicIntTM1;
 wire [3:0]  nvicIntCode;
 wire        nvicIntEn;
 
@@ -76,6 +78,20 @@ wire [1:0]  gpioMemAddr;
 wire [15:0] gpioMemDataIn, gpioMemDataOut;
 wire        gpioMemWrEn;
 wire        gpioIntEXH, gpioIntEXL;
+
+// Timer 0 wires.
+wire [1:0]  tmr0MemAddr;
+wire [15:0] tmr0MemDataIn, tmr0MemDataOut;
+wire        tmr0MemWrEn;
+wire        tmr0SmIsBooted, tmr0SmStartPause;
+wire        tmr0IntTMR;
+
+// Timer 1 wires.
+wire [1:0]  tmr1MemAddr;
+wire [15:0] tmr1MemDataIn, tmr1MemDataOut;
+wire        tmr1MemWrEn;
+wire        tmr1SmIsBooted, tmr1SmStartPause;
+wire        tmr1IntTMR;
 
 // Compute data wires (based on mem address).
 wire [15:0] readData00XX, readData01XX, readData10XX;
@@ -119,6 +135,8 @@ Nvic NVIC (
 	// Input flag connections.
 	.i_intOVF(nvicIntOVF),
 	.i_intEXH(nvicIntEXH),
+	.i_intTM0(nvicIntTM0),
+	.i_intTM1(nvicIntTM1),
 	.i_intEXL(nvicIntEXL),
 	
 	// Output interrupt connections.
@@ -172,6 +190,48 @@ Gpio GPIO (
 	.i_rstn(i_rstn)
 );
 
+//------------------------------------------------------------------------------
+// Timer 0- Basic configurable timer, capable of generating interrupt.
+Timer TMR0 (
+	// Memory Map connections.
+	.i_memAddr(tmr0MemAddr),
+   .i_memDataIn(tmr0MemDataIn),
+	.i_memWrEn(tmr0MemWrEn),
+	.o_memDataOut(tmr0MemDataOut),
+	
+	// State input connections.
+	.i_smIsBooted(tmr0SmIsBooted),
+	.i_smStartPause(tmr0SmStartPause),
+	
+	// Interrupt connection.
+	.o_intTMR(tmr0IntTMR),
+	
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Timer 1- Basic configurable timer, capable of generating interrupt.
+Timer TMR1 (
+	// Memory Map connections.
+	.i_memAddr(tmr1MemAddr),
+   .i_memDataIn(tmr1MemDataIn),
+	.i_memWrEn(tmr1MemWrEn),
+	.o_memDataOut(tmr1MemDataOut),
+	
+	// State input connections.
+	.i_smIsBooted(tmr1SmIsBooted),
+	.i_smStartPause(tmr1SmStartPause),
+	
+	// Interrupt connection.
+	.o_intTMR(tmr1IntTMR),
+	
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -187,6 +247,10 @@ assign isWdtAddr   = is6BitAddr & ~i_memAddr[5] & ~i_memAddr[4]  // ...0010xx
                                 &  i_memAddr[3] & ~i_memAddr[2];
 assign isGpioAddr  = is6BitAddr & ~i_memAddr[5] & ~i_memAddr[4]  // ...0011xx
                                 &  i_memAddr[3] &  i_memAddr[2];
+assign isTmr0Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0100xx
+                                & ~i_memAddr[3] & ~i_memAddr[2];
+assign isTmr1Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0101xx
+                                & ~i_memAddr[3] &  i_memAddr[2];
 										  
 //------------------------------------------------------------------------------
 // Handle Core Control (cctrl) inputs.
@@ -204,6 +268,8 @@ assign nvicMemDataIn = i_memDataIn;
 assign nvicMemWrEn   = isNvicAddr & i_memWrEn;
 assign nvicIntOVF    = cctrlIntOVF;
 assign nvicIntEXH    = gpioIntEXH;
+assign nvicIntTM0    = tmr0IntTMR;
+assign nvicIntTM1    = tmr1IntTMR;
 assign nvicIntEXL    = gpioIntEXL;
 
 //------------------------------------------------------------------------------
@@ -221,6 +287,22 @@ assign gpioMemDataIn = i_memDataIn;
 assign gpioMemWrEn   = isGpioAddr & i_memWrEn;
 
 //------------------------------------------------------------------------------
+// Handle Timer 0 inputs.
+assign tmr0MemAddr      = i_memAddr[1:0];
+assign tmr0MemDataIn    = i_memDataIn;
+assign tmr0MemWrEn      = isTmr0Addr & i_memWrEn;
+assign tmr0SmIsBooted   = i_smIsBooted;
+assign tmr0SmStartPause = i_smStartPause;
+
+//------------------------------------------------------------------------------
+// Handle Timer 1 inputs.
+assign tmr1MemAddr      = i_memAddr[1:0];
+assign tmr1MemDataIn    = i_memDataIn;
+assign tmr1MemWrEn      = isTmr1Addr & i_memWrEn;
+assign tmr1SmIsBooted   = i_smIsBooted;
+assign tmr1SmStartPause = i_smStartPause;
+
+//------------------------------------------------------------------------------
 // Drive data output based on given address.
 Mux4 M0[15:0] (
 	.C(cctrlMemDataOut),      // Addr 0000-xx? Read CCTRL
@@ -231,8 +313,8 @@ Mux4 M0[15:0] (
 	.Y(readData00XX)
 );
 Mux4 M1[15:0] (
-	.C(16'b0000000000000000), // Addr 0100-xx? TODO- implement
-	.D(16'b0000000000000000), // Addr 0101-xx? TODO- implement
+	.C(tmr0MemDataOut),       // Addr 0100-xx? Read TMR0
+	.D(tmr1MemDataOut),       // Addr 0101-xx? Read TMR1
 	.E(16'b0000000000000000), // Addr 0110-xx? TODO- implement
 	.F(16'b0000000000000000), // Addr 0111-xx? TODO- implement
 	.S(i_memAddr[3:2]),

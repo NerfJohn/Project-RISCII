@@ -13,6 +13,8 @@ module Nvic (
 	// Input flag connections.
 	input         i_intOVF,
 	input         i_intEXH,
+	input         i_intTM0,
+	input         i_intTM1,
 	input         i_intEXL,
 	
 	// Output interrupt connections.
@@ -116,10 +118,15 @@ assign enableEn = isEnableAddr & i_memWrEn;
 // Handle flag register inputs.
 assign doSetFlag = i_intOVF |
                    i_intEXH |
+						 i_intTM0 |
+						 i_intTM1 |
 						 i_intEXL;
 assign inFlags   = {i_intOVF,
 						  i_intEXH,
-						  8'b00000000,                         // TODO- implement
+						  1'b0,                                // TODO- implement
+						  i_intTM0,
+						  i_intTM1,
+						  5'b00000,                            // TODO- implement
 						  i_intEXL};
 Mux2 M0[10:0] (
 	.A(i_memDataIn[11:1]),                                // Data Wr? Use data
