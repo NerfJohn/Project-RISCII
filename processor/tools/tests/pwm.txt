@@ -1,0 +1,127 @@
+; Basic test to check PWM timers were implemented correctly.
+
+__START:
+_la $6 main ; Vector 0: "Reset"
+JPR $6 0
+NOP
+
+HLT         ; Vector 1: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 2: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 3: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 4: ---
+HLT
+HLT
+HLT
+
+_la $6 tmr3 ; Vector 5: TMR3
+JPR $6 0
+HLT
+
+_la $6 tmr2 ; Vector 6: TMR2
+JPR $6 0
+HLT
+
+HLT			; Vector 7: ---
+HLT
+HLT
+HLT
+
+HLT			; Vector 8: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 9: ---
+HLT
+HLT
+HLT
+
+HLT         ; Vector 10: ---
+HLT
+HLT
+HLT
+
+HLT			; Vector 11: ---
+HLT
+HLT
+HLT
+
+; Registers
+; R0 = 0x8008 (NVIC)
+; R1 = 0x8018 (GPIO)
+; R2 = 0x8030 (TMR2)
+; R3 = 0x0040 (NVIC mask for tmr2)
+; R4 = 0x0020 (NVIC mask for tmr3)
+; R5 = Intermediate
+; R6 = Intermediate
+; R7 = ISR ref
+
+
+tmr2:
+; Clear flag
+LDR $5 $0 1		; Load current flags
+XOR $6 $3 -1	; clear mask for flag
+AND $5 $6 $5	; Clear flag from flags
+STR $5 $0 1		; Write flags back to NVIC
+
+; Yep, we were here
+ADD $7 $3 0
+HLT
+LBI $7 0
+
+; RTI
+JPR %r
+
+tmr3:
+; Clear flag
+LDR $5 $0 1		; Load current flags
+XOR $6 $4 -1	; clear mask for flag
+AND $5 $6 $5	; Clear flag from flags
+STR $5 $0 1		; Write flags back to NVIC
+
+; Yep, we were here
+ADD $7 $4 0
+HLT
+LBI $7 0
+
+; RTI
+JPR %r
+
+
+main:
+; Setup registers.
+LBI		$0	-128	; R0 = 0x8008
+LBI %s	$0	0x08
+LBI		$1	-128	; R1 = 0x8018
+LBI %s	$1	0x18
+LBI		$2	-128	; R2 = 0x8030
+LBI %s	$2	0x30
+LBI		$3	0x00	; R3 = 0x0040
+LBI %s	$3	0x40
+LBI		$4  0x00	; R4 = 0x0020
+LBI %s  $4  0x20
+
+; Clear WDT.
+LBI $5 0x01		; Load "cancel" mask
+STR $5 $0 4		; Write to WDT_CTRL
+
+; Manually enter settings (many things to check).
+HLT
+
+; (Spin)
+BRC %nzp -1
+
+; Safety Halt
+HLT

@@ -15,6 +15,8 @@ module Nvic (
 	input         i_intEXH,
 	input         i_intTM0,
 	input         i_intTM1,
+	input         i_intTM2,
+	input         i_intTM3,
 	input         i_intEXL,
 	
 	// Output interrupt connections.
@@ -120,13 +122,17 @@ assign doSetFlag = i_intOVF |
                    i_intEXH |
 						 i_intTM0 |
 						 i_intTM1 |
+						 i_intTM2 |
+						 i_intTM3 |
 						 i_intEXL;
 assign inFlags   = {i_intOVF,
 						  i_intEXH,
 						  1'b0,                                // TODO- implement
 						  i_intTM0,
 						  i_intTM1,
-						  5'b00000,                            // TODO- implement
+						  i_intTM2,
+						  i_intTM3,
+						  3'b000,                              // TODO- implement
 						  i_intEXL};
 Mux2 M0[10:0] (
 	.A(i_memDataIn[11:1]),                                // Data Wr? Use data

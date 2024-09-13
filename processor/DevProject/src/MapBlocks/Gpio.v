@@ -14,6 +14,10 @@ module Gpio (
 	output        o_intEXH,
 	output        o_intEXL,
 	
+	// Alternate pin connections.
+	input         i_pwmTmr2,
+	input         i_pwmTmr3,
+	
 	// Raw pinout to outside uP.
 	inout  [15:0] io_gpioPins,
 	
@@ -58,6 +62,7 @@ wire        intHD, intHQ;
 wire        intLD, intLQ;
 
 // Tristate wires.
+wire        curBit10, curBit11;
 wire [15:0] triA, triY, triEn;
 
 // Compute data wires (based on read registers).
@@ -191,8 +196,24 @@ assign intLD = (inpY[8] ^ edgeLQ) & (cfgIntL ^ edgeLQ);
 
 //------------------------------------------------------------------------------
 // Handle tristate inputs.
-assign triA  = outQ; // TODO- implement
-assign triEn = dirQ; // TODO- implement (individual tristates).
+Mux2 M0(
+	.A(i_pwmTmr3),            // Use Alt? use TMR3 PWM signal
+	.B(outQ[10]),             // No?      use gpio bit 10
+	.S(cfgTMR3),
+	.Y(curBit10)
+);
+Mux2 M1(
+	.A(i_pwmTmr2),            // Use Alt? use TMR2 PWM signal
+	.B(outQ[11]),             // No?      use gpio bit 11
+	.S(cfgTMR2),
+	.Y(curBit11)
+);
+
+assign triA  = {outQ[15:12], // TODO- implement
+                curBit11,    // TMR2 vs GPIO[11]
+					 curBit10,    // TMR3 vs GPIO[10]
+					 outQ[9:0]};  // GPIO[9:0]
+assign triEn = dirQ;         // TODO- implement (individual tristates).
 
 //------------------------------------------------------------------------------
 // Drive data output based on given address.
@@ -205,7 +226,7 @@ assign readCfgReg = {1'b0,
 							cfgIntH,      // bit 9
 							cfgIntL,      // bit 8
 							8'b00000000};
-Mux4 M0[15:0] (
+Mux4 M2[15:0] (
 	.C(readCfgReg),                 // Address 00? Read cofigs
 	.D(inpY),                       // Address 01? Read pins
 	.E(dirQ),                       // Address 10? Read directions

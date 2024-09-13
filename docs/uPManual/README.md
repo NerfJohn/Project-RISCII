@@ -29,6 +29,7 @@ The uP design consists of many internal circuits and components. At a high level
 |WDT       | Watchdog timer for resetting hardware in event of SW failure  |
 |GPIO      | General Purpose digital IO pins with some alternate functions |
 |TMR0-1    | Two 16-bit configurable timers with overflow interrupts       |
+|TMR2-3    | Two 16-bit configurable timers capable of PWM generation      |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -72,9 +73,17 @@ Some of the uP's internal resources contain registers that can be accessed using
 |TMR0_CTRL     |0x8020    |r/w   |Controls of timer 0                      |
 |TMR0_CNT      |0x8022    |r/w   |Current count of timer 0                 |
 |TMR0_MAX      |0x8024    |r/w   |Highest value timer 0 count can be       |
-|TMR1_CTRL     |0x8028    |r/w   |Controls of timer 0                      |
-|TMR1_CNT      |0x802A    |r/w   |Current count of timer 0                 |
-|TMR1_MAX      |0x802C    |r/w   |Highest value timer 0 count can be       |
+|TMR1_CTRL     |0x8028    |r/w   |Controls of timer 1                      |
+|TMR1_CNT      |0x802A    |r/w   |Current count of timer 1                 |
+|TMR1_MAX      |0x802C    |r/w   |Highest value timer 1 count can be       |
+|TMR2_CTRL     |0x8030    |r/w   |Controls of timer 2                      |
+|TMR2_CNT      |0x8032    |r/w   |Current count of timer 2                 |
+|TMR2_MAX      |0x8034    |r/w   |Highest value timer 2 count can be       |
+|TMR2_CMP      |0x8036    |r/w   |PWM comparator- "CNT \< CMP" comparison  |
+|TMR3_CTRL     |0x8038    |r/w   |Controls of timer 3                      |
+|TMR3_CNT      |0x803A    |r/w   |Current count of timer 3                 |
+|TMR3_MAX      |0x803C    |r/w   |Highest value timer 3 count can be       |
+|TMR3_CMP      |0x803E    |r/w   |PWM comparator- "CNT \< CMP" comparison  |
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
@@ -136,10 +145,10 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |enable OVF|11       |r/w   |stack overflow detection enable (see CCTRL)   |
 |enable EXH|10       |r/w   |external high priority pin enable (see GPIO)  |
 |reserved  |9        |r/w   |reserved for future use- default value(s) = 0 |
-|reserved  |8        |r/w   |reserved for future use- default value(s) = 0 |
-|reserved  |7        |r/w   |reserved for future use- default value(s) = 0 |
-|reserved  |6        |r/w   |reserved for future use- default value(s) = 0 |
-|reserved  |5        |r/w   |reserved for future use- default value(s) = 0 |
+|enable TM0|8        |r/w   |timer 0 overflow enable (see TMR0)            |
+|enable TM1|7        |r/w   |timer 1 overflow enable (see TMR1)            |
+|enable TM2|6        |r/w   |timer 2 overflow enable (see TMR2)            |
+|enable TM3|5        |r/w   |timer 3 overflow enable (see TMR3)            |
 |reserved  |4        |r/w   |reserved for future use- default value(s) = 0 |
 |reserved  |3        |r/w   |reserved for future use- default value(s) = 0 |
 |reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
@@ -154,10 +163,10 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |OVF flag  |11       |r/w   |stack overflow detection status (see CCTRL)   |
 |EXH flag  |10       |r/w   |external high priority pin status (see GPIO)  |
 |reserved  |9        |r/w   |reserved for future use- default value(s) = 0 |
-|reserved  |8        |r/w   |reserved for future use- default value(s) = 0 |
-|reserved  |7        |r/w   |reserved for future use- default value(s) = 0 |
-|reserved  |6        |r/w   |reserved for future use- default value(s) = 0 |
-|reserved  |5        |r/w   |reserved for future use- default value(s) = 0 |
+|TM0 flag  |8        |r/w   |timer 0 overflow status (see TMR0)            |
+|TM1 flag  |7        |r/w   |timer 1 overflow status (see TMR1)            |
+|TM2 flag  |6        |r/w   |timer 2 overflow status (see TMR2)            |
+|TM3 flag  |5        |r/w   |timer 3 overflow status (see TMR3)            |
 |reserved  |4        |r/w   |reserved for future use- default value(s) = 0 |
 |reserved  |3        |r/w   |reserved for future use- default value(s) = 0 |
 |reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
@@ -197,7 +206,7 @@ All pins are capable of generic input/output capabilities. Controls are split ac
 
 Two pins (bit field's 8 and 9) has built-in edge detecting interrupts EXL and EXH, respectively. Each interrupt can be configured to trigger on a specific edge and are effectively always enabled (ie will set their NVIC flag bits triggered- exercise caution when first enabling).
 
-At present, the alternate function configurations can be read/written, but have no effect. **This is an artifact of the uP currently being developed.**
+Some pins possess alternate functions, often related to other peripherals (eg PWM timers can export their signal to a GPIO). The CFG register is used to select if these pins are used as GPIO pins or used by the associated peripheral. In any case, a peripheral requires the CFG register (and likely DIR register) to be set properly to control the GPIO pin as expected.
 
 The GPIO registers remain fully operational while the uP is in the PAUSED state.
 
@@ -209,8 +218,8 @@ The GPIO registers remain fully operational while the uP is in the PAUSED state.
 |TODO      |14       |r/w   |not implemented yet, but readable/writable    |
 |reserved  |13       |r     |reserved for future use- default value(s) = 0 |
 |TODO      |12       |r/w   |not implemented yet, but readable/writable    |
-|TODO      |11       |r/w   |not implemented yet, but readable/writable    |
-|TODO      |10       |r/w   |not implemented yet, but readable/writable    |
+|Alt TMR2  |11       |r/w   |GPIO 11 = TMR2 PWM (active high)              |
+|Alt TMR3  |10       |r/w   |GPIO 10 = TMR3 PWM (active high)              |
 |EXH trig  |9        |r/w   |EXH edge trigger- falling = 0, rising = 1     |
 |EXL trig  |8        |r/w   |EXL edge trigger- falling = 0, rising = 1     |
 |reserved  |7:0      |r     |reserved for future use- default value(s) = 0 |
@@ -258,13 +267,13 @@ The TMR0-1 registers are only fully operationl while the uP is in the RUNNING st
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:0     |r/w   |current count of the timer                    |
+|count     |15:0     |r/w   |current count of the timer                    |
 
 **_TMR0_MAX (SW Address = 0x8024, HW Address = 0xC012)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:0     |r/w   |max value CNT register can increment to       |
+|maxCount  |15:0     |r/w   |max value CNT register can increment to       |
 
 **_TMR1_CTRL (SW Address = 0x8028, HW Address = 0xC014)_**
 
@@ -279,13 +288,77 @@ The TMR0-1 registers are only fully operationl while the uP is in the RUNNING st
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:0     |r/w   |current count of the timer                    |
+|count     |15:0     |r/w   |current count of the timer                    |
 
 **_TMR1_MAX (SW Address = 0x802C, HW Address = 0xC016)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:0     |r/w   |max value CNT register can increment to       |
+|maxCount  |15:0     |r/w   |max value CNT register can increment to       |
+
+### Timer 2 (TMR2) and Timer 3 (TMR3) registers
+
+The TMR2 and TMR3 registers control timers 2 and 3 respectively. They posses the same capabilities/controls as timers 0 and 1 (see TMR0 and TMR1), but also include PWM capabilities, which can be exported via GPIOs.
+
+Compared to TM0 and TMR1, timers 2 and 3 add the CMP register, which is used to generate a PWM signal based on CNT register (ie expression "CNT \< CMP" used). Timer 2's PWM signal can be exported through GPIO pin 11 while Timer 3's PWM signal can be exported through GPIO pin 10.
+
+To export the PWM signals, the selected GPIO pin must be configured as an output and have its associated alternate function selected (see GPIO). Doing so will re-assign the GPIO pin as a PWM output pin.
+
+The TMR2-3 registers are only fully operationl while the uP is in the RUNNING state. The timers are effectively paused in the BOOTING and PAUSED uP states.
+
+**_TMR2_CTRL (SW Address = 0x8030, HW Address = 0xC018)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
+|prescale  |7:4      |r/w   |prescalar- "0000" = 1:1 -\> "1111" = 16:1     |
+|reserved  |3:1      |r     |reserved for future use- default value(s) = 0 |
+|enable    |0        |r/w   |enables timer for incrementing (active high)  |
+
+**_TMR2_CNT (SW Address = 0x8032, HW Address = 0xC019)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|count     |15:0     |r/w   |current count of the timer                    |
+
+**_TMR2_MAX (SW Address = 0x8034, HW Address = 0xC01A)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|maxCount  |15:0     |r/w   |max value CNT register can increment to       |
+
+**_TMR2_CMP (SW Address = 0x8036, HW Address = 0xC01B)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|comparator|15:0     |r/w   |compare value- does "CNT \< CMP" comparison   |
+
+**_TMR3_CTRL (SW Address = 0x8038, HW Address = 0xC01C)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
+|prescale  |7:4      |r/w   |prescalar- "0000" = 1:1 -\> "1111" = 16:1     |
+|reserved  |3:1      |r     |reserved for future use- default value(s) = 0 |
+|enable    |0        |r/w   |enables timer for incrementing (active high)  |
+
+**_TMR3_CNT (SW Address = 0x803A, HW Address = 0xC01D)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|count     |15:0     |r/w   |current count of the timer                    |
+
+**_TMR3_MAX (SW Address = 0x803C, HW Address = 0xC01E)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|maxCount  |15:0     |r/w   |max value CNT register can increment to       |
+
+**_TMR3_CMP (SW Address = 0x803E, HW Address = 0xC01F)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|comparator|15:0     |r/w   |compare value- does "CNT \< CMP" comparison   |
 
 ## uP Pinout
 ---

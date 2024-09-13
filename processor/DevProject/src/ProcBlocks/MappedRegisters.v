@@ -46,7 +46,7 @@ module MappedRegisters (
 // Compute control wires (based on mem address).
 wire        is6BitAddr;
 wire        isCctrlAddr, isNvicAddr, isWdtAddr, isGpioAddr;
-wire        isTmr0Addr, isTmr1Addr;
+wire        isTmr0Addr, isTmr1Addr, isTmr2Addr, isTmr3Addr;
 
 // Core Control wires.
 wire [1:0]  cctrlMemAddr;
@@ -62,7 +62,7 @@ wire [1:0]  nvicMemAddr;
 wire [15:0] nvicMemDataIn, nvicMemDataOut;
 wire        nvicMemWrEn;
 wire        nvicIntOVF, nvicIntEXH, nvicIntEXL;
-wire        nvicIntTM0, nvicIntTM1;
+wire        nvicIntTM0, nvicIntTM1, nvicIntTM2, nvicIntTM3;
 wire [3:0]  nvicIntCode;
 wire        nvicIntEn;
 
@@ -78,6 +78,7 @@ wire [1:0]  gpioMemAddr;
 wire [15:0] gpioMemDataIn, gpioMemDataOut;
 wire        gpioMemWrEn;
 wire        gpioIntEXH, gpioIntEXL;
+wire        gpioPwmTmr2, gpioPwmTmr3;
 
 // Timer 0 wires.
 wire [1:0]  tmr0MemAddr;
@@ -92,6 +93,20 @@ wire [15:0] tmr1MemDataIn, tmr1MemDataOut;
 wire        tmr1MemWrEn;
 wire        tmr1SmIsBooted, tmr1SmStartPause;
 wire        tmr1IntTMR;
+
+// Timer 2 wires.
+wire [1:0]  tmr2MemAddr;
+wire [15:0] tmr2MemDataIn, tmr2MemDataOut;
+wire        tmr2MemWrEn;
+wire        tmr2SmIsBooted, tmr2SmStartPause;
+wire        tmr2IntTMR, tmr2PwmOut;
+
+// Timer 3 wires.
+wire [1:0]  tmr3MemAddr;
+wire [15:0] tmr3MemDataIn, tmr3MemDataOut;
+wire        tmr3MemWrEn;
+wire        tmr3SmIsBooted, tmr3SmStartPause;
+wire        tmr3IntTMR, tmr3PwmOut;
 
 // Compute data wires (based on mem address).
 wire [15:0] readData00XX, readData01XX, readData10XX;
@@ -137,6 +152,8 @@ Nvic NVIC (
 	.i_intEXH(nvicIntEXH),
 	.i_intTM0(nvicIntTM0),
 	.i_intTM1(nvicIntTM1),
+	.i_intTM2(nvicIntTM2),
+	.i_intTM3(nvicIntTM3),
 	.i_intEXL(nvicIntEXL),
 	
 	// Output interrupt connections.
@@ -181,6 +198,10 @@ Gpio GPIO (
 	// Interrupt signal connections.
 	.o_intEXH(gpioIntEXH),
 	.o_intEXL(gpioIntEXL),
+	
+	// Alternate pin connections.
+	.i_pwmTmr2(gpioPwmTmr2),
+	.i_pwmTmr3(gpioPwmTmr3),
 	
 	// Raw pinout to outside uP.
 	.io_gpioPins(io_gpioPins),     // inout- direct connect net
@@ -232,6 +253,54 @@ Timer TMR1 (
 	.i_rstn(i_rstn)
 );
 
+//------------------------------------------------------------------------------
+// Timer 2- Configurable timer, capable of creating an interrupt and PWM signal.
+TimerPWM TMR2 (
+	// Memory Map connections.
+	.i_memAddr(tmr2MemAddr),
+   .i_memDataIn(tmr2MemDataIn),
+	.i_memWrEn(tmr2MemWrEn),
+	.o_memDataOut(tmr2MemDataOut),
+	
+	// State input connections.
+	.i_smIsBooted(tmr2SmIsBooted),
+	.i_smStartPause(tmr2SmStartPause),
+	
+	// Interrupt connection.
+	.o_intTMR(tmr2IntTMR),
+	
+	// PWM connection.
+	.o_pwmOut(tmr2PwmOut),
+	
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Timer 3- Configurable timer, capable of creating an interrupt and PWM signal.
+TimerPWM TMR3 (
+	// Memory Map connections.
+	.i_memAddr(tmr3MemAddr),
+   .i_memDataIn(tmr3MemDataIn),
+	.i_memWrEn(tmr3MemWrEn),
+	.o_memDataOut(tmr3MemDataOut),
+	
+	// State input connections.
+	.i_smIsBooted(tmr3SmIsBooted),
+	.i_smStartPause(tmr3SmStartPause),
+	
+	// Interrupt connection.
+	.o_intTMR(tmr3IntTMR),
+	
+	// PWM connection.
+	.o_pwmOut(tmr3PwmOut),
+	
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -251,6 +320,10 @@ assign isTmr0Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0100xx
                                 & ~i_memAddr[3] & ~i_memAddr[2];
 assign isTmr1Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0101xx
                                 & ~i_memAddr[3] &  i_memAddr[2];
+assign isTmr2Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0110xx
+                                &  i_memAddr[3] & ~i_memAddr[2];
+assign isTmr3Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0111xx
+                                &  i_memAddr[3] &  i_memAddr[2];
 										  
 //------------------------------------------------------------------------------
 // Handle Core Control (cctrl) inputs.
@@ -270,6 +343,8 @@ assign nvicIntOVF    = cctrlIntOVF;
 assign nvicIntEXH    = gpioIntEXH;
 assign nvicIntTM0    = tmr0IntTMR;
 assign nvicIntTM1    = tmr1IntTMR;
+assign nvicIntTM2    = tmr2IntTMR;
+assign nvicIntTM3    = tmr3IntTMR;
 assign nvicIntEXL    = gpioIntEXL;
 
 //------------------------------------------------------------------------------
@@ -285,6 +360,8 @@ assign wdtSmStartPause = i_smStartPause;
 assign gpioMemAddr   = i_memAddr[1:0];
 assign gpioMemDataIn = i_memDataIn;
 assign gpioMemWrEn   = isGpioAddr & i_memWrEn;
+assign gpioPwmTmr2   = tmr2PwmOut;
+assign gpioPwmTmr3   = tmr3PwmOut;
 
 //------------------------------------------------------------------------------
 // Handle Timer 0 inputs.
@@ -303,6 +380,22 @@ assign tmr1SmIsBooted   = i_smIsBooted;
 assign tmr1SmStartPause = i_smStartPause;
 
 //------------------------------------------------------------------------------
+// Handle Timer 2 inputs.
+assign tmr2MemAddr      = i_memAddr[1:0];
+assign tmr2MemDataIn    = i_memDataIn;
+assign tmr2MemWrEn      = isTmr2Addr & i_memWrEn;
+assign tmr2SmIsBooted   = i_smIsBooted;
+assign tmr2SmStartPause = i_smStartPause;
+
+//------------------------------------------------------------------------------
+// Handle Timer 3 inputs.
+assign tmr3MemAddr      = i_memAddr[1:0];
+assign tmr3MemDataIn    = i_memDataIn;
+assign tmr3MemWrEn      = isTmr3Addr & i_memWrEn;
+assign tmr3SmIsBooted   = i_smIsBooted;
+assign tmr3SmStartPause = i_smStartPause;
+
+//------------------------------------------------------------------------------
 // Drive data output based on given address.
 Mux4 M0[15:0] (
 	.C(cctrlMemDataOut),      // Addr 0000-xx? Read CCTRL
@@ -315,8 +408,8 @@ Mux4 M0[15:0] (
 Mux4 M1[15:0] (
 	.C(tmr0MemDataOut),       // Addr 0100-xx? Read TMR0
 	.D(tmr1MemDataOut),       // Addr 0101-xx? Read TMR1
-	.E(16'b0000000000000000), // Addr 0110-xx? TODO- implement
-	.F(16'b0000000000000000), // Addr 0111-xx? TODO- implement
+	.E(tmr2MemDataOut),       // Addr 0110-xx? Read TMR2
+	.F(tmr3MemDataOut),       // Addr 0111-xx? Read TMR3
 	.S(i_memAddr[3:2]),
 	.Y(readData01XX)
 );
