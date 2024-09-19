@@ -1,0 +1,229 @@
+; Test program checking UART works.
+;
+; Program tests/demonstrates the following:
+; 1) UART can be enabled at given a baud rate (set for 9600 @ 8.3 MHz)
+; 2) GPIO can be configured to give UART pins 14/15
+; 2) UART can send data- via block and non-blocking
+;
+; Register Usage:
+; R0 = intermediate
+; R1 = intermediate
+; R2 = intermediate/return value
+; R3 = intermediate/return link
+; R4 = 0x8008    (NVIC address)
+; R5 = 0x8018    (GPIO address)
+; R6 = 0x8040    (UART address)
+; R7 = stack ptr (for context save/restore)
+
+;===============================================================================
+; Function: uart_init (Inits GPIO and UART for 9600 @ 8.3 MHz)
+; (No Params, No Returns)
+uart_init:
+; Save context
+ADD		$7 $7 2			; Reserve 1 stack slot
+STR		$0 $7 0			; Save R0 to R7+0
+
+; Set up GPIO
+LBI		$0 -128			; Direction mask 0x8000
+LBI	%s	$0 0
+STR		$0 $5 2			; Set pins (14 = input, 15 = output)
+SHR		$0 $0 1			; Alt mask 0x4000
+STR		$0 $5 0			; Reroute pins 14/15 to UART
+
+; Set up UART
+LBI		$0 0x03			; Baud mask 0x0364
+LBI	%s	$0 0x64
+STR		$0 $6 1			; Set UART baud rate
+LBI		$0 1			; Enable mask 0x0001
+STR		$0 $6 0			; UART enabled
+
+; Restore context
+LDR		$0 $7 0			; Restore R0 from R7+0
+ADD		$7 $7 -2		; Free 1 stack slot
+
+; Return
+JPR $3 0
+
+;===============================================================================
+; Function: uart_asciiz (Sends null terminated ascii string w/o null- blocking)
+; (R0 = asciiz ptr, No Returns)
+uart_asciiz:
+; Save context
+ADD		$7 $7 6			; Reserve 3 stack slots
+STR		$0 $7 0			; Save R0 to R7-0
+STR		$1 $7 -1		; Save R1 to R7-2
+STR		$2 $7 -2		; Save R2 to R7-4
+
+; (Loop entry)
+uart_asciiz_L0:
+
+; Get next byte
+LDR		$1 $0 0			; Get word with next byte
+AND		$2 $0 1			; Get last bit of address
+BRC %z 	1				; Even addr? byte already in place
+SHR		$1 $1 8			; No?        shift upper byte into position
+
+; Send (if not null)
+ADD		$1 $1 0			; Compare sign of byte to send
+BRC %z 	1				; Zero/null? don't send overhead
+STR		$1 $6 2			; No?        write byte to UART- send has started
+ADD		$0 $0 1			; Adjust address for sent/served byte
+
+; Blocking send
+LDR		$2 $6 0			; Get status bits
+SHR		$2 $2 15		; Get "is TX idle" bit
+BRC %z	-3				; Repeat read-shift until idle (ie 1)
+
+; Exit on null
+ADD		$1 $1 0			; Compare sign of last byte
+BRC %z	3				; Zero/null? skip running loop
+_la		$2 uart_asciiz_L0
+JPR		$2 0			; No?        run loop again for next byte
+
+; (Loop exit)
+
+; Restore context
+LDR		$0 $7 0			; Restore R0 from R7-0
+LDR		$1 $7 -1		; Restore R0 from R7-2
+LDR		$2 $7 -2		; Restore R0 from R7-4
+ADD		$7 $7 -6		; Free 3 stack slots
+
+; Return
+JPR		$3 0
+
+;===============================================================================
+;===============================================================================
+;===============================================================================
+
+__START:
+_la $7 main			; (Reset Vector)
+JPR $7 0
+HLT
+
+HLT				; Vector 1
+HLT
+HLT
+HLT
+
+HLT				; Vector 2
+HLT
+HLT
+HLT
+
+HLT				; Vector 3
+HLT
+HLT
+HLT
+
+; Vector 4- UART TX complete
+STR 		$0 $7 1
+_la		$0 int_utx
+JPR		$0 0
+
+HLT				; Vector 5
+HLT
+HLT
+HLT
+
+HLT				; Vector 6
+HLT
+HLT
+HLT
+
+HLT				; Vector 7
+HLT
+HLT
+HLT
+
+HLT				; Vector 8
+HLT
+HLT
+HLT
+
+HLT				; Vector 9
+HLT
+HLT
+HLT
+
+HLT				; Vector 10
+HLT
+HLT
+HLT
+
+HLT				; Vector 11
+HLT
+HLT
+HLT
+
+;===============================================================================
+; Function: int_utx (Interrupt for UART TX completed)
+; (Interrupt- R0 already saved to R7+2)
+int_utx:
+; Save interrupt context (R0 already saved to R7+2)
+STR		$1 $7 2			; R1 saved to R7+4
+
+; Toggle GPIO 0
+LBI		$0 0x01			; Toggle GPIO 0 Mask
+LDR		$1 $5 3			; Read GPIO outputs
+XOR		$1 $0 $1		; Toggle GPIO 0
+STR		$1 $5 3			; Write toggled bit to GPIO outputs
+
+; Clear flag
+LBI		$0 0x10			; Clear UTX mask
+XOR		$0 $0 -1		; (Turn into AND mask)
+LDR		$1 $4 1			; Read NVIC flags
+AND		$1 $0 $1		; Clear UTX flag
+STR		$1 $4 1			; Write NVIC flags
+
+; Restore context
+LDR		$0 $7 1			; Restore R0 from R7+2
+LDR		$1 $7 2			; Restore R1 from R7+4
+
+; Return (from interrupt)
+JPR %r
+
+;===============================================================================
+; Function: main (Main application program being run)
+; (No Params, No Returns)
+main:
+; Init Registers
+LBI		$4 -128			; NVIC Addr 0x8008
+LBI	%s	$4 0x08
+LBI		$5 -128			; GPIO Addr 0x8018
+LBI	%s	$5 0x18
+LBI		$6 -128			; UART Addr 0x8040
+LBI	%s	$6 0x40
+_la		$7 __FREE		; Stack pointer
+
+; Turn off WDT
+LBI		$0 0x01			; Cancel mask 0x0001
+STR		$0 $4 4			; Turn off WDT (NVIC + 8 = WDT Addr)
+
+; Init UART
+_la		$0 uart_init	; Get "uart_init" address
+JLR		$3 $0 0			; Call function
+
+; Init GPIO 0 as output (initally off)
+LDR		$0 $5 2			; Read GPIO direction
+ORR		$0 $0 0x01		; Set GPIO 0 as output
+						; (GPIO 0 is off by default)
+STR		$0 $5 2			; Write GPIO direction
+
+; Init interrupt for UART TX complete (ie UTX)
+LBI		$0 0x10			; Set UTX enable mask
+XOR		$1 $0 -1		; Clear UTX flag mask
+LDR		$2 $4 1			; Read NVIC flags
+AND		$2 $1 $2		; Clear UTX flag
+STR		$2 $4 1			; Write NVIC flags
+LDR		$2 $4 0			; Read NVIC enable
+ORR		$2 $0 $2		; Set UTX enable
+STR		$2 $4 0			; Write NVIC enable
+
+; Print a message.
+myMsg: .data "Foobar:\0"
+_la		$0 myMsg		; Prep send argument
+_la		$1 uart_asciiz		; Call "uart_asciiz"
+JLR		$3 $1 0
+
+; HLT at the end of the day
+HLT

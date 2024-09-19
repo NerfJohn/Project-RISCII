@@ -13,6 +13,7 @@ module MappedRegisters (
 	// State machine connections.
 	input         i_smIsBooted,
 	input         i_smStartPause,
+	output        o_uartNowPaused,
 
 	// Reported Info connections.
 	input  [15:0] i_reportSP,
@@ -47,6 +48,7 @@ module MappedRegisters (
 wire        is6BitAddr;
 wire        isCctrlAddr, isNvicAddr, isWdtAddr, isGpioAddr;
 wire        isTmr0Addr, isTmr1Addr, isTmr2Addr, isTmr3Addr;
+wire        isUartAddr;
 
 // Core Control wires.
 wire [1:0]  cctrlMemAddr;
@@ -63,6 +65,7 @@ wire [15:0] nvicMemDataIn, nvicMemDataOut;
 wire        nvicMemWrEn;
 wire        nvicIntOVF, nvicIntEXH, nvicIntEXL;
 wire        nvicIntTM0, nvicIntTM1, nvicIntTM2, nvicIntTM3;
+wire        nvicIntUTX;
 wire [3:0]  nvicIntCode;
 wire        nvicIntEn;
 
@@ -79,6 +82,7 @@ wire [15:0] gpioMemDataIn, gpioMemDataOut;
 wire        gpioMemWrEn;
 wire        gpioIntEXH, gpioIntEXL;
 wire        gpioPwmTmr2, gpioPwmTmr3;
+wire        gpioUartTX;
 
 // Timer 0 wires.
 wire [1:0]  tmr0MemAddr;
@@ -107,6 +111,14 @@ wire [15:0] tmr3MemDataIn, tmr3MemDataOut;
 wire        tmr3MemWrEn;
 wire        tmr3SmIsBooted, tmr3SmStartPause;
 wire        tmr3IntTMR, tmr3PwmOut;
+
+// UART wires.
+wire [1:0]  uartMemAddr;
+wire [15:0] uartMemDataIn, uartMemDataOut;
+wire        uartMemWrEn;
+wire        uartSmIsBooted, uartSmStartPause, uartSmNowPaused;
+wire        uartPinTX;
+wire        uartIntUTX;
 
 // Compute data wires (based on mem address).
 wire [15:0] readData00XX, readData01XX, readData10XX;
@@ -154,6 +166,7 @@ Nvic NVIC (
 	.i_intTM1(nvicIntTM1),
 	.i_intTM2(nvicIntTM2),
 	.i_intTM3(nvicIntTM3),
+	.i_intUTX(nvicIntUTX),
 	.i_intEXL(nvicIntEXL),
 	
 	// Output interrupt connections.
@@ -202,6 +215,7 @@ Gpio GPIO (
 	// Alternate pin connections.
 	.i_pwmTmr2(gpioPwmTmr2),
 	.i_pwmTmr3(gpioPwmTmr3),
+	.i_uartTX(gpioUartTX),
 	
 	// Raw pinout to outside uP.
 	.io_gpioPins(io_gpioPins),     // inout- direct connect net
@@ -301,6 +315,31 @@ TimerPWM TMR3 (
 	.i_rstn(i_rstn)
 );
 
+//------------------------------------------------------------------------------
+// UART- UART transceiver w/ configurable baud. uP's primary serial port.
+Uart UART (
+	// Memory Map connections.
+	.i_memAddr(uartMemAddr),
+	.i_memDataIn(uartMemDataIn),
+	.i_memWrEn(uartMemWrEn),
+	.o_memDataOut(uartMemDataOut),
+	
+	// State input connections.
+	.i_smIsBooted(uartSmIsBooted),
+	.i_smStartPause(uartSmStartPause),
+	.o_smNowPaused(uartSmNowPaused),
+	
+	// Serial pin connections.
+	.o_pinTX(uartPinTX),
+	
+	// Interrupt connections.
+	.o_intUTX(uartIntUTX),
+	
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -324,6 +363,8 @@ assign isTmr2Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0110xx
                                 &  i_memAddr[3] & ~i_memAddr[2];
 assign isTmr3Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0111xx
                                 &  i_memAddr[3] &  i_memAddr[2];
+assign isUartAddr  = is6BitAddr &  i_memAddr[5] & ~i_memAddr[4]  // ...1000xx
+                                & ~i_memAddr[3] & ~i_memAddr[2];
 										  
 //------------------------------------------------------------------------------
 // Handle Core Control (cctrl) inputs.
@@ -345,6 +386,7 @@ assign nvicIntTM0    = tmr0IntTMR;
 assign nvicIntTM1    = tmr1IntTMR;
 assign nvicIntTM2    = tmr2IntTMR;
 assign nvicIntTM3    = tmr3IntTMR;
+assign nvicIntUTX    = uartIntUTX;
 assign nvicIntEXL    = gpioIntEXL;
 
 //------------------------------------------------------------------------------
@@ -362,6 +404,7 @@ assign gpioMemDataIn = i_memDataIn;
 assign gpioMemWrEn   = isGpioAddr & i_memWrEn;
 assign gpioPwmTmr2   = tmr2PwmOut;
 assign gpioPwmTmr3   = tmr3PwmOut;
+assign gpioUartTX    = uartPinTX;
 
 //------------------------------------------------------------------------------
 // Handle Timer 0 inputs.
@@ -396,6 +439,14 @@ assign tmr3SmIsBooted   = i_smIsBooted;
 assign tmr3SmStartPause = i_smStartPause;
 
 //------------------------------------------------------------------------------
+// Handle UART inputs.
+assign uartMemAddr      = i_memAddr[1:0];
+assign uartMemDataIn    = i_memDataIn;
+assign uartMemWrEn      = isUartAddr & i_memWrEn;
+assign uartSmIsBooted   = i_smIsBooted;
+assign uartSmStartPause = i_smStartPause;
+
+//------------------------------------------------------------------------------
 // Drive data output based on given address.
 Mux4 M0[15:0] (
 	.C(cctrlMemDataOut),      // Addr 0000-xx? Read CCTRL
@@ -414,7 +465,7 @@ Mux4 M1[15:0] (
 	.Y(readData01XX)
 );
 Mux4 M2[15:0] (
-	.C(16'b0000000000000000), // Addr 1000-xx? TODO- implement
+	.C(uartMemDataOut),       // Addr 1000-xx? Read UART
 	.D(16'b0000000000000000), // Addr 1001-xx? TODO- implement
 	.E(16'b0000000000000000), // Addr 1010-xx? TODO- implement
 	.F(16'b0000000000000000), // Addr 1011-xx? No mapped registers
@@ -429,6 +480,10 @@ Mux4 M3[15:0] (
 	.S(i_memAddr[5:4]),
 	.Y(o_memDataOut)
 );
+
+//------------------------------------------------------------------------------
+// Drive state machine outputs.
+assign o_uartNowPaused = uartSmNowPaused;
 
 //------------------------------------------------------------------------------
 // Drive control outputs.

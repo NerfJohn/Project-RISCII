@@ -17,6 +17,7 @@ module Nvic (
 	input         i_intTM1,
 	input         i_intTM2,
 	input         i_intTM3,
+	input         i_intUTX,
 	input         i_intEXL,
 	
 	// Output interrupt connections.
@@ -124,6 +125,7 @@ assign doSetFlag = i_intOVF |
 						 i_intTM1 |
 						 i_intTM2 |
 						 i_intTM3 |
+						 i_intUTX |
 						 i_intEXL;
 assign inFlags   = {i_intOVF,
 						  i_intEXH,
@@ -132,7 +134,8 @@ assign inFlags   = {i_intOVF,
 						  i_intTM1,
 						  i_intTM2,
 						  i_intTM3,
-						  3'b000,                              // TODO- implement
+						  i_intUTX,
+						  2'b00,                               // TODO- implement
 						  i_intEXL};
 Mux2 M0[10:0] (
 	.A(i_memDataIn[11:1]),                                // Data Wr? Use data
@@ -147,11 +150,11 @@ assign flagEn    = doSetFlag | (isFlagAddr & i_memWrEn);
 assign encIn1  = enableQ[0]  & flagQ[0];  // low ext. pin (EXL)- lowest priority
 assign encIn2  = enableQ[1]  & flagQ[1];  // TODO- implement
 assign encIn3  = enableQ[2]  & flagQ[2];  // TODO- implement
-assign encIn4  = enableQ[3]  & flagQ[3];  // TODO- implement
-assign encIn5  = enableQ[4]  & flagQ[4];  // TODO- implement
-assign encIn6  = enableQ[5]  & flagQ[5];  // TODO- implement
-assign encIn7  = enableQ[6]  & flagQ[6];  // TODO- implement
-assign encIn8  = enableQ[7]  & flagQ[7];  // TODO- implement
+assign encIn4  = enableQ[3]  & flagQ[3];  // UART TX byte (UTX)
+assign encIn5  = enableQ[4]  & flagQ[4];  // Timer 3 overflow (TM3)
+assign encIn6  = enableQ[5]  & flagQ[5];  // Timer 2 overflow (TM2)
+assign encIn7  = enableQ[6]  & flagQ[6];  // Timer 1 overflow (TM1)
+assign encIn8  = enableQ[7]  & flagQ[7];  // Timer 0 overflow (TM0)
 assign encIn9  = enableQ[8]  & flagQ[8];  // TODO- implement
 assign encIn10 = enableQ[9]  & flagQ[9];  // high ext. pin (EXH)
 assign encIn11 = enableQ[10] & flagQ[10]; // overflow (OVF)- highest priority

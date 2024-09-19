@@ -85,6 +85,22 @@ void LoadAddrItem::doLocalAnalysis(DataModel_t* model) {
 		}
 	}
 
+	// "Claim" any open labels- defining where the label points to.
+	for (string labelName : model->m_openLabels) {
+		// Claim the label.
+		model->m_labelTable.setItem(labelName, *this);
+
+		// (Inform debugging users).
+		string dbgStr = "Label \"" +
+				        labelName +
+						"\" paired";
+		Printer::getInst()->log(LOG_DEBUG,
+				                m_label->m_orignFile,
+								m_label->m_originLine,
+								dbgStr);
+	}
+	model->m_openLabels.clear();
+
 	// Use of label- record usage.
 	model->m_labelTable.useLabel(m_label->m_rawStr);
 

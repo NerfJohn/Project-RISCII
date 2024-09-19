@@ -30,6 +30,7 @@ The uP design consists of many internal circuits and components. At a high level
 |GPIO      | General Purpose digital IO pins with some alternate functions |
 |TMR0-1    | Two 16-bit configurable timers with overflow interrupts       |
 |TMR2-3    | Two 16-bit configurable timers capable of PWM generation      |
+|UART      | UART transceiver with configurable baud rate                  |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -84,6 +85,9 @@ Some of the uP's internal resources contain registers that can be accessed using
 |TMR3_CNT      |0x803A    |r/w   |Current count of timer 3                 |
 |TMR3_MAX      |0x803C    |r/w   |Highest value timer 3 count can be       |
 |TMR3_CMP      |0x803E    |r/w   |PWM comparator- "CNT \< CMP" comparison  |
+|UART_CTRL     |0x8040    |r/w   |UART control/status register             |
+|UART_BAUD     |0x8042    |r/w   |UART baud rate (in system clock ticks)   |
+|UART_TX       |0x8044    |r/w   |Byte to send over UART TX channel        |
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
@@ -149,7 +153,7 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |enable TM1|7        |r/w   |timer 1 overflow enable (see TMR1)            |
 |enable TM2|6        |r/w   |timer 2 overflow enable (see TMR2)            |
 |enable TM3|5        |r/w   |timer 3 overflow enable (see TMR3)            |
-|reserved  |4        |r/w   |reserved for future use- default value(s) = 0 |
+|enable UTX|4        |r/w   |UART TX byte complete enable (see UART)       |
 |reserved  |3        |r/w   |reserved for future use- default value(s) = 0 |
 |reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
 |enable EXL|1        |r/w   |external low priority pin enable (see GPIO)   |
@@ -167,7 +171,7 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |TM1 flag  |7        |r/w   |timer 1 overflow status (see TMR1)            |
 |TM2 flag  |6        |r/w   |timer 2 overflow status (see TMR2)            |
 |TM3 flag  |5        |r/w   |timer 3 overflow status (see TMR3)            |
-|reserved  |4        |r/w   |reserved for future use- default value(s) = 0 |
+|UTX flag  |4        |r/w   |UART TX byte complete flag (see UART)         |
 |reserved  |3        |r/w   |reserved for future use- default value(s) = 0 |
 |reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
 |EXL flag  |1        |r/w   |external low priority pin status (see GPIO)   |
@@ -215,7 +219,7 @@ The GPIO registers remain fully operational while the uP is in the PAUSED state.
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |reserved  |15       |r     |reserved for future use- default value(s) = 0 |
-|TODO      |14       |r/w   |not implemented yet, but readable/writable    |
+|Alt UART  |14       |r/w   |GPIO 14/15 = UART RX/TX (active high)         |
 |reserved  |13       |r     |reserved for future use- default value(s) = 0 |
 |TODO      |12       |r/w   |not implemented yet, but readable/writable    |
 |Alt TMR2  |11       |r/w   |GPIO 11 = TMR2 PWM (active high)              |
@@ -250,7 +254,7 @@ The CTRL register allows for enabling the timer, as well as setting a prescalar 
 
 The MAX register allows for choosing the highest value the timer's CNT can reach before overflowing. The CNT register is reset anytime the MAX register is written to. Note that setting the CNT register value to be above the MAX register value results in undefined behavior.
 
-Upon every overflow, an interrupt pulse is generated and sent to the NVIC (see NVIC). This pulse is always enabled (though not necessarily enabled in the NVIC). This overflow point adjusts with the MAX register.
+Upon every overflow, an interrupt pulse is generated and sent to the NVIC (see NVIC). This pulse is enabled by enabling the timer (though not necessarily enabled in the NVIC). This overflow point adjusts with the MAX register.
 
 The TMR0-1 registers are only fully operationl while the uP is in the RUNNING state. The timers are effectively paused in the BOOTING and PAUSED uP states.
 
@@ -359,6 +363,50 @@ The TMR2-3 registers are only fully operationl while the uP is in the RUNNING st
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |comparator|15:0     |r/w   |compare value- does "CNT \< CMP" comparison   |
+
+### Universal Asynchronous Receiver/Transmitter (UART) Registers
+
+The UART registers control the uP's UART transceiver (a common serial connection in embedded systems). The UART is capable of sending and receiving data one byte at a time at a given speed (ie baud rate). Two GPIO pins are used to import/export the UART signals.
+
+Note: At present, the RX channel of the UART is unavailable. **This is an artifact of the uP currently being under development**.
+
+The UART_CTRL register is used to enable the UART's TX and RX channels. The register can also be used to determine if the UART's TX channel is ready to send another byte.
+
+The speed of the UART is determined by the UART_BAUD register. For a given system clock speed and desired baud rate, the UART_BAUD value is calculated using the following equation:
+
+<code>floor_by_2((sys_clk_Hz \/ baud_rate) - 1) = UART_BAUD</code>
+
+Note that the resulting baud rate will likely be slightly off from the desired rate (especially due to flooring). So long as the system clock speed is significantly faster than the baud rate, this should not be a large issue.
+
+The UART_TX register is used to specify a byte to send. When the uP is in the RUNNING state, the UART is enabled, and the TX channel is idle, then writing to the register will send the lowest 8 bits of the written data over the UART's TX channel (thus making the TX channel busy).
+
+Upon the completion of a byte sent over the TX channel, an interrupt pulse will be generated (see NVIC). This interrupt is enabled with the UART, though will be cancelled if the uP begins pausing internally while a byte is being sent (it also must be enabled in the NVIC to cause an interrupt).
+
+To import/export the UART signals from the uP, the pins must be configured for the correct direction (ie pin 14 as an input, pin 15 as an output) and have their asociated alterate function selected (see GPIO). Doing so will re-assign the GPIO pins as UART pins- controlled and monitored by the UART.
+
+The UART registers are only fully operational while the uP is in the RUNNING state. Once a pause is started, the UART finishes up any TX or RX operations it's working on (neither generating interrupts), then pauses.
+
+**_UART_CTRL (SW Address = 0x8040, HW Address = 0xC020)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|tx_idle   |15       |r     |indicator if TX channel is idle (active high) |
+|reserved  |14:1     |r/w   |reserved for future use- default value(s) = 0 |
+|enable    |0        |r/w   |enables UART channels (active high)           |
+
+**_UART_BAUD (SW Address = 0x8042, HW Address = 0xC021)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|baud_rate |15:1     |r/w   |baud rate of UART (in system clock ticks)     |
+|reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
+
+**_UART_TX (SW Address = 0x8044, HW Address = 0xC022)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
+|tx_byte   |7:0      |r/w   |byte to send over UART TX channel             |
 
 ## uP Pinout
 ---
@@ -484,7 +532,7 @@ As stated before, this document focuses on describing the software uP design, NO
 
 Interfaced chips (eg memory chips) may have more control signals than the uP design specifies. Additional controls should be tied to power/ground rails or handled using a "wrapper module" on the FPGA (see subsection "Wrapper Module"). The uP design should have sufficent controls for most interfaced chips.
 
-Furthermore, specific interface requirements (eg timing, command codes, etc) will need to be considered while integrating chips with the uP. At prsent, Most assumptions made by the uP (beyond inferred use of pinouts) is the SPI interface with the storage chip, which must meet the following criteria:
+Furthermore, specific interface requirements (eg timing, command codes, etc) will need to be considered while integrating chips with the uP. At present, Most assumptions made by the uP (beyond inferred use of pinouts) is the SPI interface with the storage chip, which must meet the following criteria:
 - SPI mode 0 (CPOL/CPHA = 0), MSb first
 - 8-bit command codes, 16-bit addresses
 - "read bitstream" command with sequence "command","address","read out"

@@ -45,9 +45,9 @@ uP Interrupt Vector (12/16 possible vectors used)
 	TMR1 - counter overflow
 	TMR2 - counter overflow
 	TMR3 - counter overflow
-	SPI  - byte sent
+	UART - byte sent
 	I2C  - byte sent
-	UART - tx byte
+	SPI  - tx byte
 	GPIO - interrupt pin 2
 	(Low Priority)
 

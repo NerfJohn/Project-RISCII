@@ -17,6 +17,7 @@ module Gpio (
 	// Alternate pin connections.
 	input         i_pwmTmr2,
 	input         i_pwmTmr3,
+	input         i_uartTX,
 	
 	// Raw pinout to outside uP.
 	inout  [15:0] io_gpioPins,
@@ -62,7 +63,7 @@ wire        intHD, intHQ;
 wire        intLD, intLQ;
 
 // Tristate wires.
-wire        curBit10, curBit11;
+wire        curBit10, curBit11, curBit15;
 wire [15:0] triA, triY, triEn;
 
 // Compute data wires (based on read registers).
@@ -208,8 +209,15 @@ Mux2 M1(
 	.S(cfgTMR2),
 	.Y(curBit11)
 );
+Mux2 M2(
+	.A(i_uartTX),             // Use Alt? use UART TX signal
+	.B(outQ[15]),             // No?      use gpio bit 15
+	.S(cfgUart),
+	.Y(curBit15)
+);
 
-assign triA  = {outQ[15:12], // TODO- implement
+assign triA  = {curBit15,    // UART vs GPIO[15] (TX)
+                outQ[14:12], // TODO- implement
                 curBit11,    // TMR2 vs GPIO[11]
 					 curBit10,    // TMR3 vs GPIO[10]
 					 outQ[9:0]};  // GPIO[9:0]
@@ -226,7 +234,7 @@ assign readCfgReg = {1'b0,
 							cfgIntH,      // bit 9
 							cfgIntL,      // bit 8
 							8'b00000000};
-Mux4 M2[15:0] (
+Mux4 M3[15:0] (
 	.C(readCfgReg),                 // Address 00? Read cofigs
 	.D(inpY),                       // Address 01? Read pins
 	.E(dirQ),                       // Address 10? Read directions

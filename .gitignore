@@ -11,7 +11,7 @@ processor/**/*.bak
 processor/**/src/*.bak
 
 # (processor) Ignore bins created for testing hardware.
-processor/tools/tests/*.bin
+processor/tools/tests/**/*.bin
 
 # (compiler) Ignore Eclipse generated/related files (except for makefile).
 compiler/AsmLdProject/.settings

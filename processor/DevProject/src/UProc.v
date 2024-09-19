@@ -94,7 +94,7 @@ wire        pauseIsPausedD, pauseIsPausedQ;
 wire [13:0] mapMemAddr;
 wire [15:0] mapMemDataOut;
 wire        mapMemWrEn;
-wire        mapSmIsBooted, mapSmStartPause;
+wire        mapSmIsBooted, mapSmStartPause, mapUartNowPaused;
 wire [15:0] mapReportSP;
 wire [14:0] mapReportPC;
 wire        mapReportHLT;
@@ -296,6 +296,7 @@ MappedRegisters MAPPED_REGS (
 	// State machine connections.
 	.i_smIsBooted(mapSmIsBooted),
 	.i_smStartPause(mapSmStartPause),
+	.o_uartNowPaused(mapUartNowPaused),
 	
 	// Reported Info connections.
 	.i_reportSP(mapReportSP),
@@ -430,12 +431,13 @@ assign scanSmIsPaused = o_smIsPaused;
 
 //------------------------------------------------------------------------------
 // Handle Pause Network inputs.
-assign pauseStartPauseD = synchPauseOut      // src: "pause" pin
-                          | jtagDoPause      // src: JTAG's pause request
-								  | mapDoPause;      // src: CCTRL pause bit (ie Core)
-assign pauseIsPausedD   = pauseStartPauseQ   // "unpause" within 1 cycle
-                          & coreSmNowPaused  // core must be locally paused
-								  & bootSmNowBooted; // must be booted to formally pause
+assign pauseStartPauseD = synchPauseOut       // src: "pause" pin
+                          | jtagDoPause       // src: JTAG's pause request
+								  | mapDoPause;       // src: CCTRL pause bit (ie Core)
+assign pauseIsPausedD   = pauseStartPauseQ    // "unpause" within 1 cycle
+                          & coreSmNowPaused   // core must be locally paused
+								  & bootSmNowBooted   // formally pause when booted
+								  & mapUartNowPaused; // uart must be locally paused
 
 //------------------------------------------------------------------------------
 // Handle Mapped Registers inputs.

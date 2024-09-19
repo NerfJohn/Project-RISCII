@@ -332,7 +332,7 @@ assign doClearEXE  = ~i_smIsBooted                  // don't run in booting
 
 //------------------------------------------------------------------------------
 // Handle pause inputs.
-assign pauseD = i_smStartPause;
+assign pauseD = i_smStartPause; // TODO- wait for mems?
 
 //------------------------------------------------------------------------------
 // Handle PC inputs.
