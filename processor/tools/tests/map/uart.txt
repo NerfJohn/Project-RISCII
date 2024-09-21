@@ -84,9 +84,58 @@ JPR		$2 0			; No?        run loop again for next byte
 
 ; Restore context
 LDR		$0 $7 0			; Restore R0 from R7-0
-LDR		$1 $7 -1		; Restore R0 from R7-2
-LDR		$2 $7 -2		; Restore R0 from R7-4
+LDR		$1 $7 -1		; Restore R1 from R7-2
+LDR		$2 $7 -2		; Restore R2 from R7-4
 ADD		$7 $7 -6		; Free 3 stack slots
+
+; Return
+JPR		$3 0
+
+;===============================================================================
+; Function: uart_read (Blocks until one char is read from UART)
+; (No Params, Returns char via R2)
+uart_read:
+; Block until UART has read char
+LDR		$2 $6 0			; Get status bits
+SHR		$2 $2 14		; Get "is RX Ready" bit as LSB
+AND		$2 $2 0x01		; Get just "RX Ready" bit
+BRC %z	-4				; Repeat read-shift until ready (ie 1)
+
+; Get read char
+LDR		$2 $6 3			; Read RX char directly into return register
+
+; Return
+JPR		$3 0
+
+;===============================================================================
+; Function: uart_init_intr (Initializes UART interrupts- TX and RX)
+; (No Params, No Returns)
+uart_init_intr:
+; Save context
+ADD		$7 $7 4			; Reserve 2 stack slots
+STR		$0 $7 0			; Save R0 to R7-0
+STR		$1 $7 -1		; Save R1 to R7-2
+
+; Prep interrupt mask
+LBI		$0 0x02			; UART interrupt mask 0x0210
+LBI %s	$0 0x10
+
+; Clear UTX/URX flags
+LDR		$1 $4 1			; Read flags
+XOR		$0 $0 -1		; Get clear version of UART mask
+AND		$1 $0 $1		; Clear UART flags
+STR		$1 $4 1			; Set flags w/ cleared UART
+
+; Enable UTX/URX interrupts
+LDR		$1 $4 0			; Read enables
+XOR		$0 $0 -1		; Get set version of UART mask
+ORR		$1 $0 $1		; Set UART enables
+STR		$1 $4 0			; Set enables w/ set UART
+
+; Restore context
+LDR		$0 $7 0			; Restore R0 from R7-0
+LDR		$1 $7 -1		; Restore R1 from R7-2
+ADD		$7 $7 -4		; Free 2 stack slots
 
 ; Return
 JPR		$3 0
@@ -116,7 +165,7 @@ HLT
 HLT
 
 ; Vector 4- UART TX complete
-STR 		$0 $7 1
+STR 	$0 $7 1
 _la		$0 int_utx
 JPR		$0 0
 
@@ -140,10 +189,10 @@ HLT
 HLT
 HLT
 
-HLT				; Vector 9
-HLT
-HLT
-HLT
+; Vector 9- UART RX complete
+STR 	$0 $7 1
+_la		$0 int_urx
+JPR		$0 0
 
 HLT				; Vector 10
 HLT
@@ -183,6 +232,32 @@ LDR		$1 $7 2			; Restore R1 from R7+4
 JPR %r
 
 ;===============================================================================
+; Function: int_urx (Interrupt for UART RX completed)
+; (Interrupt- R0 already saved to R7+2)
+int_urx:
+; Save interrupt context (R0 already saved to R7+2)
+STR		$1 $7 2			; R1 saved to R7+4
+
+; Send received byte back to sender
+LDR		$0 $6 3			; Read RX byte
+STR		$0 $6 2			; Send as TX byte
+
+; Clear flag
+LBI		$0 0x02			; Clear URX mask
+LBI	%s	$0 0x00
+XOR		$0 $0 -1		; (Turn into AND mask)
+LDR		$1 $4 1			; Read NVIC flags
+AND		$1 $0 $1		; Clear URX flag
+STR		$1 $4 1			; Write NVIC flags
+
+; Restore context
+LDR		$0 $7 1			; Restore R0 from R7+2
+LDR		$1 $7 2			; Restore R1 from R7+4
+
+; Return (from interrupt)
+JPR %r
+
+;===============================================================================
 ; Function: main (Main application program being run)
 ; (No Params, No Returns)
 main:
@@ -209,21 +284,32 @@ ORR		$0 $0 0x01		; Set GPIO 0 as output
 						; (GPIO 0 is off by default)
 STR		$0 $5 2			; Write GPIO direction
 
-; Init interrupt for UART TX complete (ie UTX)
-LBI		$0 0x10			; Set UTX enable mask
-XOR		$1 $0 -1		; Clear UTX flag mask
-LDR		$2 $4 1			; Read NVIC flags
-AND		$2 $1 $2		; Clear UTX flag
-STR		$2 $4 1			; Write NVIC flags
-LDR		$2 $4 0			; Read NVIC enable
-ORR		$2 $0 $2		; Set UTX enable
-STR		$2 $4 0			; Write NVIC enable
-
 ; Print a message.
 myMsg: .data "Foobar:\0"
 _la		$0 myMsg		; Prep send argument
-_la		$1 uart_asciiz		; Call "uart_asciiz"
+_la		$1 uart_asciiz	; Call "uart_asciiz"
 JLR		$3 $1 0
+
+; Get a read char.
+_la		$0 uart_read	; Call "uart_read"
+JLR		$3 $0 0
+
+; Confirm char reception
+myMsg2: .data "Received: \0"
+retChr: .bss 2
+_la		$0 myMsg2		; Prep prefix blurb
+_la		$1 uart_asciiz	; Send blurb
+JLR		$3 $1 0
+_la		$0 retChr		; Prep received char location
+STR		$2 $0 0			; Populate location (upper/2nd byte already null)
+JLR		$3 $1 0			; Send received char
+
+; Initialize interrupts (will cause blink/repeat per received char)
+_la		$0 uart_init_intr
+JLR		$3 $0 0
+
+;spinning for read testing
+BRC	%nzp -1
 
 ; HLT at the end of the day
 HLT

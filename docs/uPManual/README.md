@@ -88,6 +88,7 @@ Some of the uP's internal resources contain registers that can be accessed using
 |UART_CTRL     |0x8040    |r/w   |UART control/status register             |
 |UART_BAUD     |0x8042    |r/w   |UART baud rate (in system clock ticks)   |
 |UART_TX       |0x8044    |r/w   |Byte to send over UART TX channel        |
+|UART_RX       |0x8046    |r     |Byte received over UART RX channel       |
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
@@ -148,7 +149,7 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
 |enable OVF|11       |r/w   |stack overflow detection enable (see CCTRL)   |
 |enable EXH|10       |r/w   |external high priority pin enable (see GPIO)  |
-|reserved  |9        |r/w   |reserved for future use- default value(s) = 0 |
+|enable URX|9        |r/w   |UART RX byte complete enable (see UART)       |
 |enable TM0|8        |r/w   |timer 0 overflow enable (see TMR0)            |
 |enable TM1|7        |r/w   |timer 1 overflow enable (see TMR1)            |
 |enable TM2|6        |r/w   |timer 2 overflow enable (see TMR2)            |
@@ -166,7 +167,7 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
 |OVF flag  |11       |r/w   |stack overflow detection status (see CCTRL)   |
 |EXH flag  |10       |r/w   |external high priority pin status (see GPIO)  |
-|reserved  |9        |r/w   |reserved for future use- default value(s) = 0 |
+|URX flag  |9        |r/w   |UART RX byte complete flag (see UART)         |
 |TM0 flag  |8        |r/w   |timer 0 overflow status (see TMR0)            |
 |TM1 flag  |7        |r/w   |timer 1 overflow status (see TMR1)            |
 |TM2 flag  |6        |r/w   |timer 2 overflow status (see TMR2)            |
@@ -366,32 +367,37 @@ The TMR2-3 registers are only fully operationl while the uP is in the RUNNING st
 
 ### Universal Asynchronous Receiver/Transmitter (UART) Registers
 
-The UART registers control the uP's UART transceiver (a common serial connection in embedded systems). The UART is capable of sending and receiving data one byte at a time at a given speed (ie baud rate). Two GPIO pins are used to import/export the UART signals.
+The UART registers control the uP's UART transceiver. The UART features one transmit/TX and receive/RX channel each with a shared baud rate. Interrupts and status bits are available to indicate when a byte has been sent/received. The UART is exported through configured GPIO pins.
 
-Note: At present, the RX channel of the UART is unavailable. **This is an artifact of the uP currently being under development**.
+The UART_CTRL register is used to enable both channels (and interrupts), as well as report the current status of each channel. The status bits indicate when another byte can be sent and if a new, unread byte has been received.
 
-The UART_CTRL register is used to enable the UART's TX and RX channels. The register can also be used to determine if the UART's TX channel is ready to send another byte.
-
-The speed of the UART is determined by the UART_BAUD register. For a given system clock speed and desired baud rate, the UART_BAUD value is calculated using the following equation:
+The speed of both channels is configured using the UART_BAUD register. The baud rate must be given in terms of system clock ticks (and even). If the system clock frequency and desired baud rate are known, the correct value can be estimated using the following equation:
 
 <code>floor_by_2((sys_clk_Hz \/ baud_rate) - 1) = UART_BAUD</code>
 
-Note that the resulting baud rate will likely be slightly off from the desired rate (especially due to flooring). So long as the system clock speed is significantly faster than the baud rate, this should not be a large issue.
+The UART_TX register is used to provide a byte to send. Writing to this register will use the lowest 8 bits as the input and begin transmitting the byte, but only if the following conditions are true:
+- The TX channel is idle/not transmitting
+- The UART is enabled
+- The uP is in the RUNNING state (ie not paused or booting)
 
-The UART_TX register is used to specify a byte to send. When the uP is in the RUNNING state, the UART is enabled, and the TX channel is idle, then writing to the register will send the lowest 8 bits of the written data over the UART's TX channel (thus making the TX channel busy).
+THe UART_RX register is used to read a received byte. Reading this register (while the uP is in the RUNNING state) will clear UART_CTRL's "RX" status bit, whereas the same bit is set everytime this register is updated. The register, however, is only updated with the most recently received byte if the following conditions are true:
+- The RX channel has received a full byte
+- The UART is enabled
+- The uP is in the RUNNING state (ie not paused or booting)
 
-Upon the completion of a byte sent over the TX channel, an interrupt pulse will be generated (see NVIC). This interrupt is enabled with the UART, though will be cancelled if the uP begins pausing internally while a byte is being sent (it also must be enabled in the NVIC to cause an interrupt).
+Each channel has an associated interrupt for when a full byte is transmitted/received. Both are enabled with the UART and require the UART to be enabled the moment the signal is generated to be registered by the NVIC (see NVIC).
 
-To import/export the UART signals from the uP, the pins must be configured for the correct direction (ie pin 14 as an input, pin 15 as an output) and have their asociated alterate function selected (see GPIO). Doing so will re-assign the GPIO pins as UART pins- controlled and monitored by the UART.
+To use the UART, the GPIO must be configured for UART use. The directions must be set accordingly (ie pin 14 = input, pin 15 = output) and the alternate UART pin function selected (see GPIO). Doing so will re-assign pins 14 and 15 to the UART's control.
 
-The UART registers are only fully operational while the uP is in the RUNNING state. Once a pause is started, the UART finishes up any TX or RX operations it's working on (neither generating interrupts), then pauses.
+The UART registers are only fully operation while the uP is in the RUNNING state. Once a pause is started, the UART finishes any TX/RX processes (without generating interrupts/updating UART_RX), then pauses.
 
 **_UART_CTRL (SW Address = 0x8040, HW Address = 0xC020)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |tx_idle   |15       |r     |indicator if TX channel is idle (active high) |
-|reserved  |14:1     |r/w   |reserved for future use- default value(s) = 0 |
+|rx_rdy    |14       |r     |indicator that RX channel has new, unread byte|
+|reserved  |13:1     |r/w   |reserved for future use- default value(s) = 0 |
 |enable    |0        |r/w   |enables UART channels (active high)           |
 
 **_UART_BAUD (SW Address = 0x8042, HW Address = 0xC021)_**
@@ -406,7 +412,14 @@ The UART registers are only fully operational while the uP is in the RUNNING sta
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
-|tx_byte   |7:0      |r/w   |byte to send over UART TX channel             |
+|tx_byte   |7:0      |r/w   |byte to send over TX channel                  |
+
+**_UART_RX (SW Address = 0x8046, HW Address = 0xC023)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
+|rx_byte   |7:0      |r     |most recently received byte from RX channel   |
 
 ## uP Pinout
 ---
@@ -560,3 +573,4 @@ For safety/reliability, some pins are expected to explicitly have a pullup or pu
 |MEM Enable    |down/LOW     |prevent errant memory accesses               |
 |SPI CLK       |down/LOW     |prevent errant storage accesses              |
 |SPI CSn       |up/HIGH      |prevent errant storage accesses              |
+|GPIO 14/15    |up/HIGH      |help stabilize UART serial pins              |

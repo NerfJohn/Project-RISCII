@@ -70,7 +70,7 @@ wire        memCoreWr;
 wire        memSmIsPaused, memSmIsBooted;
 wire [15:0] memMapReadData;
 wire [15:0] memMemAddr;
-wire        memMemRunWr, memMemRunEn, memMemMapWrEn;
+wire        memMemRunWr, memMemRunEn, memMemMapWrEn, memMemMapRdEn;
 
 // Storage Controller wires.
 wire        spiJtagTCK, spiJtagTDI, spiJtagSpiEn;
@@ -93,7 +93,7 @@ wire        pauseIsPausedD, pauseIsPausedQ;
 // Mapped Register wires.
 wire [13:0] mapMemAddr;
 wire [15:0] mapMemDataOut;
-wire        mapMemWrEn;
+wire        mapMemWrEn, mapMemRdEn;
 wire        mapSmIsBooted, mapSmStartPause, mapUartNowPaused;
 wire [15:0] mapReportSP;
 wire [14:0] mapReportPC;
@@ -208,6 +208,7 @@ MemController MEM_CTRL(
 	.o_memRunWr(memMemRunWr),
 	.o_memRunEn(memMemRunEn),
 	.o_memMapWrEn(memMemMapWrEn),
+	.o_memMapRdEn(memMemMapRdEn),
 	.io_memData(io_memData),       // inout- direct connect net
 	
 	// Common signals.
@@ -291,6 +292,7 @@ MappedRegisters MAPPED_REGS (
 	.i_memAddr(mapMemAddr),
 	.i_memDataIn(io_memData),      // inout- direct connect net
 	.i_memWrEn(mapMemWrEn),
+	.i_memRdEn(mapMemRdEn),
 	.o_memDataOut(mapMemDataOut),
 	
 	// State machine connections.
@@ -443,6 +445,7 @@ assign pauseIsPausedD   = pauseStartPauseQ    // "unpause" within 1 cycle
 // Handle Mapped Registers inputs.
 assign mapMemAddr      = memMemAddr[13:0];
 assign mapMemWrEn      = memMemMapWrEn;
+assign mapMemRdEn      = memMemMapRdEn;
 assign mapSmIsBooted   = bootSmNowBooted;
 assign mapSmStartPause = pauseStartPauseQ;
 assign mapReportSP     = coreReportSP;

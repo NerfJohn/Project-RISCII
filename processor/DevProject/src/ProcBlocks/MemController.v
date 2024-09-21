@@ -32,6 +32,7 @@ module MemController (
 	output        o_memRunWr,
 	output        o_memRunEn,
 	output        o_memMapWrEn,
+	output        o_memMapRdEn,
 	inout  [15:0] io_memData,
 	
 	// Common signals.
@@ -198,6 +199,7 @@ assign o_memAddr    = addrQ;
 assign o_memRunWr   = wrQ;
 assign o_memRunEn   = enQ & ~isMapAddr;
 assign o_memMapWrEn = wrQ & enQ & isMapAddr & i_smIsBooted;
+assign o_memMapRdEn = ~wrQ & enQ & isMapAddr & i_smIsBooted;
 assign io_memData   = triY;
 
 endmodule

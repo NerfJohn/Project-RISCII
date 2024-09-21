@@ -8,6 +8,7 @@ module MappedRegisters (
 	input  [13:0] i_memAddr,
 	input  [15:0] i_memDataIn,
 	input         i_memWrEn,
+	input         i_memRdEn,
 	output [15:0] o_memDataOut,
 	
 	// State machine connections.
@@ -65,7 +66,7 @@ wire [15:0] nvicMemDataIn, nvicMemDataOut;
 wire        nvicMemWrEn;
 wire        nvicIntOVF, nvicIntEXH, nvicIntEXL;
 wire        nvicIntTM0, nvicIntTM1, nvicIntTM2, nvicIntTM3;
-wire        nvicIntUTX;
+wire        nvicIntUTX, nvicIntURX;
 wire [3:0]  nvicIntCode;
 wire        nvicIntEn;
 
@@ -82,7 +83,7 @@ wire [15:0] gpioMemDataIn, gpioMemDataOut;
 wire        gpioMemWrEn;
 wire        gpioIntEXH, gpioIntEXL;
 wire        gpioPwmTmr2, gpioPwmTmr3;
-wire        gpioUartTX;
+wire        gpioUartTX, gpioUartRX;
 
 // Timer 0 wires.
 wire [1:0]  tmr0MemAddr;
@@ -115,10 +116,10 @@ wire        tmr3IntTMR, tmr3PwmOut;
 // UART wires.
 wire [1:0]  uartMemAddr;
 wire [15:0] uartMemDataIn, uartMemDataOut;
-wire        uartMemWrEn;
+wire        uartMemWrEn, uartMemRdEn;
 wire        uartSmIsBooted, uartSmStartPause, uartSmNowPaused;
-wire        uartPinTX;
-wire        uartIntUTX;
+wire        uartPinRX, uartPinTX;
+wire        uartIntUTX, uartIntURX;
 
 // Compute data wires (based on mem address).
 wire [15:0] readData00XX, readData01XX, readData10XX;
@@ -162,6 +163,7 @@ Nvic NVIC (
 	// Input flag connections.
 	.i_intOVF(nvicIntOVF),
 	.i_intEXH(nvicIntEXH),
+	.i_intURX(nvicIntURX),
 	.i_intTM0(nvicIntTM0),
 	.i_intTM1(nvicIntTM1),
 	.i_intTM2(nvicIntTM2),
@@ -216,6 +218,7 @@ Gpio GPIO (
 	.i_pwmTmr2(gpioPwmTmr2),
 	.i_pwmTmr3(gpioPwmTmr3),
 	.i_uartTX(gpioUartTX),
+	.o_uartRX(gpioUartRX),
 	
 	// Raw pinout to outside uP.
 	.io_gpioPins(io_gpioPins),     // inout- direct connect net
@@ -322,6 +325,7 @@ Uart UART (
 	.i_memAddr(uartMemAddr),
 	.i_memDataIn(uartMemDataIn),
 	.i_memWrEn(uartMemWrEn),
+	.i_memRdEn(uartMemRdEn),
 	.o_memDataOut(uartMemDataOut),
 	
 	// State input connections.
@@ -330,10 +334,12 @@ Uart UART (
 	.o_smNowPaused(uartSmNowPaused),
 	
 	// Serial pin connections.
+	.i_pinRX(uartPinRX),
 	.o_pinTX(uartPinTX),
 	
 	// Interrupt connections.
 	.o_intUTX(uartIntUTX),
+	.o_intURX(uartIntURX),
 	
 	// Common signals.
 	.i_clk(i_clk),
@@ -382,6 +388,7 @@ assign nvicMemDataIn = i_memDataIn;
 assign nvicMemWrEn   = isNvicAddr & i_memWrEn;
 assign nvicIntOVF    = cctrlIntOVF;
 assign nvicIntEXH    = gpioIntEXH;
+assign nvicIntURX    = uartIntURX;
 assign nvicIntTM0    = tmr0IntTMR;
 assign nvicIntTM1    = tmr1IntTMR;
 assign nvicIntTM2    = tmr2IntTMR;
@@ -443,8 +450,10 @@ assign tmr3SmStartPause = i_smStartPause;
 assign uartMemAddr      = i_memAddr[1:0];
 assign uartMemDataIn    = i_memDataIn;
 assign uartMemWrEn      = isUartAddr & i_memWrEn;
+assign uartMemRdEn      = isUartAddr & i_memRdEn;
 assign uartSmIsBooted   = i_smIsBooted;
 assign uartSmStartPause = i_smStartPause;
+assign uartPinRX        = gpioUartRX;
 
 //------------------------------------------------------------------------------
 // Drive data output based on given address.

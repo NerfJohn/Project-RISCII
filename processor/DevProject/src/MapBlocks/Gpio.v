@@ -18,6 +18,7 @@ module Gpio (
 	input         i_pwmTmr2,
 	input         i_pwmTmr3,
 	input         i_uartTX,
+	output        o_uartRX,
 	
 	// Raw pinout to outside uP.
 	inout  [15:0] io_gpioPins,
@@ -217,7 +218,8 @@ Mux2 M2(
 );
 
 assign triA  = {curBit15,    // UART vs GPIO[15] (TX)
-                outQ[14:12], // TODO- implement
+                outQ[14],    // GPIO[14] (UART RX- read only)
+					 outQ[13:12], // TODO- implement
                 curBit11,    // TMR2 vs GPIO[11]
 					 curBit10,    // TMR3 vs GPIO[10]
 					 outQ[9:0]};  // GPIO[9:0]
@@ -247,6 +249,10 @@ Mux4 M3[15:0] (
 // Drive the external pin interrupts.
 assign o_intEXH = intHQ;
 assign o_intEXL = intLQ;
+
+//------------------------------------------------------------------------------
+// Drive the UART's internal read line.
+assign o_uartRX = inpY[14] | ~cfgUart; // read "1" when disabled
 
 //------------------------------------------------------------------------------
 // Drive gpio pins using tristate.

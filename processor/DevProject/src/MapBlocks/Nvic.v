@@ -13,6 +13,7 @@ module Nvic (
 	// Input flag connections.
 	input         i_intOVF,
 	input         i_intEXH,
+	input         i_intURX,
 	input         i_intTM0,
 	input         i_intTM1,
 	input         i_intTM2,
@@ -121,6 +122,7 @@ assign enableEn = isEnableAddr & i_memWrEn;
 // Handle flag register inputs.
 assign doSetFlag = i_intOVF |
                    i_intEXH |
+						 i_intURX |
 						 i_intTM0 |
 						 i_intTM1 |
 						 i_intTM2 |
@@ -129,7 +131,7 @@ assign doSetFlag = i_intOVF |
 						 i_intEXL;
 assign inFlags   = {i_intOVF,
 						  i_intEXH,
-						  1'b0,                                // TODO- implement
+						  i_intURX,
 						  i_intTM0,
 						  i_intTM1,
 						  i_intTM2,
@@ -155,7 +157,7 @@ assign encIn5  = enableQ[4]  & flagQ[4];  // Timer 3 overflow (TM3)
 assign encIn6  = enableQ[5]  & flagQ[5];  // Timer 2 overflow (TM2)
 assign encIn7  = enableQ[6]  & flagQ[6];  // Timer 1 overflow (TM1)
 assign encIn8  = enableQ[7]  & flagQ[7];  // Timer 0 overflow (TM0)
-assign encIn9  = enableQ[8]  & flagQ[8];  // TODO- implement
+assign encIn9  = enableQ[8]  & flagQ[8];  // UART RX byte (URX)
 assign encIn10 = enableQ[9]  & flagQ[9];  // high ext. pin (EXH)
 assign encIn11 = enableQ[10] & flagQ[10]; // overflow (OVF)- highest priority
 
