@@ -18,7 +18,11 @@ module Gpio (
 	input         i_pwmTmr2,
 	input         i_pwmTmr3,
 	input         i_uartTX,
+	input         i_i2cSCL,
+	input         i_i2cSDAIn,
+	input         i_i2cSDADir,
 	output        o_uartRX,
+	output        o_i2cSDAOut,
 	
 	// Raw pinout to outside uP.
 	inout  [15:0] io_gpioPins,
@@ -64,7 +68,8 @@ wire        intHD, intHQ;
 wire        intLD, intLQ;
 
 // Tristate wires.
-wire        curBit10, curBit11, curBit15;
+wire        curBit10, curBit11, curBit12, curBit13, curBit15;
+wire        curDir12;
 wire [15:0] triA, triY, triEn;
 
 // Compute data wires (based on read registers).
@@ -211,19 +216,40 @@ Mux2 M1(
 	.Y(curBit11)
 );
 Mux2 M2(
+	.A(i_i2cSDAIn),           // Use Alt? use I2C SDA signal
+	.B(outQ[12]),             // No?      use gpio bit 12
+	.S(cfgI2C),
+	.Y(curBit12)
+);
+Mux2 M3(
+	.A(i_i2cSCL),             // Use Alt? use I2C SCL signal
+	.B(outQ[13]),             // No?      use gpio bit 13
+	.S(cfgI2C),
+	.Y(curBit13)
+);
+Mux2 M4(
 	.A(i_uartTX),             // Use Alt? use UART TX signal
 	.B(outQ[15]),             // No?      use gpio bit 15
 	.S(cfgUart),
 	.Y(curBit15)
 );
+Mux2 M5(
+	.A(i_i2cSDADir),          // Use Alt? use I2C SDA direction
+	.B(dirQ[12]),             // No?      use gpio bit 12 direction
+	.S(cfgI2C),
+	.Y(curDir12)
+);
 
 assign triA  = {curBit15,    // UART vs GPIO[15] (TX)
                 outQ[14],    // GPIO[14] (UART RX- read only)
-					 outQ[13:12], // TODO- implement
+					 curBit13,    // I2C vs GPIO[13] (SCL)
+					 curBit12,    // I2C vs GPIO[12] (SDA)
                 curBit11,    // TMR2 vs GPIO[11]
 					 curBit10,    // TMR3 vs GPIO[10]
 					 outQ[9:0]};  // GPIO[9:0]
-assign triEn = dirQ;         // TODO- implement (individual tristates).
+assign triEn = {dirQ[15:13], // GPIO[15:13]
+					 curDir12,    // I2C vs GPIO[12]
+					 dirQ[11:0]};
 
 //------------------------------------------------------------------------------
 // Drive data output based on given address.
@@ -236,7 +262,7 @@ assign readCfgReg = {1'b0,
 							cfgIntH,      // bit 9
 							cfgIntL,      // bit 8
 							8'b00000000};
-Mux4 M3[15:0] (
+Mux4 M6[15:0] (
 	.C(readCfgReg),                 // Address 00? Read cofigs
 	.D(inpY),                       // Address 01? Read pins
 	.E(dirQ),                       // Address 10? Read directions
@@ -253,6 +279,10 @@ assign o_intEXL = intLQ;
 //------------------------------------------------------------------------------
 // Drive the UART's internal read line.
 assign o_uartRX = inpY[14] | ~cfgUart; // read "1" when disabled
+
+//------------------------------------------------------------------------------
+// Drive the I2C's internal read line.
+assign o_i2cSDAOut = inpY[12] | ~cfgI2C; // read "1" when disabled
 
 //------------------------------------------------------------------------------
 // Drive gpio pins using tristate.

@@ -1,0 +1,261 @@
+;===============================================================================
+; Test program checking I2C works.
+;
+; This file "RISCII Asm Semantics":
+; R0 = free         | open for use
+; R1 = free         | open for use
+; R2 = free         | open for use
+; R3 = free         | open for use
+; R4 = free         | open for use
+; R5 = return value | value returned by a function
+; R6 = return link  | address function returns to
+; R7 = stack ptr    | lowest valid stack address
+;===============================================================================
+
+;===============================================================================
+; Function: i2c_init (Inits GPIO/I2C registers 100 kHz baud @ 8.3 MHz).
+; (No Params, No Returns)
+i2c_init:
+; Context save
+ADD		$7 $7 -8						; Reserve 4 slots
+STR		$0 $7 3							; Save R0-R1, R3-R4
+STR		$1 $7 2
+STR		$3 $7 1
+STR		$4 $7 0
+
+; Setup refs
+LBI		$3 -128							; R3 = 0x8018 (GPIO base address)
+LBI	%s	$3 0x18
+LBI		$4 -128							; R4 = 0x8048 (I2C base address)
+LBI %s	$4 0x48
+
+; Config GPIOs for I2C use
+LBI		$0 0x20							; R0 = 0x2000 (pin 13 set mask)
+LBI	%s	$0 0x00
+LDR		$1 $3 2							; Load GPIO_DIR
+ORR		$1 $1 $0						; Set pin 13 (pin 12 already set)
+STR		$1 $3 2							; Store GPIO_DIR
+SHR		$0 $0 1							; R0 = 0x1000 (pin 12 set mask)
+LDR		$1 $3 0							; LOAD GPIO_CFG
+ORR		$1 $1 $0						; Set pin 12 (ie pin 12/13 for I2C)
+STR		$1 $3 0							; Store GPIO_CFG
+
+; Config I2C for 100 kHz baud @ 8.3 MHz
+LBI		$0 0x28							; R0 = 0x0028 (100 kHz baud @ 8.3 MHz)
+STR		$0 $4 1							; Set I2C_BAUD
+LBI		$0 0x1							; R0 = 0x0001 (I2C enable, no params)
+STR		$0 $4 0							; Set I2C_CTRL
+
+; Context restore
+LDR		$0 $7 3							; Restore R0-R1, R3-R4
+LDR		$1 $7 2
+LDR		$3 $7 1
+LDR		$4 $7 0
+ADD		$7 $7 8							; Free 4 slots
+
+; Return
+JPR		$6 0
+
+;===============================================================================
+; Function: i2c_wr16 (Write 16-bit value to given i2c address/register)
+; (R0 = i2c addr << 1, R1 = i2c reg, R2 = value, Returns 0 for success)
+i2c_wr16:
+; Context save
+ADD		$7 $7 -10						; Reserve 5 slots
+STR		$0 $7 4							; Save R0-R4
+STR		$1 $7 3
+STR		$2 $7 2
+STR		$3 $7 1
+STR		$4 $7 0
+
+; Setup refs
+LBI		$4 -128							; R4 = 0x8048 (I2C base address)
+LBI %s	$4 0x48
+
+; Clear return value
+LBI		$5 0							; R5 = 0 (ie success)
+
+; Send i2c address + write
+LBI		$3 0x0D							; R3 = 0x000D (start+wr+enable)
+AND		$0 $0 -2						; Clr bit 0 (i2c write)
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$0 $4 2							; Set I2C_DATA (starts write)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+ORR		$5 $3 $5						; OR/save "ack" (bit 14) signal
+
+; Send i2c register
+LBI		$3 0x05							; R3 = 0x0005 (wr+enable)
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$1 $4 2							; Set I2C_DATA (starts write)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+ORR		$5 $3 $5						; OR/save "ack" (bit 14) signal
+
+; Send i2c upper value
+LBI		$3 0x05							; R3 = 0x0005 (wr+enable)
+SHR		$0 $2 8							; Get upper byte of value
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$0 $4 2							; Set I2C_DATA (starts write)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+ORR		$5 $3 $5						; OR/save "ack" (bit 14) signal
+
+; Send i2c lower value
+LBI		$3 0x07							; R3 = 0x0007 (wr+stop+enable)
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$2 $4 2							; Set I2C_DATA (starts write)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+ORR		$5 $3 $5						; OR/save "ack" (bit 14) signal
+
+; Extract OR-ed "ack" bits
+SHR		$5 $5 14						; Get "is idle" and "ack" bits
+AND		$5 $5 0x1						; Get just "ack" bits
+
+; Context restore
+LDR		$0 $7 4							; Restore R0-R4
+LDR		$1 $7 3
+LDR		$2 $7 2
+LDR		$3 $7 1
+LDR		$4 $7 0
+ADD		$7 $7 10						; Free 5 slots
+
+; Return
+JPR		$6 0
+
+;===============================================================================
+; Function: i2c_rd16 (Reads 16-bit value from i2c address)
+; (R0 = i2c addr, R1 = i2c reg, Returns read value)
+i2c_rd16:
+; Context save
+ADD		$7 $7 -8						; Reserve 4 slots
+STR		$0 $7 3							; Save R0-R1, R3-R4
+STR		$1 $7 2
+STR		$3 $7 1
+STR		$4 $7 0
+
+; Setup refs
+LBI		$4 -128							; R4 = 0x8048 (I2C base address)
+LBI %s	$4 0x48
+
+; Clear return value
+LBI		$5 0							; R5 = 0 (ie success)
+
+; Send i2c address + write
+LBI		$3 0x0D							; R3 = 0x000D (start+wr+enable)
+AND		$0 $0 -2						; Clr bit 0 (i2c write)
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$0 $4 2							; Set I2C_DATA (starts write)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+
+; Send i2c register
+LBI		$3 0x07							; R3 = 0x0007 (wr+stop+enable)
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$1 $4 2							; Set I2C_DATA (starts write)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+
+; Send i2c address + read
+LBI		$3 0x0D							; R3 = 0x000D (start+wr+enable)
+ORR		$0 $0 0x1						; Set bit 0 (i2c read)
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$0 $4 2							; Set I2C_DATA (starts write)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+
+; Receive i2c upper value
+LBI		$3 0x01							; R3 = 0x0001 (enable)
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$0 $4 2							; Set I2C_DATA (starts read)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+LDR		$5 $4 2							; Get I2C_DATA (ie received data)
+
+; Receive i2c lower value
+LBI		$3 0x03							; R3 = 0x0003 (stop+enable)
+STR		$3 $4 0							; Set I2C_CTRL
+STR		$0 $4 2							; Set I2C_DATA (starts read)
+LDR		$3 $4 0							; Get I2C_CTRL
+ADD		$3 $3 0							; Get "is idle" status (bit 15)
+BRC	%zp	-3								; Repeat check if still idle
+LDR		$3 $4 2							; Get I2C_DATA (ie received data)
+
+; Append received bytes into word
+SHL		$5 $5 8							; Shift upper byte into position
+ORR		$5 $5 $3						; OR lower byte into position
+
+; Context restore
+LDR		$0 $7 3							; Restore R0-R1, R3-R4
+LDR		$1 $7 2
+LDR		$3 $7 1
+LDR		$4 $7 0
+ADD		$7 $7 8							; Free 4 slots
+
+; Return
+JPR		$6 0
+
+;===============================================================================
+;===============================================================================
+;===============================================================================
+
+__START:
+_la 	$7 main							; (Reset Vector)
+JPR 	$7 0
+HLT
+
+;===============================================================================
+; Function: main (Main application program being run)
+; (No Params, No Returns)
+main:
+; Init registers
+LBI		$7 0x7F							; R7 = 0x7FFE (top of free memory)
+LBI		$7 -2
+
+; Turn off WDT
+LBI		$4 -128							; R4 = 0x8010 (WDT base address)
+LBI	%s	$4 0x10
+LBI		$0 0x01							; R0 = 0x0001 (bit 0 set mask)
+STR		$0 $4 0							; Set WDT_CTRL
+
+; Init I2C
+_la		$0 i2c_init						; Call "i2c_init"
+JLR		$6 $0 0
+
+; (Settings for I2C- address, register, value)
+i2cData: .data {0x0088 0x007E 0xfeed}
+
+; Layout data
+_la		$3 i2cData						; R3 = i2cData base address
+LDR		$0 $3 0							; R0 = i2c address
+LDR		$1 $3 1							; R1 = i2c register
+LDR		$2 $3 2							; R2 = i2c value
+
+; Read i2c data register 1
+_la		$3 i2c_rd16						; Call "i2c_rd16"
+JLR		$6 $3 0
+
+; Export result to free memory
+_la		$4 __FREE
+STR		$5 $4 0							; Set FREE[0] to "i2c_rd16" result
+
+; Read i2c data register 2
+LBI		$1 0x7F
+_la		$3 i2c_rd16						; Call "i2c_rd16"
+JLR		$6 $3 0
+
+; Export result to free memory
+_la		$4 __FREE
+STR		$5 $4 1							; Set FREE[1] to "i2c_rd16" result
+
+; Spin forever (and for observation)
+BRC %nzp -1

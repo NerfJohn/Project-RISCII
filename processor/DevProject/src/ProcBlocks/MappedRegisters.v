@@ -49,7 +49,7 @@ module MappedRegisters (
 wire        is6BitAddr;
 wire        isCctrlAddr, isNvicAddr, isWdtAddr, isGpioAddr;
 wire        isTmr0Addr, isTmr1Addr, isTmr2Addr, isTmr3Addr;
-wire        isUartAddr;
+wire        isUartAddr, isI2CAddr;
 
 // Core Control wires.
 wire [1:0]  cctrlMemAddr;
@@ -84,6 +84,7 @@ wire        gpioMemWrEn;
 wire        gpioIntEXH, gpioIntEXL;
 wire        gpioPwmTmr2, gpioPwmTmr3;
 wire        gpioUartTX, gpioUartRX;
+wire        gpioI2CSCL, gpioI2CSDAIn, gpioI2CSDADir, gpioI2CSDAOut;
 
 // Timer 0 wires.
 wire [1:0]  tmr0MemAddr;
@@ -120,6 +121,12 @@ wire        uartMemWrEn, uartMemRdEn;
 wire        uartSmIsBooted, uartSmStartPause, uartSmNowPaused;
 wire        uartPinRX, uartPinTX;
 wire        uartIntUTX, uartIntURX;
+
+// I2C wires.
+wire [1:0]  i2cMemAddr;
+wire [15:0] i2cMemDataIn, i2cMemDataOut;
+wire        i2cMemWrEn;
+wire        i2cPinSDAIn, i2cPinSCL, i2cPinSDAOut, i2cPinSDADir;
 
 // Compute data wires (based on mem address).
 wire [15:0] readData00XX, readData01XX, readData10XX;
@@ -218,7 +225,11 @@ Gpio GPIO (
 	.i_pwmTmr2(gpioPwmTmr2),
 	.i_pwmTmr3(gpioPwmTmr3),
 	.i_uartTX(gpioUartTX),
+	.i_i2cSCL(gpioI2CSCL),
+	.i_i2cSDAIn(gpioI2CSDAIn),
+	.i_i2cSDADir(gpioI2CSDADir),
 	.o_uartRX(gpioUartRX),
+	.o_i2cSDAOut(gpioI2CSDAOut),
 	
 	// Raw pinout to outside uP.
 	.io_gpioPins(io_gpioPins),     // inout- direct connect net
@@ -346,6 +357,26 @@ Uart UART (
 	.i_rstn(i_rstn)
 );
 
+//------------------------------------------------------------------------------
+// I2C- I2C master w/ configurable baud. uP's secondary serial port.
+I2C I2C (
+	// Memory Map connections.
+	.i_memAddr(i2cMemAddr),
+	.i_memDataIn(i2cMemDataIn),
+	.i_memWrEn(i2cMemWrEn),
+	.o_memDataOut(i2cMemDataOut),
+	
+	// Serial pin connections.
+	.i_pinSDAIn(i2cPinSDAIn),
+	.o_pinSCL(i2cPinSCL),
+	.o_pinSDAOut(i2cPinSDAOut),
+	.o_pinSDADir(i2cPinSDADir),
+
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -371,6 +402,8 @@ assign isTmr3Addr  = is6BitAddr & ~i_memAddr[5] &  i_memAddr[4]  // ...0111xx
                                 &  i_memAddr[3] &  i_memAddr[2];
 assign isUartAddr  = is6BitAddr &  i_memAddr[5] & ~i_memAddr[4]  // ...1000xx
                                 & ~i_memAddr[3] & ~i_memAddr[2];
+assign isI2CAddr   = is6BitAddr &  i_memAddr[5] & ~i_memAddr[4]  // ...1001xx
+                                & ~i_memAddr[3] &  i_memAddr[2];
 										  
 //------------------------------------------------------------------------------
 // Handle Core Control (cctrl) inputs.
@@ -412,6 +445,9 @@ assign gpioMemWrEn   = isGpioAddr & i_memWrEn;
 assign gpioPwmTmr2   = tmr2PwmOut;
 assign gpioPwmTmr3   = tmr3PwmOut;
 assign gpioUartTX    = uartPinTX;
+assign gpioI2CSCL    = i2cPinSCL;
+assign gpioI2CSDAIn  = i2cPinSDAOut;
+assign gpioI2CSDADir = i2cPinSDADir;
 
 //------------------------------------------------------------------------------
 // Handle Timer 0 inputs.
@@ -456,6 +492,13 @@ assign uartSmStartPause = i_smStartPause;
 assign uartPinRX        = gpioUartRX;
 
 //------------------------------------------------------------------------------
+// Handle I2C inputs.
+assign i2cMemAddr   = i_memAddr[1:0];
+assign i2cMemDataIn = i_memDataIn;
+assign i2cMemWrEn   = isI2CAddr & i_memWrEn;
+assign i2cPinSDAIn  = gpioI2CSDAOut;
+
+//------------------------------------------------------------------------------
 // Drive data output based on given address.
 Mux4 M0[15:0] (
 	.C(cctrlMemDataOut),      // Addr 0000-xx? Read CCTRL
@@ -475,7 +518,7 @@ Mux4 M1[15:0] (
 );
 Mux4 M2[15:0] (
 	.C(uartMemDataOut),       // Addr 1000-xx? Read UART
-	.D(16'b0000000000000000), // Addr 1001-xx? TODO- implement
+	.D(i2cMemDataOut),        // Addr 1001-xx? Read I2C
 	.E(16'b0000000000000000), // Addr 1010-xx? TODO- implement
 	.F(16'b0000000000000000), // Addr 1011-xx? No mapped registers
 	.S(i_memAddr[3:2]),
