@@ -94,7 +94,7 @@ wire        pauseIsPausedD, pauseIsPausedQ;
 wire [13:0] mapMemAddr;
 wire [15:0] mapMemDataOut;
 wire        mapMemWrEn, mapMemRdEn;
-wire        mapSmIsBooted, mapSmStartPause, mapUartNowPaused;
+wire        mapSmIsBooted, mapSmStartPause, mapSmNowPaused;
 wire [15:0] mapReportSP;
 wire [14:0] mapReportPC;
 wire        mapReportHLT;
@@ -298,7 +298,7 @@ MappedRegisters MAPPED_REGS (
 	// State machine connections.
 	.i_smIsBooted(mapSmIsBooted),
 	.i_smStartPause(mapSmStartPause),
-	.o_uartNowPaused(mapUartNowPaused),
+	.o_smNowPaused(mapSmNowPaused),
 	
 	// Reported Info connections.
 	.i_reportSP(mapReportSP),
@@ -439,7 +439,7 @@ assign pauseStartPauseD = synchPauseOut       // src: "pause" pin
 assign pauseIsPausedD   = pauseStartPauseQ    // "unpause" within 1 cycle
                           & coreSmNowPaused   // core must be locally paused
 								  & bootSmNowBooted   // formally pause when booted
-								  & mapUartNowPaused; // uart must be locally paused
+								  & mapSmNowPaused;   // map regs must be locally paused
 
 //------------------------------------------------------------------------------
 // Handle Mapped Registers inputs.

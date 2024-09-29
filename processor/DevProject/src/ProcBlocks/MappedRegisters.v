@@ -14,7 +14,7 @@ module MappedRegisters (
 	// State machine connections.
 	input         i_smIsBooted,
 	input         i_smStartPause,
-	output        o_uartNowPaused,
+	output        o_smNowPaused,
 
 	// Reported Info connections.
 	input  [15:0] i_reportSP,
@@ -66,7 +66,7 @@ wire [15:0] nvicMemDataIn, nvicMemDataOut;
 wire        nvicMemWrEn;
 wire        nvicIntOVF, nvicIntEXH, nvicIntEXL;
 wire        nvicIntTM0, nvicIntTM1, nvicIntTM2, nvicIntTM3;
-wire        nvicIntUTX, nvicIntURX;
+wire        nvicIntUTX, nvicIntURX, nvicIntI2C;
 wire [3:0]  nvicIntCode;
 wire        nvicIntEn;
 
@@ -84,7 +84,7 @@ wire        gpioMemWrEn;
 wire        gpioIntEXH, gpioIntEXL;
 wire        gpioPwmTmr2, gpioPwmTmr3;
 wire        gpioUartTX, gpioUartRX;
-wire        gpioI2CSCL, gpioI2CSDAIn, gpioI2CSDADir, gpioI2CSDAOut;
+wire        gpioI2CSCLDir, gpioI2CSDADir, gpioI2CSDAOut;
 
 // Timer 0 wires.
 wire [1:0]  tmr0MemAddr;
@@ -126,7 +126,9 @@ wire        uartIntUTX, uartIntURX;
 wire [1:0]  i2cMemAddr;
 wire [15:0] i2cMemDataIn, i2cMemDataOut;
 wire        i2cMemWrEn;
-wire        i2cPinSDAIn, i2cPinSCL, i2cPinSDAOut, i2cPinSDADir;
+wire        i2cSmIsBooted, i2cSmStartPause, i2cSmNowPaused;
+wire        i2cPinSDAIn, i2cPinSCLDir, i2cPinSDADir;
+wire        i2cIntI2C;
 
 // Compute data wires (based on mem address).
 wire [15:0] readData00XX, readData01XX, readData10XX;
@@ -176,6 +178,7 @@ Nvic NVIC (
 	.i_intTM2(nvicIntTM2),
 	.i_intTM3(nvicIntTM3),
 	.i_intUTX(nvicIntUTX),
+	.i_intI2C(nvicIntI2C),
 	.i_intEXL(nvicIntEXL),
 	
 	// Output interrupt connections.
@@ -225,8 +228,7 @@ Gpio GPIO (
 	.i_pwmTmr2(gpioPwmTmr2),
 	.i_pwmTmr3(gpioPwmTmr3),
 	.i_uartTX(gpioUartTX),
-	.i_i2cSCL(gpioI2CSCL),
-	.i_i2cSDAIn(gpioI2CSDAIn),
+	.i_i2cSCLDir(gpioI2CSCLDir),
 	.i_i2cSDADir(gpioI2CSDADir),
 	.o_uartRX(gpioUartRX),
 	.o_i2cSDAOut(gpioI2CSDAOut),
@@ -366,11 +368,18 @@ I2C I2C (
 	.i_memWrEn(i2cMemWrEn),
 	.o_memDataOut(i2cMemDataOut),
 	
+	// State input connections.
+	.i_smIsBooted(i2cSmIsBooted),
+	.i_smStartPause(i2cSmStartPause),
+	.o_smNowPaused(i2cSmNowPaused),
+	
 	// Serial pin connections.
 	.i_pinSDAIn(i2cPinSDAIn),
-	.o_pinSCL(i2cPinSCL),
-	.o_pinSDAOut(i2cPinSDAOut),
+	.o_pinSCLDir(i2cPinSCLDir),
 	.o_pinSDADir(i2cPinSDADir),
+	
+	// Interrupt connection.
+	.o_intI2C(i2cIntI2C),
 
 	// Common signals.
 	.i_clk(i_clk),
@@ -427,6 +436,7 @@ assign nvicIntTM1    = tmr1IntTMR;
 assign nvicIntTM2    = tmr2IntTMR;
 assign nvicIntTM3    = tmr3IntTMR;
 assign nvicIntUTX    = uartIntUTX;
+assign nvicIntI2C    = i2cIntI2C;
 assign nvicIntEXL    = gpioIntEXL;
 
 //------------------------------------------------------------------------------
@@ -445,8 +455,7 @@ assign gpioMemWrEn   = isGpioAddr & i_memWrEn;
 assign gpioPwmTmr2   = tmr2PwmOut;
 assign gpioPwmTmr3   = tmr3PwmOut;
 assign gpioUartTX    = uartPinTX;
-assign gpioI2CSCL    = i2cPinSCL;
-assign gpioI2CSDAIn  = i2cPinSDAOut;
+assign gpioI2CSCLDir = i2cPinSCLDir;
 assign gpioI2CSDADir = i2cPinSDADir;
 
 //------------------------------------------------------------------------------
@@ -493,10 +502,12 @@ assign uartPinRX        = gpioUartRX;
 
 //------------------------------------------------------------------------------
 // Handle I2C inputs.
-assign i2cMemAddr   = i_memAddr[1:0];
-assign i2cMemDataIn = i_memDataIn;
-assign i2cMemWrEn   = isI2CAddr & i_memWrEn;
-assign i2cPinSDAIn  = gpioI2CSDAOut;
+assign i2cMemAddr      = i_memAddr[1:0];
+assign i2cMemDataIn    = i_memDataIn;
+assign i2cMemWrEn      = isI2CAddr & i_memWrEn;
+assign i2cSmIsBooted   = i_smIsBooted;
+assign i2cSmStartPause = i_smStartPause;
+assign i2cPinSDAIn     = gpioI2CSDAOut;
 
 //------------------------------------------------------------------------------
 // Drive data output based on given address.
@@ -535,7 +546,7 @@ Mux4 M3[15:0] (
 
 //------------------------------------------------------------------------------
 // Drive state machine outputs.
-assign o_uartNowPaused = uartSmNowPaused;
+assign o_smNowPaused = uartSmNowPaused & i2cSmNowPaused;
 
 //------------------------------------------------------------------------------
 // Drive control outputs.

@@ -31,6 +31,7 @@ The uP design consists of many internal circuits and components. At a high level
 |TMR0-1    | Two 16-bit configurable timers with overflow interrupts       |
 |TMR2-3    | Two 16-bit configurable timers capable of PWM generation      |
 |UART      | UART transceiver with configurable baud rate                  |
+|I2C       | I2C (control/master only) with configurable baud rate         |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -89,6 +90,9 @@ Some of the uP's internal resources contain registers that can be accessed using
 |UART_BAUD     |0x8042    |r/w   |UART baud rate (in system clock ticks)   |
 |UART_TX       |0x8044    |r/w   |Byte to send over UART TX channel        |
 |UART_RX       |0x8046    |r     |Byte received over UART RX channel       |
+|I2C_CTRL      |0x8048    |r/w   |I2C control/status register              |
+|I2C_BAUD      |0x804A    |r/w   |I2C baud rate (in system ticks)          |
+|I2C_DATA      |0x804C    |r/w   |Byte sent/received over I2C              |
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
@@ -155,7 +159,7 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |enable TM2|6        |r/w   |timer 2 overflow enable (see TMR2)            |
 |enable TM3|5        |r/w   |timer 3 overflow enable (see TMR3)            |
 |enable UTX|4        |r/w   |UART TX byte complete enable (see UART)       |
-|reserved  |3        |r/w   |reserved for future use- default value(s) = 0 |
+|enable I2C|3        |r/w   |I2C byte complete enable (see I2C)            |
 |reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
 |enable EXL|1        |r/w   |external low priority pin enable (see GPIO)   |
 |reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
@@ -173,7 +177,7 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |TM2 flag  |6        |r/w   |timer 2 overflow status (see TMR2)            |
 |TM3 flag  |5        |r/w   |timer 3 overflow status (see TMR3)            |
 |UTX flag  |4        |r/w   |UART TX byte complete flag (see UART)         |
-|reserved  |3        |r/w   |reserved for future use- default value(s) = 0 |
+|I2C flag  |3        |r/w   |I2C byte complete flag (see I2C)              |
 |reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
 |EXL flag  |1        |r/w   |external low priority pin status (see GPIO)   |
 |reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
@@ -421,6 +425,53 @@ The UART registers are only fully operation while the uP is in the RUNNING state
 |reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
 |rx_byte   |7:0      |r     |most recently received byte from RX channel   |
 
+### Inter Integrated Circuit (I2C) Controller Registers
+
+The I2C registers control the uP's I2C peripheral (controller/master only). Features include a configurable baud rate, read and write capabilities, and an interrupt per byte transfer. Status bits provide insight into state and last received ACK. I2C signals are exported via configured GPIO pins.
+
+The CTRL register is used to configure the next byte of transfer and report various statuses. Beyond enabling the I2C, the next byte transfer's direction and presence of start/stop conditions can be configured. For statueses, whether the I2C is busy and the ACK result from the last byte transfer are available.
+
+The BAUD register configures the clock line's (SCL) frequency. Baud rate must be in system ticks (and even). Given a system clock frequency and desired SCL frequency, the baud rate can be estimated as:
+
+<code>floor_by_2((sys_freq \/ (2\*scl_freq)) - 1) = baud_rate</code>
+
+The DATA register is used to store the sent/received byte (with writes the register triggering the transfer). The register is only valid while the I2C is idle and will only begin a transfer for the following conditions:
+- The I2C is enabled
+- The I2C is idle
+- The uP is in the RUNNING state
+
+The I2C controller is designed to hold (or release) both I2C lines based on their last value upon finishing a transfer. This ensures any clock and data information is preserved between bytes at the expense of software being careful to finish "open" connections (ie start/stop condition pairing).
+
+To export the I2C signals, the GPIO registers must be configured. This requires clearing pins 12 and 13 in GPIO_OUT and setting pin 12 in GPIO_CFG. Doing so will reassign the pins to the I2C. Note that the I2C assumes both pins are pulled up. Thus, the I2C only drives the pins directions to pull them low (ie GPIO_OUT is cleared to ensure driving the pins pulls them low).
+
+The I2C registers are only fully operation while the uP is in the RUNNING state. Once a pause is started, the I2C finishes any running transfers (without generating interrupts), then pauses.
+
+**_I2C_CTRL (SW Address = 0x8048, HW Address = 0xC024)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|is_idle   |15       |r     |indicator if I2C is idle (active high)        |
+|last_ack  |14       |r     |value of last transfer's ACK signal           |
+|reserved  |13:4     |r/w   |reserved for future use- default value(s) = 0 |
+|do_start  |3        |r/w   |add a start condition to the next transfer    |
+|do_write  |2        |r/w   |write DATA on next transfer (read = 0)        |
+|do_stop   |1        |r/w   |add a stop condition to the next transfer     |
+|enable    |0        |r/w   |enables I2C controller (active high)          |
+
+**_I2C_BAUD (SW Address = 0x804A, HW Address = 0xC025)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|baud_rate |15:1     |r/w   |baud rate of I2C (in system clock ticks)      |
+|reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
+
+**_I2C_DATA (SW Address = 0x804C, HW Address = 0xC026)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
+|byte      |7:0      |r/w   |byte sent/received for transfer               |
+
 ## uP Pinout
 ---
 The uP interfaces with the physical FPGA (and by extension outside world) using various "pin" (verilog port) connections. These pins are used to provide the uP with clock/reset signals, volatile/non-volatile memory, and various means of communication. Below is a summary of each pin group:
@@ -573,4 +624,5 @@ For safety/reliability, some pins are expected to explicitly have a pullup or pu
 |MEM Enable    |down/LOW     |prevent errant memory accesses               |
 |SPI CLK       |down/LOW     |prevent errant storage accesses              |
 |SPI CSn       |up/HIGH      |prevent errant storage accesses              |
+|GPIO 12/13    |up/HIGH      |typical I2C pull-up behavior                 |
 |GPIO 14/15    |up/HIGH      |help stabilize UART serial pins              |
