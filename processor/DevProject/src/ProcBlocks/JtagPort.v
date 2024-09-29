@@ -76,6 +76,10 @@ wire        exeAddrCmd, exeMemCmd, exeAccessCmd, exeStateCmd;
 wire [15:0] addrD, addrQ;
 wire        addrEn;
 
+// Fetch register wires.
+wire [15:0] fetchD, fetchQ;
+wire        fetchEn;
+
 // Access enable registers wires.
 wire        spiSelD, spiSelQ, spiSelEn;
 wire        scanSelD, scanSelQ, scanSelEn;
@@ -128,6 +132,16 @@ DffAsynchEn ADDR[15:0] (
 	.Q(addrQ),
 	.S(addrEn),
 	.clk(i_TCK),
+	.rstn(i_rstn)
+);
+
+//------------------------------------------------------------------------------
+// Fetch register- stores read memory word at system clock speed for JTAG.
+DffAsynchEn FETCH[15:0] (
+	.D(fetchD),
+	.Q(fetchQ),
+	.S(fetchEn),
+	.clk(i_clk),
 	.rstn(i_rstn)
 );
 
@@ -214,8 +228,8 @@ Mux2 M5[7:0] (
 	.Y(cmdD)
 );
 Mux2 M6[15:0] (
-	.A(i_memDataIn),                         // Updating? Load memory bus
-	.B({dataQ[14:0], i_TDI}),                // NO?       Left shift in TDI
+	.A(fetchQ),                              // Updating? Load fetched memory
+	.B({dataQ[14:0], i_TDI}),                // No?       Left shift in TDI
 	.S(inUPDATE),
 	.Y(dataD)
 );
@@ -233,6 +247,11 @@ assign exeStateCmd  = is3BitCmd &  cmdQ[2] &  cmdQ[1] & inUPDATE & i_isBooted;
 // Set address as commanded.
 assign addrD  = dataQ;
 assign addrEn = exeAddrCmd;
+
+//------------------------------------------------------------------------------
+// Save read memory at core speed for slower JTAG.
+assign fetchD  = i_memDataIn;
+assign fetchEn = exeMemCmd & ~pulseQ;
 
 //------------------------------------------------------------------------------
 // Record access control selection.
