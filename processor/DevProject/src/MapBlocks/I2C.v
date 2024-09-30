@@ -29,7 +29,11 @@ module I2C (
 );
 
 /*
- * TODO- desc
+ * I2C controller (ie master only) with configurable baud rate.
+ *
+ * Sends/receives only 1 byte at a time. Config bits allows for setting
+ * "direction" and adding in start/stop conditions as needed. Module controls
+ * pin directions, NOT values- assumes pull-ups are externally provided.
  */
 
 ////////////////////////////////////////////////////////////////////////////////
