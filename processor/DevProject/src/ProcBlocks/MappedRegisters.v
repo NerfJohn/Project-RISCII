@@ -66,7 +66,7 @@ wire [15:0] nvicMemDataIn, nvicMemDataOut;
 wire        nvicMemWrEn;
 wire        nvicIntOVF, nvicIntEXH, nvicIntEXL;
 wire        nvicIntTM0, nvicIntTM1, nvicIntTM2, nvicIntTM3;
-wire        nvicIntUTX, nvicIntURX, nvicIntI2C;
+wire        nvicIntUTX, nvicIntURX, nvicIntI2C, nvicIntWDT;
 wire [3:0]  nvicIntCode;
 wire        nvicIntEn;
 
@@ -76,6 +76,7 @@ wire [15:0] wdtMemDataIn, wdtMemDataOut;
 wire        wdtMemWrEn;
 wire        wdtSmIsBooted, wdtSmStartPause;
 wire        wdtDoReset;
+wire        wdtIntWDT;
 
 // GPIO wires.
 wire [1:0]  gpioMemAddr;
@@ -179,6 +180,7 @@ Nvic NVIC (
 	.i_intTM3(nvicIntTM3),
 	.i_intUTX(nvicIntUTX),
 	.i_intI2C(nvicIntI2C),
+	.i_intWDT(nvicIntWDT),
 	.i_intEXL(nvicIntEXL),
 	
 	// Output interrupt connections.
@@ -205,6 +207,9 @@ Watchdog WDT (
 	
 	// Triggered reset connection.
 	.o_doReset(wdtDoReset),
+	
+	// Triggered interrupt connection.
+	.o_intWDT(wdtIntWDT),
 	
 	// Common signals.
 	.i_clk(i_clk),
@@ -437,6 +442,7 @@ assign nvicIntTM2    = tmr2IntTMR;
 assign nvicIntTM3    = tmr3IntTMR;
 assign nvicIntUTX    = uartIntUTX;
 assign nvicIntI2C    = i2cIntI2C;
+assign nvicIntWDT    = wdtIntWDT;
 assign nvicIntEXL    = gpioIntEXL;
 
 //------------------------------------------------------------------------------

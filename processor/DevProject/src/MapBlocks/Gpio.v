@@ -32,7 +32,11 @@ module Gpio (
 );
 
 /*
- * TODO- desc once all funcs are made.
+ * Port of generic digital IO pins. All configurable, some with alt functions.
+ *
+ * Each pin uses tristate controls (DIR and OUT) to control read vs write (read
+ * register always reads regardless). Alternate functions override some/all of
+ * tristate controls for given pins.
  */
 
 ////////////////////////////////////////////////////////////////////////////////

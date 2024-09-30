@@ -20,6 +20,7 @@ module Nvic (
 	input         i_intTM3,
 	input         i_intUTX,
 	input         i_intI2C,
+	input         i_intWDT,
 	input         i_intEXL,
 	
 	// Output interrupt connections.
@@ -32,7 +33,11 @@ module Nvic (
 );
 
 /*
- * TODO- desc once all funcs are made.
+ * "Central Station" for interrupts- tracks INT enable and assertion.
+ *
+ * Flags registers latches onto asserts of interrupts while enable determines
+ * which ones can be passed on. Priority encoder ensures highest priority
+ * interrupts are sent. Requires manual clearing of flags to move on.
  */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -130,6 +135,7 @@ assign doSetFlag = i_intOVF |
 						 i_intTM3 |
 						 i_intUTX |
 						 i_intI2C |
+						 i_intWDT |
 						 i_intEXL;
 assign inFlags   = {i_intOVF,
 						  i_intEXH,
@@ -140,7 +146,7 @@ assign inFlags   = {i_intOVF,
 						  i_intTM3,
 						  i_intUTX,
 						  i_intI2C,
-						  1'b0,                                // reserved
+						  i_intWDT,
 						  i_intEXL};
 Mux2 M0[10:0] (
 	.A(i_memDataIn[11:1]),                                // Data Wr? Use data
@@ -153,8 +159,8 @@ assign flagEn    = doSetFlag | (isFlagAddr & i_memWrEn);
 //------------------------------------------------------------------------------
 // Handle encoder inputs.
 assign encIn1  = enableQ[0]  & flagQ[0];  // low ext. pin (EXL)- lowest priority
-assign encIn2  = enableQ[1]  & flagQ[1];  // TODO- implement
-assign encIn3  = enableQ[2]  & flagQ[2];  // TODO- implement
+assign encIn2  = enableQ[1]  & flagQ[1];  // WDT Bark (WDT)
+assign encIn3  = enableQ[2]  & flagQ[2];  // I2C byte (I2C)
 assign encIn4  = enableQ[3]  & flagQ[3];  // UART TX byte (UTX)
 assign encIn5  = enableQ[4]  & flagQ[4];  // Timer 3 overflow (TM3)
 assign encIn6  = enableQ[5]  & flagQ[5];  // Timer 2 overflow (TM2)

@@ -160,7 +160,7 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |enable TM3|5        |r/w   |timer 3 overflow enable (see TMR3)            |
 |enable UTX|4        |r/w   |UART TX byte complete enable (see UART)       |
 |enable I2C|3        |r/w   |I2C byte complete enable (see I2C)            |
-|reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
+|enable WDT|2        |r/w   |WDT alternate pulse enable (see WDT)          |
 |enable EXL|1        |r/w   |external low priority pin enable (see GPIO)   |
 |reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
 
@@ -178,7 +178,7 @@ The NVIC registers remain fully operational while the uP is in the PAUSED state.
 |TM3 flag  |5        |r/w   |timer 3 overflow status (see TMR3)            |
 |UTX flag  |4        |r/w   |UART TX byte complete flag (see UART)         |
 |I2C flag  |3        |r/w   |I2C byte complete flag (see I2C)              |
-|reserved  |2        |r/w   |reserved for future use- default value(s) = 0 |
+|WDT flag  |2        |r/w   |WDT alternate pulse flag (see WDT)            |
 |EXL flag  |1        |r/w   |external low priority pin status (see GPIO)   |
 |reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
 
@@ -188,7 +188,9 @@ The WDT registers control the uP's watchdog timer- a special timer used to reset
 
 By default, the timer runs in the RUNNING state, with a 2\^20 cycle fuse before it forces a hardware reset. This fuse can be paused by leaving the RUNNING state, reset (to 2\^20 cycles) by any write to WDT_CTRL, and reset+disarmed by setting the "cancel" bit in WDT_CTRL. A read-only "paused" status bit under WDT_CTRL indicates if the fuse/timer is paused.
 
-Additionally, a manual hardware reset can be performed by setting the "reset" bit under WDT_CTRL. This will force a hardware reset to occur regardless of the uP state and WDT timer's fuse.
+Also, CTRL features an option to generate an interrupt instead of a reset upon fuse expiration. Asserting the interrupt will reset, but not cancel, the fuse. Interrupt is handled like any other interrupt (see NVIC).
+
+Additionally, a manual hardware reset can be performed by setting the "reset" bit under WDT_CTRL. This will force a hardware reset to occur regardless of the uP state and WDT timer's fuse/settings.
 
 The WDT registers are only fully operationl while the uP is in the RUNNING state. The WDT timer is effectively paused in the BOOTING and PAUSED uP states.
 
@@ -197,7 +199,9 @@ The WDT registers are only fully operationl while the uP is in the RUNNING state
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |isPaused  |15       |r     |indicator for WDT being paused (active high)  |
-|reserved  |14:2     |r     |reserved for future use- default value(s) = 0 |
+|reserved  |14:4     |r     |reserved for future use- default value(s) = 0 |
+|int_alt   |3        |r/w   |do interrupt instead of reset (active high)   |
+|reserved  |2        |r     |reserved for future use- default value(s) = 0 |
 |reset     |1        |r/w   |manual trigger HW reset (active high)         |
 |cancel    |0        |r/w   |stops the WDT from counting (active high)     |
 

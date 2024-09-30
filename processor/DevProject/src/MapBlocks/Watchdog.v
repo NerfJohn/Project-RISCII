@@ -17,6 +17,9 @@ module Watchdog (
 	// Triggered reset connection.
 	output        o_doReset,
 	
+	// Triggered interrupt connection.
+	output        o_intWDT,
+	
 	// Common signals.
 	input         i_clk,
 	input         i_rstn
@@ -25,8 +28,8 @@ module Watchdog (
 /*
  * Memory mapped "counter" used to reset device during SW errors.
  *
- * Implements a 2^20 cycle "fuse" before sending a pulse to perform a hardware
- * reset. Only runs when NOT booting or paused. Control bits allow for stopping
+ * Implements a 2^20 cycle "fuse" before pulsing to hardware reset or interrupt
+ * Only runs when NOT booting or paused. Control bits allow for stopping
  * countdown and forcing a HW reset. Writing to controls auto resets countdown.
  */
  
@@ -40,6 +43,7 @@ wire        isCtrlAddr;
 // Control setting wires.
 wire        cancelD, cancelQ, cancelEn;
 wire        resetD, resetQ, resetEn;
+wire        selectD, selectQ, selectEn;
 
 // Compute control wires (based on counter state).
 wire        isCtrlWr;
@@ -53,7 +57,11 @@ wire        cntEn,cntRstn;
 wire [3:0]  preQ;
 wire        preRstn;
 
+// Interrupt wires.
+wire        intD, intQ;
+
 // Nets for driving output data.
+wire [15:0] readCtrl;
 wire [15:0] readAddr0X;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,6 +81,13 @@ DffSynchEn RESET_REG (
 	.D(resetD),
 	.Q(resetQ),
 	.S(resetEn),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+DffSynchEn SELECT_REG (
+	.D(selectD),
+	.Q(selectQ),
+	.S(selectEn),
 	.clk(i_clk),
 	.rstn(i_rstn)
 );
@@ -99,6 +114,15 @@ RegInc4 PRESCALE (
 	.rstn(preRstn)
 );
 
+//------------------------------------------------------------------------------
+// Interupt- asserts interrupt on bark (if configured to do so).
+DffSynch INT (
+	.D(intD),
+	.Q(intQ),
+	.clk(i_clk),
+	.rstn(i_rstn)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,6 +137,8 @@ assign cancelD  = i_memDataIn[0];                          // bit 0
 assign cancelEn = isCtrlAddr & i_memWrEn;
 assign resetD   = i_memDataIn[1];                          // bit 1
 assign resetEn  = isCtrlAddr & i_memWrEn;
+assign selectD  = i_memDataIn[3];                          // bit 3
+assign selectEn = isCtrlAddr & i_memWrEn;
 
 //------------------------------------------------------------------------------
 // Compute counter state based controls.
@@ -132,10 +158,20 @@ assign cntRstn = i_rstn & ~isCtrlWr;
 assign preRstn = doPrescaleRst;
 
 //------------------------------------------------------------------------------
+// Handle interrupt wires.
+assign intD = &cntQ & doCountInc & selectQ; // sel = interrupt
+
+//------------------------------------------------------------------------------
 // Drive data output based on given address.
+assign readCtrl = {doPause | cancelQ,
+                   11'b00000000000,
+						 selectQ,
+						 1'b0,
+						 resetQ,
+						 cancelQ};
 Mux2 M0[15:0] (
 	.A(cntQ),                                               // Addr 01? CNT Reg
-	.B({doPause, 13'b0000000000000, resetQ, cancelQ}),      // Addr 00? CTRL Reg
+	.B(readCtrl),                                           // Addr 00? CTRL Reg
 	.S(i_memAddr[0]),
 	.Y(readAddr0X)
 );
@@ -143,6 +179,10 @@ assign o_memDataOut = readAddr0X & {16{~i_memAddr[1]}};    // Addr 1X? Zeroes
 
 //------------------------------------------------------------------------------
 // Drive reset output.
-assign o_doReset = resetQ | (&addS & doCountInc);
+assign o_doReset = resetQ | (&cntQ & doCountInc & ~selectQ); // ~sel = reset
+
+//------------------------------------------------------------------------------
+// Drive interrupt output.
+assign o_intWDT = intQ;
 
 endmodule

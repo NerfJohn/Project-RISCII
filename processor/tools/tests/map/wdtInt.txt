@@ -1,0 +1,87 @@
+; Test program checking WDT configured as interrupt works.
+
+__START:
+
+; Reset Vector
+_la $7 main
+JPR $7 0
+HLT
+
+HLT										; Vector 1
+HLT
+HLT
+HLT
+
+; Vector 2- WDT went off
+_la	$0 intr
+JPR $0 0
+HLT
+
+HLT										; Vector 3
+HLT
+HLT
+HLT
+
+HLT										; Vector 4
+HLT
+HLT
+HLT
+
+HLT										; Vector 5
+HLT
+HLT
+HLT
+
+HLT										; Vector 6
+HLT
+HLT
+HLT
+
+HLT										; Vector 7
+HLT
+HLT
+HLT
+
+HLT										; Vector 8
+HLT
+HLT
+HLT
+
+HLT										; Vector 9
+HLT
+HLT
+HLT
+
+HLT										; Vector 10
+HLT
+HLT
+HLT
+
+HLT										; Vector 11
+HLT
+HLT
+HLT
+
+; Interrupt routine for WDT
+intr:
+LBI $7 0x3F
+HLT
+
+; "Main" program
+main:
+; Configure WDT for interrupt instead of reset
+LBI		$0 -128
+LBI	%s	$0 0x10
+LBI		$1 0x08
+STR		$1 $0 0
+
+; Configure WDT interrupt
+LBI		$0 -128
+LBI	%s	$0 0x08
+LBI		$1 0x04
+LBI		$2 0x00
+STR		$2 $0 1
+STR		$1 $0 0
+
+; Wait for interrupt
+BRC	%nzp -1
