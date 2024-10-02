@@ -230,7 +230,7 @@ The GPIO registers remain fully operational while the uP is in the PAUSED state.
 |reserved  |15       |r     |reserved for future use- default value(s) = 0 |
 |Alt UART  |14       |r/w   |GPIO 14/15 = UART RX/TX (active high)         |
 |reserved  |13       |r     |reserved for future use- default value(s) = 0 |
-|TODO      |12       |r/w   |not implemented yet, but readable/writable    |
+|Alt I2C   |12       |r/w   |GPIO 12/13 = I2C SDA/SCL (active high)        |
 |Alt TMR2  |11       |r/w   |GPIO 11 = TMR2 PWM (active high)              |
 |Alt TMR3  |10       |r/w   |GPIO 10 = TMR3 PWM (active high)              |
 |EXH trig  |9        |r/w   |EXH edge trigger- falling = 0, rising = 1     |
