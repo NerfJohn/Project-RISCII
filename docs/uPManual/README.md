@@ -32,6 +32,7 @@ The uP design consists of many internal circuits and components. At a high level
 |TMR2-3    | Two 16-bit configurable timers capable of PWM generation      |
 |UART      | UART transceiver with configurable baud rate                  |
 |I2C       | I2C (control/master only) with configurable baud rate         |
+|SPI       | SPI (control/master only) tied to uP's storage chip           |
 
 These blocks do not cover the entire uP design (ie smaller circuits exist to
 route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
@@ -93,6 +94,9 @@ Some of the uP's internal resources contain registers that can be accessed using
 |I2C_CTRL      |0x8048    |r/w   |I2C control/status register              |
 |I2C_BAUD      |0x804A    |r/w   |I2C baud rate (in system ticks)          |
 |I2C_DATA      |0x804C    |r/w   |Byte sent/received over I2C              |
+|SPI_CTRL      |0x8050    |r     |Status signals of the SPI port           |
+|SPI_LOCK      |0x8052    |r/w   |Lock register enabling SPI port          |
+|SPI_DATA      |0x8054    |r/w   |Data register used to read/write SPI port|
 
 Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
 
@@ -475,6 +479,42 @@ The I2C registers are only fully operation while the uP is in the RUNNING state.
 |----------|---------|------|----------------------------------------------|
 |reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
 |byte      |7:0      |r/w   |byte sent/received for transfer               |
+
+### Serial Peripheral Interface (SPI) Controller Registers
+
+The SPI registers control a SPI port explicitly tied to the storage chip (used to store the uP's binary image). Once unlocked, the SPI port enables the storage chip, allowing software to send/receive bytes from the chip (in turn, allowing software to read/write the binary image).
+
+The CTRL register contains only status signals. It provides bits to determine if the SPI is actively transfering bits and if the SPI is unlocked (which also indicates if the storage chip is selected/enabled).
+
+The LOCK register is used to enable both the SPI controller and storage chip. The LOCK register should be set prior to transferring data and clear once finished. Until the proper key is written to the lock, the DATA register cannot be written to (nor can a transfer be started). The key value is hardwired to the following value: 0x2024.
+
+The DATA register is used to send and receive one byte of data per transfer. Writing the DATA register starts a new transfer provided the following conditions are true:
+- SPI_LOCK register is set to 0x2024
+- The SPI port is idle
+- The uP is in the RUNNING state
+
+The SPI port is only fully operational while the uP is in the RUNNING state (furthermore, the SPI port is not given control of the storage chip when not in the RUNNING state). Once a pause is started, the SPI finishes any running transfers, then pauses.
+
+**_SPI_CTRL (SW Address = 0x8050, HW Address = 0xC028)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|is_idle   |15       |r     |indicator if SPI is idle (active high)        |
+|is_free   |14       |r     |indicator if SPI is unlocked (active high)    |
+|reserved  |13:0     |r     |reserved for future use- default value(s) = 0 |
+
+**_SPI_LOCK (SW Address = 0x8052, HW Address = 0xC029)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|key       |15:0     |r/w   |key value used to unlock SPI (active 0x2024)  |
+
+**_SPI_DATA (SW Address = 0x8054, HW Address = 0xC02A)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
+|data      |7:0      |r/w   |data sent/received over SPI                   |
 
 ## uP Pinout
 ---

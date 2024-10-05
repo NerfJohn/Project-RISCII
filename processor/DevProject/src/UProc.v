@@ -34,12 +34,14 @@ module UProc (
 	input         i_sysClk,
 	input         i_sysRstn
 );
- 
+
 /*
- * TODO- desc.
+ * Top level of RISCII microprocessor (uP). Connects uP's major circuits.
+ *
+ * Top level handles connecting uP's major circuits/functions. Smaller
+ * functions (eg synchronizing/muxing relays) are handled directly, but most
+ * operations are done within instantiated sub-modules.
  */
-// TODO- larger sigs: i_sysClk, synchJtagTDI, pauseIsPausedQ, bootSmNowBooted,
-//                    synchRstnOut
  
 ////////////////////////////////////////////////////////////////////////////////
 // -- Internal Signals/Wires -- //
@@ -75,7 +77,8 @@ wire        memMemRunWr, memMemRunEn, memMemMapWrEn, memMemMapRdEn;
 // Storage Controller wires.
 wire        spiJtagTCK, spiJtagTDI, spiJtagSpiEn;
 wire        spiBootSpiMOSI, spiBootSpiEn;
-wire        spiSmIsPaused;
+wire        spiMapSpiMOSI, spiMapSpiEn, spiMapSpiHold;
+wire        spiSmIsBooted, spiSmIsPaused;
 wire        spiSpiCLK, spiSpiMOSI, spiSpiCSn;
 
 // Boundary scan wires.
@@ -101,6 +104,7 @@ wire        mapReportHLT;
 wire [3:0]  mapIntCode;
 wire        mapIntEn, mapDoPause;
 wire        mapDoReset;
+wire        mapSpiMISO, mapSpiMOSI, mapSpiEn, mapSpiHold;
 
 // Bootloader wires.
 wire        bootSpiMISO, bootSpiMOSI, bootSpiEn;
@@ -228,7 +232,13 @@ SpiController SPI_CTRL (
 	.i_bootSpiMOSI(spiBootSpiMOSI),
 	.i_bootSpiEn(spiBootSpiEn),
 	
+	// SPI port connections.
+	.i_mapSpiMOSI(spiMapSpiMOSI),
+	.i_mapSpiEn(spiMapSpiEn),
+	.i_mapSpiHold(spiMapSpiHold),
+	
 	// uP State connections.
+	.i_smIsBooted(spiSmIsBooted),
 	.i_smIsPaused(spiSmIsPaused),
 	
 	// Selected/driven spi/storage bus.
@@ -315,6 +325,12 @@ MappedRegisters MAPPED_REGS (
 	
 	// Driven GPIO connections.
 	.io_gpioPins(io_gpioPins),     // inout- direct connect net
+	
+	// SPI connection to storage chip,
+	.i_spiMISO(mapSpiMISO),
+	.o_spiMOSI(mapSpiMOSI),
+	.o_spiEn(mapSpiEn),
+	.o_spiHold(mapSpiHold),
 	
 	// Common signals.
 	.i_clk(i_sysClk),
@@ -414,6 +430,10 @@ assign spiJtagTDI     = synchJtagTDI;
 assign spiJtagSpiEn   = jtagSpiAccess;
 assign spiBootSpiMOSI = bootSpiMOSI; 
 assign spiBootSpiEn   = bootSpiEn;
+assign spiMapSpiMOSI  = mapSpiMOSI;
+assign spiMapSpiEn    = mapSpiEn;
+assign spiMapSpiHold  = mapSpiHold;
+assign spiSmIsBooted  = bootSmNowBooted;
 assign spiSmIsPaused  = pauseIsPausedQ;
 
 //------------------------------------------------------------------------------
@@ -451,6 +471,7 @@ assign mapSmStartPause = pauseStartPauseQ;
 assign mapReportSP     = coreReportSP;
 assign mapReportPC     = coreReportPC;
 assign mapReportHLT    = coreReportHLT;
+assign mapSpiMISO      = i_spiMISO;
 
 //------------------------------------------------------------------------------
 // Handle Bootloader inputs.

@@ -1,0 +1,68 @@
+;===============================================================================
+; Simple program to test "internal" SPI port
+;===============================================================================
+
+__START:
+
+; (Reset Vector)
+_la			$7 main
+JPR			$7 0
+HLT
+
+;===============================================================================
+; Function: main (Main function of the program)
+; (No Params, No Returns)
+main:
+; Init Registers/Setup Refs
+LBI			$3 -128						; R3 = 0x8010 (WDT base address)
+LBI	%s		$3 0x10
+LBI			$4 -128						; R4 = 0x8050 (SPI base address)
+LBI	%s		$4 0x50
+LBI			$7 0x7F						; R7 = 0x7FFE (Bottom of Stack)
+LBI	%s		$7 -2
+
+; Disable WDT
+LBI			$0 0x01						; R0 = 0x0001 (bit 0 set mask)
+STR			$0 $3 0						; Set WDT_CTRL (disable WDT)
+
+; Enable SPI
+LBI			$0 0x20						; R0 = 0x2024 (SPI lock key)
+LBI	%s		$0 0x24
+STR			$0 $4 1						; Set SPI_LOCK (unlock/select SPI)
+
+; Send read command + address 0x0000
+LBI			$0 0x03						; R0 = 0x0003 (EEPROM read command)
+STR			$0 $4 2						; Send Read command
+LDR			$0 $4 0						; Get SPI_CTRL
+SHR			$0 $0 15					; Get "is idle" bit
+BRC	%z		-3							; Spin if not idle
+LBI			$0 0x00						; R0 = 0x0000 (address 0x0000)
+STR			$0 $4 2						; Send address upper
+LDR			$0 $4 0						; Get SPI_CTRL
+SHR			$0 $0 15					; Get "is idle" bit
+BRC	%z		-3							; Spin if not idle
+LBI			$0 0x00						; R0 = 0x0000 (address 0x0000)
+STR			$0 $4 2						; Send address lower
+LDR			$0 $4 0						; Get SPI_CTRL
+SHR			$0 $0 15					; Get "is idle" bit
+BRC	%z		-3							; Spin if not idle
+
+; Read/save 10 bytes
+data: .data {0 0 0 0 0 0 0 0 0 0}
+_la			$0 data						; get ptr to array
+ADD			$1 $0 9						; last address to populate
+ADD			$1 $1 9
+STR			$1 $4 2						; trigger read
+LDR			$2 $4 0						; Get SPI_CTRL
+SHR			$2 $2 15					; Get "is idle" bit
+BRC	%z		-3							; Spin if not idle
+LDR			$2 $4 2						; Read received byte
+STR			$2 $0 0						; store to array
+ADD			$0 $0 2						; adjust ptr
+SUB			$2 $0 $1					; Check addresses
+BRC	%np		-9							; Repeat if not equal
+
+LBI			$0 0
+STR			$0 $4 1
+
+HLT

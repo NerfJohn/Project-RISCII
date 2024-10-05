@@ -32,13 +32,23 @@ module MappedRegisters (
 	// Driven GPIO connections.
 	inout  [15:0] io_gpioPins,
 	
+	// SPI connection to storage chip,
+	input         i_spiMISO,
+	output        o_spiMOSI,
+	output        o_spiEn,
+	output        o_spiHold,
+	
 	// Common signals.
 	input         i_clk,
 	input         i_rstn
 );
 
 /*
- * TODO- desc once all funcs are done.
+ * Collection of uP's peripherals, including selection and intra-comm wires.
+ *
+ * Contains instances of peripherals, connecting all to the same memory bus and
+ * handling routing of read/writing. Also contains wires connecting peripherals
+ * to each other. Interface includes wires that enter/exit "mapped zone".
  */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +59,7 @@ module MappedRegisters (
 wire        is6BitAddr;
 wire        isCctrlAddr, isNvicAddr, isWdtAddr, isGpioAddr;
 wire        isTmr0Addr, isTmr1Addr, isTmr2Addr, isTmr3Addr;
-wire        isUartAddr, isI2CAddr;
+wire        isUartAddr, isI2CAddr, isSpiAddr;
 
 // Core Control wires.
 wire [1:0]  cctrlMemAddr;
@@ -130,6 +140,13 @@ wire        i2cMemWrEn;
 wire        i2cSmIsBooted, i2cSmStartPause, i2cSmNowPaused;
 wire        i2cPinSDAIn, i2cPinSCLDir, i2cPinSDADir;
 wire        i2cIntI2C;
+
+// SPI wires.
+wire [1:0]  spiMemAddr;
+wire [15:0] spiMemDataIn, spiMemDataOut;
+wire        spiMemWrEn;
+wire        spiSpiMISO, spiSpiMOSI, spiSpiEn, spiSpiHold;
+wire        spiSmIsBooted, spiSmStartPause, spiSmNowPaused;
 
 // Compute data wires (based on mem address).
 wire [15:0] readData00XX, readData01XX, readData10XX;
@@ -391,6 +408,31 @@ I2C I2C (
 	.i_rstn(i_rstn)
 );
 
+//------------------------------------------------------------------------------
+// SPI- SPI controller hardwired to communicate to the storage chip.
+Spi SPI (
+	// Memory Map connections.
+	.i_memAddr(spiMemAddr),
+	.i_memDataIn(spiMemDataIn),
+	.i_memWrEn(spiMemWrEn),
+	.o_memDataOut(spiMemDataOut),
+	
+	// Serial connections.
+	.i_spiMISO(spiSpiMISO),
+	.o_spiMOSI(spiSpiMOSI),
+	.o_spiEn(spiSpiEn),
+	.o_spiHold(spiSpiHold),
+	
+	// State input connections.
+	.i_smIsBooted(spiSmIsBooted),
+	.i_smStartPause(spiSmStartPause),
+	.o_smNowPaused(spiSmNowPaused),
+
+	// Common signals.
+	.i_clk(i_clk),
+	.i_rstn(i_rstn)
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // -- Connections/Comb Logic -- //
 ////////////////////////////////////////////////////////////////////////////////
@@ -418,6 +460,8 @@ assign isUartAddr  = is6BitAddr &  i_memAddr[5] & ~i_memAddr[4]  // ...1000xx
                                 & ~i_memAddr[3] & ~i_memAddr[2];
 assign isI2CAddr   = is6BitAddr &  i_memAddr[5] & ~i_memAddr[4]  // ...1001xx
                                 & ~i_memAddr[3] &  i_memAddr[2];
+assign isSpiAddr   = is6BitAddr &  i_memAddr[5] & ~i_memAddr[4]  // ...1010xx
+                                &  i_memAddr[3] & ~i_memAddr[2];
 										  
 //------------------------------------------------------------------------------
 // Handle Core Control (cctrl) inputs.
@@ -516,6 +560,15 @@ assign i2cSmStartPause = i_smStartPause;
 assign i2cPinSDAIn     = gpioI2CSDAOut;
 
 //------------------------------------------------------------------------------
+// Handle SPI inputs.
+assign spiMemAddr      = i_memAddr[1:0];
+assign spiMemDataIn    = i_memDataIn;
+assign spiMemWrEn      = isSpiAddr & i_memWrEn;
+assign spiSpiMISO      = i_spiMISO;
+assign spiSmIsBooted   = i_smIsBooted;
+assign spiSmStartPause = i_smStartPause;
+
+//------------------------------------------------------------------------------
 // Drive data output based on given address.
 Mux4 M0[15:0] (
 	.C(cctrlMemDataOut),      // Addr 0000-xx? Read CCTRL
@@ -536,7 +589,7 @@ Mux4 M1[15:0] (
 Mux4 M2[15:0] (
 	.C(uartMemDataOut),       // Addr 1000-xx? Read UART
 	.D(i2cMemDataOut),        // Addr 1001-xx? Read I2C
-	.E(16'b0000000000000000), // Addr 1010-xx? TODO- implement
+	.E(spiMemDataOut),        // Addr 1010-xx? Read SPI
 	.F(16'b0000000000000000), // Addr 1011-xx? No mapped registers
 	.S(i_memAddr[3:2]),
 	.Y(readData10XX)
@@ -552,7 +605,7 @@ Mux4 M3[15:0] (
 
 //------------------------------------------------------------------------------
 // Drive state machine outputs.
-assign o_smNowPaused = uartSmNowPaused & i2cSmNowPaused;
+assign o_smNowPaused = uartSmNowPaused & i2cSmNowPaused & spiSmNowPaused;
 
 //------------------------------------------------------------------------------
 // Drive control outputs.
@@ -563,5 +616,11 @@ assign o_doPause = cctrlDoPause;
 //------------------------------------------------------------------------------
 // Drive reset outputs.
 assign o_doReset = wdtDoReset;
+
+//------------------------------------------------------------------------------
+// Drive SPI/storage chip connection.
+assign o_spiMOSI = spiSpiMOSI;
+assign o_spiEn   = spiSpiEn;
+assign o_spiHold = spiSpiHold;
 
 endmodule
