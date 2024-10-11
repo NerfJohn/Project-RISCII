@@ -1,672 +1,717 @@
-# Project RISCII Microprocessor Manual
-*"Reference manual for softcore microprocessor design"*
+# Project RISCII: uP (Microprocessor) Manual (PR2001)
+*"Reference for design of the RISCII softcore microprocessor"*
 
 ---
 
-This README is a summary on how to use Project RISCII's (softcore) microprocessor design. These writings are primarly focused on the softcore uP design, though offer some insight into the desired FPGA/PCB implementation. This manual covers the following "internal" oriented material:
-- uP Blocks
-- uP State Machine
-- Mapped Registers
+This document describes the capabilities and functions of the RISCII softcore processor (64 KB NVM/32 KB RAM, rated for 8 MHz system clock). Includes pertient details for software usage and hardware setup.
 
-Followed by the following "external" oriented material:
-- uP Pinout
-- "JTAG" Interface
-- Binary Image Layout
-- Integration Considerations
+**Table of Contents** 
 
-## uP Blocks
+- [Pinout](#pinout)
+- [Block Diagram](#block-diagram)
+- [High Level Operation](#high-level-operation)
+- [JTAG Interface](#jtag-interface)
+- [Binary Image Format](#binary-image-format)
+- [Mapped Registers](#mapped-registers)
+- [Integration Considerations](#integration-considerations)
+
+**Referenced Terms**
+
+|Term            |Description                                              |
+|----------------|---------------------------------------------------------|
+|ISA             |"ISA" Document PR2000                                    |
+|uP              |RISCII softcore microprocessor                           |
+|KB              |kilobyte, = 1024 bytes                                   |
+|MHz             |megahertz, = 1,000,000 hertz                             |
+|RAM             |SRAM runtime memory chip, external to uP                 |
+|NVM             |EEPROM storage memory chip, external to uP               |
+|IO              |input/output                                             |
+|ext             |external                                                 |
+|JTAG            |RISCII's version of common hardware std of the same name |
+|CLK             |clock, system clock unless specified (eg NVM CLK)        |
+|SYS             |system, with respect to uP at large                      |
+
+
 ---
-The uP design consists of many internal circuits and components. At a high level, the uP is made up of the following "blocks" of circuits:
+
+## Pinout
+---
+This section outlines the uP's pinout (ie module IO of the softcore uP).
+
+The table below summarizes the uP's critical pinout (VDD/GND not included).
+
+|Pin Group Name|# of Pins|Direction|Summary                                |
+|--------------|---------|---------|---------------------------------------|
+|RAM Address   |16       |Output   |RAM access word address                |
+|RAM Write     |1        |Output   |RAM access write/read signal (0 = rd)  |
+|RAM Enable    |1        |Output   |RAM access enable signal (0 = off)     |
+|RAM Data      |16       |Bidir    |RAM access data                        |
+|NVM MISO      |1        |Input    |NVM access data ouput to uP            |
+|NVM MOSI      |1        |Output   |NVM access data output to NVM          |
+|NVM CLK       |1        |Output   |NVM access shared clock                |
+|NVM CSn       |1        |Output   |NVM access enable signal (0 = on)      |
+|GPIO Pins     |16       |Bidir    |generic digital IO pins                |
+|JTAG TCK      |1        |Input    |JTAG access shared clock               |
+|JTAG TMS      |1        |Input    |JTAG access state select signal        |
+|JTAG TDI      |1        |Input    |JTAG access data input                 |
+|JTAG TDO      |1        |Output   |JTAG access data output                |
+|SM Do Pause   |1        |Input    |external pause signal (0 = off)        |
+|SM Is Booted  |1        |Output   |indicator uP has exited BOOTING state  |
+|SM Is Paused  |1        |Output   |indicator uP is in PAUSED state        |
+|SYS Clock     |1        |Input    |system clock of uP                     |
+|SYS Reset     |1        |Input    |external reset signal (0 = on)         |
+
+## Block Diagram
+---
+This section provides an overview of the major circuit blocks of the uP. It covers internal and external circuits.
+
+The table below describes circuit blocks internal to (thus provided by) the uP.
 
 |Block Name|Description                                                    |
 |----------|---------------------------------------------------------------|
-|JTAG      | JTAG port/interface for remote hardware access                |
-|SCAN      | Read only boundary scan register accessible only through JTAG |
-|BOOT      | Circuit to copy stored binary image to runtime memory on reset|
-|CORE      | Core processor responsible for code execution                 |
-|CCTRL     | Mapped CORE registers and stack overflow detection controls   |
-|NVIC      | Interrupt Controller for enabling preemptive behavior         |
-|WDT       | Watchdog timer for resetting hardware in event of SW failure  |
-|GPIO      | General Purpose digital IO pins with some alternate functions |
-|TMR0-1    | Two 16-bit configurable timers with overflow interrupts       |
-|TMR2-3    | Two 16-bit configurable timers capable of PWM generation      |
-|UART      | UART transceiver with configurable baud rate                  |
-|I2C       | I2C (control/master only) with configurable baud rate         |
-|SPI       | SPI (control/master only) tied to uP's storage chip           |
+|JTAG      |JTAG-esque port capable of programming and debugging           |
+|SCAN      |Read-only boundary scan register, extension of JTAG block      |
+|BOOT      |Hardware bootloader, reads binary image from storage chip      |
+|CORE      |Core processor responsible for code execution                  |
+|CCTRL     |Mapped CORE registers and stack overflow detection controls    |
+|NVIC      |Mapped interrupt controller with 11 unique types/sources       |
+|WDT       |Mapped watchdog timer capable of causing hardware reset        |
+|GPIO      |Mapped generic digital IO pins, some with alternate functions  |
+|TMR0      |Mapped generic configurable timer                              |
+|TMR1      |Mapped generic configurable timer                              |
+|TMR2      |Mapped configurable timer with PWM capabilities                |
+|TMR3      |Mapped configurable timer with PWM capabilities                |
+|UART      |Mapped UART transceiver with configurable baud rate            |
+|I2C       |Mapped master only I2C with configurable baud rate             |
+|SPI       |Mapped master only SPI hardwired to the storage chip           |
 
-These blocks do not cover the entire uP design (ie smaller circuits exist to
-route/synchronize signals), but reflect the primary "actors" and functions of the uP design at the high level.
+By contrast, the following table (below) describes circuit blocks the uP expects to be provided with externally.
 
-## uP State Machine
+|Block Name|Description                                                    |
+|----------|---------------------------------------------------------------|
+|CLK       |system clock, std square wave signal at a constant frequency   |
+|RAM       |SRAM runtime chip, at least 96 KB and parallel port accessed   |
+|NVM       |EEPROM storage chip, at least 64 KB and SPI port accessed      |
+
+## High Level Operation
 ---
-Between various signals, the uP effectively implements a global "state machine" that dictates larger functionality (eg if firmware is running, which circuits control memory, etc). The high level states are as follows:
+This section describes the high level 1) state machine 2) memory layout and 3) Core Architecture of the uP.
 
-|State Name|SM Is Booted|SM Is Paused|Summary                              |
-|----------|------------|------------|-------------------------------------|
-|RUNNING   |HIGH        |LOW         |uP is running the binary firmware    |
-|PAUSED    |HIGH        |HIGH        |uP is "paused", JTAG now in charge   |
-|BOOTING   |LOW         |LOW         |uP is preparing to run binary image  |
+### State Machine
 
-Pins "SM Is Booted" and "SM Is Paused" act as external indicators of the uP's internal state (see "uP Pinout" below for more details about the pins).
+The uP has three over-arching states that correspond to who controls the memory chips (ie runtime/RAM and storage/NVM). The table below summarizes these states.
 
-In the RUNNING state, the CORE block executes the loaded firmware, exercising control of the uP's resources. In this mode, code (stored in the runtime chip) is executed, controlling the rest of the uP based on the program/functions being run.
+|State Name|Memory Chips Controller|Description                            |
+|----------|-----------------------|---------------------------------------|
+|BOOTING   |BOOT                   |uP is reading binary image into RAM    |
+|RUNNING   |CORE/Mapped Registers  |uP is executing code (out of RAM)      |
+|PAUSED    |JTAG                   |uP is on standby for JTAG access       |
 
-In the PAUSED state, uP's resources temporarily cease operation (eg firmware execution pauses, timers freeze, etc). In this mode, the JTAG is given general control over the uP's resources. Note that while the PAUSED state is not reached until all resources are paused, some resources may take longer to pause than others (ie frequent pausing may cause performance variation).
+Upon a hardware reset, the uP begins in the BOOTING state, which always terminates. Depending on the various pause signals, the uP will continue in the RUNNING or PAUSED states, transitioning as instructed.
 
-In the BOOTING state, the BOOT block is given control over both memory chips (other resources are put on hold). In this mode, the binary image is copied from the storage chip into the runtime chip (see section "Binary Image Format" below). This state cannot be interrupted, though eventually terminates and does not prevent uP resources from being paused (ie prevents formal recognition of uP being paused, but not pause process).
+For RUNNING/PAUSED transitions, while only one pause signal is needed to begin a pause, all uP circuits must fully pause before becoming PAUSED (see [Mapped Registers](#mapped-registers)). The table below summarizes the sources of pause signals.
+
+|Signal Name|Signal Origin|Description                                     |
+|-----------|-------------|------------------------------------------------|
+|Ext Pause  |SM Do Pause  |uP pin providing external method of pausing     |
+|JTAG Pause |JTAG         |JTAG setting allowing for "ext host" pausing    |
+|CCTRL Pause|Mapped CCTRL |mapped bit used by CORE for software pausing    |
+
+*Note: PAUSED state implements ISA's "paused mode".*
+
+### Memory Layout
+
+Memory is implemented between 1) the runtime chip 2) the uP's mapped registers and 3) the storage chip. How these regions are used vary based on the "level" they are viewed at.
+
+**_Hardware Level View_**
+
+Interal hardware, such as BOOT and JTAG, view memory for what it is. The table below summarizes how they view memory.
+
+|Section Name|Address Range|Bits Per Address|Address Space|Summary         |
+|------------|-------------|----------------|-------------|----------------|
+|RAM         |0x0000-0xBFFF|16              |Memory       |runtime chip    |
+|Mapped      |0xC000-0xFFFF|16              |Memory       |mapped registers|
+|NVM         |0x0000-0xFFFF|8               |Storage      |storage chip    |
+
+**_Software Level View_**
+
+Software, executed by CORE, views memory in an abstract manner. The table below summarizes how software views memory.
+
+|Section Name|Address Range|Bits Per Address|Address Space|Summary         |
+|------------|-------------|----------------|-------------|----------------|
+|Progam      |0x0000-0xFFFF|8               |Program      |text section    |
+|Data        |0x0000-0x7FFF|8               |Data         |data/open memory|
+|Mapped      |0x8000-0xFFFF|8               |Data         |mapped registers|
+
+Software sees two separate address spaces (within RAM), where one space is partially mapped to internal registers. Address spaces appear byte addressable, though as seen in the hardware view, are actually addressed by word.
+
+### Core Architecture
+
+The uP's CORE complies with the ISA given in PR2000. In terms of "interrupt/application" modes, the CORE supports interrupts and defines a unique mode in which it executes interrupt related code.
+
+Beyond ISA requirements, the CORE is a (roughly) 2 stage, Harvard style architecture (albeit a single, shared memory pipeline). As described in the above memory layout, it strictly uses RAM for executing a binary image.
+
+## JTAG Interface
+---
+This section describes the uP's JTAG interface. It covers 1) pins and state machine 2) JTAG commands and ) additional features.
+
+*Note: As stated above, the uP's JTAG does not completely follow the JTAG std common to most modern microcontrollers.*
+
+### Pin and State Machine
+
+The JTAG uses 4 pins in a similar manner to SPI (ie full duplex, clocked with select signal). Following the comparison, the JTAG uses CPOL/CPHA = 0 and MSb semantics. See [Pinout](#pinout) for more details on JTAG pins.
+
+Unlike SPI, the select signal (ie JTAG TMS) is used to traverse a state machine. The table below summarizes the state machine.
+
+|Curent State|Next State on TCK Posedge|Current State Summary              |
+|------------|-------------------------|-----------------------------------|
+|IDLE        |TMS == 0 ? CSEL  : IDLE  |JTAG not in use- idling            |
+|CSEL        |TMS == 0 ? CSHFT : DSEL  |"command" selected                 |
+|DSEL        |TMS == 0 ? DSHFT : IDLE  |"data" selected                    |
+|CSHFT       |TMS == 0 ? CSHFT : UPDATE|shifting in 8-bit command          |
+|DSHFT       |TMS == 0 ? DSHFT : IDLE  |shifting in 16-bit data            |
+|UPDATE      |IDLE                     |executing command                  |
+
+### JTAG Commands
+
+Values can be shifted in/out of either an 8-bit command register or 16-bit data register. After shifting in a command, it is executed in the next TCK cycle. The table below summarizes the available JTAG commands.
+
+|Command Name|Command Code|Pre-Reqs|Summary                                |
+|------------|------------|--------|---------------------------------------|
+|No Operation|0x00        |None    |No operation performed                 |
+|RAM Addr    |0x01        |None    |Sets address used for RAM commands     |
+|RAM Read    |0x02        |Paused  |Reads word from RAM into data register |
+|RAM Write   |0x03        |Paused  |Writes word to RAM from data register  |
+|Access SCAN |0x04        |Paused  |Maps SCAN register over data register  |
+|Access NVM  |0x05        |Paused  |Maps NVM connection over data register |
+|Run uP      |0x06        |Booted  |De-asserts JTAG's pause signal         |
+|Pause uP    |0x07        |Booted  |Asserts JTAG's pause signal            |
+
+Additional notes regarding JTAG commands are as follows:
+- Commands that are unrecocgnized or don't meet pre-reqs are ignored
+- The JTAG uses hardware level memory (see [High Level Operation](#high-level-operation))
+- SCAN/NVM accesses remain active until the next command is executed
+- On a hardware reset, SCAN/NVM accesses and the pause signal are inactive
+
+### Additional Features
+
+**_Status Code_**
+
+When the command register is shifted, an 8-bit status code is initially shifted out. The table below summarizes the meaning of each bit (field).
+
+|Field Name|Bit Field|Description                                          |
+|----------|---------|-----------------------------------------------------|
+|reserved  |7:2      |reserved for future use (value = 0)                  |
+|isPaused  |1        |set if uP is in PAUSED state                         |
+|isBooted  |0        |set if uP has exited the BOOTING state               |
+
+*Note: Recommended to use "No Operation" command to extract status.*
+
+**_Boundary Scan (SCAN) Register_**
+
+The SCAN register provides read only access to the uP external pins (excluding SYS and JTAG pins). It is accessed via shifting (sampling all other times). The table below summarizes the meaning of each bit (field).
+
+|Field Name|Bit Field|Description                                          |
+|----------|---------|-----------------------------------------------------|
+|reserved  |63:57    |reserved for future use (value = 0)                  |
+|smIsPaused|56       |indicator uP is in PAUSED state                      |
+|smIsBooted|55       |indicator uP has exited BOOTING state                |
+|smDoPause |54       |external paused signal                               |
+|gpioPins  |53:38    |generic digital IO pins                              |
+|nvmCSn    |37       |NVM access enable signal                             |
+|nvmCLK    |36       |NVM access shared clock                              |
+|nvmMOSI   |35       |NVM access data output to NVM                        |
+|nvmMISO   |34       |NVM access data output to uP                         |
+|ramEn     |33       |RAM access enable signal                             |
+|ramWr     |32       |RAM access write/read signal                         |
+|ramData   |31:16    |RAM access data                                      |
+|ramAddr   |15:0     |RAM access word address                              |
+
+## Binary Image Format
+---
+This section describes how the uP interprets the binary image stored in NVM (thus, how the image should be formatted). It covers the layout of the image file and how it is copied into RAM.
+
+### Image File Layout
+
+The image file is divided into 4 distinct sections. It is also word aligned, big endian, and totalling no more than 64 KB. The table below summarizes each section (in ascending address order).
+
+|Section Name  |Length (Bytes)|Description                                 |
+|--------------|--------------|--------------------------------------------|
+|.text metadata|2             |last .text address in RAM (hardware level)  |
+|.text value   |2+            |.text section of binary image               |
+|.data metadata|2             |last .data address in RAM (hardware level)  |
+|.data value   |2+            |.data section of binary image               |
+
+A program is directly made up of instructions (.text) and pre-initialized data (.data). Their values are written using software level memory, whereas the metadata refers to hardware level memory (see [High Level Operation](#high-level-operation)).
+
+### RAM Parsing
+
+During BOOTING, the binary image is parsed into RAM. The .text and .data values are copied to specific RAM regions while metadata guides the process. The illustrative code below demonstrates the final result (using hardware level memory addresses).
+
+```
+|------------| 0x0000
+|.text values|
+|------------| <.text metadata>
+|...         |
+|------------| 0x8000
+|.data values|
+|------------| <.data metadata>
+|...         |
+|------------| 0xC000
+```
+
+Overall, 64 KB and 32 KB are reserved explictly for .text and .data values, respectively. Regardless of these sizes, the binary image must fit within 64 KB itself.
 
 ## Mapped Registers
 ---
-Some of the uP's internal resources contain registers that can be accessed using specific addresses in the data address space (ie SW addresses 0x8000-0xFFFF, HW adddresses 0xC000-0xFFFF). The following subsections cover each register in detail, though a summary of each register is as follows:
+This section describes the mapped registers (and their related circuits). Each group of mapped registers (see [Block Diagram](#block-diagram)) is covered in its own sub-section.
 
-|Register Name |SW Address|Access|Description                              |
-|--------------|----------|------|-----------------------------------------|
-|CCTRL_CTRL    |0x8000    |r/w   |Controls for core processing features    |
-|CCTRL_SETPOINT|0x8002    |r/w   |Setpoint for stack overflow detection    |
-|CCTRL_PC      |0x8004    |r     |Current value of the PC                  |
-|CCTRL_SP      |0x8006    |r     |Current value of the stack pointer (SP)  |
-|NVIC_ENABLE   |0x8008    |r/w   |Interrupt enables (per interrupt)        |
-|NVIC_FLAG     |0x800A    |r/w   |Status of interrupt signals              |
-|WDT_CTRL      |0x8010    |r/w   |Controls/Status of Watchdog timer        |
-|WDT_CNT       |0x8012    |r     |Current count of the WDT main counter    |
-|GPIO_CFG      |0x8018    |r/w   |Gpio pin alternate functions/configs     |
-|GPIO_INP      |0x801A    |r     |Read value for each GPIO pin             |
-|GPIO_DIR      |0x801C    |r/w   |Controls read/write direction of pin     |
-|GPIO_OUT      |0x801E    |r/w   |Write value for each GPIO pin            |
-|TMR0_CTRL     |0x8020    |r/w   |Controls of timer 0                      |
-|TMR0_CNT      |0x8022    |r/w   |Current count of timer 0                 |
-|TMR0_MAX      |0x8024    |r/w   |Highest value timer 0 count can be       |
-|TMR1_CTRL     |0x8028    |r/w   |Controls of timer 1                      |
-|TMR1_CNT      |0x802A    |r/w   |Current count of timer 1                 |
-|TMR1_MAX      |0x802C    |r/w   |Highest value timer 1 count can be       |
-|TMR2_CTRL     |0x8030    |r/w   |Controls of timer 2                      |
-|TMR2_CNT      |0x8032    |r/w   |Current count of timer 2                 |
-|TMR2_MAX      |0x8034    |r/w   |Highest value timer 2 count can be       |
-|TMR2_CMP      |0x8036    |r/w   |PWM comparator- "CNT \< CMP" comparison  |
-|TMR3_CTRL     |0x8038    |r/w   |Controls of timer 3                      |
-|TMR3_CNT      |0x803A    |r/w   |Current count of timer 3                 |
-|TMR3_MAX      |0x803C    |r/w   |Highest value timer 3 count can be       |
-|TMR3_CMP      |0x803E    |r/w   |PWM comparator- "CNT \< CMP" comparison  |
-|UART_CTRL     |0x8040    |r/w   |UART control/status register             |
-|UART_BAUD     |0x8042    |r/w   |UART baud rate (in system clock ticks)   |
-|UART_TX       |0x8044    |r/w   |Byte to send over UART TX channel        |
-|UART_RX       |0x8046    |r     |Byte received over UART RX channel       |
-|I2C_CTRL      |0x8048    |r/w   |I2C control/status register              |
-|I2C_BAUD      |0x804A    |r/w   |I2C baud rate (in system ticks)          |
-|I2C_DATA      |0x804C    |r/w   |Byte sent/received over I2C              |
-|SPI_CTRL      |0x8050    |r     |Status signals of the SPI port           |
-|SPI_LOCK      |0x8052    |r/w   |Lock register enabling SPI port          |
-|SPI_DATA      |0x8054    |r/w   |Data register used to read/write SPI port|
+*Note: This section uses a software level view of memory for addresses (see [High Level Operation](#high-level-operation)).*
 
-Unless otherwise stated, all registers are reset to a value of 0x0000 upon hardware reset. Likewise, any unspecified addresses are reserved registers with a read value of 0x0000.
+### General Behavior
 
-### Core Controls (CCTRL) Registers
+The following characteristics are true for all mapped registers (unless stated otherwise): 
+- all mapped registers are read/written as 16-bit values
+- upon a hardware reset, all mapped registers are reset to 0x0000
+- unused mapped registers/bits are read only and equal to 0
+- mapped registers' access permissions are constant for RUNNING and PAUSED
+- mapped registers' functions are available for RUNNING and PAUSED
 
-The CCTRL registers provide various controls and readings of the uP's core. Controls include interfaces for pausing and detecting stack overflow, whereas readings include copies of the current program counter (PC) and stack pointer (SP- equal to R7 in the core's register file).
+### Core Control Registers (CCTL)
 
-The pause bit (active for value of 1) is primarily used by the core to continue pausing once the core itself has been paused, but can be used by software as well. When set, the JTAG or a power reset is required to clear the bit.
+The CCTRL registers provide various services related to the CORE. The tables below summarize their usage.
 
-Enabling the stack overflow detector (active for value of 1) compares the SP to a given setpoint. The OVF interrupt is asserted anytime SP is less than the setpoint (compared as uint16 values). Due to this, the OVF interrupt may be active for contiguous cycles.
-
-The CCTRL registers remain fully operational while the uP is in the PAUSED state.
-
-**_CCTRL_CTRL (SW Address = 0x8000, HW Address = 0xC000)_**
+**_CCTRL_CTRL (0x8000)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:2     |r     |reserved for future use- default value(s) = 0 |
-|ovdEn     |1        |r/w   |stack overflow detection enable               |
-|doPause   |0        |r/w   |pauses uP (auto set by HLT instruction)       |
+|reserved  |15:2     |r     |reserved for future use (value = 0)           |
+|ovfEn     |1        |r/w   |stack overflow detection enable (0 = off)     |
+|doPause   |0        |r/w   |uP pause signal (0 = unpause)                 |
 
-**_CCTRL_SETP (SW Address = 0x8002, HW Address = 0xC001)_**
+**_CCTRL_SETP (0x8002)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|setpoint  |15:0     |r/w   |lowest valid stack pointer (ie "\<" trigger)  |
+|setpoint  |15:0     |r/w   |lowest valid stack pointer (R7) value         |
 
-**_CCTRL_PC (SW Address = 0x8004, HW Address = 0xC002)_**
+**_CCTRL_PC (0x8004)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
 |PC        |15:0     |r     |current PC value- used to fetch instructions  |
 
-**_CCTRL_SP (SW Address = 0x8006, HW Address = 0xC003)_**
+**_CCTRL_SP (0x8006)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|SP        |15:0     |r     |current stack pointer- checked by detector    |
+|SP        |15:0     |r     |current stack pointer (R7)- used for detection|
 
-### Nested Vector Interrupt Controller (NVIC) Registers
+CCTRL_CTRL's `doPause` bit is used to transition from RUNNING to PAUSED. It is automatically set by the CORE upon executing a halt/pause instruction (see ISA document PR2000), but can also be set/cleared manually.
 
-The NVIC registers control which interrupt's have been received an can be forwarded to the core for processing. Controls include individual enable and flag signals for each of the 11 interrupts. Logic shared between the NVIC and core implement priority and behavioral rules for interrupts.
+CCTRL_CTRL's `ovfEn` bit enables stack overflow detection. Treating register 7 (referred to as R7) in the CORE's register file as a stack pointer, it asserts the stack overflow interrupt signal anytime R7 is less than CCTRL_SETP (and enabled).
 
-Interrupts cause the core to save the current PC/CC values and enter an "interrupt mode". In this mode, the PC is initialized to a value equal to the serviced interrupt's bit field (ie in the NVIC registers) times 8. The core continues running in interrupt mode, ignoring other interrupts, until a JPR instruction with its "r" flag (see ISA) is executed. Once executed, the uP returns to the previous context (ie PC/CC values) preempted by the interrupt.
+For convenience, CCTRL_PC and CCTRL_SP are provided as read only registers. This is primarily for an external host (via JTAG) to be able to debug the software running on the uP.
 
-The enable bits determine if an interrupt's flag can be forwarded to the core (a value of 1 allowing passage). The flag bits record if an interrupt signal was detected (a value of 1 equaling detection). These bits are typically updated by hardware, though can be overwritten by the software directly.
+### Nested Vector Interrupt Controller Registers (NVIC)
 
-If two or more interrupts are enabled and have been detected, the NVIC will forward the interrupt with the higher bit field (ie in the NVIC registers). Thus, while interrupts cannot pre-emptive other interrupts due to the core's "interrupt mode", they are executed in a prioritized manner.
+The NVIC registers handle the recording and passing of interrupts to the CORE. The tables below summarize their usage.
 
-In general, interrupts are expected to be enabled both in the NVIC and at their origin, arriving as pulses captured by the flag bits. It is expected that the flags are handled with care (as both hardware and software write to them- write conflicts are a potential issue).
-
-The NVIC registers remain fully operational while the uP is in the PAUSED state. However, the core prevents interrupts from being processes until in the RUNNING state.
-
-**_NVIC_ENABLE (SW Address = 0x8008, HW Address = 0xC004)_**
+**_NVIC_ENABLE (0x8008)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
-|enable OVF|11       |r/w   |stack overflow detection enable (see CCTRL)   |
-|enable EXH|10       |r/w   |external high priority pin enable (see GPIO)  |
-|enable URX|9        |r/w   |UART RX byte complete enable (see UART)       |
-|enable TM0|8        |r/w   |timer 0 overflow enable (see TMR0)            |
-|enable TM1|7        |r/w   |timer 1 overflow enable (see TMR1)            |
-|enable TM2|6        |r/w   |timer 2 overflow enable (see TMR2)            |
-|enable TM3|5        |r/w   |timer 3 overflow enable (see TMR3)            |
-|enable UTX|4        |r/w   |UART TX byte complete enable (see UART)       |
-|enable I2C|3        |r/w   |I2C byte complete enable (see I2C)            |
-|enable WDT|2        |r/w   |WDT alternate pulse enable (see WDT)          |
-|enable EXL|1        |r/w   |external low priority pin enable (see GPIO)   |
-|reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
+|reserved  |15:12    |r     |reserved for future use (value = 0)           |
+|ovfEn     |11       |r/w   |CCTRL stack overflow enable (0 = off)         |
+|exhEn     |10       |r/w   |GPIO high priority enable (0 = off)           |
+|urxEn     |9        |r/w   |UART RX complete enable (0 = off)             |
+|tm0En     |8        |r/w   |TMR0 overflow enable (0 = off)                |
+|tm1En     |7        |r/w   |TMR1 overflow enable (0 = off)                |
+|tm2En     |6        |r/w   |TMR2 overflow enable (0 = off)                |
+|tm3En     |5        |r/w   |TMR3 overflow enable (0 = off)                |
+|utxEn     |4        |r/w   |UART TX complete enable (0 = off)             |
+|i2cEn     |3        |r/w   |I2C byte complete enable (0 = off)            |
+|wdtEn     |2        |r/w   |WDT bark enable (0 = off)                     |
+|exlEn     |1        |r/w   |GPIO low priority enable (0 = off)            |
+|reserved  |0        |r     |reserved for future use (value = 0)           |
 
-**_NVIC_FLAG (SW Address = 0x800A, HW Address = 0xC005)_**
-
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|reserved  |15:12    |r     |reserved for future use- default value(s) = 0 |
-|OVF flag  |11       |r/w   |stack overflow detection status (see CCTRL)   |
-|EXH flag  |10       |r/w   |external high priority pin status (see GPIO)  |
-|URX flag  |9        |r/w   |UART RX byte complete flag (see UART)         |
-|TM0 flag  |8        |r/w   |timer 0 overflow status (see TMR0)            |
-|TM1 flag  |7        |r/w   |timer 1 overflow status (see TMR1)            |
-|TM2 flag  |6        |r/w   |timer 2 overflow status (see TMR2)            |
-|TM3 flag  |5        |r/w   |timer 3 overflow status (see TMR3)            |
-|UTX flag  |4        |r/w   |UART TX byte complete flag (see UART)         |
-|I2C flag  |3        |r/w   |I2C byte complete flag (see I2C)              |
-|WDT flag  |2        |r/w   |WDT alternate pulse flag (see WDT)            |
-|EXL flag  |1        |r/w   |external low priority pin status (see GPIO)   |
-|reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
-
-### Watchdog Timer (WDT) Registers
-
-The WDT registers control the uP's watchdog timer- a special timer used to reset the automatically reset the hardware for a software error. The timer's "fuse" is implicitly paused when not in the RUNNING mode and can be reset or disarmed using the controls. A manual hardware reset can also be performed.
-
-By default, the timer runs in the RUNNING state, with a 2\^20 cycle fuse before it forces a hardware reset. This fuse can be paused by leaving the RUNNING state, reset (to 2\^20 cycles) by any write to WDT_CTRL, and reset+disarmed by setting the "cancel" bit in WDT_CTRL. A read-only "paused" status bit under WDT_CTRL indicates if the fuse/timer is paused.
-
-Also, CTRL features an option to generate an interrupt instead of a reset upon fuse expiration. Asserting the interrupt will reset, but not cancel, the fuse. Interrupt is handled like any other interrupt (see NVIC).
-
-Additionally, a manual hardware reset can be performed by setting the "reset" bit under WDT_CTRL. This will force a hardware reset to occur regardless of the uP state and WDT timer's fuse/settings.
-
-The WDT registers are only fully operationl while the uP is in the RUNNING state. The WDT timer is effectively paused in the BOOTING and PAUSED uP states.
-
-**_WDT_CTRL (SW Address = 0x8010, HW Address = 0xC008)_**
+**_NVIC_FLAG (0x800A)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|isPaused  |15       |r     |indicator for WDT being paused (active high)  |
-|reserved  |14:4     |r     |reserved for future use- default value(s) = 0 |
-|int_alt   |3        |r/w   |do interrupt instead of reset (active high)   |
-|reserved  |2        |r     |reserved for future use- default value(s) = 0 |
-|reset     |1        |r/w   |manual trigger HW reset (active high)         |
-|cancel    |0        |r/w   |stops the WDT from counting (active high)     |
+|reserved  |15:12    |r     |reserved for future use (value = 0)           |
+|ovfFlag   |11       |r/w   |CCTRL stack overflow pending (0 = no)         |
+|exhFlag   |10       |r/w   |GPIO high priority pending (0 = no)           |
+|urxFlag   |9        |r/w   |UART RX complete pending (0 = no)             |
+|tm0Flag   |8        |r/w   |TMR0 overflow pending (0 = no)                |
+|tm1Flag   |7        |r/w   |TMR1 overflow pending (0 = no)                |
+|tm2Flag   |6        |r/w   |TMR2 overflow pending (0 = no)                |
+|tm3Flag   |5        |r/w   |TMR3 overflow pending (0 = no)                |
+|utxFlag   |4        |r/w   |UART TX complete pending (0 = no)             |
+|i2cFlag   |3        |r/w   |I2C byte complete pending (0 = no)            |
+|wdtFlag   |2        |r/w   |WDT bark pending (0 = no)                     |
+|exlFlag   |1        |r/w   |GPIO low priority pending (0 = no)            |
+|reserved  |0        |r     |reserved for future use (value = 0)           |
 
-**_WDT_CNT (SW Address = 0x801A, HW Address = 0xC009)_**
+Each interrupt has a `En` and `Flag` bit (in NVIC_ENABLE and NVIC_FLAG, respectively). When an interrupt signal is asserted, the corresponding `Flag` bit is set. If an interrupt's `En` and `Flag` bit are set, the interrupt is valid and passed to the CORE.
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|count     |15:0     |r     |current count of WDT's main counter           |
+When the CORE receives an interrupt, the PC and condition codes are saved, the PC is set based on the passed interrupt, and the CORE enters "interrupt mode". The equation below summarizes how the PC is set based on the passed interrupt.
 
-### General Purpose Input/Output (GPIO) Registers
+`PC = <interrupt's 'En' bit field value> * 8`
 
-The GPIO registers control the uP's 16 general purpose digital pins. Pins can be read, configured as an input/output, and set to digital value. Some pins can also be configured to be used by other peripherals or generate externally sourced interrupts.
+In "interrupt mode", the CORE will not accept any new passed interrupts until a return from interrupt instruction is executed (see ISA document PR2000). Once executed, the CORE restores the PC and condition codes and re-enters "application mode".
 
-All pins are capable of generic input/output capabilities. Controls are split across 3 registers, with bit field values indicating which pin they correspond to. Writing a value to a pin only works when the pin's direction is outward (ie DIR value of 1). Pins can always be read, regardless of direction.
+For standard operation, the following recommendations are made:
+- The first 96 bytes of the binary image should be reserved for interrupts
+- Interrupt service routines should save/restore the register file as needed
+- Interrupt service routines should clear their associated `Flag` bits
 
-Two pins (bit field's 8 and 9) has built-in edge detecting interrupts EXL and EXH, respectively. Each interrupt can be configured to trigger on a specific edge and are effectively always enabled (ie will set their NVIC flag bits triggered- exercise caution when first enabling).
+*Note: If multiple interrupts are valid, the valid interrupt with the highest `En` bit field value is passed to the CORE.*
 
-Some pins possess alternate functions, often related to other peripherals (eg PWM timers can export their signal to a GPIO). The CFG register is used to select if these pins are used as GPIO pins or used by the associated peripheral. In any case, a peripheral requires the CFG register (and likely DIR register) to be set properly to control the GPIO pin as expected.
+*Note: Upon a hardware reset, the CORE starts in "application mode".*
 
-The GPIO registers remain fully operational while the uP is in the PAUSED state.
+### Watchdog Timer Registers (WDT)
 
-**_GPIO_CFG (SW Address = 0x8018, HW Address = 0xC00C)_**
+The WDT registers handle the uP's watchdog timer, capable of causing a hardware reset or interrupt. The tables below summarize their usage.
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|reserved  |15       |r     |reserved for future use- default value(s) = 0 |
-|Alt UART  |14       |r/w   |GPIO 14/15 = UART RX/TX (active high)         |
-|reserved  |13       |r     |reserved for future use- default value(s) = 0 |
-|Alt I2C   |12       |r/w   |GPIO 12/13 = I2C SDA/SCL (active high)        |
-|Alt TMR2  |11       |r/w   |GPIO 11 = TMR2 PWM (active high)              |
-|Alt TMR3  |10       |r/w   |GPIO 10 = TMR3 PWM (active high)              |
-|EXH trig  |9        |r/w   |EXH edge trigger- falling = 0, rising = 1     |
-|EXL trig  |8        |r/w   |EXL edge trigger- falling = 0, rising = 1     |
-|reserved  |7:0      |r     |reserved for future use- default value(s) = 0 |
-
-**_GPIO_INP (SW Address = 0x801A, HW Address = 0xC00D)_**
+**_WDT_CTRL (0x8010)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|read bits |15:0     |r     |read values, regardless of direction          |
+|isPaused  |15       |r     |indicator WDT is paused (0 = running)         |
+|reserved  |14:4     |r     |reserved for future use (value = 0)           |
+|intEn     |3        |r/w   |watchdog bark interrupt enable (0 = do reset) |
+|reserved  |2        |r     |reserved for future use (value = 0)           |
+|doReset   |1        |r/w   |manual hardware reset trigger (0 = inactive)  |
+|doCancel  |0        |r/w   |pauses and resets WDT count (0 = inactive)    |
 
-**_GPIO_DIR (SW Address = 0x801C, HW Address = 0xC00E)_**
-
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|direction |15:0     |r/w   |pin direction- read = 0, write = 1            |
-
-**_GPIO_OUT (SW Address = 0x801E, HW Address = 0xC00F)_**
-
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|write bits|15:0     |r/w   |write values, only used if pin is writing     |
-
-### Timer 0 (TMR0) and Timer 1 (TMR1) Registers
-
-The TMR0 and TMR1 registers control timers 0 and 1 respectively. Each timer is a basic count-up timer, featuring an enable bit, a configurable prescale, a configurable max count, and interrupt upon count overflow.
-
-The CTRL register allows for enabling the timer, as well as setting a prescalar value- a ratio between when the timer's CNT increments and the system clock. This effectively creates a "counter for the counter", which is reset anytime the CTRL register is written to or the uP is the PAUSED state.
-
-The MAX register allows for choosing the highest value the timer's CNT can reach before overflowing. The CNT register is reset anytime the MAX register is written to. Note that setting the CNT register value to be above the MAX register value results in undefined behavior.
-
-Upon every overflow, an interrupt pulse is generated and sent to the NVIC (see NVIC). This pulse is enabled by enabling the timer (though not necessarily enabled in the NVIC). This overflow point adjusts with the MAX register.
-
-The TMR0-1 registers are only fully operationl while the uP is in the RUNNING state. The timers are effectively paused in the BOOTING and PAUSED uP states.
-
-**_TMR0_CTRL (SW Address = 0x8020, HW Address = 0xC010)_**
+**_WDT_CNT (0x801A)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
-|prescale  |7:4      |r/w   |prescalar- "0000" = 1:1 -\> "1111" = 16:1     |
-|reserved  |3:1      |r     |reserved for future use- default value(s) = 0 |
-|enable    |0        |r/w   |enables timer for incrementing (active high)  |
+|cnt       |15:0     |r     |watchdog timer's current count                |
 
-**_TMR0_CNT (SW Address = 0x8022, HW Address = 0xC011)_**
+When the uP is RUNNING, WDT_CNT is automatically incremented at 1/16th CLK speed. Upon overflowing (ie after about 2\^20 CLK cycles), the WDT causes a hardware reset. Unlike most mapped registers, the WDT is active by default.
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|count     |15:0     |r/w   |current count of the timer                    |
+Any write to WDT_CTRL will reset WDT_CNT, and WDT_CTRL's `doCancel` bit, when set, will both reset and pause WDT_CNT (as observed by the `isPaused` bit). By contrast, setting WDT_CTRL's `doReset` bit will force a hardware reset.
 
-**_TMR0_MAX (SW Address = 0x8024, HW Address = 0xC012)_**
+WDT_CTRL's `intEn` bit allows a WDT_CNT overflow to generate a watchdog bark interrupt signal instead of a hardware reset. Setting this bit does not change how the `doReset` bit works.
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|maxCount  |15:0     |r/w   |max value CNT register can increment to       |
+*Note: WDT_CNT is paused when the uP is BOOTING or PAUSED.*
 
-**_TMR1_CTRL (SW Address = 0x8028, HW Address = 0xC014)_**
+### General Purpose Input Output Registers (GPIO)
+
+The GPIO registers handle the uP's digital IO pins. The tables below summarize their usage.
+
+**_GPIO_CFG (0x8018)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
-|prescale  |7:4      |r/w   |prescalar- "0000" = 1:1 -\> "1111" = 16:1     |
-|reserved  |3:1      |r     |reserved for future use- default value(s) = 0 |
-|enable    |0        |r/w   |enables timer for incrementing (active high)  |
+|reserved  |15       |r     |reserved for future use (value = 0)           |
+|uartAlt   |14       |r/w   |UART pins 14/15 control enable (0 = off)      |
+|reserved  |13       |r     |reserved for future use (value = 0)           |
+|i2cAlt    |12       |r/w   |I2C pins 12/13 control enable (0 = off)       |
+|tmr2Alt   |11       |r/w   |TMR2 pin 11 control enable (0 = off)          |
+|tmr3Alt   |10       |r/w   |TMR3 pin 10 control enable (0 = off)          |
+|exhTrig   |9        |r/w   |high priority trigger config (0 = falling)    |
+|exlTrig   |8        |r/w   |low priority trigger config (0 = rising)      |
+|reserved  |7:0      |r     |reserved for future use (value = 0)           |
 
-**_TMR1_CNT (SW Address = 0x802A, HW Address = 0xC015)_**
-
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|count     |15:0     |r/w   |current count of the timer                    |
-
-**_TMR1_MAX (SW Address = 0x802C, HW Address = 0xC016)_**
-
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|maxCount  |15:0     |r/w   |max value CNT register can increment to       |
-
-### Timer 2 (TMR2) and Timer 3 (TMR3) registers
-
-The TMR2 and TMR3 registers control timers 2 and 3 respectively. They posses the same capabilities/controls as timers 0 and 1 (see TMR0 and TMR1), but also include PWM capabilities, which can be exported via GPIOs.
-
-Compared to TM0 and TMR1, timers 2 and 3 add the CMP register, which is used to generate a PWM signal based on CNT register (ie expression "CNT \< CMP" used). Timer 2's PWM signal can be exported through GPIO pin 11 while Timer 3's PWM signal can be exported through GPIO pin 10.
-
-To export the PWM signals, the selected GPIO pin must be configured as an output and have its associated alternate function selected (see GPIO). Doing so will re-assign the GPIO pin as a PWM output pin.
-
-The TMR2-3 registers are only fully operationl while the uP is in the RUNNING state. The timers are effectively paused in the BOOTING and PAUSED uP states.
-
-**_TMR2_CTRL (SW Address = 0x8030, HW Address = 0xC018)_**
+**_GPIO_INP (0x801A)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
-|prescale  |7:4      |r/w   |prescalar- "0000" = 1:1 -\> "1111" = 16:1     |
-|reserved  |3:1      |r     |reserved for future use- default value(s) = 0 |
-|enable    |0        |r/w   |enables timer for incrementing (active high)  |
+|input     |15:0     |r     |read levels from each pin                     |
 
-**_TMR2_CNT (SW Address = 0x8032, HW Address = 0xC019)_**
+**_GPIO_DIR (0x801C)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|count     |15:0     |r/w   |current count of the timer                    |
+|direction |15:0     |r/w   |direction of each pin (0 = input)             |
 
-**_TMR2_MAX (SW Address = 0x8034, HW Address = 0xC01A)_**
-
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|maxCount  |15:0     |r/w   |max value CNT register can increment to       |
-
-**_TMR2_CMP (SW Address = 0x8036, HW Address = 0xC01B)_**
+**_GPIO_OUT (0x801E)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|comparator|15:0     |r/w   |compare value- does "CNT \< CMP" comparison   |
+|output    |15:0     |r/w   |write levels for each pin                     |
 
-**_TMR3_CTRL (SW Address = 0x8038, HW Address = 0xC01C)_**
+Registers GPIO_DIR and GPIO_OUT control each pin's direction and output value, respectively (where bit field value corresponds to the effected pin). Similarly, GPIO_INP is used to read each pin, regardless of its `direction` bit.
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
-|prescale  |7:4      |r/w   |prescalar- "0000" = 1:1 -\> "1111" = 16:1     |
-|reserved  |3:1      |r     |reserved for future use- default value(s) = 0 |
-|enable    |0        |r/w   |enables timer for incrementing (active high)  |
+GPIO_CFG allows for specific pins to be configured to be controlled by different mapped registers (via the `Alt` bits) instead of by the GPIO registers. Each bit's bit field value roughly determines the overridden pins.
 
-**_TMR3_CNT (SW Address = 0x803A, HW Address = 0xC01D)_**
+Additionally, GPIO_CFG includes bits `exhTrig` and `exlTrig`. These control how the GPIO's high and low priority interrupt signals (tied to pins 9 and 8) are triggered, respectively. Both interrupt signals are always enabled.
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|count     |15:0     |r/w   |current count of the timer                    |
+*Note: Some `Alt` bits cause multiple pins to be overridden by different mapped registers.*
 
-**_TMR3_MAX (SW Address = 0x803C, HW Address = 0xC01E)_**
+*Note: Both interrupt signals are enabled within GPIO, but not necessarily enabled in the NVIC registers.*
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|maxCount  |15:0     |r/w   |max value CNT register can increment to       |
+### Timer 0 and Timer 1 Registers (TMR0, TMR1)
 
-**_TMR3_CMP (SW Address = 0x803E, HW Address = 0xC01F)_**
+The TMR0 and TMR1 registers handle the uP's two configurable count up timers. The tables below summarize their usage.
+
+**_TMRx_CTRL (TMR0 = 0x8020, TMR1 = 0x8028)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|comparator|15:0     |r/w   |compare value- does "CNT \< CMP" comparison   |
+|reserved  |15:8     |r     |reserved for future use (value = 0)           |
+|prescale  |7:4      |r/w   |prescalar value (0000 = 1:1, 1111 = 16:1)     |
+|reserved  |3:1      |r     |reserved for future use (value = 0)           |
+|enable    |0        |r/w   |timer count up enable (0 = off)               |
 
-### Universal Asynchronous Receiver/Transmitter (UART) Registers
-
-The UART registers control the uP's UART transceiver. The UART features one transmit/TX and receive/RX channel each with a shared baud rate. Interrupts and status bits are available to indicate when a byte has been sent/received. The UART is exported through configured GPIO pins.
-
-The UART_CTRL register is used to enable both channels (and interrupts), as well as report the current status of each channel. The status bits indicate when another byte can be sent and if a new, unread byte has been received.
-
-The speed of both channels is configured using the UART_BAUD register. The baud rate must be given in terms of system clock ticks (and even). If the system clock frequency and desired baud rate are known, the correct value can be estimated using the following equation:
-
-<code>floor_by_2((sys_clk_Hz \/ baud_rate) - 1) = UART_BAUD</code>
-
-The UART_TX register is used to provide a byte to send. Writing to this register will use the lowest 8 bits as the input and begin transmitting the byte, but only if the following conditions are true:
-- The TX channel is idle/not transmitting
-- The UART is enabled
-- The uP is in the RUNNING state (ie not paused or booting)
-
-THe UART_RX register is used to read a received byte. Reading this register (while the uP is in the RUNNING state) will clear UART_CTRL's "RX" status bit, whereas the same bit is set everytime this register is updated. The register, however, is only updated with the most recently received byte if the following conditions are true:
-- The RX channel has received a full byte
-- The UART is enabled
-- The uP is in the RUNNING state (ie not paused or booting)
-
-Each channel has an associated interrupt for when a full byte is transmitted/received. Both are enabled with the UART and require the UART to be enabled the moment the signal is generated to be registered by the NVIC (see NVIC).
-
-To use the UART, the GPIO must be configured for UART use. The directions must be set accordingly (ie pin 14 = input, pin 15 = output) and the alternate UART pin function selected (see GPIO). Doing so will re-assign pins 14 and 15 to the UART's control.
-
-The UART registers are only fully operation while the uP is in the RUNNING state. Once a pause is started, the UART finishes any TX/RX processes (without generating interrupts/updating UART_RX), then pauses.
-
-**_UART_CTRL (SW Address = 0x8040, HW Address = 0xC020)_**
+**_TMRx_CNT (TMR0 = 0x8022, TMR1 = 0x802A)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|tx_idle   |15       |r     |indicator if TX channel is idle (active high) |
-|rx_rdy    |14       |r     |indicator that RX channel has new, unread byte|
-|reserved  |13:1     |r/w   |reserved for future use- default value(s) = 0 |
-|enable    |0        |r/w   |enables UART channels (active high)           |
+|cnt       |15:0     |r/w   |timer's current count                         |
 
-**_UART_BAUD (SW Address = 0x8042, HW Address = 0xC021)_**
+**_TMRx_MAX (TMR0 = 0x8024, TMR1 = 0x802C)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|baud_rate |15:1     |r/w   |baud rate of UART (in system clock ticks)     |
-|reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
+|maxCnt    |15:0     |r/w   |max value TMRx_CNT is permitted               |
 
-**_UART_TX (SW Address = 0x8044, HW Address = 0xC022)_**
+When the uP is RUNNING, the `enable` bit in TMRx_CTRL controls the auto incrementing of TMRx_CNT. The `prescale` bits (in the same register) can be used to configure the speed relative to the CLK, ranging from 1:1, 2:1, ..., up to 16:1.
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
-|tx_byte   |7:0      |r/w   |byte to send over TX channel                  |
+TMRx_CNT's upper value is defined by TMRx_MAX. Upon the next increment, TMRx_CNT is reset to zero and a timer interrupt signal (specific to the individual timer) is generated. The interrupt signal is enabled along with the timer.
 
-**_UART_RX (SW Address = 0x8046, HW Address = 0xC023)_**
+*Note: TMRx_CNT is paused when the uP is BOOTING or PAUSED.*
 
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
-|rx_byte   |7:0      |r     |most recently received byte from RX channel   |
+*Note: For prescale, 16:1 is read as "16 CLK ticks to 1 TMRx_CNT tick".*
 
-### Inter Integrated Circuit (I2C) Controller Registers
+### Timer 2 and Timer 3 Registers (TMR2, TMR3)
 
-The I2C registers control the uP's I2C peripheral (controller/master only). Features include a configurable baud rate, read and write capabilities, and an interrupt per byte transfer. Status bits provide insight into state and last received ACK. I2C signals are exported via configured GPIO pins.
+The TMR2 and TMR3 registers handle the uP's two count timers with PWM capabilities. The tables below summarize their usage.
 
-The CTRL register is used to configure the next byte of transfer and report various statuses. Beyond enabling the I2C, the next byte transfer's direction and presence of start/stop conditions can be configured. For statueses, whether the I2C is busy and the ACK result from the last byte transfer are available.
-
-The BAUD register configures the clock line's (SCL) frequency. Baud rate must be in system ticks (and even). Given a system clock frequency and desired SCL frequency, the baud rate can be estimated as:
-
-<code>floor_by_2((sys_freq \/ (2\*scl_freq)) - 1) = baud_rate</code>
-
-The DATA register is used to store the sent/received byte (with writes the register triggering the transfer). The register is only valid while the I2C is idle and will only begin a transfer for the following conditions:
-- The I2C is enabled
-- The I2C is idle
-- The uP is in the RUNNING state
-
-The I2C controller is designed to hold (or release) both I2C lines based on their last value upon finishing a transfer. This ensures any clock and data information is preserved between bytes at the expense of software being careful to finish "open" connections (ie start/stop condition pairing).
-
-To export the I2C signals, the GPIO registers must be configured. This requires clearing pins 12 and 13 in GPIO_OUT and setting pin 12 in GPIO_CFG. Doing so will reassign the pins to the I2C. Note that the I2C assumes both pins are pulled up. Thus, the I2C only drives the pins directions to pull them low (ie GPIO_OUT is cleared to ensure driving the pins pulls them low).
-
-The I2C registers are only fully operation while the uP is in the RUNNING state. Once a pause is started, the I2C finishes any running transfers (without generating interrupts), then pauses.
-
-**_I2C_CTRL (SW Address = 0x8048, HW Address = 0xC024)_**
+**_TMRx_CTRL (TMR2 = 0x8030, TMR3 = 0x8038)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|is_idle   |15       |r     |indicator if I2C is idle (active high)        |
-|last_ack  |14       |r     |value of last transfer's ACK signal           |
-|reserved  |13:4     |r/w   |reserved for future use- default value(s) = 0 |
-|do_start  |3        |r/w   |add a start condition to the next transfer    |
-|do_write  |2        |r/w   |write DATA on next transfer (read = 0)        |
-|do_stop   |1        |r/w   |add a stop condition to the next transfer     |
-|enable    |0        |r/w   |enables I2C controller (active high)          |
+|reserved  |15:8     |r     |reserved for future use (value = 0)           |
+|prescale  |7:4      |r/w   |prescalar value (0000 = 1:1, 1111 = 16:1)     |
+|reserved  |3:1      |r     |reserved for future use (value = 0)           |
+|enable    |0        |r/w   |timer count up enable (0 = off)               |
 
-**_I2C_BAUD (SW Address = 0x804A, HW Address = 0xC025)_**
+**_TMRx_CNT (TMR2 = 0x8032, TMR3 = 0x803A)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|baud_rate |15:1     |r/w   |baud rate of I2C (in system clock ticks)      |
-|reserved  |0        |r/w   |reserved for future use- default value(s) = 0 |
+|cnt       |15:0     |r/w   |timer's current count                         |
 
-**_I2C_DATA (SW Address = 0x804C, HW Address = 0xC026)_**
-
-|Field Name|Bit Field|Access|Description                                   |
-|----------|---------|------|----------------------------------------------|
-|reserved  |15:8     |r/w   |reserved for future use- default value(s) = 0 |
-|byte      |7:0      |r/w   |byte sent/received for transfer               |
-
-### Serial Peripheral Interface (SPI) Controller Registers
-
-The SPI registers control a SPI port explicitly tied to the storage chip (used to store the uP's binary image). Once unlocked, the SPI port enables the storage chip, allowing software to send/receive bytes from the chip (in turn, allowing software to read/write the binary image).
-
-The CTRL register contains only status signals. It provides bits to determine if the SPI is actively transfering bits and if the SPI is unlocked (which also indicates if the storage chip is selected/enabled).
-
-The LOCK register is used to enable both the SPI controller and storage chip. The LOCK register should be set prior to transferring data and clear once finished. Until the proper key is written to the lock, the DATA register cannot be written to (nor can a transfer be started). The key value is hardwired to the following value: 0x2024.
-
-The DATA register is used to send and receive one byte of data per transfer. Writing the DATA register starts a new transfer provided the following conditions are true:
-- SPI_LOCK register is set to 0x2024
-- The SPI port is idle
-- The uP is in the RUNNING state
-
-The SPI port is only fully operational while the uP is in the RUNNING state (furthermore, the SPI port is not given control of the storage chip when not in the RUNNING state). Once a pause is started, the SPI finishes any running transfers, then pauses.
-
-**_SPI_CTRL (SW Address = 0x8050, HW Address = 0xC028)_**
+**_TMRx_MAX (TMR2 = 0x8034, TMR3 = 0x803C)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|is_idle   |15       |r     |indicator if SPI is idle (active high)        |
-|is_free   |14       |r     |indicator if SPI is unlocked (active high)    |
-|reserved  |13:0     |r     |reserved for future use- default value(s) = 0 |
+|maxCnt    |15:0     |r/w   |max value TMRx_CNT is permitted               |
 
-**_SPI_LOCK (SW Address = 0x8052, HW Address = 0xC029)_**
+**_TMRx_CMP (TMR2 = 0x8036, TMR3 = 0x803E)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|key       |15:0     |r/w   |key value used to unlock SPI (active 0x2024)  |
+|cmpr      |15:0     |r/w   |value compared with TMRx_CNT                  |
 
-**_SPI_DATA (SW Address = 0x8054, HW Address = 0xC02A)_**
+The TMR2 and TMR3 registers are supersets of the TMR0 and TMR1 registers. See [Timer 0 and Timer 1 Registers (TMR0, TMR1)](#timer-0-and-timer-1-registers-tmr0-tmr1) for relevant details.
+
+The TMRx_CMP register is compared against TMRx_CNT to create an output signal. The equation below summarizes how the output signal is generated.
+
+`output = (TMRx_CNT < TMRx_CMP)`
+
+To export this output signal, the appropriate pin must be configured as an output (ie pin 11 for TMR2, pin 10 for TMR3) in GPIO_DIR, and the appropriate config bit (`tmr2Alt` for TMR2, `tmr3Alt` for TMR3) in GPIO_CFG must be set.
+
+### Universal Asynchronous Receiver Transmitter Registers (UART)
+
+The UART registers handle the uP's UART transceiver. The tables below summarize their usage.
+
+**_UART_CTRL (0x8040)_**
 
 |Field Name|Bit Field|Access|Description                                   |
 |----------|---------|------|----------------------------------------------|
-|reserved  |15:8     |r     |reserved for future use- default value(s) = 0 |
-|data      |7:0      |r/w   |data sent/received over SPI                   |
+|txIdle    |15       |r     |indicator TX channel is idle (0 = running)    |
+|rxRdy     |14       |r     |indicator RX channel has new byte (0 = stale) |
+|reserved  |13:1     |r/w   |reserved for future use (value = 0)           |
+|enable    |0        |r/w   |UART channels enable (0 = off)                |
 
-## uP Pinout
----
-The uP interfaces with the physical FPGA (and by extension outside world) using various "pin" (verilog port) connections. These pins are used to provide the uP with clock/reset signals, volatile/non-volatile memory, and various means of communication. Below is a summary of each pin group:
+**_UART_BAUD (0x8042)_**
 
-|Pin Group Name|# of Pins|Direction|Summary                               |
-|--------------|---------|---------|--------------------------------------|
-|MEM Address   |16       |Output   |16-bit word address to runtime chip   |
-|MEM Write     |1        |Output   |read/write runtime chip specifier     |
-|MEM Enable    |1        |Output   |enable to trigger runtime chip access |
-|MEM Data      |16       |Inout    |16-bit runtime chip data (read/write) |
-|SPI MISO      |1        |Input    |input data coming from storage chip   |
-|SPI MOSI      |1        |Output   |output data going to storage chip     |
-|SPI CLK       |1        |Output   |clock synching storage chip access    |
-|SPI CSn       |1        |Output   |enable to trigger storage chip access |
-|GPIO          |16       |Inout    |generic digital pins for software use |
-|JTAG TCK      |1        |Input    |clock synching jtag access            |
-|JTAG TMS      |1        |Input    |select signal controlling jtag state  |
-|JTAG TDI      |1        |Input    |input data entering jtag              |
-|JTAG TDO      |1        |Output   |output data exiting jtag              |
-|SM Do Pause   |1        |Input    |external input to pause uP            |
-|SM Is Booted  |1        |Output   |indicator output that uP is booted    |
-|SM Is Paused  |1        |Output   |indicator output that uP is paused    |
-|SYS Clock     |1        |Input    |core clock frequency used by uP       |
-|SYS Reset     |1        |Input    |external input to reset uP hardware   |
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|baudRate  |15:1     |r/w   |baud rate of UART channels (in CLK ticks)     |
+|reserved  |0        |r/w   |reserved for future use (value = 0)           |
 
-All pins are digital and should only ever be set to logic HIGH or LOW (except for bidirectional/"Inout" pins, which may float at high impedance "Z").
+**_UART_TX (0x8044)_**
 
-For info about integrating these pins with the FPGA/board design, see the "Integration Considerations" section below.
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r/w   |reserved for future use (value = 0)           |
+|txByte    |7:0      |r/w   |byte to send over TX channel                  |
 
-## "JTAG" Interface
----
-The JTAG interface is the uP's "maintenance hatch", allowing hardware access and control to an external host. It is intended to provide, among other features: partial boundary scan (ie hardware debugging), programming, and software debugging.
+**_UART_RX (0x8046)_**
 
-### Basic Usage
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r/w   |reserved for future use (value = 0)           |
+|rxByte    |7:0      |r     |byte received over RX channel                 |
 
-Similar, though not compliant, to the formal JTAG standard, the interface consists of 4 pins, transfering data between the uP and host. The pins themselves are used similar to SPI (CPOL/CPHA = 0) pins, except the select pin is used to navigate a state machine (instead of being a simple on/off switch). The uP JTAG state machine is as follows:
+When the uP is RUNNING, the `enable` bit in UART_CTRL enables the UART's channels/functions. Both channels use UART_BAUD to set their speed. Given a CLK and desired baud rate, the UART_BAUD value can be approximated using the equation below.
 
-|Curent State|Next State on TCK Posedge|Current State Summary              |
-|------------|-------------------------|-----------------------------------|
-|IDLE        |TMS == 0 ? ISEL : IDLE   |jtag not in use- idling            |
-|ISEL        |TMS == 0 ? ISHFT : DSEL  |"instruction/command" selected     |
-|DSEL        |TMS == 0 ? DSHFT : IDLE  |"data/value" selected              |
-|ISHFT       |TMS == 0 ? ISHFT : UPDATE|shifting in instruction/command    |
-|DSHFT       |TMS == 0 ? DSHFT : IDLE  |shifting in data/value             |
-|UPDATE      |IDLE                     |executing instruction/command      |
+`value = floor((CLK / baud rate) - 1)`
 
-The interface allows for left shifting (ie MSb first) either an 8-bit command or 16-bit data value in/out of the uP (states ISHFT and DSHFT, respectively). Data values are saved/stored until next access, while commands will attempt to be executed once they are done shifting in.
+The UART_TX register is used to send a byte over the TX channel. To send a byte, UART_TX must be written with the desired byte while the `txIdle` bit in UART_CTRL is set.
 
-Additionally, when shifting in a command, an 8-bit status byte will be shifted out first. This byte contain information about the uP as described below:
+The UART_RX register is used to receive a byte over the RX channel. When a new byte is received, UART_RX is updated and the `rxRdy` bit in UART_CTRL is set. When UART_RX is read, the `rxRdy` bit is cleared. Newer received bytes overwrite older received bytes.
 
-|Field Name|Bit Field|Description                                          |
-|----------|---------|-----------------------------------------------------|
-|reserved  |7:2      |reserved for future use- default value(s) = 0        |
-|isPaused  |1        |set if uP hardware is currently paused               |
-|isBooted  |0        |set if uP hardware has finished booting              |
+Each channel has an associated interrupt signal. When a byte is sent or a full byte is received, the respective interrupt signal is generated. Both interrupt signals are enabled with the UART.
 
-### Commands
+To import/export the channels, pins 14 and 15 in GPIO_DIR must be configured as an input and output, respectively. Likewise, pin 14 in GPIO_CFG must be set.
 
-Below is a table of the JTAG's supported commands:
+*Note: The UART_BAUD value equation is an estimate- where accuracy tends to drop as CLK speed and desired baud rate get closer.*
 
-|Command Name|Command Code|Requirements|Desciption                         |
-|------------|------------|------------|-----------------------------------|
-|No Operation|0x00        |None        |No action taken- "get status" cmd  |
-|Set MEM Addr|0x01        |None        |Saves data register as MEM address |
-|MEM Read    |0x02        |Paused      |Reads MEM Address to data register |
-|MEM Write   |0x03        |Paused      |Write data register to MEM address |
-|Access SCAN |0x04        |Paused      |Map SCAN register to data register |
-|Access SPI  |0x05        |Paused      |Map SPI storage to data register   |
-|Run uP      |0x06        |Booted      |De-asserts JTAG's pause request    |
-|Pause uP    |0x07        |Booted      |Asserts JTAG's pause request       |
+*Note: All UART functions are disabled in BOOTING or PAUSED.*
 
-Note that some commands have requirements. These requirements center around the uP's current overall state (i.e. BOOTING, RUNNING, or PAUSED). If the uP state does not meet the requirements, the commands is not executed.
+*Note: When the uP transitions to PAUSED, both channels will finish their current transfers before entering PAUSED.*
 
-For MEM read/write (ie runtime chip accesses), it is worth noting the 16-bit address provided is word addressable. That is, addresses 0x0000 and 0x0001 access completely different bits/bytes/words in the memory. With respect to the application software, addresses 0x0000-0x7FFF correspond to the program address space while addresses 0x8000-0xFFFF correspond to the data address space.
+### Inter Integrated Circuit Registers (I2C)
 
-For SCAN/SPI accesses, it is worth noting that the "masking/mapping" of each device only lasts until another command is given (even if the given command is inavlid/has no effect).
+The I2C registers handle the uP's I2C controller. The tables below summarize their usage.
 
-For uP pause commands, the commands only control the JTAG's pause request- not other sources. That said, other sources (except for the "SM Do Pause Pin") are typically memory mapped and can be overwritten by the JTAG's MEM write command.
+**_I2C_CTRL (0x8048)_**
 
-### Boundary Scan Register
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|isIdle    |15       |r     |indicator I2C is idle (0 = running)           |
+|lastAck   |14       |r     |value of previous ACK bit                     |
+|reserved  |13:4     |r/w   |reserved for future use (value = 0)           |
+|addStart  |3        |r/w   |add start condition to next transfer          |
+|isWr      |2        |r/w   |write byte on next transfer (0 = read)        |
+|addStop   |1        |r/w   |add stop condition to next transfer           |
+|enable    |0        |r/w   |I2C controller enable (0 = off)               |
 
-Similar to the formal JTAG standard, the JTAG interface implements a special boundary scan register to access the uP's raw pins (albeit in a read only mode). The register acts as one larger shift register, with following bit interpretation/behavior:
+**_I2C_BAUD (0x804A)_**
 
-|Field Name|Bit Field|Description                                          |
-|----------|---------|-----------------------------------------------------|
-|reserved  |63:57    |reserved for future use- default value(s) = 0        |
-|smIsPaused|56       |indicator output that uP is paused                   |
-|smIsBooted|55       |indicator output that uP is booted                   |
-|smDoPause |54       |external input to pause uP                           |
-|gpioPins  |53:38    |generic digital pins for software use                |
-|spiCSn    |37       |enable to trigger storage chip access                |
-|spiCLK    |36       |clock synching storage chip access                   |
-|spiMOSI   |35       |output data going to storage chip                    |
-|spiMISO   |34       |input data coming from storage chip                  |
-|memEn     |33       |enable to trigger runtime chip access                |
-|memWr     |32       |read/write runtime chip specifier                    |
-|memData   |31:16    |16-bit runtime chip data (read/write)                |
-|memAddr   |15:0     |16-bit word address to runtime chip                  |
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|baudRate  |15:1     |r/w   |baud rate of I2C (in CLK ticks)               |
+|reserved  |0        |r/w   |reserved for future use (value = 0)           |
 
-## Binary Image Format
----
-The uP is designed to store a binary image (up to 64 KB in size) on the storage memory chip between power cycles. Once powered on, it reads the binary image into the runtime chip for execution. To properly facilitate this process, the binary image shall be formatted as follows:
+**_I2C_DATA (0x804C)_**
 
-|Section Name  |Length (Bytes)|Description                                 |
-|--------------|--------------|--------------------------------------------|
-|.text metadata|2             |Last valid .text HW address                 |
-|.text section |2+            |.text section of program                    |
-|.data metadata|2             |Last valid .data HW address                 |
-|.data section |2+            |.data section of program                    |
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r/w   |reserved for future use (value = 0)           |
+|byte      |7:0      |r/w   |byte sent/received during transfer            |
 
-Each section of the software is preceded by a word of metadata describing the last HW address used to store the following section (.text implicitly starting from HW address 0x0000, .data from HW address 0x8000). Neither metadata word is copied to the runtime chip.
+When the uP is RUNNING, the `enable` bit in I2C_CTRL enables the I2C channel/functions. I2C_BAUD is used to set the I2C CLK speed. Given a  (system) CLK and desired baud rate, the I2C_BAUD value can be approximated using the equation below.
 
-The .text section is where the program's instructions are stored while the .data section is where any global initialized program data is stored. Both are better described in documentation about the Instruction Set Architecture (ISA) and Assembler/Linker (asmld) Manuals. Importantly, though, they use SW addresses to refer to the runtime chip instead of HW addresses.
+` value = floor((CLK / (baud rate * 2)) - 1)`
 
-In general, all values in the binary image are, at most precise, 2-byte words. As applicable, big endian (ie MSB first) applies within each word.
+A byte transfer is started when I2C_DATA is written while I2C_CTRL's `isIdle` bit is set. Bits `addStart` and `addStop` add start/stop conditions to the transfer, while `isWr` determines the direction of the transfer.
+
+For writing, the byte written to I2C_DATA while triggering the transfer is sent (while I2C_CTRL's `lastAck` bit records the received ACK bit). For reading, I2C_DATA is updated with the read byte at the end of the transfer.
+
+Upon a completed transfer, an interrupt signal will be generated. The interrupt signal is enabled with the I2C.
+
+To import/export the channel, pins 12 and 13 in GPIO_OUT must be set to 0. Likewise, pin 12 in GPIO_CFG must be set. Akin to a standard I2C network, this allows the I2C to actively pull down the pins, but relies on external pull-up resistors to drive the pins high.
+
+*Note: The I2C_BAUD value equation is an estimate- where accuracy tends to drop as CLK speed and desired baud rate get closer.*
+
+*Note: All I2C functions are disabled in BOOTING or PAUSED.*
+
+*Note: When the uP transitions to PAUSED, the channel will finish its current transfer before entering PAUSED.*
+
+*Note: Software is expected to use the `addStart` and `addStop` bits appropriately to open/close I2C connections.*
+
+### Serial Peripheral Interface Registers (SPI)
+
+The SPI registers handle the uP's SPI controller, which is hardwired to the storage chip/NVM. The tables below summarize their usage.
+
+**_SPI_CTRL (0x8050)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|isIdle    |15       |r     |indicator SPI is idle (0 = running)           |
+|isFree    |14       |r     |indicator SPI is unlocked (0 = locked)        |
+|reserved  |13:0     |r     |reserved for future use (value = 0)           |
+
+**_SPI_LOCK (0x8052)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|key       |15:0     |r/w   |value used to unlock SPI (ie 0x2024)          |
+
+**_SPI_DATA (0x8054)_**
+
+|Field Name|Bit Field|Access|Description                                   |
+|----------|---------|------|----------------------------------------------|
+|reserved  |15:8     |r     |reserved for future use (value = 0)           |
+|byte      |7:0      |r/w   |data send/received during transfer            |
+
+SPI_LOCK is used to allow writes to SPI_DATA and open a connection to the NVM. This is done by writing a specific key value to SPI_LOCK (see equation below). SPI_CTRL's `isFree` bit indicates if the written key value is correct.
+
+`value = 0x2024`
+
+While the uP is RUNNING and the `isFree` bit is set, a byte transfer can be started by writing SPI_DATA when SPI_CTRL's `isIdle` bit is set. The written byte is then sent (at CLK speed) to the NVM. Afterwards, the received byte is placed in SPI_DATA.
+
+*Note: All SPI functions are disabled in BOOTING or PAUSED. Moreover, the SPI registers lose NVM access when not in RUNNING.*
+
+*Note: When the uP transitions to PAUSED, the channel will finish its current transfer before entering PAUSED.*
+
+*Note: Software is expected to use SPI_LOCK appropriately to open/close NVM connections.*
 
 ## Integration Considerations
 ---
-As stated before, this document focuses on describing the software uP design, NOT the the physical, FPGA implemented feature. However, to ensure proper implementation, the following sections cover FPGA related details the softcore uP design expects to be handled.
+This section provides details pertinent to integrating the RISCII softcore processor with the host FPGA and supporting external circuits. It covers 1) interface variation 2) characteristic matching and 3) pin pulling.
 
-### Additional Interface Controls
+### Interface Variation
 
-Interfaced chips (eg memory chips) may have more control signals than the uP design specifies. Additional controls should be tied to power/ground rails or handled using a "wrapper module" on the FPGA (see subsection "Wrapper Module"). The uP design should have sufficent controls for most interfaced chips.
+The uP is not designed to be directly run on the host FPGA. Instead, the uP should be be instantiated in a "Wrapper Module" that adapts the uP's pinout (see [Pinout](#pinout)) to the host FPGA's pinout.
 
-Furthermore, specific interface requirements (eg timing, command codes, etc) will need to be considered while integrating chips with the uP. At present, Most assumptions made by the uP (beyond inferred use of pinouts) is the SPI interface with the storage chip, which must meet the following criteria:
-- SPI mode 0 (CPOL/CPHA = 0), MSb first
-- 8-bit command codes, 16-bit addresses
-- "read bitstream" command with sequence "command","address","read out"
-- "read bitstream" command of "0x03" (must change design based on chip)
+Likewise, external circuits interfacing with the uP (eg memory chips) may have more connections than the uP's pinout. It is recommended that any extra pins either 1) be tied to VDD or GND or 2) be handled as an additional host FPGA pinout of the previously mentioned "Wrapper Module".
 
-As stated, the exact command byte used to trigger a read is hardwired into the design (in file "processor/DevProject/src/ProcBlocks/BootImage.v") and must be changed based on the exact storage chip used.
+*Note: Additional pinout and "Wrapper Module" should be handled case by case- based on the host FPGA.*
 
-Lastly, be aware of any timing considerations (hold times on falling edges, access times, etc). Specifically, note that both memory chip interfaces update pins on the falling edge of the system clock- meaning that memory accesses likely need to happen within half a clock cycle (ie round trip travel + chip and uP delays).
+### Characteristic Matching
 
-### Wrapper module
+External circuits that interface with the uP/FPGA must match its electrical and serial characteristics. This primarily applies to the memory chips (ie RAM and NVM).
 
-For better FPGA/uP integration, it is recommended a "wrapper module" be made per specific FPGA used. This module should instantiate the uP design, then route the physical FPGA pins to the uP's "pins", thus integrating the design without changing its source logic.
+**_Runtime Chip (RAM) Characteristics_**
 
-A wrapper module may also be needed for pins that exist on both the uP and external elements, but have different active edges. See subsection "Pin Pulling" for more details on pins where active edges/levels are cruical.
+The uP expects the runtime chip to have the following interface:
+- 16-bit addressing
+- 16-bit data (ie 2 bytes per address)
+- 96 KB of storage (ie addresses 0x0000-0xBFFF are unique/valid)
+
+Furthermore, the uP performs RAM accesses within the LOW level of the CLK cycle. In other words, a RAM access- plus any travel/computation time -must be one within half a CLK cycle.
+
+**_Storage Chip (NVM) Characteristics_**
+
+The uP expects the storage chip to implement a SPI interface, where CPOL/CPHA = 0 and rated for CLK speed (ie runs at same speed as uP).
+
+Futhermore, the uP expects the storage chip has 64 KB of storage and supports streaming up to all bytes in ascending order. The illustrative code below demonstrates the expected send/recieve sequence.
+
+```
+NVM MOSI: [8-bit command code][0x0000]------------------------------
+NVM MISO: ----------------------------[<= 64 KB ascending bitstream]
+```
+
+*Note: The "8-bit command code" is hardwired into the uP's BOOT circuit. Minor edits to BOOT may be required to interface with the storage chip.*
+
+**_Additional Circuits_**
+
+Any additional circuits interfaced with the uP/FPGA should consider the following characteristics during integration/design:
+- Voltages (both analog and digital use cases)
+- Current
+- Timing (especially with respect to clock edges and computation delay)
 
 ### Pin Pulling
 
-For safety/reliability, some pins are expected to explicitly have a pullup or pulldown resistor. Below summarizes these pins and their reasons for desiring a pull:
+Some pins are expected to have explicit pull up/down resistors (for safetly and/or reliability). The table below summarizes the expected resistors.
 
 |Pin Group Name|Expected Pull|Reason                                       |
 |--------------|-------------|---------------------------------------------|
-|JTAG TCK      |down/LOW     |prevent errant clock ticks on connection     |
-|JTAG TMS      |up/HIGH      |prevent errant state traversal on connection |
-|SYS Reset     |up/HIGH      |keep active-low signal "off" when not in use |
-|MEM Enable    |down/LOW     |prevent errant memory accesses               |
-|SPI CLK       |down/LOW     |prevent errant storage accesses              |
-|SPI CSn       |up/HIGH      |prevent errant storage accesses              |
-|GPIO 12/13    |up/HIGH      |typical I2C pull-up behavior                 |
-|GPIO 14/15    |up/HIGH      |help stabilize UART serial pins              |
+|RAM Enable    |LOW          |prevent errant RAM accesses                  |
+|NVM CLK       |LOW          |prevent errant NVM accesses                  |
+|NVM CSn       |HIGH         |prevent errant NVM accesses                  |
+|GPIO 12/13    |HIGH         |required for I2C network functionality       |
+|GPIO 14/15    |HIGH         |stabilize UART connection                    |
+|JTAG TCK      |LOW          |prevent errant ticks upon hardware connection|
+|JTAG TMS      |HIGH         |prevent errant ticks upon hardware connection|
+|SYS Reset     |HIGH         |prevent errant external hardware reset       |

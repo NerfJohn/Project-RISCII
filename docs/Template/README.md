@@ -1,4 +1,4 @@
-# Project RISCII: (README) Template (PR0000) {#head}
+# Project RISCII: (README) Template (PR0000)
 *"Template for creating Project RISCII README files"*
 
 ---
@@ -6,9 +6,9 @@
 Each document begins with a summary (240 chars max) of the document's purpose. This is followed by links to 2nd-level headers and a table referenced documents and common terms (in that order), both labeled with bold text.
 
 **Table of Contents**
-- [Example Headers](#example_head)
-- [Text Examples](#example_text)
-- [Block Examples](#example_block)
+- [Example Headers](#example-headers)
+- [Text Examples](#text-examples)
+- [Block Examples](#block-examples)
 
 **Referenced Terms**
 
@@ -19,7 +19,7 @@ Each document begins with a summary (240 chars max) of the document's purpose. T
 
 ---
 
-## Example Headers {#example_head}
+## Example Headers
 ---
 2nd headers have a line and immediate summary (240 chars max).
 
@@ -27,22 +27,21 @@ Each document begins with a summary (240 chars max) of the document's purpose. T
 
 3rd headers have no line and a space separating any text/items.
 
-#### 4th headers
-4th headers should be avoided, but if used, have neither line nor spacer.
+**_4th Headers_**
 
-## Text Examples {#example_text}
+4th headers (for these docs purposes) are just bold/italic lines
+
+## Text Examples
 ---
 Examples of *italics* and **bold** text.
 
 Example of ~~strikethrough~~ text.
 
-Example of super^script^ and sub~script~ text.
-
 Example of `one line code` text.
 
-Example of [internal link](#head) text (to top).
+Example of [internal link](#example-headers) text (to Example Headers).
 
-## Block Examples {#example_block}
+## Block Examples
 ---
 Following examples show-off "blocks" of text.
 

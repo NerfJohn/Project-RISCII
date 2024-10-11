@@ -7,9 +7,9 @@ This document describes the semantics hardware and software must follow in order
 
 **Table of Contents**
 
-- [Required Constraints](#h1)
-- [Instruction Set](#h2)
-- [Branch Condition Codes](#h3)
+- [Required Constraints](#required-constraints)
+- [Instruction Set](#instruction-set)
+- [Branch Condition Codes](#branch-condition-codes)
 
 **Referenced Terms**
 
@@ -19,7 +19,7 @@ This document describes the semantics hardware and software must follow in order
 |word (length)   |16 bits wide                                             |
 |register        |memory unit, one word length                             |
 |register file   |collection of registers accessible to by instructions    |
-|condition codes |flags `nzpc`, see [Branch Condition Codes](#h3)          |
+|condition codes |condition code flags `nzpc`                              |
 |interrupt mode  |unique mode/state of hardware, hardware defined meaning  |
 |application mode|unique mode/state of hardware, hardware defined meaning  |
 |paused mode     |unique mode/state of hardware, hardware defined meaning  |
@@ -29,7 +29,7 @@ This document describes the semantics hardware and software must follow in order
 
 ---
 
-## Required Constraints {#h1}
+## Required Constraints
 ---
 This section details general constraints that must be followed. These constraints are inferred by the instruction set.
 
@@ -43,9 +43,9 @@ The constraints are as follows:
 - The hardware supports interrupt and application modes
 - The hardware supports a paused mode
 
-## Instruction Set {#h2}
+## Instruction Set
 ---
-This section describes the instruction set. It specifies 1) what operations and available 2) what each operation does and 3) the bit field layout needed to invoke each operation.
+This section describes the instruction set. It specifies 1) what operations are available 2) what each operation does and 3) the bit field layout needed to invoke each operation.
 
 ### Instruction Set Summary
 
@@ -59,8 +59,8 @@ This section describes the instruction set. It specifies 1) what operations and 
 |Bitwise XOR (IMM)        |1011-DST-SR1-1-5bImm  |
 |Shift Logic Left (VAR)   |1100-DST-SR1-000-SR2  |
 |Shift Logic Left (IMM)   |1100-DST-SR1-10-4bIm  |
-|Shift Right (VAR)        |1101-DST-SR1-000-SR2  |
-|Shift Right (IMM)        |1101-DST-SR1-10-4bIm  |
+|Shift Right (VAR)        |1101-DST-SR1-0-a-0-SR2|
+|Shift Right (IMM)        |1101-DST-SR1-1-a-4bIm |
 |Arithmetic Add (VAR)     |1000-DST-SR1-000-SR2  |
 |Arithmetic Add (IMM)     |1000-DST-SR1-1-5bImm  |
 |Arithmetic Subtract (VAR)|1001-DST-SR1-000-SR2  |
@@ -161,7 +161,7 @@ The conditions to set the PC are as follows:
 1. For flags `nzp`, both hardware and instruction have at least one of the same flag both set.
 2. If instruction's flag `c` is set, the hardware's flag `c` is also set.
 
-For more information about the conditions and flags, see [Branch Condition Codes](#h3).
+For more information about the conditions and flags, see [Branch Condition Codes](#branch-condition-codes).
 
 **_Jump Register_**
 
@@ -199,7 +199,7 @@ Instruction has no effect.
 
 Forces hardware to enter paused mode.
 
-## Branch Condition Codes {#h3}
+## Branch Condition Codes
 ---
 This section describes the condition code (ie flags `nzpc`) in more detail, describing their calculation/meaning and when they're updated.
 
@@ -214,7 +214,7 @@ Each condition code flag, when set, infers data about a given word length value.
 |Positive |p          |Last data operation result, as int16, was positive  |
 |Carry    |c          |Last data operation, as subtract, had carry-out     |
 
-As mentioned under [Required Constraints](#h1), hardware is expected to generate and store these condition codes. Specifically, these codes should be generated and stored based on the result of the following operations:
+As mentioned under [Required Constraints](#required-constraints), hardware is expected to generate and store these condition codes. Specifically, these codes should be generated and stored based on the result of the following operations:
 - Bitwise AND
 - Bitwise OR
 - Bitwise XOR
@@ -224,7 +224,7 @@ As mentioned under [Required Constraints](#h1), hardware is expected to generate
 - Arithmetic Subtract
 - Load Byte Immediate
 
-*Note: that flag `c`, while updated for the above instructions, is only valid after an arithmetic subtract instruction is performed.*
+*Note: Flag `c`, while updated for the above instructions, is only valid after an arithmetic subtract instruction is performed.*
 
 ### Common Condition Code Combinations
 
