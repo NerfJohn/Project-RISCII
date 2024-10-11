@@ -1,6 +1,9 @@
-# Processor Design
-This folder is focused on the RISCII processor design- a softcore processor implemented on an FPGA. Below describes the included folders and their purpose.
+# (Micro)processor Design
+---
 
-__/DevProject:__ Project directory for FPGA source code development
+This folder contains files related to the RISCII microprocessor design. The table below describes the purpose/contents of each folder.
 
-__/tools__: Various self-made tools/scripts to ease source code development
+|Folder Name|Description                                                   |
+|-----------|--------------------------------------------------------------|
+|DevProject |project/environment used to develop softcore microprocessor   |
+|tools      |scripts/tests used to develop the softcore microprocessor     |

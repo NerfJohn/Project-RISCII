@@ -1,13 +1,25 @@
-# Project RISCII Documents
-*"Documents, descriptions, and manuals for Project RISCII deliverables"*
-
+# Documents
 ---
 
-This README is a quick summary of the documents contained in this folder. For ease, the documents are arranged by general purpose.
+This folder contains documents related to Project RISCII. The tables below describe the purpose contents of each folder/document (organized by design level).
 
-## Hardware Related Documents
-- __/InstructionSetArchitecture__: Interface between RISCII hardware and software (though primarily focused on hardware constraints)
-- __/uPManual__: User manual for the RISCII Microprocessor Design (see "processor/DevProject" under the repo's root folder)
+*Note: The "CliffNotes.txt" is a quick dumping ground for ideas that need to be sorted. It is mainly for developer use only.*
 
-## Software Related Documents
-- __/AsmldManual__: User manual for the RISCII Assembler/Linker Design (see "compiler/AsmldProject" under the repo's root folder)
+## Compiler Documents
+
+|Folder Name|Doc Number|Description                                        |
+|-----------|----------|---------------------------------------------------|
+|AsmldManual|NA        |rough assembler/linker manual- to be refactored    |
+
+## Microprocessor Docuements
+
+|Folder Name|Doc Number|Description                                        |
+|-----------|----------|---------------------------------------------------|
+|uPManual   |PR2001    |manual for RISCII softcore microprocessor          |
+|ISA        |PR2000    |instruction set architecture for Project RISCII    |
+
+## Other Documents
+
+|Folder Name|Doc Number|Description                                        |
+|-----------|----------|---------------------------------------------------|
+|Template   |PR0000    |template document for Project RISCII docuements    |
