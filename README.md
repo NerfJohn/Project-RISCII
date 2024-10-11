@@ -13,7 +13,7 @@ Project RISCII (pronounced "risky"- no affiliation with RISC-II) is a personal p
 
 The softcore microprocessor deisgn has been completed. An assembler/linker program (albeit with rough documentation) has also been developed and used in testing of the microprocessor.
 
-The microprocessor can be found under [/processor/DevProject](./processor/DevProject). The sample assembler/linker can be found under [/compiler/AsmldProject](./compiler/AsmldProject).
+The microprocessor can be found under [/processor/DevProject](./processor/DevProject). The sample assembler/linker can be found under [/compiler/AsmLdProject](./compiler/AsmLdProject).
 
 ## Next Steps: Phase II 1/2- Compiler Backend + Shape-up
 
