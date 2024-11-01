@@ -18,3 +18,34 @@ Levels of Design
 	- Circuit Board (power regulated, programmable, devices to use MPU circuits)
 
 ================================================================================
+Compiler (High) Feature/Design:
+
+General Goals
+	sources = C and static libraries
+	outputs = binary images and static libraries
+	options = optimize and debug
+		(for debug: functional > performant/capabilities)
+
+Static Libraries/Linking
+	static lib = glorified asm file
+	new asm directive: ".global"
+		labels implicitly use internal linkage
+		.global <label> gives local label global linkage
+		internal > global linkage as applicable
+		
+Debugging
+	backend adds NOPs to start of ".global" functions
+		generated ".global" function labels point to NOP
+		NOP used as SW breakpoint (can be replaced w/ HLT)
+	asmld appends table of .global labels to binary image
+		includes info needed to set/remove breakpoints
+		can probe global data (+maps) at global function starts (or on stop)
+
+Backend/Optimizer
+	"Flattened" version of C code (in SSA form)
+	Focused mainly on optimizing
+		(eg not strict on declaration matching definition, usage, etc)
+		(ie should in theory be "portable" code, though scope has 1 front/back)
+	Optimizations based around SSA form + structure
+
+================================================================================
