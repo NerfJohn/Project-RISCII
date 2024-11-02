@@ -13,6 +13,12 @@ processor/**/src/*.bak
 # (processor) Ignore bins created for testing hardware.
 processor/tools/tests/**/*.bin
 
+# (compiler) Ignore artifacts of "irbend" building/testing/developing.
+compiler/irbend/irbend.exe
+compiler/irbend/build
+compiler/irbend/IrbendProject/Debug
+compiler/irbend/IrbendProject/.settings
+
 # (compiler) Ignore Eclipse generated/related files (except for makefile).
 compiler/AsmLdProject/.settings
 compiler/AsmLdProject/Debug/*
