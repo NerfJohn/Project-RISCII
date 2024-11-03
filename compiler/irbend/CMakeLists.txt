@@ -27,13 +27,13 @@ message("Run action '${RUN}'")
 
 # Gather files/paths (globbing because i'm lazy/arrogant).
 file(GLOB shared_sources 
-	IrbendProject/Utils/*.cpp
+	IrbendProject/Device/*.cpp
 )
 file(GLOB build_sources
 	IrbendProject/main.cpp
 )
 file(GLOB test_sources
-	tests/Utils/*.cpp
+	tests/Device/*.cpp
 )
 file(GLOB build_includes IrbendProject)
 file(GLOB test_includes .)
