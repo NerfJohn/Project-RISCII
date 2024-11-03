@@ -73,7 +73,9 @@ bool GetOpt::getOpt(void) {
 		else                           {m_type = CLI_TYPE_FILE;}
 
 		// Set/consume argument for appropriate flags.
-		if ((m_type == CLI_TYPE_ARG) && (m_nextIdx < m_tokens.size())) {
+		if ((m_type == CLI_TYPE_ARG)                && // arg flag...
+			(m_nextIdx < m_tokens.size())           && // with argument...
+			(m_tokens[m_nextIdx][0] != FLAG_PREFIX)) { // that's not a flag
 			m_arg = m_tokens[m_nextIdx];
 			m_nextIdx++;
 		}

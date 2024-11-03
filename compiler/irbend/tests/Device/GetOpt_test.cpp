@@ -86,6 +86,23 @@ TEST(GetOpt, FindArgNone) {
 	EXPECT_EQ(dut.m_arg, "");
 }
 
+TEST(GetOpt, FindArgToFlag) {
+	// Input starts with "arg" followed by flag.
+	int argc = 2;
+	char* argv[] = {"-o", "-h"};
+	
+	// Run constructor.
+	GetOpt dut(argc, argv);
+	
+	// Parse 1 token- should find something.
+	EXPECT_EQ(dut.getOpt(), true);
+	
+	// Check updated values.
+	EXPECT_EQ(dut.m_type, CLI_TYPE_ARG);
+	EXPECT_EQ(dut.m_value, "-o");
+	EXPECT_EQ(dut.m_arg, "");
+}
+
 TEST(GetOpt, EndFile) {
 	// Input ending with file.
 	int argc = 1;
