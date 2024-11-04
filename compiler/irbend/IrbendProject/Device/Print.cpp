@@ -2,7 +2,7 @@
  * Print.cpp: Standardizes types of printing formats/behavior.
  */
 
-#include "Os/OsExit.h"
+#include "Device/Terminate.h"
 #include "Os/OsStdout.h"
 
 #include "Device/Print.h"
@@ -60,7 +60,7 @@ void Print::log(LogType_e level, std::string msg) {
 			default:
 				// Unknown type input- design issue/bug.
 				this->bug("Invalid log level type used for logging");
-				OsExit_exit(RET_ASSERT);
+				Terminate_silent(RET_ASSERT);
 				/* Line not reached */
 		}
 		logStr += "]";
