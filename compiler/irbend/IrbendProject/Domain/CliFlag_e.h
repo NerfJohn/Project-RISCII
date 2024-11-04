@@ -14,11 +14,11 @@
  */
 typedef enum {
 	// Real values.
-	CLI_FLAG_HELP,
-	CLI_FLAG_NAME,
+	CLI_FLAG_HELP,     // request program help menu
+	CLI_FLAG_NAME,     // name output file
 
 	// Special values.
-	CLI_FLAG_INVALID
+	CLI_FLAG_INVALID   // invalid/unused flag
 
 } CliFlag_e;
 

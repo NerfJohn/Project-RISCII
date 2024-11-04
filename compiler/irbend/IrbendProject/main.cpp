@@ -7,6 +7,10 @@
 #include <iostream>
 #include "Device/GetOpt.h"
 
+#include "Device/Print.h"
+#include "Os/OsExit.h"
+#include "Os/OsStdout.h"
+
 using namespace std;
 
 //==============================================================================
@@ -14,6 +18,12 @@ using namespace std;
 int main(int argc, char* argv[]) {
 	// Process args.
 	GetOpt cliArgs(argc, argv);
+
+	Print::inst().log(LOG_ERROR, "error 1");
+	Print::inst().setLogLevel(LOG_ERROR);
+	Print::inst().log(LOG_ERROR, "error 2");
+
+	Print::inst().log(LOG_SILENT, "silence");
 
 	// Display info on each.
 	while(cliArgs.getOpt()) {
@@ -24,5 +34,7 @@ int main(int argc, char* argv[]) {
 		// Spacer between entries.
 		cout << endl;
 	}
+
+	OsExit_exit(RET_SUCCESS);
 }
 

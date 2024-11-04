@@ -2,7 +2,7 @@
  * GetOpt.cpp: Customized version of unistd.h's "getopt" function.
  */
 
-#include <Device/GetOpt.h>
+#include "Device/GetOpt.h"
 
 using namespace std;
 

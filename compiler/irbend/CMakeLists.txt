@@ -31,12 +31,14 @@ file(GLOB shared_sources
 )
 file(GLOB build_sources
 	IrbendProject/main.cpp
+	IrbendProject/Os/*.cpp
 )
 file(GLOB test_sources
 	tests/Device/*.cpp
+	tests/Os/*.cpp
 )
 file(GLOB build_includes IrbendProject)
-file(GLOB test_includes .)
+file(GLOB test_includes ${CMAKE_CURRENT_SOURCE_DIR})
 
 ################################################################################
 # ~Update section...

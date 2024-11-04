@@ -14,12 +14,12 @@
  */
 typedef enum {
 	// Real values.
-	CLI_TYPE_FILE,
-	CLI_TYPE_LONE,
-	CLI_TYPE_ARG,
+	CLI_TYPE_FILE,     // file/typical input
+	CLI_TYPE_LONE,     // stand-alone flag
+	CLI_TYPE_ARG,      // flag with required, following argument
 
 	// Special values.
-	CLI_TYPE_INVALID
+	CLI_TYPE_INVALID   // invalid/unused type
 } CliType_e;
 
 #endif /* DOMAIN_CLITYPE_E_H_ */
