@@ -8,6 +8,8 @@
 #include "Device/Print.h"
 #include "Device/Terminate.h"
 
+#include "Device/File.h"
+
 using namespace std;
 
 //==============================================================================
@@ -26,6 +28,11 @@ int main(int argc, char* argv[]) {
 
 		// Spacer between entries.
 		Print::inst().cli("");
+	}
+
+	File::inst().open("test.sh", FILE_OP_READ);
+	while(File::inst().peek() != 0xFF) {
+		Print::inst().cli(to_string((File::inst().pop())));
 	}
 
 	// Successful run.
