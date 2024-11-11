@@ -9,6 +9,7 @@
 #include "Device/Terminate.h"
 
 #include "Device/File.h"
+#include "Domain/LexState_e.h"
 
 using namespace std;
 
