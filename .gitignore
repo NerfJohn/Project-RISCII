@@ -13,6 +13,12 @@ processor/**/src/*.bak
 # (processor) Ignore bins created for testing hardware.
 processor/tools/tests/**/*.bin
 
+# (compiler) Ignore artifacts of "asmld" building/testing/developing.
+compiler/asmld/asmld.exe
+compiler/asmld/build
+compiler/asmld/AsmldProject/Debug
+compiler/asmld/AsmldProject/.settings
+
 # (compiler) Ignore artifacts of "irbend" building/testing/developing.
 compiler/irbend/irbend.exe
 compiler/irbend/build
