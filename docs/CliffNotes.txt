@@ -49,3 +49,41 @@ Backend/Optimizer
 	Optimizations based around SSA form + structure
 
 ================================================================================
+Assembler/Linker Feature Set:
+
+var types
+	flags (%[low letters]): instruction specific bitmasks
+	regs  ($[num])        : direct register for instruction
+	int   (num or hex)    : constant value, sized to instruction's use or word
+	str   (str lit w/ esc): byte array, 2 bytes per word w/ first in lower bits
+		(0x00 appended to match word multiple)
+	label (std var name)  : labelled text/data address
+	array (bracketed vars): combo of int/str/labels, all resolved before whole
+		(ie resolved in size, then array aligns/packs items to words)
+
+directives
+	.data: initialized data in .data section
+	.bss : uninitialized data in .data section
+	.glob: label (defined in this file) is accessible to all files on linking
+	.weak: label (defined in this file) should be overriden if globl exists
+	.part: labelled text/data (in file) forms section (till next .part-ed label)
+
+(instructions heavily based on ISA layout)
+
+funcs:
+	_la: load value of label (or integer) into register
+	_br: jump to label for condition (requires register to "burn")
+
+defined labels
+	__START: start of text section in image
+	__SIZE : size of binary image
+	__FREE : start of free memory in data section
+	__BSS  : start of bss section
+	
+other
+	comments (;)
+	linking = local > global (besides .weak)
+	can print debug global table w/ file
+	can optimize using iterative part deletion + _br minimizing?
+	limits based on known target sizes
+
