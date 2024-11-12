@@ -1,5 +1,5 @@
 /*
- * Lexer.cpp: Class containing language specific lexing rules/support.
+ * Lexer.cpp: Functions containing language specific lexing rules/support.
  */
 
 #include "Device/Print.h"

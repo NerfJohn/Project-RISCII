@@ -1,5 +1,5 @@
 /*
- * Lexer.h: Class containing language specific lexing rules/support.
+ * Lexer.h: Functions containing language specific lexing rules/support.
  */
 
 #ifndef DEVICE_LEXER_H_
