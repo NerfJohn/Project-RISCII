@@ -40,10 +40,10 @@ TEST(Parser, asAction) {
 TEST(Parser, parseAssert) {
 	// Prep input.
 	std::stack<ParseState_e> stack;
-	stack.push((ParseState_e)(TOKEN_COMMA));
+	stack.push((ParseState_e)(TOKEN_COMMENT));
 	
 	// Attempt a bad parse.
-	Parser_parse(stack, TOKEN_COMMA);
+	Parser_parse(stack, TOKEN_COMMENT);
 
 	// Check operation resulted in assert.
 	std::string output = "ASSERT! Parsed with invalid top state\n";
@@ -58,7 +58,7 @@ TEST(Parser, badParse) {
 	stack.push((ParseState_e)(PARSE_FILE));
 	
 	// Attempt a bad parse.
-	RetErr_e retErr = Parser_parse(stack, TOKEN_COMMA);
+	RetErr_e retErr = Parser_parse(stack, TOKEN_COMMENT);
 
 	// Check final parsing results.
 	EXPECT_EQ(retErr, RET_ERR_ERROR);

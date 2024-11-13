@@ -17,30 +17,21 @@
 typedef enum {
 	// Real values (LexToken_e extension).
 	LEX_START = TOKEN_LEX_MAX + 1,         // start of all lexing paths
-	LEX_LOOP_SYMBOL,                       // loop for capturing symbol
-	LEX_IS_MINUS,                          // "-" confirmed, should be integer
-	LEX_LOOP_INT,                          // loop for capturing integer
-	LEX_IS_SLASH,                          // "/" confirmed, may be comment
-	LEX_LOOP_COMMENT,                      // loop for capturing comment
-	LEX_IS_EQUALS,                         // "=" confirmed
-	LEX_IS_LCURLY,                         // "{" confirmed
-	LEX_IS_RCURLY,                         // "}" confirmed
-	LEX_IS_COMMA,                          // "," confirmed
-	LEX_KW_D,                              // "d" keywords
-	LEX_KW_DE,
-	LEX_KW_DEC,
-	LEX_KW_DEF,
-	LEX_KW_G,                              // "g" keywords
-	LEX_KW_GL,
-	LEX_KW_GLO,
-	LEX_KW_GLOB,
-	LEX_KW_I,                              // "i" keywords
-	LEX_KW_I1,
-	LEX_KW_I8,
-	LEX_KW_I16,
+	LEX_LOOP_COMMENT,                      // loop used to capture comments
+	LEX_HANDLE_PERCENT,                    // "%" sign found
+	LEX_LOOP_FLAGS,                        // loop used to capture flags
+	LEX_HANDLE_DOLLAR,                     // "$" sign found
+	LEX_LOOP_REGISTER,                     // loop used to capture register #
+	LEX_HANDLE_MINUS,                      // "-" sign found
+	LEX_HANDLE_ZERO,                       // "0" found for decimal or hex
+	LEX_HANDLE_HEX,                        // "0x" sign found
+	LEX_LOOP_DECIMAL,                      // loop used to capture decimal imm
+	LEX_LOOP_HEX,                          // loop used to capture hex imm
+	LEX_LOOP_NAME,                         // loop for label/keywords
 
 	// Special values.
-	LEX_ERROR                              // end state for "bad" lexing
+	LEX_ERROR,                             // end state for "bad" lexing
+	LEX_NAME                               // "end state" for labels/keywords
 } LexState_e;
 
 #endif /* DOMAIN_LEXSTATE_E_H_ */

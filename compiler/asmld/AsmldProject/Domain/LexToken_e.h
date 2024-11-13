@@ -16,17 +16,10 @@ typedef enum {
 	// Real values.
 	TOKEN_COMMENT,                   // one line user comment
 	TOKEN_EOF,                       // "end of file" character
-	TOKEN_KW_DEC,                    // "dec" keyword
-	TOKEN_KW_DEF,                    // "def" keyword
-	TOKEN_KW_GLOB,                   // "glob" keyword
-	TOKEN_SYMBOL,                    // symbol/variable
-	TOKEN_INT_LIT,                   // integer (decimal) literal
-	TOKEN_EQUALS,                    // "=" operator
-	TOKEN_L_CURLY,                   // "{" char
-	TOKEN_R_CURLY,                   // "}" char
-	TOKEN_COMMA,                     // "," char
-	TOKEN_I8,                        // 8-bit type
-	TOKEN_I16,                       // 16-bit type
+	TOKEN_FLAGS,                     // flag(s) variable
+	TOKEN_REGISTER,                  // register variable
+	TOKEN_IMMEDIATE,                 // immediate/integer variable
+	TOKEN_KW_SHR,                    // "shift right" keyword
 
 	// Special values.
 	TOKEN_INVALID,                   // Unknown/Invalid lex token

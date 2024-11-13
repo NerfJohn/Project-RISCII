@@ -52,90 +52,53 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 		case LEX_START:                          // (Start of all lex paths)
 			WSPACE       TO(LEX_START)           // skip token "spacers"
 			ENDOF        TO(TOKEN_EOF)           // last token scanned
-			IS('%')      TO(LEX_LOOP_SYMBOL)
-			IS('-')      TO(LEX_IS_MINUS)
-			IN('0','9')  TO(LEX_LOOP_INT)
-			IS('/')      TO(LEX_IS_SLASH)
-			IS('=')      TO(LEX_IS_EQUALS)
-			IS('{')      TO(LEX_IS_LCURLY)
-			IS('}')      TO(LEX_IS_RCURLY)
-			IS(',')      TO(LEX_IS_COMMA)
-			IS('d')      TO(LEX_KW_D)
-			IS('g')      TO(LEX_KW_G)
-			IS('i')      TO(LEX_KW_I)
-			break;
-		case LEX_LOOP_SYMBOL:
-			LABEL        TO(LEX_LOOP_SYMBOL)     // greedy grab symbol name
-			ELSE         TO(TOKEN_SYMBOL)
-			break;
-		case LEX_IS_MINUS:
-			IN('0','9')  TO(LEX_LOOP_INT)        // negation of integer value
-			break;
-		case LEX_LOOP_INT:
-			IN('0','9')  TO(LEX_LOOP_INT)        // greedy grab integer
-			ELSE         TO(TOKEN_INT_LIT)
-			break;
-		case LEX_IS_SLASH:
-			IS('/')      TO(LEX_LOOP_COMMENT)
+			IS(';')      TO(LEX_LOOP_COMMENT)
+			IS('%')      TO(LEX_HANDLE_PERCENT)
+			IS('$')      TO(LEX_HANDLE_DOLLAR)
+			IS('-')      TO(LEX_HANDLE_MINUS)
+			IS('0')      TO(LEX_HANDLE_ZERO)
+			IN('1','9')  TO(LEX_LOOP_DECIMAL)
+			LABEL        TO(LEX_LOOP_NAME)       // covers labels/keywords
 			break;
 		case LEX_LOOP_COMMENT:
 			IS('\n')     TO(TOKEN_COMMENT)
-			ELSE         TO(LEX_LOOP_COMMENT)    // greedy grab comment
+			ELSE         TO(LEX_LOOP_COMMENT)    // greedy grab comments
 			break;
-		case LEX_IS_EQUALS:                      // (operators/formatters)
-			ELSE         TO(TOKEN_EQUALS)
+		case LEX_HANDLE_PERCENT:
+			IN('a','z')  TO(LEX_LOOP_FLAGS)
 			break;
-		case LEX_IS_LCURLY:
-			ELSE         TO(TOKEN_L_CURLY)
+		case LEX_LOOP_FLAGS:
+			IN('a','z')  TO(LEX_LOOP_FLAGS)      // greedy grab flags
+			ELSE         TO(TOKEN_FLAGS)
 			break;
-		case LEX_IS_RCURLY:
-			ELSE         TO(TOKEN_R_CURLY)
+		case LEX_HANDLE_DOLLAR:
+			IN('0','9')  TO(LEX_LOOP_REGISTER)
 			break;
-		case LEX_IS_COMMA:
-			ELSE         TO(TOKEN_COMMA)
+		case LEX_LOOP_REGISTER:
+			IN('0','9')  TO(LEX_LOOP_REGISTER)   // greedy grab register #
+			ELSE         TO(TOKEN_REGISTER)
 			break;
-		case LEX_KW_D:                           // ("d" keywords)
-			IS('e')      TO(LEX_KW_DE)
+		case LEX_HANDLE_MINUS:
+			IN('0','9')  TO(LEX_LOOP_DECIMAL)    // -[0-9]...
 			break;
-		case LEX_KW_DE:
-			IS('c')      TO(LEX_KW_DEC)
-			IS('f')      TO(LEX_KW_DEF)
+		case LEX_HANDLE_ZERO:
+			IS('x')      TO(LEX_HANDLE_HEX)      // 0x...
+			IN('0','9')  TO(LEX_LOOP_DECIMAL)    // 0[0-9]...
 			break;
-		case LEX_KW_DEC:
-			LABEL        TO(LEX_ERROR)
-			ELSE         TO(TOKEN_KW_DEC)
+		case LEX_HANDLE_HEX:
+			HEX          TO(LEX_LOOP_HEX)        // 0x[hex num]...
 			break;
-		case LEX_KW_DEF:
-			LABEL        TO(LEX_ERROR)
-			ELSE         TO(TOKEN_KW_DEF)
+		case LEX_LOOP_DECIMAL:
+			IN('0','9')  TO(LEX_LOOP_DECIMAL)    // greedy grab decimals
+			ELSE         TO(TOKEN_IMMEDIATE)
 			break;
-		case LEX_KW_G:                           // ("g" keywords)
-			IS('l')      TO(LEX_KW_GL)
+		case LEX_LOOP_HEX:
+			HEX          TO(LEX_LOOP_HEX)        // greedy grab hex
+			ELSE         TO(TOKEN_IMMEDIATE)
 			break;
-		case LEX_KW_GL:
-			IS('o')      TO(LEX_KW_GLO)
-			break;
-		case LEX_KW_GLO:
-			IS('b')      TO(LEX_KW_GLOB)
-			break;
-		case LEX_KW_GLOB:
-			LABEL        TO(LEX_ERROR)
-			ELSE         TO(TOKEN_KW_GLOB)
-			break;
-		case LEX_KW_I:                           // ("i" keywords)
-			IS('1')      TO(LEX_KW_I1)
-			IS('8')      TO(LEX_KW_I8)
-			break;
-		case LEX_KW_I1:
-			IS('6')      TO(LEX_KW_I16)
-			break;
-		case LEX_KW_I8:
-			LABEL        TO(LEX_ERROR)
-			ELSE         TO(TOKEN_I8)
-			break;
-		case LEX_KW_I16:
-			LABEL        TO(LEX_ERROR)
-			ELSE         TO(TOKEN_I16)
+		case LEX_LOOP_NAME:
+			LABEL        TO(LEX_LOOP_NAME)       // greedy grab label chars
+			ELSE         TO(LEX_NAME)            // signal "label" is ready
 			break;
 		default:                                 // (No matching "from" state)
 			// Start at non-state? compiler bug.

@@ -17,9 +17,9 @@ TEST(Lexer, lexAssert) {
 }
 
 TEST(Lexer, badLex) {
-	// Sample inputs.
+	// Sample inputs (ie no corresponding keyword).
 	LexState_e  state = LEX_START;
-	std::string input = "de ";     // no corresponding keyword
+	std::string input = "$q";
 	
 	// Lex through entire string.
 	while(input.size()) {
@@ -51,7 +51,7 @@ TEST(Lexer, whitespace) {
 TEST(Lexer, comment) {
 	// Sample inputs.
 	LexState_e  state = LEX_START;
-	std::string input = "// A comment for i8 i16 %d5\n";
+	std::string input = "; A comment for SHR %a $0 $1 3\n";
 	
 	// Lex through entire string.
 	while(input.size()) {
@@ -80,10 +80,10 @@ TEST(Lexer, eof) {
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
 
-TEST(Lexer, decKeyword) {
+TEST(Lexer, flagVar) {
 	// Sample inputs.
 	LexState_e  state = LEX_START;
-	std::string input = "dec ";
+	std::string input = "%a+";
 	
 	// Lex through entire string.
 	while(input.size()) {
@@ -92,14 +92,14 @@ TEST(Lexer, decKeyword) {
 	}
 	
 	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_KW_DEC);
+	EXPECT_EQ(state, TOKEN_FLAGS);
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
 
-TEST(Lexer, defKeyword) {
+TEST(Lexer, regVar) {
 	// Sample inputs.
 	LexState_e  state = LEX_START;
-	std::string input = "def\xff";
+	std::string input = "$3a";
 	
 	// Lex through entire string.
 	while(input.size()) {
@@ -108,14 +108,14 @@ TEST(Lexer, defKeyword) {
 	}
 	
 	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_KW_DEF);
+	EXPECT_EQ(state, TOKEN_REGISTER);
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
 
-TEST(Lexer, globKeyword) {
+TEST(Lexer, immVar) {
 	// Sample inputs.
 	LexState_e  state = LEX_START;
-	std::string input = "glob+";
+	std::string input = "5q";
 	
 	// Lex through entire string.
 	while(input.size()) {
@@ -124,28 +124,12 @@ TEST(Lexer, globKeyword) {
 	}
 	
 	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_KW_GLOB);
-	EXPECT_EQ(OsExit_hasRet(), false);
-}
-
-TEST(Lexer, symbol) {
-	// Sample inputs.
-	LexState_e  state = LEX_START;
-	std::string input = "%0\n";
-	
-	// Lex through entire string.
-	while(input.size()) {
-		state = Lexer_nextState(state, (uint8_t)(input[0]));
-		input.erase(input.begin());
-	}
-	
-	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_SYMBOL);
+	EXPECT_EQ(state, TOKEN_IMMEDIATE);
 	EXPECT_EQ(OsExit_hasRet(), false);
 	
 	// Sample inputs.
 	state = LEX_START;
-	input = "%_foobar\r";
+	input = "-00 ";
 	
 	// Lex through entire string.
 	while(input.size()) {
@@ -154,12 +138,12 @@ TEST(Lexer, symbol) {
 	}
 	
 	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_SYMBOL);
+	EXPECT_EQ(state, TOKEN_IMMEDIATE);
 	EXPECT_EQ(OsExit_hasRet(), false);
 	
 	// Sample inputs.
 	state = LEX_START;
-	input = "%b33f_and_p0tat0es\xff";
+	input = "0xaB21}";
 	
 	// Lex through entire string.
 	while(input.size()) {
@@ -168,14 +152,14 @@ TEST(Lexer, symbol) {
 	}
 	
 	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_SYMBOL);
+	EXPECT_EQ(state, TOKEN_IMMEDIATE);
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
 
-TEST(Lexer, intLiteral) {
+TEST(Lexer, shrKeyword) {
 	// Sample inputs.
 	LexState_e  state = LEX_START;
-	std::string input = "13 ";
+	std::string input = "SHR ";
 	
 	// Lex through entire string.
 	while(input.size()) {
@@ -184,116 +168,6 @@ TEST(Lexer, intLiteral) {
 	}
 	
 	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_INT_LIT);
-	EXPECT_EQ(OsExit_hasRet(), false);
-	
-	// Sample inputs.
-	state = LEX_START;
-	input = "-05q";
-	
-	// Lex through entire string.
-	while(input.size()) {
-		state = Lexer_nextState(state, (uint8_t)(input[0]));
-		input.erase(input.begin());
-	}
-	
-	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_INT_LIT);
-	EXPECT_EQ(OsExit_hasRet(), false);
-}
-
-TEST(Lexer, equalsOp) {
-	// Sample inputs.
-	LexState_e  state = LEX_START;
-	std::string input = "=a";
-	
-	// Lex through entire string.
-	while(input.size()) {
-		state = Lexer_nextState(state, (uint8_t)(input[0]));
-		input.erase(input.begin());
-	}
-	
-	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_EQUALS);
-	EXPECT_EQ(OsExit_hasRet(), false);
-}
-
-TEST(Lexer, lCurly) {
-	// Sample inputs.
-	LexState_e  state = LEX_START;
-	std::string input = "{i";
-	
-	// Lex through entire string.
-	while(input.size()) {
-		state = Lexer_nextState(state, (uint8_t)(input[0]));
-		input.erase(input.begin());
-	}
-	
-	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_L_CURLY);
-	EXPECT_EQ(OsExit_hasRet(), false);
-}
-
-TEST(Lexer, rCurly) {
-	// Sample inputs.
-	LexState_e  state = LEX_START;
-	std::string input = "}\xff";
-	
-	// Lex through entire string.
-	while(input.size()) {
-		state = Lexer_nextState(state, (uint8_t)(input[0]));
-		input.erase(input.begin());
-	}
-	
-	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_R_CURLY);
-	EXPECT_EQ(OsExit_hasRet(), false);
-}
-
-TEST(Lexer, commas) {
-	// Sample inputs.
-	LexState_e  state = LEX_START;
-	std::string input = ",%";
-	
-	// Lex through entire string.
-	while(input.size()) {
-		state = Lexer_nextState(state, (uint8_t)(input[0]));
-		input.erase(input.begin());
-	}
-	
-	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_COMMA);
-	EXPECT_EQ(OsExit_hasRet(), false);
-}
-
-TEST(Lexer, i8Type) {
-	// Sample inputs.
-	LexState_e  state = LEX_START;
-	std::string input = "i8-";
-	
-	// Lex through entire string.
-	while(input.size()) {
-		state = Lexer_nextState(state, (uint8_t)(input[0]));
-		input.erase(input.begin());
-	}
-	
-	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_I8);
-	EXPECT_EQ(OsExit_hasRet(), false);
-}
-
-TEST(Lexer, i16Type) {
-	// Sample inputs.
-	LexState_e  state = LEX_START;
-	std::string input = "i16@";
-	
-	// Lex through entire string.
-	while(input.size()) {
-		state = Lexer_nextState(state, (uint8_t)(input[0]));
-		input.erase(input.begin());
-	}
-	
-	// Check final lexing results.
-	EXPECT_EQ(state, TOKEN_I16);
+	EXPECT_EQ(state, LEX_NAME);
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
