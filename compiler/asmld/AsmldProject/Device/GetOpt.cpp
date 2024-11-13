@@ -21,7 +21,7 @@ using namespace std;
 
 //==============================================================================
 // Helper function to parse asmld.exe specific flags/details.
-void GetOpt::parseFlag(std::string const flagStr) {
+void GetOpt::parseFlag(std::string const& flagStr) {
 	// Set types as applicable.
 	if      FLAG(FLAG_HELP) SET(CLI_TYPE_LONE, CLI_FLAG_HELP)
 	else if FLAG(FLAG_NAME) SET(CLI_TYPE_ARG, CLI_FLAG_NAME)

@@ -37,7 +37,7 @@ public:
 	 *
 	 * @param level log level to set threshold to
 	 */
-	void setLogLevel(LogType_e level);
+	void setLogLevel(LogType_e const level);
 
 	/*
 	 * Prints given message using "log" line formatting.
@@ -51,23 +51,28 @@ public:
 	 * @param line  line number (eg logging error at file/line location)
 	 * @param msg   string to print (ie heart of the log info)
 	 */
-	void log(LogType_e level, std::string msg);
-	void log(LogType_e level, std::string file, std::string msg);
-	void log(LogType_e level, std::string file, uint32_t line, std::string msg);
+	void log(LogType_e const level, std::string const& msg);
+	void log(LogType_e const level,
+			 std::string const& file,
+			 std::string const& msg);
+	void log(LogType_e const level,
+			 std::string const& file,
+			 uint32_t const line,
+			 std::string const& msg);
 
 	/*
 	 * Print given message using "bug" line formatting. Always printed.
 	 *
 	 * @param msg string to print
 	 */
-	void bug(std::string msg);
+	void bug(std::string const& msg);
 
 	/*
 	 * Print given message using "cli" line formatting. Always printed.
 	 *
 	 * @param msg string to print
 	 */
-	void cli(std::string msg);
+	void cli(std::string const& msg);
 
 private:
 	// Local save of "threshhold" log level.

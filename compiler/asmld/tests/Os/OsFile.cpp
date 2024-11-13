@@ -14,7 +14,7 @@ static RetErr_e s_resp = RET_ERR_NONE;
 
 //==============================================================================
 // (Source code declared function).
-RetErr_e OsFile_open(std::string const name, FileOp_e const dir) {
+RetErr_e OsFile_open(std::string const& name, FileOp_e const dir) {
 	// Prep file.
 	if (!OsExit_hasRet()) {
 		s_name = name;

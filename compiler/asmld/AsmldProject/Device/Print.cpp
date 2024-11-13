@@ -37,14 +37,14 @@ Print& Print::inst(void) {
 
 //==============================================================================
 // Sets the log level of the singleton.
-void Print::setLogLevel(LogType_e level) {
+void Print::setLogLevel(LogType_e const level) {
 	// Save the type for future logging control flow.
 	m_level = level;
 }
 
 //==============================================================================
 // Prints given message using "log" line formatting.
-void Print::log(LogType_e level, std::string msg) {
+void Print::log(LogType_e const level, std::string const& msg) {
 	// Only log message if within level limit.
 	if (level <= m_level) {
 		// String to log- always begins with program's name.
@@ -76,7 +76,9 @@ void Print::log(LogType_e level, std::string msg) {
 
 //==============================================================================
 // Prints given message using "log" line formatting.
-void Print::log(LogType_e level, std::string file, std::string msg) {
+void Print::log(LogType_e const level,
+		        std::string const& file,
+				std::string const& msg) {
 	// Format filename as part of the message.
 	string logStr = string("(") + file + ") " + msg;
 
@@ -86,10 +88,10 @@ void Print::log(LogType_e level, std::string file, std::string msg) {
 
 //==============================================================================
 // Prints given message using "log" line formatting.
-void Print::log(LogType_e level,
-		        std::string file,
-				uint32_t line,
-				std::string msg) {
+void Print::log(LogType_e const level,
+		        std::string const& file,
+				uint32_t const line,
+				std::string const& msg) {
 	// Format filename and line number as part of the message.
 	string lineStr = to_string(line);
 	string logStr = string("(") + file + "/" + lineStr + ") " + msg;
@@ -100,7 +102,7 @@ void Print::log(LogType_e level,
 
 //==============================================================================
 // Print given message using "bug" line formatting. Always printed.
-void Print::bug(std::string msg) {
+void Print::bug(std::string const& msg) {
 	// Format string with prefix for bugs.
 	string logStr = string(ASSERT_NAME) + " " + msg;
 
@@ -110,7 +112,7 @@ void Print::bug(std::string msg) {
 
 //==============================================================================
 // Print given message using "cli" line formatting. Always printed.
-void Print::cli(std::string msg) {
+void Print::cli(std::string const& msg) {
 	// Just print plaintext- cli messages have no fancy prefix.
 	OsStdout_printStr(msg + NEWLINE);
 }

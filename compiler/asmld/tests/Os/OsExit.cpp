@@ -12,7 +12,7 @@ static bool hasRet = false;
 
 //==============================================================================
 // (Source code declared function).
-void OsExit_exit(RetCode_e retCode) {
+void OsExit_exit(RetCode_e const retCode) {
 	// Gather return code ONCE.
 	if (!hasRet) {code = retCode; hasRet = true;}
 }

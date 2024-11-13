@@ -48,7 +48,7 @@ public:
 	 * @param dir  operation to perform on file
 	 * @return     RET_ERR_NONE is successful, RET_ERR_ERROR otherwise
 	 */
-	RetErr_e open(std::string const name, FileOp_e const dir);
+	RetErr_e open(std::string const& name, FileOp_e const dir);
 
 	/*
 	 * Peeks byte from file (if open and reading).

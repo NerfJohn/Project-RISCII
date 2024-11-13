@@ -12,6 +12,6 @@
  *
  * @param msg string to print to stdout
  */
-void OsStdout_printStr(std::string msg);
+void OsStdout_printStr(std::string const& msg);
 
 #endif /* OS_OSSTDOUT_H_ */

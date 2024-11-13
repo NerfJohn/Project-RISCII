@@ -10,7 +10,7 @@ using namespace std;
 
 //==============================================================================
 // Terminates the program without any additional output/processing.
-void Terminate_silent(RetCode_e exitCode) {
+void Terminate_silent(RetCode_e const exitCode) {
 	// Behold- the Irish goodbye.
 	OsExit_exit(exitCode);
 

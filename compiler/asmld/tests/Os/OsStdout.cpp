@@ -10,7 +10,7 @@ static string printBuffer = "";
 
 //==============================================================================
 // (Source code declared function).
-void OsStdout_printStr(std::string msg) {
+void OsStdout_printStr(std::string const& msg) {
 	// Append "output" data to buffer (IF program is still "running").
 	if (!OsExit_hasRet()) {printBuffer += msg;}
 }

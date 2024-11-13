@@ -16,6 +16,6 @@
  *
  * @param exitCode value to return to caller
  */
-void Terminate_silent(RetCode_e exitCode);
+void Terminate_silent(RetCode_e const exitCode);
 
 #endif /* DEVICE_TERMINATE_H_ */

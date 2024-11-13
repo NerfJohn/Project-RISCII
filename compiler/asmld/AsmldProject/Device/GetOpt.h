@@ -52,7 +52,7 @@ private:
 	std::size_t              m_nextIdx; // next token to parse
 
 	// Helper function to parse asmld.exe specific flags/details.
-	void parseFlag(std::string const flagStr);
+	void parseFlag(std::string const& flagStr);
 };
 
 #endif /* DEVICE_GETOPT_H_ */

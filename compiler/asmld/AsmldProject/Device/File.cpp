@@ -42,7 +42,7 @@ std::string File::getName(void) {
 
 //==============================================================================
 // Opens file for given operation. Returns based on success of operation.
-RetErr_e File::open(std::string const name, FileOp_e const dir) {
+RetErr_e File::open(std::string const& name, FileOp_e const dir) {
 	// Cannot open a new file before closing last one.
 	if (m_isOpen) {
 		string bugStr = string("Opened '")   +
