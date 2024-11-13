@@ -17,7 +17,8 @@
 typedef enum {
 	// Real values (ParseAction_e extension).
 	PARSE_FILE = ACTION_PARSE_MAX + 1,           // start of file to parse
-	PARSE_GLOB_SYM                               // symbol w/ optional "glob"
+	PARSE_OPT_FLAGS,                             // optional flags
+	PARSE_REG_IMM                                // either reg or imm required
 } ParseState_e;
 
 #endif /* DOMAIN_PARSESTATE_E_H_ */

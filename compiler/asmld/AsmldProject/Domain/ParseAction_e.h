@@ -16,11 +16,11 @@
  */
 typedef enum {
 	// Real values (LexToken_e extension).
-	ACTION_VAR_DECL = TOKEN_LEX_MAX + 1,         // "r-value" variable name
+	ACTION_INSTR = TOKEN_LEX_MAX + 1,            // instruction operation
 
 	// Special values.
 	ACTION_INVALID,                              // Unknown/Invalid action
-	ACTION_PARSE_MIN = ACTION_VAR_DECL,          // Lowest value action
+	ACTION_PARSE_MIN = ACTION_INSTR,             // Lowest value action
 	ACTION_PARSE_MAX = ACTION_INVALID            // Highest value action
 } ParseAction_e;
 

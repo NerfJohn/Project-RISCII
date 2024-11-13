@@ -52,6 +52,20 @@ TEST(Parser, parseAssert) {
 	EXPECT_EQ(OsExit_getCode(), RET_ASSERT);
 }
 
+TEST(Parser, parseEmpty) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	
+	// Attempt a bad parse.
+	Parser_parse(stack, TOKEN_COMMENT);
+
+	// Check operation resulted in assert.
+	std::string output = "ASSERT! Parsed with empty stack\n";
+	EXPECT_EQ(OsStdout_getOutput(), output);
+	EXPECT_EQ(OsExit_hasRet(), true);
+	EXPECT_EQ(OsExit_getCode(), RET_ASSERT);
+}
+
 TEST(Parser, badParse) {
 	// Prep input.
 	std::stack<ParseState_e> stack;
@@ -63,4 +77,108 @@ TEST(Parser, badParse) {
 	// Check final parsing results.
 	EXPECT_EQ(retErr, RET_ERR_ERROR);
 	EXPECT_EQ(OsExit_hasRet(), false);
+}
+
+TEST(Parser, eof) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_FILE));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_EOF);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_EOF);
+}
+
+TEST(Parser, shrKeyword) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_FILE));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_KW_SHR);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_KW_SHR);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_OPT_FLAGS);
+	stack.pop();
+	EXPECT_EQ(stack.top(), TOKEN_REGISTER);
+	stack.pop();
+	EXPECT_EQ(stack.top(), TOKEN_REGISTER);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_REG_IMM);
+	stack.pop();
+	EXPECT_EQ(stack.top(), ACTION_INSTR);
+}
+
+TEST(Parser, optFlag) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_OPT_FLAGS));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_REGISTER);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.size(), 0);
+	
+	// Prep input.
+	stack.push((ParseState_e)(PARSE_OPT_FLAGS));
+	
+	// Attempt a bad parse.
+	retErr = Parser_parse(stack, TOKEN_FLAGS);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.size(), 1);
+	EXPECT_EQ(stack.top(), TOKEN_FLAGS);
+}
+
+TEST(Parser, regImm) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_REG_IMM));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_REGISTER);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.size(), 1);
+	EXPECT_EQ(stack.top(), TOKEN_REGISTER);
+	
+	// Prep input.
+	stack.pop();
+	stack.push((ParseState_e)(PARSE_REG_IMM));
+	
+	// Attempt a bad parse.
+	retErr = Parser_parse(stack, TOKEN_IMMEDIATE);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.size(), 1);
+	EXPECT_EQ(stack.top(), TOKEN_IMMEDIATE);
 }
