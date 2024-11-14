@@ -2,7 +2,6 @@
  * File.cpp: Standard portal for accessing files (albeit one at a time).
  */
 
-#include "Device/Print.h"
 #include "Device/Terminate.h"
 #include "Os/OsFile.h"
 
@@ -32,8 +31,7 @@ File& File::inst(void) {
 std::string File::getName(void) {
 	// Name requires an actively open file.
 	if (m_isOpen == false) {
-		Print::inst().bug("Fetched filename without opening file");
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert("Fetched filename without opening file");
 	}
 
 	// Otherwise, return the file's name.
@@ -50,8 +48,7 @@ RetErr_e File::open(std::string const& name, FileOp_e const dir) {
 						"' before closing '" +
 						m_name               +
 						"'";
-		Print::inst().bug(bugStr);
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert(bugStr);
 	}
 
 	// Open requested file.
@@ -73,14 +70,12 @@ RetErr_e File::open(std::string const& name, FileOp_e const dir) {
 uint8_t File::peek(void) {
 	// Peek requires an actively open file.
 	if (m_isOpen == false) {
-		Print::inst().bug("Peeked without opening file");
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert("Peeked without opening file");
 	}
 
 	// Cannot peek a file opened for writing.
 	if (m_dir == FILE_OP_WRITE) {
-		Print::inst().bug(string("Peeked write file '" + m_name + "'"));
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert(string("Peeked write file '" + m_name + "'"));
 	}
 
 	// Peek file.
@@ -89,8 +84,7 @@ uint8_t File::peek(void) {
 
 	// Bad operation- something beyond program has happened.
 	if(retErr) {
-		Print::inst().bug(string("Unable to peek file '") + m_name + "'");
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert(string("Unable to peek file '") + m_name + "'");
 	}
 
 	// Return peeked byte.
@@ -102,14 +96,12 @@ uint8_t File::peek(void) {
 uint8_t File::pop(void) {
 	// Pop requires an actively open file.
 	if (m_isOpen == false) {
-		Print::inst().bug("Popped without opening file");
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert("Popped without opening file");
 	}
 
 	// Cannot pop a file opened for writing.
 	if (m_dir == FILE_OP_WRITE) {
-		Print::inst().bug(string("Popped write file '" + m_name + "'"));
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert(string("Popped write file '" + m_name + "'"));
 	}
 
 	// Pop file.
@@ -118,8 +110,7 @@ uint8_t File::pop(void) {
 
 	// Bad operation- something beyond program has happened.
 	if(retErr) {
-		Print::inst().bug(string("Unable to pop file '") + m_name + "'");
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert(string("Unable to pop file '") + m_name + "'");
 	}
 
 	// Return popped byte.
@@ -131,14 +122,12 @@ uint8_t File::pop(void) {
 void File::write(uint8_t byte) {
 	// Write requires an actively open file.
 	if (m_isOpen == false) {
-		Print::inst().bug("Wrote without opening file");
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert("Wrote without opening file");
 	}
 
 	// Cannot write a file opened for reading.
 	if (m_dir == FILE_OP_READ) {
-		Print::inst().bug(string("Wrote read file '" + m_name + "'"));
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert(string("Wrote read file '" + m_name + "'"));
 	}
 
 	// Peek file.
@@ -146,8 +135,7 @@ void File::write(uint8_t byte) {
 
 	// Bad operation- something beyond program has happened.
 	if(retErr) {
-		Print::inst().bug(string("Unable to write file '") + m_name + "'");
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert(string("Unable to write file '") + m_name + "'");
 	}
 }
 

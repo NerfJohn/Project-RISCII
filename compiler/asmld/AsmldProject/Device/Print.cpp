@@ -59,8 +59,7 @@ void Print::log(LogType_e const level, std::string const& msg) {
 			case LOG_DEBUG:   logStr += DEBUG_NAME;   break;
 			default:
 				// Unknown type input- design issue/bug.
-				this->bug("Invalid log level type used for logging");
-				Terminate_silent(RET_ASSERT);
+				Terminate_assert("Invalid log level type used for logging");
 				/* Line not reached */
 		}
 		logStr += "]";

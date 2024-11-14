@@ -3,7 +3,6 @@
  */
 
 #include <vector>
-#include "Device/Print.h"
 #include "Device/Terminate.h"
 
 #include "Device/Parser.h"
@@ -77,8 +76,7 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 
 	// Empty stack? likely a compiler bug.
 	if (stack.empty()) {
-		Print::inst().bug("Parsed with empty stack");
-		Terminate_silent(RET_ASSERT);
+		Terminate_assert("Parsed with empty stack");
 	}
 	else {
 		// Otherwise- find replacement sequence.
@@ -97,8 +95,7 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 				break;
 			default:
 				// Top can't be broken down? compiler bug.
-				Print::inst().bug("Parsed with invalid top state");
-				Terminate_silent(RET_ASSERT);
+				Terminate_assert("Parsed with invalid top state");
 				break;
 		}
 	}

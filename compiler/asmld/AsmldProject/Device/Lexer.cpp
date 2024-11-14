@@ -2,7 +2,6 @@
  * Lexer.cpp: Functions containing language specific lexing rules/support.
  */
 
-#include "Device/Print.h"
 #include "Device/Terminate.h"
 
 #include "Device/Lexer.h"
@@ -102,8 +101,7 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 			break;
 		default:                                 // (No matching "from" state)
 			// Start at non-state? compiler bug.
-			Print::inst().bug("Lexed from invalid starting state");
-			Terminate_silent(RET_ASSERT);
+			Terminate_assert("Lexed from invalid starting state");
 			break;
 	}
 

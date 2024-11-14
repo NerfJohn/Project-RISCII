@@ -7,12 +7,24 @@
 
 TEST(Terminate, silent) {
 	// Execute silent terminate.
-	Terminate_silent(RET_ASSERT);
+	Terminate_silent(RET_SUCCESS);
+	
+	// Check return is correct.
+	EXPECT_EQ(OsExit_hasRet(), true);
+	EXPECT_EQ(OsExit_getCode(), RET_SUCCESS);
+	
+	// Check nothing was output.
+	EXPECT_EQ(OsStdout_getOutput(), "");
+}
+
+TEST(Terminate, terminateAssert) {
+	// Execute asserting terminate.
+	Terminate_assert("assert message");
 	
 	// Check return is correct.
 	EXPECT_EQ(OsExit_hasRet(), true);
 	EXPECT_EQ(OsExit_getCode(), RET_ASSERT);
 	
-	// Check nothing was output.
-	EXPECT_EQ(OsStdout_getOutput(), "");
+	// Check assert was output.
+	EXPECT_EQ(OsStdout_getOutput(), "ASSERT! assert message\n");
 }
