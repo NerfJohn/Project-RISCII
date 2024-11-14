@@ -5,6 +5,20 @@
 
 #include "Device/Lexer.h"
 
+TEST(Lexer, asTkn) {
+	// Attempt conversions.
+	LexToken_e tkn1 = Lexer_asToken((LexState_e)(TOKEN_LEX_MIN - 1));
+	LexToken_e tkn2 = Lexer_asToken((LexState_e)(TOKEN_LEX_MIN));
+	LexToken_e tkn3 = Lexer_asToken((LexState_e)(TOKEN_LEX_MAX));
+	LexToken_e tkn4 = Lexer_asToken((LexState_e)(TOKEN_LEX_MAX + 1));
+	
+	// Bounds check conversion to token.
+	EXPECT_EQ(tkn1, TOKEN_INVALID);
+	EXPECT_EQ(tkn2, TOKEN_LEX_MIN);
+	EXPECT_EQ(tkn3, TOKEN_LEX_MAX);
+	EXPECT_EQ(tkn4, TOKEN_INVALID);
+}
+
 TEST(Lexer, lexAssert) {
 	// Attempt a bad lex.
 	Lexer_nextState(LEX_ERROR, 0x00);
