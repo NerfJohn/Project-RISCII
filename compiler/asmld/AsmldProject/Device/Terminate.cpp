@@ -29,3 +29,18 @@ void Terminate_assert(std::string const& msg) {
 
 	/* Line never reached */
 }
+
+//==============================================================================
+// Terminates using model data- logging a summary of program's results.
+void Terminate_summary(DataModel_t const& model) {
+	// Log a summary of the program's efforts.
+	string sumStr = to_string(model.m_numErrs) +
+			        " error(s), returned " +
+					to_string((int)(model.m_retCode));
+	Print::inst().log(LOG_INFO, sumStr);
+
+	// Exit with stated return code.
+	OsExit_exit(model.m_retCode);
+
+	/* Line never reached */
+}

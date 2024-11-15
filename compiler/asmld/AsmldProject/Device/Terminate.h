@@ -6,6 +6,7 @@
 #define DEVICE_TERMINATE_H_
 
 #include <string>
+#include "Domain/DataModel_t.h"
 #include "Domain/RetCode_e.h"
 
 /*
@@ -29,5 +30,16 @@ void Terminate_silent(RetCode_e const exitCode);
  * @param msg message to print with assert formatting prior to exiting
  */
 void Terminate_assert(std::string const& msg);
+
+/*
+ * Terminates using model data- logging a summary of program's results.
+ *
+ * Logs the results of the program (eg number of errors, return code, etc) prior
+ * to exiting. Likewise, uses the reported return code when exiting. Naturally,
+ * this function doesn't return.
+ *
+ * @param model shared data of the entire program
+ */
+void Terminate_summary(DataModel_t const& model);
 
 #endif /* DEVICE_TERMINATE_H_ */

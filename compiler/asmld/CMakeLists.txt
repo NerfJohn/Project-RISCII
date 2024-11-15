@@ -29,6 +29,7 @@ message("Run action '${RUN}'")
 file(GLOB shared_sources 
 	AsmldProject/Device/*.cpp
 	AsmldProject/State/*.cpp
+	AsmldProject/Util/*.cpp
 )
 file(GLOB build_sources
 	AsmldProject/main.cpp
@@ -37,6 +38,7 @@ file(GLOB build_sources
 file(GLOB test_sources
 	tests/Device/*.cpp
 	tests/Os/*.cpp
+	tests/Util/*.cpp
 )
 file(GLOB build_includes AsmldProject)
 file(GLOB test_includes ${CMAKE_CURRENT_SOURCE_DIR})

@@ -7,6 +7,7 @@
 #include "Device/Print.h"
 #include "Device/Terminate.h"
 #include "State/StepParseCli.h"
+#include "State/StepReadFiles.h"
 
 using namespace std;
 
@@ -16,16 +17,21 @@ int main(int argc, char* argv[]) {
 	// Initialize program's shared data.
 	DataModel_t prgmData;
 	{
+		// General Summary/Progress.
+		prgmData.m_numErrs = 0;                  // no errors yet...
+		prgmData.m_retCode = RET_SUCCESS;        // INNOCENT till guilty
+
 		// Parsed Cli Data.
-		prgmData.m_files = {};                   // no initial files
+		prgmData.m_files   = {};                 // no initial files
 	}
 
 	// Log warnings/error by default. // TODO- "Debug" for developing
 	Print::inst().setLogLevel(LOG_DEBUG);
 
-	// Parse/handle cli inputs into data model.
+	// Core program: parse/handle input arguments and files.
 	StepParseCli_execute(prgmData, argc, argv);
+	StepReadFiles_execute(prgmData);
 
-	// Program finished- job well done. // TODO- exit w/ summary info
-	Terminate_silent(RET_SUCCESS);
+	// Program finished- job well done.
+	Terminate_summary(prgmData);
 }

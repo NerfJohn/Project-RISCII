@@ -5,8 +5,10 @@
 #ifndef DOMAIN_DATAMODEL_T_H_
 #define DOMAIN_DATAMODEL_T_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
+#include "Domain/RetCode_e.h"
 
 /*
  * Data passed in-between states/pieces of the entire program.
@@ -16,6 +18,10 @@
  * the program to only ever have one, shared instance of this type.
  */
 typedef struct {
+	// General Summary/Progress.
+	uint32_t                 m_numErrs;          // number of found errors
+	RetCode_e                m_retCode;          // code to return on exit
+
 	// Parsed Cli Data.
 	std::vector<std::string> m_files;            // input source files
 

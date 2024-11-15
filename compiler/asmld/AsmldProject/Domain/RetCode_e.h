@@ -16,6 +16,7 @@ typedef enum {
 	// Real values.
 	RET_SUCCESS = 0x00, // Successful run of program
 	RET_ASSERT  = 0x01, // assertion failed (ie program bug)
+	RET_NO_READ = 0x02, // unable to open file for reading
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */
