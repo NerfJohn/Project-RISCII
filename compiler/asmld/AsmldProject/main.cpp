@@ -11,7 +11,7 @@
 using namespace std;
 
 //==============================================================================
-// TODO- define once main is ready...
+// Start/main process of the asmld.exe program.
 int main(int argc, char* argv[]) {
 	// Initialize program's shared data.
 	DataModel_t prgmData;
@@ -20,12 +20,12 @@ int main(int argc, char* argv[]) {
 		prgmData.m_files = {};                   // no initial files
 	}
 
-	// TODO- for now, print everything.
+	// Log warnings/error by default. // TODO- "Debug" for developing
 	Print::inst().setLogLevel(LOG_DEBUG);
 
-	// First, parse in cli file/flag inputs.
+	// Parse/handle cli inputs into data model.
 	StepParseCli_execute(prgmData, argc, argv);
 
-	// Return for a job well done. // TODO- likely return w/ summary in future
+	// Program finished- job well done. // TODO- exit w/ summary info
 	Terminate_silent(RET_SUCCESS);
 }

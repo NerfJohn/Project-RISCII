@@ -10,17 +10,15 @@
 using namespace std;
 
 //==============================================================================
-// TODO
+// Executes process to check/parse arguments from command line into data model.
 void StepParseCli_execute(DataModel_t& model,
 		                  int const argc,
 						  char const* const argv[]) {
 	// Get cli arguments in parse-able means.
 	GetOpt args(argc, argv);
+	args.getOpt();           // first arg is program file- discard
 
-	// First arg is program itself- parse once to discard.
-	args.getOpt();
-
-	// Parse each cli elements.
+	// Parse each cli argument.
 	while(args.getOpt()) {
 		// TODO- for now, only record/check files.
 		if (args.m_type == CLI_TYPE_FILE) {
