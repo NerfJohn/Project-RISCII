@@ -1,10 +1,11 @@
 /*
- * StepReadFiles.cpp: State/step to parse and analyze the input files
+ * StepReadFiles.cpp: State/step to parse and analyze the input files.
  */
 
 #include "Device/File.h"
 #include "Device/Print.h"
 #include "Device/Terminate.h"
+#include "State/SubStepLexFile.h"
 #include "Util/ModelUtil.h"
 
 #include "State/StepReadFiles.h"
@@ -26,6 +27,12 @@ void StepReadFiles_execute(DataModel_t& model) {
 		if (retErr) {
 			Print::inst().log(LOG_ERROR, string("Can't read '") + fname + "'");
 			ModelUtil_recordError(model, RET_NO_READ);
+		}
+
+		// Lex the file- creating an ordered list of tokens.
+		vector<FileToken_t> lexTkns;
+		if (retErr == RET_ERR_NONE) {
+			retErr = SubStepLexFile_execute(model, lexTkns);
 		}
 
 		// Finished with raw file's contents.

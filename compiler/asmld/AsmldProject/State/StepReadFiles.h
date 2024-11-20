@@ -1,5 +1,5 @@
 /*
- * StepReadFiles.h: State/step to parse and analyze the input files
+ * StepReadFiles.h: State/step to parse and analyze the input files.
  */
 
 #ifndef STATE_STEPREADFILES_H_
