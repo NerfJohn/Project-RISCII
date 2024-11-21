@@ -1,9 +1,9 @@
 /*
- * FileToken_t.h: Tokenized excerpt of a file- result of lexing said file.
+ * ItemToken.h: Tokenized excerpt of a file- result of lexing said file.
  */
 
-#ifndef DOMAIN_FILETOKEN_T_H_
-#define DOMAIN_FILETOKEN_T_H_
+#ifndef DS_ITEMTOKEN_H_
+#define DS_ITEMTOKEN_H_
 
 #include <cstdint>
 #include <string>
@@ -16,7 +16,8 @@
  * file/line location. Primary value is the LexToken_e, though the other data
  * is kept for use in possible logged messages.
  */
-typedef struct {
+class ItemToken {
+public:
 	// Data at location.
 	LexToken_e  m_lexTkn;
 	std::string m_rawStr;
@@ -24,6 +25,6 @@ typedef struct {
 	// Location of data.
 	std::string m_file;
 	uint32_t    m_line;
-} FileToken_t;
+};
 
-#endif /* DOMAIN_FILETOKEN_T_H_ */
+#endif /* DS_ITEMTOKEN_H_ */

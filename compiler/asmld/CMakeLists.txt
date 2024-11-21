@@ -28,6 +28,7 @@ message("Run action '${RUN}'")
 # Gather files/paths (globbing because i'm lazy/arrogant).
 file(GLOB shared_sources 
 	AsmldProject/Device/*.cpp
+	AsmldProject/Ds/*.cpp
 	AsmldProject/State/*.cpp
 	AsmldProject/Util/*.cpp
 )

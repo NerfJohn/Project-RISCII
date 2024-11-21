@@ -5,6 +5,7 @@
 #include "Device/File.h"
 #include "Device/Lexer.h"
 #include "Device/Print.h"
+#include "Device/Terminate.h"
 #include "Domain/LexState_e.h"
 #include "Util/ModelUtil.h"
 
@@ -40,8 +41,7 @@ static void SubStepLexFile_parseName(std::string const& buffer,
 
 //==============================================================================
 // Executes sub-process to lex opened file into a series of file tokens.
-RetErr_e SubStepLexFile_execute(DataModel_t& model,
-		                        std::vector<FileToken_t>& tkns) {
+RetErr_e SubStepLexFile_execute(DataModel_t& model, TokenList_t& tkns) {
 	// Result of the process.
 	RetErr_e retErr = RET_ERR_NONE; // INNOCENT till guilty
 
@@ -103,14 +103,17 @@ RetErr_e SubStepLexFile_execute(DataModel_t& model,
 		// Save meaningful tokens to given list.
 		if ((retErr == RET_ERR_NONE) && (lexTkn != TOKEN_COMMENT)) {
 			// Create file token.
-			FileToken_t newTkn;
-			newTkn.m_lexTkn = lexTkn;
-			newTkn.m_rawStr = lexBuffer;
-			newTkn.m_file   = file;
-			newTkn.m_line   = line;
+			shared_ptr<ItemToken> newTkn(new ItemToken());
+			if (newTkn == nullptr) {Terminate_assert("Couldn't create token");}
+
+			// Populate with lexed data.
+			newTkn->m_lexTkn = lexTkn;
+			newTkn->m_rawStr = lexBuffer;
+			newTkn->m_file   = file;
+			newTkn->m_line   = line;
 
 			// Save to list.
-			tkns.push_back(newTkn);
+			tkns.push(move(newTkn)); // move- we're done with it here
 		}
 
 		// If error was hit, break out to return.

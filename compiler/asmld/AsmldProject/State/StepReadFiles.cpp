@@ -6,6 +6,7 @@
 #include "Device/Print.h"
 #include "Device/Terminate.h"
 #include "State/SubStepLexFile.h"
+#include "State/SubStepParseTkns.h"
 #include "Util/ModelUtil.h"
 
 #include "State/StepReadFiles.h"
@@ -30,13 +31,19 @@ void StepReadFiles_execute(DataModel_t& model) {
 		}
 
 		// Lex the file- creating an ordered list of tokens.
-		vector<FileToken_t> lexTkns;
+		TokenList_t fileTkns;
 		if (retErr == RET_ERR_NONE) {
-			retErr = SubStepLexFile_execute(model, lexTkns);
+			retErr = SubStepLexFile_execute(model, fileTkns);
 		}
 
 		// Finished with raw file's contents.
 		File::inst().close();
+
+		// Now parse the tokens into a localized "program" for analysis.
+		NodeList_t fileNodes;
+		if (retErr == RET_ERR_NONE) {
+			retErr = SubStepParseTkns_execute(model, fileTkns, fileNodes);
+		}
 
 		// Stop reading files if errors were found.
 		if (retErr) {break;}

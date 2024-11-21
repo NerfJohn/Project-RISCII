@@ -17,7 +17,9 @@ typedef enum {
 	RET_SUCCESS = 0x00, // Successful run of program
 	RET_ASSERT  = 0x01, // assertion failed (ie program bug)
 	RET_NO_READ = 0x02, // unable to open file for reading
-	RET_BAD_LEX = 0x03  // unrecognized character sequence
+	RET_BAD_LEX = 0x03, // unrecognized character sequence
+	RET_MIS_TKN = 0x04, // mismatched token (parsing)
+	RET_UEX_TKN = 0x05  // unexpected token (parsing)
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */
