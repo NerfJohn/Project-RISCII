@@ -86,8 +86,8 @@ RetErr_e SubStepLexFile_execute(DataModel_t& model, TokenList_t& tkns) {
 				retErr = RET_ERR_ERROR;
 			}
 
-			// Keep line count updated.
-			if (peekByte == CHAR_NEWLINE) {
+			// Keep line count updated (though only when newline is "popped").
+			if ((peekByte == CHAR_NEWLINE) && (lexTkn == TOKEN_INVALID)) {
 				// (Debug-able details).
 				string dbgStr = to_string(tkns.size()) + " tokens thru line";
 				Print::inst().log(LOG_DEBUG, file, line, dbgStr);

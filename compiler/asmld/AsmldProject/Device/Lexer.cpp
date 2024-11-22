@@ -61,6 +61,7 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 			break;
 		case LEX_LOOP_COMMENT:
 			IS('\n')     TO(TOKEN_COMMENT)
+			ENDOF        TO(TOKEN_COMMENT)       // ensure EOF is seen
 			ELSE         TO(LEX_LOOP_COMMENT)    // greedy grab comments
 			break;
 		case LEX_HANDLE_PERCENT:

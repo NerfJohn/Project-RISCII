@@ -35,7 +35,7 @@ void Terminate_assert(std::string const& msg) {
 void Terminate_summary(DataModel_t const& model) {
 	// Log a summary of the program's efforts.
 	string sumStr = to_string(model.m_numErrs) +
-			        " error(s), returned " +
+			        " errors, returned " +
 					to_string((int)(model.m_retCode));
 	Print::inst().log(LOG_INFO, sumStr);
 

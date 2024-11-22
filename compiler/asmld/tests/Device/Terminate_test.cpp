@@ -45,5 +45,5 @@ TEST(Terminate, terminateSummary) {
 	EXPECT_EQ(OsExit_getCode(), RET_NO_READ);
 	
 	// Check assert was output.
-	EXPECT_EQ(OsStdout_getOutput(), "asmld.exe [INFO ] 3 error(s), returned 2\n");
+	EXPECT_EQ(OsStdout_getOutput(), "asmld.exe [INFO ] 3 errors, returned 2\n");
 }

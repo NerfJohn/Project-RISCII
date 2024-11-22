@@ -5,6 +5,8 @@
 #include "Device/Parser.h"
 #include "Device/Print.h"
 #include "Device/Terminate.h"
+#include "Domain/BuildStack_t.h"
+#include "Ds/InstructionNode.h"
 #include "Util/ModelUtil.h"
 
 #include "State/SubStepParseTkns.h"
@@ -14,11 +16,20 @@ using namespace std;
 //==============================================================================
 // Helper function to create specific nodes based off given action.
 static void SubStepParseTkns_buildNode(shared_ptr<AAsmNode>& node,
-		                               stack<shared_ptr<ItemToken>>& stack,
+		                               BuildStack_t& itemStack,
 		                               ParseAction_e const action) {
-	// TODO- implement.
-	Print::inst().cli(to_string(action));
-	while(stack.size()) {stack.pop();}
+	// Create the referenced node.
+	switch (action) {
+		case ACTION_INSTR:
+			node = move(shared_ptr<AAsmNode>(new InstructionNode(itemStack)));
+			break;
+		default:
+			// No matching node? compiler bug.
+			Terminate_assert("Tried creating unknown node");
+	}
+
+	// (Ensure object was actually made.)
+	if (node == nullptr) {Terminate_assert("Couldn't create node");}
 }
 
 //==============================================================================
@@ -29,8 +40,11 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 	// Result of the process.
 	RetErr_e retErr = RET_ERR_NONE; // INNOCENT till guilty
 
+	// (filename for debug summary at end.)
+	string fname;
+
 	// Prepare stacks for grammar checking + data structure construction.
-	stack<shared_ptr<ItemToken>>  actStack;
+	BuildStack_t                  actStack;
 	stack<ParseState_e>           parseStack;
 	parseStack.push(PARSE_FILE);              // starting parse state
 
@@ -39,6 +53,7 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 		// (Sanity check before de-ref.)
 		if (tkns.size() == 0)        {Terminate_assert("Ran out of tokens");}
 		if (tkns.front() == nullptr) {Terminate_assert("NULL token parsed");}
+		fname = tkns.front()->m_file; // (get filename for debug summary)
 
 		// Analyze the next state.
 		ParseState_e          curState  = parseStack.top();
@@ -115,6 +130,10 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 		if (tkns.size() > 0)     {Terminate_assert("Tokens left unparsed");}
 		if (actStack.size() > 0) {Terminate_assert("Artifacts left unparsed");}
 	}
+
+	// (Final debug report on parsing.)
+	string dbgStr = to_string(nodes.size()) + " nodes created";
+	Print::inst().log(LOG_DEBUG, fname, dbgStr);
 
 	// Return result of the process.
 	return retErr;
