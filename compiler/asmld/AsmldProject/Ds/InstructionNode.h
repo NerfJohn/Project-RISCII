@@ -7,6 +7,8 @@
 
 #include <vector>
 #include "Domain/BuildStack_t.h"
+#include "Domain/Imm_t.h"
+#include "Domain/InstrType_e.h"
 #include "Ds/AAsmNode.h"
 #include "Ds/ItemToken.h"
 
@@ -28,6 +30,17 @@ public:
 	 */
 	InstructionNode(BuildStack_t& itemStack);
 
+	/*
+	 * Runs local analytics on node's data.
+	 *
+	 * Localized analysis generally involves checking arguments are semantically
+	 * correct and managing local level symbol declaring/modifying/linking. This
+	 * function cannot directly terminate the program, but can log errors.
+	 *
+	 * @param model shared data of the entire program
+	 */
+	void doLocalAnalysis(DataModel_t& model);
+
 private:
 	// Raw items/tokens composing the instruction.
 	std::shared_ptr<ItemToken>              m_itemOp;   // MUST be non-null
@@ -35,6 +48,13 @@ private:
 	std::vector<std::shared_ptr<ItemToken>> m_itemRegs;
 	std::shared_ptr<ItemToken>              m_itemImm;
 
+	// Processed variations of tokens (result of analysis).
+	InstrType_e                             m_procOp;
+	std::vector<uint8_t>                    m_procRegs;
+	Imm_t                                   m_procImm;
+
+	// Helper function to warning about repeated flags in instructions.
+	std::string getRepeats(std::string const& str);
 };
 
 #endif /* DS_INSTRUCTIONNODE_H_ */

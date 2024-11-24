@@ -19,6 +19,7 @@
  */
 typedef struct {
 	// General Summary/Progress.
+	uint32_t                 m_numWarns;         // number of found warnings
 	uint32_t                 m_numErrs;          // number of found errors
 	RetCode_e                m_retCode;          // code to return on exit
 

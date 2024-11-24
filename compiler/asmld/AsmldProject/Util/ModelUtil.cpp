@@ -13,3 +13,10 @@ void ModelUtil_recordError(DataModel_t& model, RetCode_e const errCode) {
 	model.m_numErrs++;
 	model.m_retCode = errCode;
 }
+
+//==============================================================================
+// Update the model with the most recent warning.
+void ModelUtil_recordWarn(DataModel_t& model) {
+	// Update model for found warning.
+	model.m_numWarns++;
+}

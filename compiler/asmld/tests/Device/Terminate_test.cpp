@@ -34,6 +34,7 @@ TEST(Terminate, terminateSummary) {
 	// Setup inputs.
 	DataModel_t data;
 	data.m_numErrs = 3;
+	data.m_numWarns = 1;
 	data.m_retCode = RET_NO_READ;
 	Print::inst().setLogLevel(LOG_INFO);
 	
@@ -45,5 +46,5 @@ TEST(Terminate, terminateSummary) {
 	EXPECT_EQ(OsExit_getCode(), RET_NO_READ);
 	
 	// Check assert was output.
-	EXPECT_EQ(OsStdout_getOutput(), "asmld.exe [INFO ] 3 errors, returned 2\n");
+	EXPECT_EQ(OsStdout_getOutput(), "asmld.exe [INFO ] 3 errors, 1 warnings, returned 2\n");
 }

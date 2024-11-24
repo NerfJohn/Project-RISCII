@@ -9,6 +9,8 @@
 #include "State/SubStepParseTkns.h"
 #include "Util/ModelUtil.h"
 
+#include <unordered_map>
+
 #include "State/StepReadFiles.h"
 
 using namespace std;
@@ -43,6 +45,18 @@ void StepReadFiles_execute(DataModel_t& model) {
 		NodeList_t fileNodes;
 		if (retErr == RET_ERR_NONE) {
 			retErr = SubStepParseTkns_execute(model, fileTkns, fileNodes);
+		}
+
+		// Analyze nodes locally (ie variable semantics, local linking, etc).
+		if (retErr == RET_ERR_NONE) {
+			// Analyze each node in file order.
+			for (shared_ptr<AAsmNode> node : fileNodes) {
+				if (node == nullptr) {Terminate_assert("Analyzed null node");}
+				node->doLocalAnalysis(model);
+			}
+
+			// Update local record based on analysis.
+			if (model.m_numErrs > 0) {retErr = RET_ERR_ERROR;}
 		}
 
 		// Stop reading files if errors were found.

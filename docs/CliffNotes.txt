@@ -51,6 +51,33 @@ Backend/Optimizer
 ================================================================================
 Assembler/Linker Feature Set:
 
+core features to work-over
+	linkage rules
+	dead-code elimination
+	add debug details (sw breakpoints and global symbol table)
+	static library creation
+	
+linkage rules (assume global table and storage for locals)
+	new local table per file
+		decl either errors on matched decl (mult def), links to entry, or creates
+		ref either links to entry or creates
+		mod either links to entry or creates
+	after analyzing file
+		global/weak/section && no decl is error (must refer locally)
+		non-global && decl added to storage
+		global decl || (ref && no decl) added to globals (add for more refs or to find def)
+
+	addr: for generating bin file
+	name: for generating lib file
+	file: for reporting on mult def
+	line: for reporting on mult def
+	refs: for counting how many people reference this
+	isGlobal
+	isWeak
+	isSection
+	refType: text, data, neither
+		
+
 var types
 	flags (%[low letters]): instruction specific bitmasks
 	regs  ($[num])        : direct register for instruction

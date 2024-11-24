@@ -29,3 +29,15 @@ TEST(ModelUtil, recErr2nd) {
 	EXPECT_EQ(data.m_numErrs, 6);
 	EXPECT_EQ(data.m_retCode, RET_SUCCESS);
 }
+
+TEST(ModelUtil, recWarn) {
+	// Setup inputs.
+	DataModel_t data;
+	data.m_numWarns = 0;
+	
+	// Call utility under test.
+	ModelUtil_recordWarn(data);
+	
+	// Check utility update model.
+	EXPECT_EQ(data.m_numWarns, 1);
+}

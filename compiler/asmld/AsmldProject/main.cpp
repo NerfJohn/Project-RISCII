@@ -18,11 +18,12 @@ int main(int argc, char* argv[]) {
 	DataModel_t prgmData;
 	{
 		// General Summary/Progress.
-		prgmData.m_numErrs = 0;                  // no errors yet...
-		prgmData.m_retCode = RET_SUCCESS;        // INNOCENT till guilty
+		prgmData.m_numWarns = 0;
+		prgmData.m_numErrs  = 0;                 // no errors yet...
+		prgmData.m_retCode  = RET_SUCCESS;       // INNOCENT till guilty
 
 		// Parsed Cli Data.
-		prgmData.m_files   = {};                 // no initial files
+		prgmData.m_files    = {};                // no initial files
 	}
 
 	// Log warnings/error by default. // TODO- "Debug" for developing

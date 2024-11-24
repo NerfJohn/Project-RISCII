@@ -20,4 +20,14 @@
  */
 void ModelUtil_recordError(DataModel_t& model, RetCode_e const errCode);
 
+/*
+ * Update the model with the most recent warning.
+ *
+ * Increments the count of found warnings- allowing for reports the cumulative
+ * number of warnings later on.
+ *
+ * @param model shared data of the entire program
+ */
+void ModelUtil_recordWarn(DataModel_t& model);
+
 #endif /* UTIL_MODELUTIL_H_ */
