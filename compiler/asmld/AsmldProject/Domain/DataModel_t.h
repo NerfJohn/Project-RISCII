@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "Domain/NodeList_t.h"
 #include "Domain/RetCode_e.h"
 
 /*
@@ -25,6 +26,9 @@ typedef struct {
 
 	// Parsed Cli Data.
 	std::vector<std::string> m_files;            // input source files
+
+	// Parsed/analyzed program.
+	NodeList_t               m_nodes;            // nodes creating the program
 
 } DataModel_t;
 

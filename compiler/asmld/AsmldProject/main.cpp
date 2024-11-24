@@ -24,6 +24,9 @@ int main(int argc, char* argv[]) {
 
 		// Parsed Cli Data.
 		prgmData.m_files    = {};                // no initial files
+
+		// Parsed/analyzed program.
+		prgmData.m_nodes    = {};                // no initial nodes
 	}
 
 	// Log warnings/error by default. // TODO- "Debug" for developing

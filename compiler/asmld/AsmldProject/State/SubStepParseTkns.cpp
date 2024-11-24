@@ -15,13 +15,13 @@ using namespace std;
 
 //==============================================================================
 // Helper function to create specific nodes based off given action.
-static void SubStepParseTkns_buildNode(shared_ptr<AAsmNode>& node,
+static void SubStepParseTkns_buildNode(AAsmNode*& node,
 		                               BuildStack_t& itemStack,
 		                               ParseAction_e const action) {
 	// Create the referenced node.
 	switch (action) {
 		case ACTION_INSTR:
-			node = move(shared_ptr<AAsmNode>(new InstructionNode(itemStack)));
+			node = new InstructionNode(itemStack);
 			break;
 		default:
 			// No matching node? compiler bug.
@@ -64,11 +64,11 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 		// Create a new node if the "state" is actually an action (1/3 IF).
 		if (curAction != ACTION_INVALID) {
 			// Create the node in question.
-			shared_ptr<AAsmNode> newNode;
+			AAsmNode* newNode = nullptr;
 			SubStepParseTkns_buildNode(newNode, actStack, curAction);
 
 			// Append node to the list (asmld's "core data structure").
-			nodes.push_back(move(newNode)); // move- we're done with it here
+			nodes.push_back(move(newNode)); // (pass ownership)
 
 			// Pop executed action.
 			parseStack.pop();

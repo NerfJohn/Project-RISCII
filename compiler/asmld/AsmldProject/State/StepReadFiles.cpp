@@ -5,11 +5,10 @@
 #include "Device/File.h"
 #include "Device/Print.h"
 #include "Device/Terminate.h"
+#include "Ds/AAsmNode.h"
 #include "State/SubStepLexFile.h"
 #include "State/SubStepParseTkns.h"
 #include "Util/ModelUtil.h"
-
-#include <unordered_map>
 
 #include "State/StepReadFiles.h"
 
@@ -47,12 +46,18 @@ void StepReadFiles_execute(DataModel_t& model) {
 			retErr = SubStepParseTkns_execute(model, fileTkns, fileNodes);
 		}
 
-		// Analyze nodes locally (ie variable semantics, local linking, etc).
+		// Analyze nodes locally- accumulating them into the model (in order).
 		if (retErr == RET_ERR_NONE) {
 			// Analyze each node in file order.
-			for (shared_ptr<AAsmNode> node : fileNodes) {
+			for (AAsmNode* node : fileNodes) {
+				// (Sanity check node.)
 				if (node == nullptr) {Terminate_assert("Analyzed null node");}
+
+				// Analyze node.
 				node->doLocalAnalysis(model);
+
+				// Save (in order) to model.
+				model.m_nodes.push_back(move(node)); // (pass ownership)
 			}
 
 			// Update local record based on analysis.
