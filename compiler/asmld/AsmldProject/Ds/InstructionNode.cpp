@@ -43,7 +43,8 @@ std::string InstructionNode::getRepeats(std::string const& str) {
 // Constructor called by parser. Builds itself directly from action stack.
 InstructionNode::InstructionNode(BuildStack_t& itemStack) {
 	// (Init members that are set later.)
-	m_procOp = INSTR_INVALID;
+	m_procOp   = INSTR_INVALID;
+	m_binInstr = 0x0000;
 
 	// Parse all items from the stack (ie trusting parser knows its grammar).
 	while (itemStack.size() > 0) {
@@ -155,4 +156,33 @@ void InstructionNode::doLocalAnalysis(DataModel_t& model) {
 			ModelUtil_recordError(model, RET_BAD_IMM);
 		}
 	}
+}
+
+//==============================================================================
+// TODO
+void InstructionNode::assemblePrgm(DataModel_t& model) {
+	// Collector for value to bake into instruction.
+	Instr_t fields;
+
+	// Add opcode.
+	fields.m_opcode = m_procOp;
+
+	// Add flags.
+	if (m_itemFlag != nullptr) {fields.m_flags = m_itemFlag->m_rawStr;}
+
+	// Add registers.
+	size_t numRegs = m_procRegs.size();
+	if (numRegs > 0) {fields.m_r1 = m_procRegs[0];}
+	if (numRegs > 1) {fields.m_r2 = m_procRegs[1];}
+	if (numRegs > 2) {fields.m_r3 = m_procRegs[2];}
+
+	// Add immediate.
+	if (m_itemImm != nullptr) {fields.m_imm = m_procImm.m_val;}
+
+	// "Fields... Assemble!".
+	RetErr_e retErr = IsaUtil_genInstr(m_binInstr, fields);
+	if (retErr) {Terminate_assert("Couldn't assemble instruction");}
+
+	// Instruction takes up 1 text section word.
+	model.m_textSize += ISA_WORD_BYTES;
 }

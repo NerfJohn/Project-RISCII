@@ -30,6 +30,10 @@ typedef struct {
 	// Parsed/analyzed program.
 	NodeList_t               m_nodes;            // nodes creating the program
 
+	// Binary image metrics.
+	uint32_t                 m_textSize;         // size of text section
+	uint32_t                 m_dataSize;         // size of data section
+
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

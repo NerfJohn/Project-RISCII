@@ -7,9 +7,16 @@
 
 #include <string>
 #include "Domain/Imm_t.h"
+#include "Domain/Instr_t.h"
 #include "Domain/InstrType_e.h"
 #include "Domain/LexToken_e.h"
 #include "Domain/RetErr_e.h"
+
+// Definitions for ISA defined sizes.
+#define ISA_WORD_BYTES (2)
+
+// TODO
+RetErr_e IsaUtil_genInstr(uint16_t& instr, Instr_t const& fields);
 
 /*
  * Converts lex token into specific instruction opcode.

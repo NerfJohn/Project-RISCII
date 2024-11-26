@@ -28,6 +28,9 @@ public:
 	 */
 	virtual void doLocalAnalysis(DataModel_t& model) = 0;
 
+	// TODO
+	virtual void assemblePrgm(DataModel_t& model) = 0;
+
 protected:
 	// Protect constructor/destructor to ensure class is abstract.
 	         AAsmNode() {/* no actions */}

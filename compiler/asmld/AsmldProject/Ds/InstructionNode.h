@@ -41,6 +41,9 @@ public:
 	 */
 	void doLocalAnalysis(DataModel_t& model);
 
+	// TODO
+	void assemblePrgm(DataModel_t& model);
+
 private:
 	// Raw items/tokens composing the instruction.
 	std::shared_ptr<ItemToken>              m_itemOp;   // MUST be non-null
@@ -52,6 +55,9 @@ private:
 	InstrType_e                             m_procOp;
 	std::vector<uint8_t>                    m_procRegs;
 	Imm_t                                   m_procImm;
+
+	// Assembled, binary version of instruction.
+	uint16_t                                m_binInstr;
 
 	// Helper function to warning about repeated flags in instructions.
 	std::string getRepeats(std::string const& str);

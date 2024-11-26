@@ -27,6 +27,10 @@ int main(int argc, char* argv[]) {
 
 		// Parsed/analyzed program.
 		prgmData.m_nodes    = {};                // no initial nodes
+
+		// Binary image metrics.
+		prgmData.m_textSize = 0;                 // no initial bytes
+		prgmData.m_dataSize = 0;                 // no initial bytes
 	}
 
 	// Log warnings/error by default. // TODO- "Debug" for developing
