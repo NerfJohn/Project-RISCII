@@ -23,6 +23,7 @@ void StepParseCli_execute(DataModel_t& model,
 		// TODO- for now, only record/check files.
 		if (args.m_type == CLI_TYPE_FILE) {
 			model.m_files.push_back(args.m_value);
+			model.m_outFile = args.m_value + ".bin";
 		}
 	}
 

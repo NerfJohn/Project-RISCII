@@ -5,8 +5,7 @@
 #include "Device/Parser.h"
 #include "Device/Print.h"
 #include "Device/Terminate.h"
-#include "Domain/BuildStack_t.h"
-#include "Ds/InstructionNode.h"
+#include "Ds/InstrNode.h"
 #include "Util/ModelUtil.h"
 
 #include "State/SubStepParseTkns.h"
@@ -16,12 +15,12 @@ using namespace std;
 //==============================================================================
 // Helper function to create specific nodes based off given action.
 static void SubStepParseTkns_buildNode(AAsmNode*& node,
-		                               BuildStack_t& itemStack,
+		                               stack<ItemToken*>& itemStack,
 		                               ParseAction_e const action) {
 	// Create the referenced node.
 	switch (action) {
 		case ACTION_INSTR:
-			node = new InstructionNode(itemStack);
+			node = new InstrNode(itemStack);
 			break;
 		default:
 			// No matching node? compiler bug.
@@ -34,17 +33,14 @@ static void SubStepParseTkns_buildNode(AAsmNode*& node,
 
 //==============================================================================
 // Executes sub-process to parse tokens into an ordered series of nodes.
-RetErr_e SubStepParseTkns_execute(DataModel_t& model,
-		                          TokenList_t& tkns,
-								  NodeList_t& nodes) {
-	// Result of the process.
-	RetErr_e retErr = RET_ERR_NONE; // INNOCENT till guilty
-
+void SubStepParseTkns_execute(DataModel_t& model,
+		                      std::queue<ItemToken*>& tkns,
+							  std::vector<AAsmNode*>& nodes) {
 	// (filename for debug summary at end.)
 	string fname;
 
 	// Prepare stacks for grammar checking + data structure construction.
-	BuildStack_t                  actStack;
+	stack<ItemToken*>             actStack;
 	stack<ParseState_e>           parseStack;
 	parseStack.push(PARSE_FILE);              // starting parse state
 
@@ -59,7 +55,7 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 		ParseState_e          curState  = parseStack.top();
 		ParseAction_e         curAction = Parser_asParseAction(curState);
 		LexToken_e            curTkn    = Parser_asLexToken(curState);
-		shared_ptr<ItemToken> curItem   = tkns.front();
+		ItemToken*            curItem   = tkns.front();
 
 		// Create a new node if the "state" is actually an action (1/3 IF).
 		if (curAction != ACTION_INVALID) {
@@ -78,7 +74,6 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 		else if (curTkn != TOKEN_INVALID) {
 			// Ensure next token is expected.
 			if (curTkn != curItem->m_lexTkn) {
-				// Record error globally.
 				string errStr = string("Mismatched token '") +
 						        curItem->m_rawStr            +
 								"'";
@@ -87,9 +82,6 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 								  curItem->m_line,
 								  errStr);
 				ModelUtil_recordError(model, RET_MIS_TKN);
-
-				// Record error locally.
-				retErr = RET_ERR_ERROR;
 			}
 
 			// Move (used) tokens into action stack for construction.
@@ -105,7 +97,7 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 		// Otherwise, break down the state into known tokens (3/3 ELSE).
 		else {
 			// Break down the non-terminal state.
-			retErr = Parser_parse(parseStack, curItem->m_lexTkn);
+			RetErr_e retErr = Parser_parse(parseStack, curItem->m_lexTkn);
 
 			// Given token isn't correct if unable to break down state.
 			if (retErr) {
@@ -122,11 +114,11 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 		}
 
 		// If error was hit, break out to return.
-		if (retErr) {break;}
+		if (model.m_numErrs > 0) {break;}
 	}
 
 	// (Sanity check post parsing).
-	if (retErr == RET_ERR_NONE) {
+	if (model.m_numErrs == 0) {
 		if (tkns.size() > 0)     {Terminate_assert("Tokens left unparsed");}
 		if (actStack.size() > 0) {Terminate_assert("Artifacts left unparsed");}
 	}
@@ -134,7 +126,4 @@ RetErr_e SubStepParseTkns_execute(DataModel_t& model,
 	// (Final debug report on parsing.)
 	string dbgStr = to_string(nodes.size()) + " nodes created";
 	Print::inst().log(LOG_DEBUG, fname, dbgStr);
-
-	// Return result of the process.
-	return retErr;
 }

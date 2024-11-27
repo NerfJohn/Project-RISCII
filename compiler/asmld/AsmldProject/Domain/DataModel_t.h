@@ -8,8 +8,10 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "Domain/NodeList_t.h"
 #include "Domain/RetCode_e.h"
+
+// Forward declare to avoid recursive includes.
+class AAsmNode;
 
 /*
  * Data passed in-between states/pieces of the entire program.
@@ -26,14 +28,17 @@ typedef struct {
 
 	// Parsed Cli Data.
 	std::vector<std::string> m_files;            // input source files
+	std::string              m_outFile;          // name of created file
 
 	// Parsed/analyzed program.
-	NodeList_t               m_nodes;            // nodes creating the program
+	std::vector<AAsmNode*>   m_nodes;            // nodes creating the program
 
-	// Binary image metrics.
-	uint32_t                 m_textSize;         // size of text section
-	uint32_t                 m_dataSize;         // size of data section
-
+	// Binary image results.
+	uint32_t                 m_textSize;         // number of text words
+	uint32_t                 m_dataSize;         // number of data words
+	uint32_t                 m_bssSize;          // number of bss words
+	std::vector<uint16_t>    m_textVals;         // ordered text section values
+	std::vector<uint16_t>    m_dataVals;         // ordered data section values
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

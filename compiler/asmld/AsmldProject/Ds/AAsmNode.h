@@ -28,8 +28,27 @@ public:
 	 */
 	virtual void doLocalAnalysis(DataModel_t& model) = 0;
 
-	// TODO
-	virtual void assemblePrgm(DataModel_t& model) = 0;
+	/*
+	 * Computes address-related data for model and node.
+	 *
+	 * Nodes that take up space in the binary image update the model to reflect
+	 * their effect on addresses while nodes that use addresses use the model to
+	 * determine their actual value.
+	 *
+	 * @param model shared data of the entire program
+	 */
+	virtual void genAddresses(DataModel_t& model) = 0;
+
+	/*
+	 * Assembles the node, adding its binary data to the model.
+	 *
+	 * Nodes that take up space in the binary image generate and update the
+	 * model with their binary equivalent. Function has no effect on all other
+	 * nodes.
+	 *
+	 * @param model shared data of the entire program
+	 */
+	virtual void genAssemble(DataModel_t& model) = 0;
 
 protected:
 	// Protect constructor/destructor to ensure class is abstract.

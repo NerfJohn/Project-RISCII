@@ -48,7 +48,7 @@ using namespace std;
 #define ARITH_FLAG  'a'
 
 //==============================================================================
-// TODO
+// Helper function to generate instruction with "RegRegReg" data format.
 static void IsaUtil_toRRR(uint16_t& instr, Instr_t const& fields) {
 	// Implicit 0s for unset bits.
 	instr = 0x0000;
@@ -64,7 +64,7 @@ static void IsaUtil_toRRR(uint16_t& instr, Instr_t const& fields) {
 }
 
 //==============================================================================
-// TODO
+// Helper function to generate instruction with "RegReg4bIm" data format.
 static void IsaUtil_toRR4(uint16_t& instr, Instr_t const& fields) {
 	// Implicit 0s for unset bits.
 	instr = 0x0000;
@@ -83,7 +83,7 @@ static void IsaUtil_toRR4(uint16_t& instr, Instr_t const& fields) {
 }
 
 //==============================================================================
-// TODO
+// Generate binary ISA instruction from given fields.
 RetErr_e IsaUtil_genInstr(uint16_t& instr, Instr_t const& fields) {
 	// Result of the process.
 	RetErr_e retErr = RET_ERR_NONE; // GUILTY till innocent

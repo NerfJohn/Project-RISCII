@@ -6,7 +6,6 @@
 #include "Device/Lexer.h"
 #include "Device/Print.h"
 #include "Device/Terminate.h"
-#include "Domain/LexState_e.h"
 #include "Util/ModelUtil.h"
 
 #include "State/SubStepLexFile.h"
@@ -41,10 +40,7 @@ static void SubStepLexFile_parseName(std::string const& buffer,
 
 //==============================================================================
 // Executes sub-process to lex opened file into a series of file tokens.
-RetErr_e SubStepLexFile_execute(DataModel_t& model, TokenList_t& tkns) {
-	// Result of the process.
-	RetErr_e retErr = RET_ERR_NONE; // INNOCENT till guilty
-
+void SubStepLexFile_execute(DataModel_t& model, std::queue<ItemToken*>& tkns) {
 	// Commonly referenced variables during lexing.
 	string   file = File::inst().getName(); // name of lexed file
 	uint32_t line = 1;                      // files start with line 1
@@ -75,15 +71,11 @@ RetErr_e SubStepLexFile_execute(DataModel_t& model, TokenList_t& tkns) {
 
 			// Record lexical errors.
 			if (lexState == LEX_ERROR) {
-				// Mark error in log.
 				string errStr = string("Unrecognized sequence '") +
 						        lexBuffer                         +
 								"'";
 				Print::inst().log(LOG_ERROR, file, line, errStr);
 				ModelUtil_recordError(model, RET_BAD_LEX);
-
-				// Mark error locally.
-				retErr = RET_ERR_ERROR;
 			}
 
 			// Keep line count updated (though only when newline is "popped").
@@ -97,13 +89,13 @@ RetErr_e SubStepLexFile_execute(DataModel_t& model, TokenList_t& tkns) {
 			}
 
 			// If error was hit, break out to return.
-			if (retErr) {break;}
+			if (model.m_numErrs > 0) {break;}
 		}
 
 		// Save meaningful tokens to given list.
-		if ((retErr == RET_ERR_NONE) && (lexTkn != TOKEN_COMMENT)) {
+		if ((model.m_numErrs == 0) && (lexTkn != TOKEN_COMMENT)) {
 			// Create file token.
-			shared_ptr<ItemToken> newTkn(new ItemToken());
+			ItemToken* newTkn = new ItemToken();
 			if (newTkn == nullptr) {Terminate_assert("Couldn't create token");}
 
 			// Populate with lexed data.
@@ -113,18 +105,15 @@ RetErr_e SubStepLexFile_execute(DataModel_t& model, TokenList_t& tkns) {
 			newTkn->m_line   = line;
 
 			// Save to list.
-			tkns.push(move(newTkn)); // move- we're done with it here
+			tkns.push(move(newTkn)); // (pass ownership)
 		}
 
 		// If error was hit, break out to return.
-		if (retErr) {break;}
+		if (model.m_numErrs > 0) {break;}
 	}
 
 	// (Final debug report on lexing.)
 	string dbgStr = to_string(tkns.size()) + " tokens total";
 	Print::inst().log(LOG_DEBUG, file, dbgStr);
-
-	// Return result of the process.
-	return retErr;
 }
 

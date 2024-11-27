@@ -22,7 +22,10 @@ typedef enum {
 	RET_UEX_TKN = 0x05, // unexpected token (parsing)
 	RET_BAD_FLG = 0x06, // invalid flag
 	RET_BAD_REG = 0x07, // invalid register
-	RET_BAD_IMM = 0x08  // invalid immediate
+	RET_BAD_IMM = 0x08, // invalid immediate
+	RET_BIG_BIN = 0x09, // image is too large
+	RET_BIG_RAM = 0x0A, // ram use is too large
+	RET_NO_WRIT = 0x0B  // unable to open file for writing
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

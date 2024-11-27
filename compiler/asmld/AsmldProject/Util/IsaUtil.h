@@ -15,7 +15,17 @@
 // Definitions for ISA defined sizes.
 #define ISA_WORD_BYTES (2)
 
-// TODO
+/*
+ * Generate binary ISA instruction from given fields.
+ *
+ * Formats the field values given into a single binary instruction in accordance
+ * with the ISA. This function does little/no error checking on the field values
+ * themselves- it is merely a "computation".
+ *
+ * @param instr  destination to populate with the binary instruction
+ * @param fields values to interpret and parse into a binary instruction
+ * @return       RET_ERR_NONE if successful, RET_ERR_ERROR otherwise
+ */
 RetErr_e IsaUtil_genInstr(uint16_t& instr, Instr_t const& fields);
 
 /*
