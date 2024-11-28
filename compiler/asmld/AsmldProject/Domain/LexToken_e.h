@@ -19,6 +19,7 @@ typedef enum {
 	TOKEN_FLAGS,                     // flag(s) variable
 	TOKEN_REGISTER,                  // register variable
 	TOKEN_IMMEDIATE,                 // immediate/integer variable
+	TOKEN_KW_DATA,                   // ".data"       keyword
 	TOKEN_KW_SHR,                    // "shift right" keyword
 
 	// Special values.

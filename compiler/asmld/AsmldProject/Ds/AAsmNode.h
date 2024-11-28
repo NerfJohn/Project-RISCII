@@ -6,7 +6,7 @@
 #define DS_AASMNODE_H_
 
 #include "Domain/DataModel_t.h"
-#include "Domain/RetErr_e.h"
+#include "Ds/ItemToken.h"
 
 /*
  * Abstract class used to give nodes a general interface for operations.
@@ -54,6 +54,14 @@ protected:
 	// Protect constructor/destructor to ensure class is abstract.
 	         AAsmNode() {/* no actions */}
 	virtual ~AAsmNode() {/* no actions */}
+
+	// Helper function for common immediate value validation.
+	virtual void validateImm(DataModel_t& model,
+			                 ItemToken const& immItem,
+					         ItemToken const& immOp);
+
+	// Helper function for common immediate value extraction.
+	virtual int32_t getImmVal(ItemToken const& immItem);
 };
 
 #endif /* DS_AASMNODE_H_ */

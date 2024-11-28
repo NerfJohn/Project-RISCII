@@ -162,3 +162,37 @@ TEST(IsaUtil, isValidImmShr) {
 	// Check results.
 	EXPECT_EQ(res, true);
 }
+
+TEST(IsaUtil, isValidWordBad) {
+	// Prep input.
+	Imm_t immInt;
+	immInt.m_val = -1000000;
+	immInt.m_isBin = false;
+	
+	// Call utility.
+	bool res = IsaUtil_isValidWord(immInt);
+	
+	// Check results.
+	EXPECT_EQ(res, false);
+}
+
+TEST(IsaUtil, isValidWordGood) {
+	// Prep input.
+	Imm_t immInt;
+	immInt.m_val = -32768;
+	immInt.m_isBin = false;
+	
+	// Call utility.
+	bool res = IsaUtil_isValidWord(immInt);
+	
+	// Check results.
+	EXPECT_EQ(res, true);
+	
+	// re-do with "hex".
+	immInt.m_val   = 0xFFFF;
+	immInt.m_isBin = true;
+	res = IsaUtil_isValidWord(immInt);
+
+	// Check results.
+	EXPECT_EQ(res, true);
+}

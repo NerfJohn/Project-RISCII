@@ -182,3 +182,42 @@ TEST(Parser, regImm) {
 	EXPECT_EQ(stack.size(), 1);
 	EXPECT_EQ(stack.top(), TOKEN_IMMEDIATE);
 }
+
+TEST(Parser, dataKeyword) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_FILE));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_KW_DATA);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_KW_DATA);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_INIT_DATA);
+	stack.pop();
+	EXPECT_EQ(stack.top(), ACTION_DATA);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_FILE);
+}
+
+TEST(Parser, initData) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_INIT_DATA));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_IMMEDIATE);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.size(), 1);
+	EXPECT_EQ(stack.top(), TOKEN_IMMEDIATE);
+}

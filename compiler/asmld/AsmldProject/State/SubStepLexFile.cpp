@@ -18,6 +18,7 @@ using namespace std;
 #define CHAR_NEWLINE (0x0A)
 
 // Definitions for expected keywords.
+#define KW_DATA      (".data")
 #define KW_SHR       ("SHR")
 
 // (Targeted macros to simplify the parsing process.)
@@ -33,6 +34,21 @@ static void SubStepLexFile_parseName(std::string const& buffer,
 
 	// Set token as keyword as applicable.
 	if KEYWORD(KW_SHR, TOKEN_KW_SHR);
+
+	// Set state based on process.
+	if (tkn == TOKEN_INVALID) {state = LEX_ERROR;}
+}
+
+//==============================================================================
+// Helper function to parse "directives" specific to assembly language syntax.
+static void SubStepLexFile_parseDirective(std::string const& buffer,
+		                                  LexState_e& state,
+		                                  LexToken_e& tkn) {
+	// Either a directive or an error.
+	tkn = TOKEN_INVALID;
+
+	// Set token as keyword as applicable.
+	if KEYWORD(KW_DATA, TOKEN_KW_DATA);
 
 	// Set state based on process.
 	if (tkn == TOKEN_INVALID) {state = LEX_ERROR;}
@@ -63,6 +79,9 @@ void SubStepLexFile_execute(DataModel_t& model, std::queue<ItemToken*>& tkns) {
 			// Handle special lex cases requiring user aid.
 			if (lexState == LEX_NAME) {
 				SubStepLexFile_parseName(lexBuffer, lexState, lexTkn);
+			}
+			if (lexState == LEX_DIRECTIVE) {
+				SubStepLexFile_parseDirective(lexBuffer, lexState, lexTkn);
 			}
 
 			// Handle buffer- append or clear if not yet a token.

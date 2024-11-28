@@ -27,6 +27,9 @@ using namespace std;
 
 // Constants containing replacements for parsed states.
 LIST(SEQ_EPSILON) = {};
+LIST(SEQ_DATA)    = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_DATA),
+					 ITEM(PARSE_INIT_DATA)};
 LIST(SEQ_SHR)     = {ITEM(PARSE_FILE),
 					 ITEM(ACTION_INSTR),
 		             ITEM(PARSE_REG_IMM),
@@ -84,6 +87,7 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 			case PARSE_FILE:                               // (start of parsing)
 				IS(TOKEN_EOF)       WITH(SEQ_EPSILON)      // end of parsing
 				IS(TOKEN_KW_SHR)    WITH(SEQ_SHR)
+				IS(TOKEN_KW_DATA)   WITH(SEQ_DATA)
 				break;
 			case PARSE_OPT_FLAGS:
 				IS(TOKEN_FLAGS)     WITH(SEQ_EPSILON)
@@ -92,6 +96,9 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 			case PARSE_REG_IMM:
 				IS(TOKEN_REGISTER)  WITH(SEQ_EPSILON)
 				IS(TOKEN_IMMEDIATE) WITH(SEQ_EPSILON)
+				break;
+			case PARSE_INIT_DATA:
+				IS(TOKEN_IMMEDIATE) WITH(SEQ_EPSILON)      // init imm only
 				break;
 			default:
 				// Top can't be broken down? compiler bug.

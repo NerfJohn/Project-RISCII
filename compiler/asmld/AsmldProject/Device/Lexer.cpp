@@ -57,6 +57,7 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 			IS('-')      TO(LEX_HANDLE_MINUS)
 			IS('0')      TO(LEX_HANDLE_ZERO)
 			IN('1','9')  TO(LEX_LOOP_DECIMAL)
+			IS('.')      TO(LEX_LOOP_DIRECTIVE)  // covers all directives
 			LABEL        TO(LEX_LOOP_NAME)       // covers labels/keywords
 			break;
 		case LEX_LOOP_COMMENT:
@@ -99,6 +100,10 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 		case LEX_LOOP_NAME:
 			LABEL        TO(LEX_LOOP_NAME)       // greedy grab label chars
 			ELSE         TO(LEX_NAME)            // signal "label" is ready
+			break;
+		case LEX_LOOP_DIRECTIVE:
+			IN('a','z')  TO(LEX_LOOP_DIRECTIVE)
+			ELSE         TO(LEX_DIRECTIVE)
 			break;
 		default:                                 // (No matching "from" state)
 			// Start at non-state? compiler bug.

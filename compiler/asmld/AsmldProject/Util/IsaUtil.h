@@ -91,4 +91,15 @@ RetErr_e IsaUtil_toImm(std::string const& immStr, Imm_t& immInt);
  */
 bool IsaUtil_isValidImm(InstrType_e const instr, Imm_t const& immInt);
 
+/*
+ * Confirms if immediate is within valid range of a word length integer.
+ *
+ * Implements logic checking if integer fits within word size. Function factors
+ * for both the immediate's raw value and it's direct/indirect sign.
+ *
+ * @param immInt immediate being checked for validity within word size
+ * @return       TRUE if flag is valid, FALSE otherwise
+ */
+bool IsaUtil_isValidWord(Imm_t const& immInt);
+
 #endif /* UTIL_ISAUTIL_H_ */

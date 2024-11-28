@@ -1,22 +1,22 @@
 /*
- * InstrNode.h: Represents single ISA instruction in assembly.
+ * DataNode.h: Represents directives specifying global data (data and bss).
  */
 
-#ifndef DS_INSTRNODE_H_
-#define DS_INSTRNODE_H_
+#ifndef DS_DATANODE_H_
+#define DS_DATANODE_H_
 
 #include <stack>
 #include "Ds/AAsmNode.h"
 #include "Ds/ItemToken.h"
 
 /*
- * Class implementing single ISA based instructions (in the assembly language).
+ * Class implementing directive controlling global data layout of the program.
  *
- * Implements the checks/translations needed to assemble/link a binary
- * instruction. Derives functions from AAsmNode to allow for the node to be part
- * of a larger data structure, yet still be accessed appropriately.
+ * Implements checks/translations needed to organize/assemble/link global data
+ * for a program (initialized of not). Derives functions from AAsmNode to allow
+ * node to be part of a larger data structure, yet still be accessed.
  */
-class InstrNode: public AAsmNode {
+class DataNode: public AAsmNode {
 public:
 	/*
 	 * Constructor called by parser. Builds itself directly from action stack.
@@ -25,7 +25,7 @@ public:
 	 * implements some checks on stack composition, but generally assumes the
 	 * items have already been checked/parsed by a parser.
 	 */
-	InstrNode(std::stack<ItemToken*>& itemStack);
+	DataNode(std::stack<ItemToken*>& itemStack);
 
 	/*
 	 * Runs local analytics on node's data.
@@ -61,17 +61,9 @@ public:
 	void genAssemble(DataModel_t& model);
 
 private:
-	// Raw items/tokens composing the instruction.
-	ItemToken*               m_itemOp;   // MUST be non-null
-	ItemToken*               m_itemFlag;
-	std::deque<ItemToken*>   m_itemRegs;
-	ItemToken*               m_itemImm;
-
-	// Helper function to warn about repeated flags in instructions.
-	std::string getRepeats(std::string const& str);
-
-	// Helper function to extract register values (quickly- minimal checks).
-	void extractRegs(std::vector<uint8_t>& regInts);
+	// Raw items/tokens composing the directive.
+	ItemToken*               m_itemType;   // MUST be non-null
+	std::deque<ItemToken*>   m_itemVals;
 };
 
-#endif /* DS_INSTRNODE_H_ */
+#endif /* DS_DATANODE_H_ */

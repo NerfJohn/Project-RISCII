@@ -38,8 +38,8 @@ std::string InstrNode::getRepeats(std::string const& str) {
 }
 
 //==============================================================================
-// Helper function to extract "integer" values (quickly- minimal checks).
-void InstrNode::extractInts(std::vector<uint8_t>& regInts, int32_t& immInt) {
+// Helper function to extract register values (quickly- minimal checks).
+void InstrNode::extractRegs(std::vector<uint8_t>& regInts) {
 	// Extract each register value (ptrs pre-checked by ctor).
 	for (ItemToken* tkn : m_itemRegs) {
 		// Value extracted.
@@ -52,20 +52,6 @@ void InstrNode::extractInts(std::vector<uint8_t>& regInts, int32_t& immInt) {
 
 		// Save.
 		regInts.push_back(regInt);
-	}
-
-	// Extract immediate value (as applicable).
-	if (m_itemImm != nullptr) {
-		// Value extracted.
-		Imm_t imm;
-
-		// Extract.
-		if (IsaUtil_toImm(m_itemImm->m_rawStr, imm) == RET_ERR_ERROR) {
-			Terminate_assert("Extracted bad immediate value");
-		}
-
-		// Save.
-		immInt = imm.m_val;
 	}
 }
 
@@ -140,7 +126,6 @@ void InstrNode::doLocalAnalysis(DataModel_t& model) {
 
 	// Validate each register on record (ptrs pre-checked by ctor).
 	for (ItemToken* itemReg : m_itemRegs) {
-
 		// Get common vars.
 		string   raw  = itemReg->m_rawStr;
 		string   file = itemReg->m_file;
@@ -156,27 +141,7 @@ void InstrNode::doLocalAnalysis(DataModel_t& model) {
 	}
 
 	// If there'a an immediate, validate the value.
-	if (m_itemImm != nullptr) {
-		// Get common vars.
-		string   raw  = m_itemImm->m_rawStr;
-		string   file = m_itemImm->m_file;
-		uint32_t line = m_itemImm->m_line;
-
-		// Analyze the immediate.
-		Imm_t procImm;
-		if (IsaUtil_toImm(raw, procImm) == RET_ERR_ERROR) {
-			Terminate_assert("Analyzed invalid immediate");
-		}
-		string dbgStr = string("'") + raw + "' -> " + to_string(procImm.m_val);
-		Print::inst().log(LOG_DEBUG, file, line, dbgStr);
-
-		// Validate value- saving it for future generation.
-		if (IsaUtil_isValidImm(procOp, procImm) == false) {
-			string errStr = string("Invalid immediate '") + raw + "'";
-			Print::inst().log(LOG_ERROR, file, line, errStr);
-			ModelUtil_recordError(model, RET_BAD_IMM);
-		}
-	}
+	if (m_itemImm != nullptr) {this->validateImm(model, *m_itemImm, *m_itemOp);}
 }
 
 //==============================================================================
@@ -193,10 +158,9 @@ void InstrNode::genAssemble(DataModel_t& model) {
 	uint16_t binInstr = 0x0000;
 	Instr_t  fields;
 
-	// Prep "integers" for populating fields.
+	// Prep register values for populating fields.
 	vector<uint8_t> regInts;
-	int32_t         immInt;
-	this->extractInts(regInts, immInt);
+	this->extractRegs(regInts);
 	size_t numRegs = regInts.size();
 
 	// Add fields.
@@ -205,7 +169,7 @@ void InstrNode::genAssemble(DataModel_t& model) {
 	if (numRegs > 0) {fields.m_r1 = regInts[0];}
 	if (numRegs > 1) {fields.m_r2 = regInts[1];}
 	if (numRegs > 2) {fields.m_r3 = regInts[2];}
-	if (m_itemImm != nullptr) {fields.m_imm = immInt;}
+	if (m_itemImm != nullptr) {fields.m_imm = this->getImmVal(*m_itemImm);}
 
 	// "Fields... Assemble!".
 	RetErr_e retErr = IsaUtil_genInstr(binInstr, fields);

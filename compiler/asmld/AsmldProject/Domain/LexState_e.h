@@ -28,10 +28,12 @@ typedef enum {
 	LEX_LOOP_DECIMAL,                      // loop used to capture decimal imm
 	LEX_LOOP_HEX,                          // loop used to capture hex imm
 	LEX_LOOP_NAME,                         // loop for label/keywords
+	LEX_LOOP_DIRECTIVE,                    // loop for directive keywords
 
 	// Special values.
 	LEX_ERROR,                             // end state for "bad" lexing
-	LEX_NAME                               // "end state" for labels/keywords
+	LEX_NAME,                              // "end state" for labels/keywords
+	LEX_DIRECTIVE                          // "end state" for directives
 } LexState_e;
 
 #endif /* DOMAIN_LEXSTATE_E_H_ */

@@ -22,8 +22,10 @@ using namespace std;
 #define HEX_BASE     (16)
 
 // Definitions for range checking integer values.
+#define IN_INT16(x)  ((-32768 <= (x)) && ((x) <= 32767))
 #define IN_UINT3(x)  ((0 <= (x)) && ((x) <= 7))
 #define IN_UINT4(x)  ((0 <= (x)) && ((x) <= 15))
+#define IN_UINT16(x) ((0 <= (x)) && ((x) <= 65535))
 
 // Masks sized to bit field lengths.
 #define OPCODE_MASK (0xF)  // 4-bit
@@ -214,6 +216,21 @@ bool IsaUtil_isValidImm(InstrType_e const instr, Imm_t const& immInt) {
 		case INSTR_SHR: retBool = IN_UINT4(val); break;
 		default: retBool = false; // instruction doesn't support immediate
 	}
+
+	// Return result.
+	return retBool;
+}
+
+//==============================================================================
+// Confirms if immediate is within valid range of a word length integer.
+bool IsaUtil_isValidWord(Imm_t const& immInt) {
+	// Result of check to return.
+	bool retBool = false; // GUILTY till innocent
+
+	// Determine if value can fit at all in word.
+	int32_t val   = immInt.m_val;
+	bool    isBin = immInt.m_isBin;
+	retBool = (isBin) ? IN_UINT16(val) : IN_INT16(val);
 
 	// Return result.
 	return retBool;
