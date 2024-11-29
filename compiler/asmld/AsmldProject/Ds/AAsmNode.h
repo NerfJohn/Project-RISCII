@@ -5,6 +5,7 @@
 #ifndef DS_AASMNODE_H_
 #define DS_AASMNODE_H_
 
+#include "Device/SymTable.h"
 #include "Domain/DataModel_t.h"
 #include "Ds/ItemToken.h"
 
@@ -25,8 +26,9 @@ public:
 	 * function cannot directly terminate the program, but can log errors.
 	 *
 	 * @param model shared data of the entire program
+	 * @param syms  symbol table of localized symbols
 	 */
-	virtual void doLocalAnalysis(DataModel_t& model) = 0;
+	virtual void doLocalAnalysis(DataModel_t& model, SymTable& syms) = 0;
 
 	/*
 	 * Computes address-related data for model and node.
@@ -62,6 +64,11 @@ protected:
 
 	// Helper function for common immediate value extraction.
 	virtual int32_t getImmVal(ItemToken const& immItem);
+
+	// Helper function for pairing nodes to labels.
+	virtual void pairOpenLabels(DataModel_t& model,
+			                    ItemToken& fileLoc,
+								AddrSpace_e const space);
 };
 
 #endif /* DS_AASMNODE_H_ */

@@ -57,3 +57,25 @@ int32_t AAsmNode::getImmVal(ItemToken const& immItem) {
 	// Return just value of immediate.
 	return imm.m_val;
 }
+
+//==============================================================================
+// Helper function for pairing nodes to labels.
+void AAsmNode::pairOpenLabels(DataModel_t& model,
+		                      ItemToken& fileLoc,
+							  AddrSpace_e const space) {
+	// Pair with any open labels.
+	for (Symbol_t* sym : model.m_openLabels) {
+		// (Sanity check.)
+		if (sym == nullptr) {Terminate_assert("Paired with null symbol");}
+
+		// Set the address space- token order takes care of exact address.
+		sym->m_space = space;
+
+		// (Log pairing.)
+		string dbgStr = string("Paired '") + sym->m_name + "'";
+		Print::inst().log(LOG_DEBUG, fileLoc.m_file, fileLoc.m_line, dbgStr);
+	}
+
+	// All open labels claimed- clear list.
+	model.m_openLabels.clear();
+}

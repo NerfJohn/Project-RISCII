@@ -29,6 +29,7 @@ typedef enum {
 	LEX_LOOP_HEX,                          // loop used to capture hex imm
 	LEX_LOOP_NAME,                         // loop for label/keywords
 	LEX_LOOP_DIRECTIVE,                    // loop for directive keywords
+	LEX_FOUND_COLON,                       // ':' char found
 
 	// Special values.
 	LEX_ERROR,                             // end state for "bad" lexing

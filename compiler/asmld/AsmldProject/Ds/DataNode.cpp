@@ -46,7 +46,7 @@ DataNode::DataNode(std::stack<ItemToken*>& itemStack) {
 
 //==============================================================================
 // Runs local analytics on node's data.
-void DataNode::doLocalAnalysis(DataModel_t& model) {
+void DataNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 	// Validate each item on record (ptrs pre-checked by ctor).
 	for (ItemToken* itemValue : m_itemVals) {
 		// Validate the item based on its underlying type.
@@ -61,6 +61,9 @@ void DataNode::doLocalAnalysis(DataModel_t& model) {
 				break;
 		}
 	}
+
+	// Claim any open labels.
+	this->pairOpenLabels(model, *m_itemType, ADDR_DATA);
 }
 
 //==============================================================================

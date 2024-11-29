@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "Device/SymTable.h"
 #include "Domain/RetCode_e.h"
 
 // Forward declare to avoid recursive includes.
@@ -32,6 +33,7 @@ typedef struct {
 
 	// Parsed/analyzed program.
 	std::vector<AAsmNode*>   m_nodes;            // nodes creating the program
+	std::vector<Symbol_t*>   m_openLabels;       // unpaired labels
 
 	// Binary image results.
 	uint32_t                 m_textSize;         // number of text words

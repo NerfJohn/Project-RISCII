@@ -35,8 +35,9 @@ public:
 	 * function cannot directly terminate the program, but can log errors.
 	 *
 	 * @param model shared data of the entire program
+	 * @param syms  symbol table of localized symbols
 	 */
-	void doLocalAnalysis(DataModel_t& model);
+	void doLocalAnalysis(DataModel_t& model, SymTable& syms);
 
 	/*
 	 * Computes address-related data for model and node.

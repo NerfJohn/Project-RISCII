@@ -30,6 +30,9 @@ LIST(SEQ_EPSILON) = {};
 LIST(SEQ_DATA)    = {ITEM(PARSE_FILE),
 		             ITEM(ACTION_DATA),
 					 ITEM(PARSE_INIT_DATA)};
+LIST(SEQ_DECL)    = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_DECL),
+					 ITEM(TOKEN_COLON)};
 LIST(SEQ_SHR)     = {ITEM(PARSE_FILE),
 					 ITEM(ACTION_INSTR),
 		             ITEM(PARSE_REG_IMM),
@@ -86,6 +89,7 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 		switch(stack.top()) {
 			case PARSE_FILE:                               // (start of parsing)
 				IS(TOKEN_EOF)       WITH(SEQ_EPSILON)      // end of parsing
+				IS(TOKEN_LABEL)     WITH(SEQ_DECL)
 				IS(TOKEN_KW_SHR)    WITH(SEQ_SHR)
 				IS(TOKEN_KW_DATA)   WITH(SEQ_DATA)
 				break;

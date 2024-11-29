@@ -19,23 +19,24 @@ int main(int argc, char* argv[]) {
 	DataModel_t prgmData;
 	{
 		// General Summary/Progress.
-		prgmData.m_numWarns = 0;
-		prgmData.m_numErrs  = 0;                 // no errors yet...
-		prgmData.m_retCode  = RET_SUCCESS;       // INNOCENT till guilty
+		prgmData.m_numWarns   = 0;
+		prgmData.m_numErrs    = 0;               // no errors yet...
+		prgmData.m_retCode    = RET_SUCCESS;     // INNOCENT till guilty
 
 		// Parsed Cli Data.
-		prgmData.m_files    = {};                // no initial files
-		prgmData.m_outFile  = "";                // no initial out filename
+		prgmData.m_files      = {};              // no initial files
+		prgmData.m_outFile    = "";              // no initial out filename
 
 		// Parsed/analyzed program.
-		prgmData.m_nodes    = {};                // no initial nodes
+		prgmData.m_nodes      = {};              // no initial nodes
+		prgmData.m_openLabels = {};              // no initial unpaired labels
 
 		// Binary image results.
-		prgmData.m_textSize = 0;                 // no initial bytes
-		prgmData.m_dataSize = 0;                 // no initial bytes
-		prgmData.m_bssSize  = 0;                 // no initial bytes
-		prgmData.m_textVals = {};                // no initial words
-		prgmData.m_dataVals = {};                // no initial words
+		prgmData.m_textSize   = 0;               // no initial bytes
+		prgmData.m_dataSize   = 0;               // no initial bytes
+		prgmData.m_bssSize    = 0;               // no initial bytes
+		prgmData.m_textVals   = {};              // no initial words
+		prgmData.m_dataVals   = {};              // no initial words
 	}
 
 	// Log warnings/error by default. // TODO- "Debug" for developing

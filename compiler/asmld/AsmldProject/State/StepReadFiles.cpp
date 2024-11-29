@@ -4,6 +4,7 @@
 
 #include "Device/File.h"
 #include "Device/Print.h"
+#include "Device/SymTable.h"
 #include "Device/Terminate.h"
 #include "Ds/AAsmNode.h"
 #include "State/SubStepLexFile.h"
@@ -60,10 +61,18 @@ void StepReadFiles_execute(DataModel_t& model) {
 		// With file now parsed, perform localized checks/analysis/saving.
 		if (model.m_numErrs == 0) {
 			// Analyze each node- checking args/local symbols.
-			// TODO- create local symbol table
+			SymTable localSyms;
 			for (AAsmNode* node : fileNodes) {
 				if (node == nullptr) {Terminate_assert("Analyzed null node");}
-				node->doLocalAnalysis(model);
+				node->doLocalAnalysis(model, localSyms);
+			}
+
+			// Labels must be paired- otherwise an error.
+			for (Symbol_t* sym : model.m_openLabels) {
+				if (sym == nullptr) {Terminate_assert("Leftover null symbol");}
+				string errStr = string("Unpaired label '") + sym->m_name + "'";
+				Print::inst().log(LOG_ERROR, sym->m_file, sym->m_line, errStr);
+				ModelUtil_recordError(model, RET_NO_PAIR);
 			}
 
 			// TODO- perform local linking/linkage handling.

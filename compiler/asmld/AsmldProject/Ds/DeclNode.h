@@ -1,22 +1,22 @@
 /*
- * InstrNode.h: Represents single ISA instruction in assembly.
+ * DeclNode.h: Represents declaration of a label/named address.
  */
 
-#ifndef DS_INSTRNODE_H_
-#define DS_INSTRNODE_H_
+#ifndef DS_DECLNODE_H_
+#define DS_DECLNODE_H_
 
 #include <stack>
 #include "Ds/AAsmNode.h"
 #include "Ds/ItemToken.h"
 
 /*
- * Class implementing single ISA based instructions (in the assembly language).
+ * Class implementing a declaration of a labeled address.
  *
- * Implements the checks/translations needed to assemble/link a binary
- * instruction. Derives functions from AAsmNode to allow for the node to be part
- * of a larger data structure, yet still be accessed appropriately.
+ * Implements checks/translations required to declare named addresses that can
+ * be referred to by other nodes. Derives functions from AAsmNode to allow for
+ * the node to be part of a larger data structure, yet still be accessed.
  */
-class InstrNode: public AAsmNode {
+class DeclNode: public AAsmNode {
 public:
 	/*
 	 * Constructor called by parser. Builds itself directly from action stack.
@@ -25,7 +25,7 @@ public:
 	 * implements some checks on stack composition, but generally assumes the
 	 * items have already been checked/parsed by a parser.
 	 */
-	InstrNode(std::stack<ItemToken*>& itemStack);
+	DeclNode(std::stack<ItemToken*>& itemStack);
 
 	/*
 	 * Runs local analytics on node's data.
@@ -62,17 +62,11 @@ public:
 	void genAssemble(DataModel_t& model);
 
 private:
-	// Raw items/tokens composing the instruction.
-	ItemToken*               m_itemOp;   // MUST be non-null
-	ItemToken*               m_itemFlag;
-	std::deque<ItemToken*>   m_itemRegs;
-	ItemToken*               m_itemImm;
+	// Raw items/tokens composing the declaration.
+	ItemToken*               m_itemLabel;   // MUST be non-null
 
-	// Helper function to warn about repeated flags in instructions.
-	std::string getRepeats(std::string const& str);
-
-	// Helper function to extract register values (quickly- minimal checks).
-	void extractRegs(std::vector<uint8_t>& regInts);
+	// Symbol created/managed by declaration.
+	Symbol_t*                m_sym;
 };
 
-#endif /* DS_INSTRNODE_H_ */
+#endif /* DS_DECLNODE_H_ */

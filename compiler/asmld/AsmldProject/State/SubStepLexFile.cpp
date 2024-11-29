@@ -29,14 +29,11 @@ using namespace std;
 static void SubStepLexFile_parseName(std::string const& buffer,
 		                             LexState_e& state,
 		                             LexToken_e& tkn) {
-	// By default, names are NOT tokens // TODO- until they're labels
-	tkn = TOKEN_INVALID;
+	// By default, names are labels.
+	tkn = TOKEN_LABEL;
 
 	// Set token as keyword as applicable.
 	if KEYWORD(KW_SHR, TOKEN_KW_SHR);
-
-	// Set state based on process.
-	if (tkn == TOKEN_INVALID) {state = LEX_ERROR;}
 }
 
 //==============================================================================

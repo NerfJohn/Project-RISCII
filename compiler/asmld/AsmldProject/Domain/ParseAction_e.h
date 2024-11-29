@@ -18,6 +18,7 @@ typedef enum {
 	// Real values (LexToken_e extension).
 	ACTION_INSTR = TOKEN_LEX_MAX + 1,            // instruction operation
 	ACTION_DATA,                                 // data related directives
+	ACTION_DECL,                                 // label declaration
 
 	// Special values.
 	ACTION_INVALID,                              // Unknown/Invalid action

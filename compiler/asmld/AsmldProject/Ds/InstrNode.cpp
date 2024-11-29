@@ -94,7 +94,7 @@ InstrNode::InstrNode(std::stack<ItemToken*>& itemStack) {
 
 //==============================================================================
 // Runs local analytics on node's data.
-void InstrNode::doLocalAnalysis(DataModel_t& model) {
+void InstrNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 	// Analyze the opcode (ptr pre-checked by ctor).
 	InstrType_e procOp = IsaUtil_asInstr(m_itemOp->m_lexTkn);
 	if (procOp == INSTR_INVALID) {Terminate_assert("Analyzed bad opcode");}
@@ -142,6 +142,9 @@ void InstrNode::doLocalAnalysis(DataModel_t& model) {
 
 	// If there'a an immediate, validate the value.
 	if (m_itemImm != nullptr) {this->validateImm(model, *m_itemImm, *m_itemOp);}
+
+	// Claim any open labels.
+	this->pairOpenLabels(model, *m_itemOp, ADDR_TEXT);
 }
 
 //==============================================================================
