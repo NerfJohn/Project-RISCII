@@ -22,6 +22,7 @@ typedef enum {
 	TOKEN_LABEL,                     // labeled address
 	TOKEN_COLON,                     // ':' character
 	TOKEN_KW_DATA,                   // ".data"       keyword
+	TOKEN_KW_GLOBAL,                 // ",global"     keyword
 	TOKEN_KW_SHR,                    // "shift right" keyword
 
 	// Special values.

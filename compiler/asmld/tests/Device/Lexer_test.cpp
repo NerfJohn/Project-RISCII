@@ -233,3 +233,19 @@ TEST(Lexer, colon) {
 	EXPECT_EQ(state, TOKEN_COLON);
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
+
+TEST(Lexer, globalKeyword) {
+	// Sample inputs.
+	LexState_e  state = LEX_START;
+	std::string input = ".global ";
+	
+	// Lex through entire string.
+	while(input.size()) {
+		state = Lexer_nextState(state, (uint8_t)(input[0]));
+		input.erase(input.begin());
+	}
+	
+	// Check final lexing results.
+	EXPECT_EQ(state, LEX_DIRECTIVE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+}

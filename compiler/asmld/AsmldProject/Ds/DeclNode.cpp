@@ -47,7 +47,7 @@ DeclNode::DeclNode(std::stack<ItemToken*>& itemStack) {
 }
 
 //==============================================================================
-// Runs local analytics on node's data.
+// Runs local analytics and record-keeping on node's data.
 void DeclNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 	// Get common vars (ptr pre-checked by ctor).
 	string   raw  = m_itemLabel->m_rawStr;
@@ -79,6 +79,73 @@ void DeclNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 }
 
 //==============================================================================
+// Analyzes and links labels/symbols at the local level.
+void DeclNode::doLocalLinking(DataModel_t& model, SymTable& syms) {
+	// Ensure symbol has a given address space.
+	if (m_sym == nullptr) {Terminate_assert("Local linked null symbol");}
+	if (m_sym->m_space == ADDR_INVALID) {
+		string errStr = string("Unpaired label '") + m_sym->m_name + "'";
+		Print::inst().log(LOG_ERROR, m_sym->m_file, m_sym->m_line, errStr);
+		ModelUtil_recordError(model, RET_NO_PAIR);
+	}
+}
+
+//==============================================================================
+// Adds node to model's overall program data structures.
+void DeclNode::addToProgram(DataModel_t& model) {
+	// (Sanity check.)
+	if (m_sym == nullptr)  {Terminate_assert("Adding with null symbol");}
+
+	// Add symbol to global table as applicable.
+	if (m_sym->m_isGlobal) {
+		// Attempt to add to global table.
+		RetErr_e retErr = model.m_gSyms.addSym(m_sym->m_name, m_sym);
+		if (retErr) {
+			model.m_gSyms.getSym(m_sym->m_name, m_sym);
+			string errStr = string("Global re-def '") +
+					        m_itemLabel->m_rawStr     +
+							"' (first at "            +
+							m_sym->m_file             +
+							"/"                       +
+							to_string(m_sym->m_line)  +
+							")";
+			Print::inst().log(LOG_ERROR,
+					          m_itemLabel->m_file,
+							  m_itemLabel->m_line,
+							  errStr);
+			ModelUtil_recordError(model, RET_G_REDEF);
+		}
+	}
+
+	// Warn if (locally) unused.
+	if ((m_sym->m_isGlobal == false) && (m_sym->m_numRefs <= 1)) {
+		string wrnStr = "Local unused '" + m_sym->m_name + "'";
+		Print::inst().log(LOG_WARNING,
+				          m_itemLabel->m_file,
+						  m_itemLabel->m_line,
+						  wrnStr);
+		ModelUtil_recordWarn(model);
+	}
+
+	// Otherwise, add node to global program.
+	model.m_nodes.push_back(this);
+}
+
+//==============================================================================
+// Runs last (iterable) checks on global program prior to modification.
+void DeclNode::cleanProgram(DataModel_t& model) {
+	// Warn if (globally) unused.
+	if (m_sym->m_isGlobal && (m_sym->m_numRefs <= 1)) {
+		string wrnStr = "Global unused '" + m_sym->m_name + "'";
+		Print::inst().log(LOG_WARNING,
+				          m_itemLabel->m_file,
+						  m_itemLabel->m_line,
+						  wrnStr);
+		ModelUtil_recordWarn(model);
+	}
+}
+
+//==============================================================================
 // Computes address-related data for model and node.
 void DeclNode::genAddresses(DataModel_t& model) {
 	// (Sanity check.)
@@ -107,5 +174,11 @@ void DeclNode::genAddresses(DataModel_t& model) {
 }
 
 //==============================================================================
-// Assembles the node, adding its binary data to the model.
-void DeclNode::genAssemble(DataModel_t& model) {/* No actions */}
+// General destructor- ensures all memory is freed on deletion.
+DeclNode::~DeclNode(void) {
+	// Free token (pre-checked by ctor).
+	delete m_itemLabel;
+
+	// Free symbol.
+	this->freeSymbol(m_sym);
+}

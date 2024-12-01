@@ -18,6 +18,10 @@
  */
 class DataNode: public AAsmNode {
 public:
+	// Enforce node class as "no copy".
+	DataNode(DataNode const&)       = delete;
+	void operator=(DataNode const&) = delete;
+
 	/*
 	 * Constructor called by parser. Builds itself directly from action stack.
 	 *
@@ -28,16 +32,27 @@ public:
 	DataNode(std::stack<ItemToken*>& itemStack);
 
 	/*
-	 * Runs local analytics on node's data.
+	 * Runs local analytics and record-keeping on node's data.
 	 *
-	 * Localized analysis generally involves checking arguments are semantically
-	 * correct and managing local level symbol declaring/modifying/linking. This
-	 * function cannot directly terminate the program, but can log errors.
+	 * Localized analysis focused on checking arguments are semantically correct
+	 * and tracking locally declared symbols/labels. Intended as the first step
+	 * of file-level analysis.
 	 *
 	 * @param model shared data of the entire program
 	 * @param syms  symbol table of localized symbols
 	 */
 	void doLocalAnalysis(DataModel_t& model, SymTable& syms);
+
+	/*
+	 * Adds node to model's overall program data structures.
+	 *
+	 * Function focused on adding nodes and symbols to the model (as
+	 * appropriate). Additional logic is performed to necessary errors/warnings.
+	 * Should be done after each node has been locally analyzed/linked.
+	 *
+	 * @param model shared data of the entire program
+	 */
+	void addToProgram(DataModel_t& model);
 
 	/*
 	 * Computes address-related data for model and node.
@@ -60,6 +75,11 @@ public:
 	 * @param model shared data of the entire program
 	 */
 	void genAssemble(DataModel_t& model);
+
+	/*
+	 * General destructor- ensures all memory is freed on deletion.
+	 */
+	~DataNode(void);
 
 private:
 	// Raw items/tokens composing the directive.

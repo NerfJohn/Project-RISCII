@@ -60,28 +60,23 @@ void StepReadFiles_execute(DataModel_t& model) {
 
 		// With file now parsed, perform localized checks/analysis/saving.
 		if (model.m_numErrs == 0) {
-			// Analyze each node- checking args/local symbols.
+			// FIRST, analyze each node- checking args/local symbols.
 			SymTable localSyms;
 			for (AAsmNode* node : fileNodes) {
 				if (node == nullptr) {Terminate_assert("Analyzed null node");}
 				node->doLocalAnalysis(model, localSyms);
 			}
 
-			// Labels must be paired- otherwise an error.
-			for (Symbol_t* sym : model.m_openLabels) {
-				if (sym == nullptr) {Terminate_assert("Leftover null symbol");}
-				string errStr = string("Unpaired label '") + sym->m_name + "'";
-				Print::inst().log(LOG_ERROR, sym->m_file, sym->m_line, errStr);
-				ModelUtil_recordError(model, RET_NO_PAIR);
+			// NEXT, perform local linking/linkage handling.
+			for (AAsmNode* node : fileNodes) {
+				if (node == nullptr) {Terminate_assert("Linking null node");}
+				node->doLocalLinking(model, localSyms);
 			}
 
-			// TODO- perform local linking/linkage handling.
-
-			// Add nodes to cumulative program.
+			// THEN, add relevant nodes to the global program.
 			for (AAsmNode* node : fileNodes) {
-				// (Sanity check.)
 				if (node == nullptr) {Terminate_assert("Added null node");}
-				model.m_nodes.push_back(move(node)); // (pass ownership)
+				node->addToProgram(model);
 			}
 		}
 

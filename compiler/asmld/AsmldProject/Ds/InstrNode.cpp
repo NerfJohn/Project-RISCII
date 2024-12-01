@@ -93,7 +93,7 @@ InstrNode::InstrNode(std::stack<ItemToken*>& itemStack) {
 }
 
 //==============================================================================
-// Runs local analytics on node's data.
+// Runs local analytics and record-keeping on node's data.
 void InstrNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 	// Analyze the opcode (ptr pre-checked by ctor).
 	InstrType_e procOp = IsaUtil_asInstr(m_itemOp->m_lexTkn);
@@ -148,6 +148,13 @@ void InstrNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 }
 
 //==============================================================================
+// Adds node to model's overall program data structures.
+void InstrNode::addToProgram(DataModel_t& model) {
+	// Simply add the node to the global program.
+	model.m_nodes.push_back(this);
+}
+
+//==============================================================================
 // Computes address-related data for model and node.
 void InstrNode::genAddresses(DataModel_t& model) {
 	// Instruction takes 1 word in text section.
@@ -180,4 +187,16 @@ void InstrNode::genAssemble(DataModel_t& model) {
 
 	// Add instruction to text section.
 	model.m_textVals.push_back(binInstr);
+}
+
+//==============================================================================
+// General destructor- ensures all memory is freed on deletion.
+InstrNode::~InstrNode(void) {
+	// Free pre-checked tokens (ie ptrs pre-checked in ctor).
+	delete m_itemOp;
+	for (ItemToken* item : m_itemRegs) {delete item;}
+
+	// Free other tokens as needed.
+	if (m_itemFlag != nullptr) {delete m_itemFlag;}
+	if (m_itemImm  != nullptr) {delete m_itemImm;}
 }

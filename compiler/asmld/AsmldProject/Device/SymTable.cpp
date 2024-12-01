@@ -30,15 +30,58 @@ RetErr_e SymTable::define(ItemToken& labelTkn, Symbol_t*& sym) {
 		if (newSym == nullptr) {Terminate_assert("Couldn't create symbol");}
 
 		// Fill in symbol with given data.
-		newSym->m_name = name;
-		newSym->m_file = labelTkn.m_file;
-		newSym->m_line = labelTkn.m_line;
+		newSym->m_name    = name;
+		newSym->m_file    = labelTkn.m_file;
+		newSym->m_line    = labelTkn.m_line;
+		newSym->m_numRefs = 1;               // just created- only reference
 
 		// Save symbol to table.
 		m_table.insert({name, newSym});
 
 		// Return reference to new symbol.
 		sym = newSym;
+	}
+
+	// Return result of the process.
+	return retErr;
+}
+
+//==============================================================================
+// Adds the given symbol to the table (if the nameis not already taken).
+RetErr_e SymTable::addSym(std::string const& name, Symbol_t* sym) {
+	// Result to return (pessimistic).
+	RetErr_e retErr = RET_ERR_ERROR;
+
+	// Only add actual symbols- bug otherwise.
+	if (sym == nullptr) {Terminate_assert("SymTable- adding null symbol");}
+
+	// Add symbol to table if key isn't already used.
+	if (m_table.find(name) == m_table.end()) {
+		// Save symbol to table.
+		m_table.insert({name, sym});
+
+		// Good run- return as such.
+		retErr = RET_ERR_NONE;
+	}
+
+	// Return result of the process.
+	return retErr;
+}
+
+//==============================================================================
+// Gets a symbol based on the given name.
+RetErr_e SymTable::getSym(std::string const& name, Symbol_t*& sym) {
+	// Result to return (pessimistic).
+	RetErr_e retErr = RET_ERR_ERROR;
+
+	// Populate the pointer if found.
+	if (m_table.find(name) != m_table.end()) {
+		// Get symbol.
+		sym = m_table.at(name);
+		if (sym == nullptr) {Terminate_assert("getSym() on null symbol");}
+
+		// Symbol found successfully.
+		retErr = RET_ERR_NONE;
 	}
 
 	// Return result of the process.

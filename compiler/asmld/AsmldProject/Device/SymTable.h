@@ -15,8 +15,8 @@
  * Class used to manage the creation and modification of symbols.
  *
  * Implements logic to create, get, and modify symbols based on labels. Table
- * can create symbols for the caller, though generally expects the caller to
- * "own" the symbol (on creation).
+ * can create symbols for the caller, add pre-created entries, and retrieve
+ * requested symbols.
  */
 class SymTable {
 public:
@@ -32,6 +32,31 @@ public:
 	 * @return         RET_ERR_NONE if new symbol made, RET_ERR_ERROR otherwise
 	 */
 	RetErr_e define(ItemToken& labelTkn, Symbol_t*& sym);
+
+	/*
+	 * Adds the given symbol to the table (if the nameis not already taken).
+	 *
+	 * If the given name is not already used to access a symbol, the given
+	 * symbol will be added under the given name. Nullptrs result in assertion,
+	 * with the return indicating the success of the "add" operation.
+	 *
+	 * @param name name to save the symbol under
+	 * @param sym  symbol (ptr) to save to the table
+	 * @return     RET_ERR_NONE if added, RET_ERR_ERROR otherwise
+	 */
+	RetErr_e addSym(std::string const& name, Symbol_t* sym);
+
+	/*
+	 * Gets a symbol based on the given name.
+	 *
+	 * Uses given name to find and return the symbol. Return indicates the
+	 * success of the "get" operation.
+	 *
+	 * @param name name symbol is saved under
+	 * @param sym  symbol accessed using the name
+	 * @return     RET_ERR_NONE if found, RET_ERR_ERROR otherwise
+	 */
+	RetErr_e getSym(std::string const& name, Symbol_t*& sym);
 
 private:
 	// Core "name to symbol" map of the table.

@@ -45,7 +45,7 @@ DataNode::DataNode(std::stack<ItemToken*>& itemStack) {
 }
 
 //==============================================================================
-// Runs local analytics on node's data.
+// Runs local analytics and record-keeping on node's data.
 void DataNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 	// Validate each item on record (ptrs pre-checked by ctor).
 	for (ItemToken* itemValue : m_itemVals) {
@@ -64,6 +64,13 @@ void DataNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 
 	// Claim any open labels.
 	this->pairOpenLabels(model, *m_itemType, ADDR_DATA);
+}
+
+//==============================================================================
+// Adds node to model's overall program data structures.
+void DataNode::addToProgram(DataModel_t& model) {
+	// Simply add the node to the global program.
+	model.m_nodes.push_back(this);
 }
 
 //==============================================================================
@@ -114,5 +121,13 @@ void DataNode::genAssemble(DataModel_t& model) {
 			}
 		}
 	}
+}
+
+//==============================================================================
+// General destructor- ensures all memory is freed on deletion.
+DataNode::~DataNode(void) {
+	// Free tokens (ptrs pre-checked by ctor)
+	delete m_itemType;
+	for (ItemToken* tkn : m_itemVals) {delete tkn;}
 }
 

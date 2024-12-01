@@ -27,7 +27,9 @@ typedef enum {
 	RET_BIG_RAM = 0x0A, // ram use is too large
 	RET_NO_WRIT = 0x0B, // unable to open file for writing
 	RET_L_REDEF = 0x0C, // multiply defined label- local
-	RET_NO_PAIR = 0x0D  // label not paired to instruction/data
+	RET_NO_PAIR = 0x0D, // label not paired to instruction/data
+	RET_L_NODEF = 0x0E, // label not defined locally
+	RET_G_REDEF = 0x0F  // multiply defined label- global
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

@@ -12,6 +12,30 @@
 using namespace std;
 
 //==============================================================================
+// Runs local analytics on node's data.
+void AAsmNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {/* --- */}
+
+//==============================================================================
+// Analyzes and links labels/symbols at the local level.
+void AAsmNode::doLocalLinking(DataModel_t& mode, SymTable& syms) {/* --- */}
+
+//==============================================================================
+// Adds node to model's overall program data structures.
+void AAsmNode::addToProgram(DataModel_t& model) {/* --- */}
+
+//==============================================================================
+// Runs last (iterable) checks on global program prior to modification.
+void AAsmNode::cleanProgram(DataModel_t& model) {/* --- */}
+
+//==============================================================================
+// Computes address-related data for model and node.
+void AAsmNode::genAddresses(DataModel_t& model) {/* --- */}
+
+//==============================================================================
+// Assembles the node, adding its binary data to the model.
+void AAsmNode::genAssemble(DataModel_t& model) {/* --- */}
+
+//==============================================================================
 // Helper function for common immediate value validation.
 void AAsmNode::validateImm(DataModel_t& model,
 		                   ItemToken const& immItem,
@@ -78,4 +102,13 @@ void AAsmNode::pairOpenLabels(DataModel_t& model,
 
 	// All open labels claimed- clear list.
 	model.m_openLabels.clear();
+}
+
+//==============================================================================
+// Helper function for freeing symbols upon destruction.
+void AAsmNode::freeSymbol(Symbol_t*& sym) {
+	// Free symbol if last reference.
+	if (sym == nullptr)      {Terminate_assert("Deleted null symbol");}
+	sym->m_numRefs--;
+	if (sym->m_numRefs == 0) {delete sym;}
 }

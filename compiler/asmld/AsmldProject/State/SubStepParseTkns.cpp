@@ -8,6 +8,7 @@
 #include "Ds/DataNode.h"
 #include "Ds/DeclNode.h"
 #include "Ds/InstrNode.h"
+#include "Ds/ModNode.h"
 #include "Util/ModelUtil.h"
 
 #include "State/SubStepParseTkns.h"
@@ -24,6 +25,7 @@ static void SubStepParseTkns_buildNode(AAsmNode*& node,
 		case ACTION_INSTR: node = new InstrNode(itemStack); break;
 		case ACTION_DATA:  node = new DataNode(itemStack);  break;
 		case ACTION_DECL:  node = new DeclNode(itemStack);  break;
+		case ACTION_MOD:   node = new ModNode(itemStack);   break;
 		default:
 			// No matching node? compiler bug.
 			Terminate_assert("Tried creating unknown node");

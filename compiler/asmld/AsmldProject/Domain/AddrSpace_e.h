@@ -11,7 +11,10 @@
 typedef enum {
 	// Core values.
 	ADDR_TEXT,               // text/program address space
-	ADDR_DATA                // data address space
+	ADDR_DATA,               // data address space
+
+	// Special values.
+	ADDR_INVALID             // invalid/unknown address space
 } AddrSpace_e;
 
 #endif /* DOMAIN_ADDRSPACE_E_H_ */

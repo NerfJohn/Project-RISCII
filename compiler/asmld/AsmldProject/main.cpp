@@ -8,6 +8,7 @@
 #include "Device/Terminate.h"
 #include "State/StepGenImage.h"
 #include "State/StepParseCli.h"
+#include "State/StepProcPrgm.h"
 #include "State/StepReadFiles.h"
 
 using namespace std;
@@ -29,6 +30,7 @@ int main(int argc, char* argv[]) {
 
 		// Parsed/analyzed program.
 		prgmData.m_nodes      = {};              // no initial nodes
+		prgmData.m_gSyms      = {};              // no initial symbols
 		prgmData.m_openLabels = {};              // no initial unpaired labels
 
 		// Binary image results.
@@ -45,7 +47,7 @@ int main(int argc, char* argv[]) {
 	// Parse/Handle arguments and files into desired program.
 	StepParseCli_execute(prgmData, argc, argv);
 	StepReadFiles_execute(prgmData);
-	// TODO- process program- global linking, debug, etc
+	StepProcPrgm_execute(prgmData);
 
 	// Create the unified output program.
 	StepGenImage_execute(prgmData);

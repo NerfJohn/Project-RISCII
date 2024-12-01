@@ -19,6 +19,7 @@ using namespace std;
 
 // Definitions for expected keywords.
 #define KW_DATA      (".data")
+#define KW_GLOBAL    (".global")
 #define KW_SHR       ("SHR")
 
 // (Targeted macros to simplify the parsing process.)
@@ -45,7 +46,8 @@ static void SubStepLexFile_parseDirective(std::string const& buffer,
 	tkn = TOKEN_INVALID;
 
 	// Set token as keyword as applicable.
-	if KEYWORD(KW_DATA, TOKEN_KW_DATA);
+	if KEYWORD(KW_DATA,   TOKEN_KW_DATA);
+	if KEYWORD(KW_GLOBAL, TOKEN_KW_GLOBAL);
 
 	// Set state based on process.
 	if (tkn == TOKEN_INVALID) {state = LEX_ERROR;}
