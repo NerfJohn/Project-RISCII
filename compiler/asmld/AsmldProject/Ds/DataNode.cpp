@@ -37,6 +37,7 @@ DataNode::DataNode(std::stack<ItemToken*>& itemStack) {
 	// (Init members.)
 	m_reqType = nullptr;
 	m_optVals = {};
+	m_syms    = {};
 
 	// Parse all items from the stack.
 	while (itemStack.size() > 0) {
@@ -46,6 +47,7 @@ DataNode::DataNode(std::stack<ItemToken*>& itemStack) {
 
 		// "Take" item in appropriate spot (REALLY trusting parser, here).
 		switch (item->m_lexTkn) {
+			case TOKEN_LABEL:
 			case TOKEN_IMMEDIATE:    m_optVals.push_back(item); break;
 			default: /* directive */ m_reqType = item;          break;
 		}
@@ -72,6 +74,9 @@ void DataNode::localAnalyze(DataModel_t& model, SymTable& table){
 		// Validate based on underlying type.
 		IF_NULL(item, "analyze() null data item");
 		switch(item->m_lexTkn) {
+			case TOKEN_LABEL:
+				// Label- no actions to take as of yet.
+				break;
 			case TOKEN_IMMEDIATE:
 				// Immediate- use common checker.
 				this->getImm(model, *item, *m_reqType); // ignore val for now
@@ -83,8 +88,48 @@ void DataNode::localAnalyze(DataModel_t& model, SymTable& table){
 		}
 	}
 
-	// Claim any open labels to "data space" values.
-	this->pairLabels(model, *m_reqType, ADDR_DATA);
+	// Claim any open labels- using appropriate space.
+	AddrSpace_e space = ADDR_INVALID;
+	switch(m_reqType->m_lexTkn) {
+		case TOKEN_KW_DATA: space = ADDR_DATA; break;
+		default: Terminate_assert("analyze() unknown data directive"); break;
+	}
+	this->pairLabels(model, *m_reqType, space);
+}
+
+//==============================================================================
+// Handles local links/symbols- modifying and linking to local symbols.
+void DataNode::localLink(DataModel_t& model, SymTable& table) {
+	// Create symbol links for each label present.
+	for (ItemToken* item : m_optVals) {
+		// Create/link symbol for label.
+		IF_NULL(item, "localLink() with null data item");
+		if (item->m_lexTkn == TOKEN_LABEL) {
+			Symbol_t* sym = nullptr;            // create
+			this->linkLocal(table, *item, sym); // link
+			m_syms.push_back(sym);              // save
+		}
+	}
+}
+
+//==============================================================================
+// Handles global links/symbols- finishing overall symbol linkage.
+void DataNode::globalLink(DataModel_t& model) {
+	// Counter to track symbol currently being worked on.
+	size_t symIdx = 0;
+
+	// Link remaining labels within the itms.
+	for (ItemToken* item : m_optVals) {
+		// Link label.
+		IF_NULL(item, "globalLink() with null data item");
+		if (item->m_lexTkn == TOKEN_LABEL) {
+			// Link (as needed- function skips solid links).
+			this->linkGlobal(model, *item, m_syms[symIdx]);
+
+			// To next symbol to update.
+			symIdx++;
+		}
+	}
 }
 
 //==============================================================================
@@ -93,11 +138,20 @@ void DataNode::imageAddress(DataModel_t& model) {
 	// Total byte size of node.
 	uint32_t totSize = 0;
 
+	// Counter to track symbol currently being worked on.
+	size_t symIdx = 0;
+
 	// Accumulate the size of each item.
 	for (ItemToken* item : m_optVals) {
 		// Get size based off underlying type.
 		IF_NULL(item, "address() null data item");
 		switch (item->m_lexTkn) {
+			case TOKEN_LABEL:
+				// Label- resolve address, which is ALWAYS word size.
+				this->setAddress(model, m_syms[symIdx]);
+				totSize += ISA_WORD_BYTES;
+				symIdx++;
+				break;
 			case TOKEN_IMMEDIATE:
 				// Immediate- size based on directive type.
 				totSize += this->allocImm(model, *item, *m_reqType);
@@ -122,6 +176,9 @@ void DataNode::imageAssemble(DataModel_t& model) {
 	// Handy uint16_t for intermediate computing.
 	uint16_t binData = 0;
 
+	// Counter to track symbol currently being worked on.
+	size_t symIdx = 0;
+
 	// Only initialized data creates image data.
 	if (m_reqType->m_lexTkn == TOKEN_KW_DATA) {
 		// Assemble each item.
@@ -129,6 +186,12 @@ void DataNode::imageAssemble(DataModel_t& model) {
 			// Translate based on underlying type.
 			IF_NULL(item, "assemble()null data item");
 			switch (item->m_lexTkn) {
+				case TOKEN_LABEL:
+					// Label- add resolved address.
+					IF_NULL(m_syms[symIdx], "assemble() null symbol data item");
+					model.m_dataVals.push_back(m_syms[symIdx]->m_addr);
+					symIdx++;
+					break;
 				case TOKEN_IMMEDIATE:
 					// Immediate- extract/save word.
 					binData = (uint16_t)this->getImm(model, *item, *m_reqType);

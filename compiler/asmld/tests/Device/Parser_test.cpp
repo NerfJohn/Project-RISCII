@@ -205,7 +205,7 @@ TEST(Parser, dataKeyword) {
 	EXPECT_EQ(stack.top(), PARSE_FILE);
 }
 
-TEST(Parser, initData) {
+TEST(Parser, initDataImm) {
 	// Prep input.
 	std::stack<ParseState_e> stack;
 	stack.push((ParseState_e)(PARSE_INIT_DATA));
@@ -220,6 +220,23 @@ TEST(Parser, initData) {
 	// Check stack.
 	EXPECT_EQ(stack.size(), 1);
 	EXPECT_EQ(stack.top(), TOKEN_IMMEDIATE);
+}
+
+TEST(Parser, initDataLabel) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_INIT_DATA));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_LABEL);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.size(), 1);
+	EXPECT_EQ(stack.top(), TOKEN_LABEL);
 }
 
 TEST(Parser, labelDecl) {

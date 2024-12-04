@@ -44,6 +44,29 @@ public:
 	void localAnalyze(DataModel_t& model, SymTable& table);
 
 	/*
+	 * Handles local links/symbols- modifying and linking to local symbols.
+	 *
+	 * Primarily links references to local symbols as applicable. Also applies
+	 * symbol modifiers and pairing checks, ensuring all local symbol info is
+	 * accounted for and linked as able.
+	 *
+	 * @param model shared data of the entire program
+	 * @param table record of locally declared symbols
+	 */
+	void localLink(DataModel_t& model, SymTable& table);
+
+	/*
+	 * Handles global links/symbols- finishing overall symbol linkage.
+	 *
+	 * Finishes work of AAsmNode::localLink() by linking remaining references
+	 * to symbols/labels. Also handles re-linking weak symbols/references as
+	 * applicable.
+	 *
+	 * @param model shared data of the entire program
+	 */
+	void globalLink(DataModel_t& model);
+
+	/*
 	 * Analyze program- generating addresses for each symbol.
 	 *
 	 * Primarily calculates addresses for each symbol. Also computes program
@@ -75,6 +98,9 @@ private:
 
 	// Raw items OPTIONAL/MULTI-ELEMENT to compose directive.
 	std::deque<ItemToken*>   m_optVals; // undo "stack inversion" of values
+
+	// Symbols tied to stored labels (in same order as labels in values).
+	std::vector<Symbol_t*>   m_syms;
 
 	// Helper function to determine bytes to allocate using immediate.
 	uint32_t allocImm(DataModel_t& model,

@@ -106,7 +106,8 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 				IS(TOKEN_IMMEDIATE) WITH(SEQ_EPSILON)
 				break;
 			case PARSE_INIT_DATA:
-				IS(TOKEN_IMMEDIATE) WITH(SEQ_EPSILON)      // init imm only
+				IS(TOKEN_IMMEDIATE) WITH(SEQ_EPSILON)
+				IS(TOKEN_LABEL)     WITH(SEQ_EPSILON)
 				break;
 			default:
 				// Top can't be broken down? compiler bug.

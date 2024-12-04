@@ -16,7 +16,10 @@ void StepProcPrgm_execute(DataModel_t& model) {
 	Print::inst().log(LOG_INFO, "=Process Program=");
 
 	// Complete primary checks/parsing or program.
-	// TODO- global linking/checking
+	for (AAsmNode* node : model.m_nodes) {
+		IF_NULL(node, "Globally linked null node");
+		node->globalLink(model);
+	}
 
 	// Clean up program- deleting nodes as applicable.
 	vector<AAsmNode*>::iterator it = model.m_nodes.begin();

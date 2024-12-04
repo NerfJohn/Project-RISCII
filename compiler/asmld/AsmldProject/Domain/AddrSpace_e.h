@@ -11,7 +11,8 @@
 typedef enum {
 	// Core values.
 	ADDR_TEXT,               // text/program address space
-	ADDR_DATA,               // data address space
+	ADDR_DATA,               // init data (in data address space)
+	ADDR_BSS,                // un-init data (in data address space)
 
 	// Special values.
 	ADDR_INVALID             // invalid/unknown address space

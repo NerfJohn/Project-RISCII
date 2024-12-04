@@ -119,6 +119,83 @@ void AAsmNode::pairLabels(DataModel_t& model,
 }
 
 //==============================================================================
+// Common helper function to link a local label, finding its symbol.
+void AAsmNode::linkLocal(SymTable& table,
+		                 ItemToken const& label,
+						 Symbol_t*& sym) {
+	// (Item is label, right?)
+	if (label.m_lexTkn != TOKEN_LABEL) {Terminate_assert("llink() w/o label");}
+
+	// Search table for symbol to link to (may not find if global ref).
+	if (table.getSym(label.m_rawStr, sym) == RET_ERR_NONE) {
+		// Symbol now referenced- update counter.
+		sym->m_numRefs++;
+
+		// Log link.
+		string dbgStr = string("Local link '") +
+				        label.m_rawStr         +
+						"' (to "               +
+						sym->m_file            +
+						"/"                    +
+						to_string(sym->m_line) +
+						")";
+		Print::inst().log(LOG_DEBUG, label.m_file, label.m_line, dbgStr);
+	}
+}
+
+//==============================================================================
+// Common helper function to link a global label, finding its symbol.
+void AAsmNode::linkGlobal(DataModel_t& model,
+		                  ItemToken const& label,
+						  Symbol_t*& sym) {
+	// (Item is label, right?)
+	if (label.m_lexTkn != TOKEN_LABEL) {Terminate_assert("glink() w/o label");}
+
+	// Attempt link ONLY IF link hasn't been found.
+	if (sym == nullptr) {
+		// Search table for symbol to link to (MUST find for validity).
+		if (model.m_gSyms.getSym(label.m_rawStr, sym)== RET_ERR_ERROR) {
+			// No symbol found- log error.
+			string errStr = string("Global no-def '") + label.m_rawStr + "'";
+			Print::inst().log(LOG_ERROR, label.m_file, label.m_line, errStr);
+			ModelUtil_recordError(model, RET_G_NODEF);
+		}
+		else {
+			// Symbol now referenced- update counter.
+			sym->m_numRefs++;
+
+			// Log link.
+			string dbgStr = string("Global link '") +
+					        label.m_rawStr          +
+							"' (to "                +
+							sym->m_file             +
+							"/"                     +
+							to_string(sym->m_line)  +
+							")";
+			Print::inst().log(LOG_DEBUG, label.m_file, label.m_line, dbgStr);
+		}
+	}
+}
+
+//==============================================================================
+// Common helper function to resolve a label's address.
+void AAsmNode::setAddress(DataModel_t const& model, Symbol_t* const& sym) {
+	// Set address based on address space symbol represents.
+	IF_NULL(sym, "setAddr() with null symbol");
+	switch (sym->m_space) {
+		case ADDR_TEXT: sym->m_addr = (uint16_t)(model.m_textSize); break;
+		case ADDR_DATA: sym->m_addr = (uint16_t)(model.m_dataSize); break;
+		case ADDR_BSS:
+			// Bss comes after init data in RAM.
+			sym->m_addr = (uint16_t)(model.m_dataSize + model.m_bssSize);
+			break;
+		default:
+			// Unknown address space? Bug!
+			Terminate_assert("setAddr() with unknown space");
+	}
+}
+
+//==============================================================================
 // Common helper function to free symbols/ptrs to symbols.
 void AAsmNode::freeSymbol(Symbol_t*& sym) {
 	// Adjust reference counter.
