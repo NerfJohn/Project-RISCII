@@ -10,11 +10,11 @@
 #include "Ds/ItemToken.h"
 
 /*
- * Class implementing directive controlling global data layout of the program.
+ * Build node representing a data allocation directive.
  *
- * Implements checks/translations needed to organize/assemble/link global data
- * for a program (initialized of not). Derives functions from AAsmNode to allow
- * node to be part of a larger data structure, yet still be accessed.
+ * Building node from items off the parser's action stack, implements functions
+ * to analyze and generate allocated data. Handles both initialized and
+ * uninitialized data allocation/organization.
  */
 class DataNode: public AAsmNode {
 public:
@@ -25,56 +25,44 @@ public:
 	/*
 	 * Constructor called by parser. Builds itself directly from action stack.
 	 *
-	 * Builds node from all items stored on the given stack. Constructor
+	 * Builds node from ALL items stored on the given stack. Constructor
 	 * implements some checks on stack composition, but generally assumes the
-	 * items have already been checked/parsed by a parser.
+	 * items have ALREADY BEEN CHECKED by a parser.
 	 */
 	DataNode(std::stack<ItemToken*>& itemStack);
 
 	/*
-	 * Runs local analytics and record-keeping on node's data.
+	 * Analyzes node- validating local arguments/symbols.
 	 *
-	 * Localized analysis focused on checking arguments are semantically correct
-	 * and tracking locally declared symbols/labels. Intended as the first step
-	 * of file-level analysis.
+	 * Validates node's arguments- ensuring value are semantically correct. Also
+	 * declares/creates symbols and pairs them with their target nodes/address
+	 * spaces.
 	 *
 	 * @param model shared data of the entire program
-	 * @param syms  symbol table of localized symbols
+	 * @param table record of locally declared symbols
 	 */
-	void doLocalAnalysis(DataModel_t& model, SymTable& syms);
+	void localAnalyze(DataModel_t& model, SymTable& table);
 
 	/*
-	 * Adds node to model's overall program data structures.
+	 * Analyze program- generating addresses for each symbol.
 	 *
-	 * Function focused on adding nodes and symbols to the model (as
-	 * appropriate). Additional logic is performed to necessary errors/warnings.
-	 * Should be done after each node has been locally analyzed/linked.
+	 * Primarily calculates addresses for each symbol. Also computes program
+	 * sizes for state step checks. Assumes program nodes are being called in
+	 * the order they will be assembled/placed.
 	 *
 	 * @param model shared data of the entire program
 	 */
-	void addToProgram(DataModel_t& model);
+	void imageAddress(DataModel_t& model);
 
 	/*
-	 * Computes address-related data for model and node.
+	 * Assembles program- generating binary values in the data model.
 	 *
-	 * Nodes that take up space in the binary image update the model to reflect
-	 * their effect on addresses while nodes that use addresses use the model to
-	 * determine their actual value.
-	 *
-	 * @param model shared data of the entire program
-	 */
-	void genAddresses(DataModel_t& model);
-
-	/*
-	 * Assembles the node, adding its binary data to the model.
-	 *
-	 * Nodes that take up space in the binary image generate and update the
-	 * model with their binary equivalent. Function has no effect on all other
-	 * nodes.
+	 * Generates and stores binary values in the data model. Assumes program
+	 * nodes are being called in the order they will be placed into the file.
 	 *
 	 * @param model shared data of the entire program
 	 */
-	void genAssemble(DataModel_t& model);
+	void imageAssemble(DataModel_t& model);
 
 	/*
 	 * General destructor- ensures all memory is freed on deletion.
@@ -82,9 +70,16 @@ public:
 	~DataNode(void);
 
 private:
-	// Raw items/tokens composing the directive.
-	ItemToken*               m_itemType;   // MUST be non-null
-	std::deque<ItemToken*>   m_itemVals;
+	// Raw items REQUIRED to compose data directive.
+	ItemToken*               m_reqType;
+
+	// Raw items OPTIONAL/MULTI-ELEMENT to compose directive.
+	std::deque<ItemToken*>   m_optVals; // undo "stack inversion" of values
+
+	// Helper function to determine bytes to allocate using immediate.
+	uint32_t allocImm(DataModel_t& model,
+			          ItemToken const& imm,
+					  ItemToken const& type);
 };
 
 #endif /* DS_DATANODE_H_ */

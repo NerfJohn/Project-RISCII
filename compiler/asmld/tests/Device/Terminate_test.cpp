@@ -48,3 +48,24 @@ TEST(Terminate, terminateSummary) {
 	// Check assert was output.
 	EXPECT_EQ(OsStdout_getOutput(), "asmld.exe [INFO ] 3 errors, 1 warnings, returned 2\n");
 }
+
+TEST(Terminate, terminateIfNull) {
+	// Setup inputs.
+	int a = 4;
+	int* aPtr = &a;
+	
+	// Run macro under test.
+	IF_NULL(aPtr, "error msg");
+	
+	// Check results.
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Try 2nd run with nullptr.
+	aPtr = nullptr;
+	IF_NULL(aPtr, "error2");
+	
+	// Check return is correct.
+	EXPECT_EQ(OsExit_hasRet(), true);
+	EXPECT_EQ(OsExit_getCode(), RET_ASSERT);
+	EXPECT_EQ(OsStdout_getOutput(), "ASSERT! error2\n");
+}

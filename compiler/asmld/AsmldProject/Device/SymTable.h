@@ -9,54 +9,52 @@
 #include <vector>
 #include "Domain/RetErr_e.h"
 #include "Domain/Symbol_t.h"
-#include "Ds/ItemToken.h"
 
 /*
- * Class used to manage the creation and modification of symbols.
+ * Table used to add/lookup/store program's symbols.
  *
- * Implements logic to create, get, and modify symbols based on labels. Table
- * can create symbols for the caller, add pre-created entries, and retrieve
- * requested symbols.
+ * Effectively just a storage class for symbols. Can be used to store local
+ * and global labels. Tables act as individual instances, but shares common
+ * definitions for pre-known labels (e.g. __SIZE, __START) baked into class.
  */
 class SymTable {
 public:
 	/*
-	 * Creates a new symbol with a label- returning a link to symbol info.
+	 * Adds given symbol to table (if key has no assigned symbol).
 	 *
-	 * Allocates new symbol based on given label's info. Symbol link is returned
-	 * for future referencing/reading. If a symbol with the given label name
-	 * already exists, it is returned instead.
+	 * Addition carried out ONLY IF key doesn't already correspond to a
+	 * symbol. Symbol ptr MUST not be NULL. Function factors for pre-known
+	 * labels (e.g. __SIZE, __START).
 	 *
-	 * @param labelTkn label item new symbol is based on
-	 * @param sym      link to symbol associated with the label's name
-	 * @return         RET_ERR_NONE if new symbol made, RET_ERR_ERROR otherwise
+	 * @param key string used to find symbol later
+	 * @param sym symbol to add to table under key
+	 * @return    RET_ERR_NONE if successfully added, RET_ERR_ERROR otherwise
 	 */
-	RetErr_e define(ItemToken& labelTkn, Symbol_t*& sym);
+	RetErr_e addSym(std::string const& key, Symbol_t* sym);
 
 	/*
-	 * Adds the given symbol to the table (if the nameis not already taken).
+	 * Finds symbol based on key.
 	 *
-	 * If the given name is not already used to access a symbol, the given
-	 * symbol will be added under the given name. Nullptrs result in assertion,
-	 * with the return indicating the success of the "add" operation.
+	 * Populates symbol reference ONLY IF symbol is found with the key. Symbol
+	 * ptr is guaranteed to NOT be NULL. Function factors for pre-known labels
+	 * (e.g. __SIZE, __START).
 	 *
-	 * @param name name to save the symbol under
-	 * @param sym  symbol (ptr) to save to the table
-	 * @return     RET_ERR_NONE if added, RET_ERR_ERROR otherwise
+	 * @param key key to use to find symbol
+	 * @param sym symbol found using the key
+	 * @return    RET_ERR_NONE if symbol is found, RET_ERR_ERROR otherwise
 	 */
-	RetErr_e addSym(std::string const& name, Symbol_t* sym);
+	RetErr_e getSym(std::string const& key, Symbol_t*& sym);
 
 	/*
-	 * Gets a symbol based on the given name.
+	 * Populates the given vector with table's symbols.
 	 *
-	 * Uses given name to find and return the symbol. Return indicates the
-	 * success of the "get" operation.
+	 * Overwrites vector's contents with symbols currently in the symbol table.
+	 * Symbol ptrs are guaranteed to NOT be NULL. Pre-known labels (e.g. __SIZE,
+	 * __START) are NOT included in the list.
 	 *
-	 * @param name name symbol is saved under
-	 * @param sym  symbol accessed using the name
-	 * @return     RET_ERR_NONE if found, RET_ERR_ERROR otherwise
+	 * @param syms vector to overwrite/populate with the table's symbols
 	 */
-	RetErr_e getSym(std::string const& name, Symbol_t*& sym);
+	void asList(std::vector<Symbol_t*>& syms);
 
 private:
 	// Core "name to symbol" map of the table.

@@ -12,7 +12,7 @@
 using namespace std;
 
 //==============================================================================
-// Helper function to warning about repeated flags in instructions.
+// Helper function to warn about repeated flags in instruction.
 std::string InstrNode::getRepeats(std::string const& str) {
 	// Strings for tracking seen/repeated chars.
 	string seen;
@@ -38,73 +38,55 @@ std::string InstrNode::getRepeats(std::string const& str) {
 }
 
 //==============================================================================
-// Helper function to extract register values (quickly- minimal checks).
-void InstrNode::extractRegs(std::vector<uint8_t>& regInts) {
-	// Extract each register value (ptrs pre-checked by ctor).
-	for (ItemToken* tkn : m_itemRegs) {
-		// Value extracted.
-		uint8_t regInt;
-
-		// Extract.
-		if (IsaUtil_toReg(tkn->m_rawStr, regInt) == RET_ERR_ERROR) {
-			Terminate_assert("Extracted bad register value");
-		}
-
-		// Save.
-		regInts.push_back(regInt);
-	}
-}
-
-//==============================================================================
 // Constructor called by parser. Builds itself directly from action stack.
 InstrNode::InstrNode(std::stack<ItemToken*>& itemStack) {
 	// (Init members.)
-	m_itemOp   = nullptr;
-	m_itemFlag = nullptr;
-	m_itemRegs = {};
-	m_itemImm  = nullptr;
+	m_reqOp   = nullptr;
+	m_optFlag = nullptr;
+	m_optRegs = {};
+	m_optImm  = nullptr;
 
-	// Parse all items from the stack (ie trusting parser knows its grammar).
+	// Parse all items from the stack.
 	while (itemStack.size() > 0) {
-		// (Sanity check item.)
-		ItemToken* tkn = itemStack.top();
-		if (tkn == nullptr) {Terminate_assert("Null token in InstrNode stack");}
+		// Get next item.
+		ItemToken* item = itemStack.top();
+		IF_NULL(item, "InstrNode() with null item");
 
-		// Take ownership of items based on type (ie REALLY trusting parser...).
-		switch (tkn->m_lexTkn) {
-			case TOKEN_FLAGS:     m_itemFlag = move(tkn);           break;
-			case TOKEN_REGISTER:  m_itemRegs.push_front(move(tkn)); break;
-			case TOKEN_IMMEDIATE: m_itemImm = move(tkn);            break;
-			default: /* opcode */ m_itemOp = move(tkn);             break;
+		// "Take" item in appropriate spot (REALLY trusting parser, here).
+		switch (item->m_lexTkn) {
+			case TOKEN_FLAGS:     m_optFlag = item;           break;
+			case TOKEN_REGISTER:  m_optRegs.push_front(item); break;
+			case TOKEN_IMMEDIATE: m_optImm  = item;           break;
+			default: /* opcode */ m_reqOp   = item;           break;
 		}
 
 		// Item saved/moved- remove from stack.
 		itemStack.pop();
 	}
 
-	// (Sanity check pertinent details.)
-	if (m_itemOp == nullptr) {Terminate_assert("InstrNode has no opcode");}
+	// Ensure required items are present.
+	IF_NULL(m_reqOp, "InstrNode() without opcode");
 
 	// (Log creation.)
 	Print::inst().log(LOG_DEBUG,
-					  m_itemOp->m_file,
-					  m_itemOp->m_line,
+			          m_reqOp->m_file,
+					  m_reqOp->m_line,
 					  "InstrNode created");
 }
 
 //==============================================================================
-// Runs local analytics and record-keeping on node's data.
-void InstrNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
-	// Analyze the opcode (ptr pre-checked by ctor).
-	InstrType_e procOp = IsaUtil_asInstr(m_itemOp->m_lexTkn);
-	if (procOp == INSTR_INVALID) {Terminate_assert("Analyzed bad opcode");}
+// Analyzes node- validating local arguments/symbols.
+void InstrNode::localAnalyze(DataModel_t& model, SymTable& table) {
+	// Validate opcode.
+	InstrType_e procOp = IsaUtil_asInstr(m_reqOp->m_lexTkn);
+	if (procOp == INSTR_INVALID) {Terminate_assert("analyze() bad opcode");}
 
-	// If there are flags, check they are valid.
-	if (m_itemFlag != nullptr) {
+	// Validate flags as present.
+	if (m_optFlag != nullptr) {
 		// Get common vars.
-		string   raw  = m_itemFlag->m_rawStr;
-		string   file = m_itemFlag->m_file;
-		uint32_t line = m_itemFlag->m_line;
+		string   raw  = m_optFlag->m_rawStr;
+		string   file = m_optFlag->m_file;
+		uint32_t line = m_optFlag->m_line;
 
 		// Warn about any repeated flags.
 		string repeats = this->getRepeats(raw);
@@ -124,66 +106,56 @@ void InstrNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 		}
 	}
 
-	// Validate each register on record (ptrs pre-checked by ctor).
-	for (ItemToken* itemReg : m_itemRegs) {
-		// Get common vars.
-		string   raw  = itemReg->m_rawStr;
-		string   file = itemReg->m_file;
-		uint32_t line = itemReg->m_line;
-
-		// Analyze register value.
-		uint8_t regInt;
-		if (IsaUtil_toReg(raw, regInt) == RET_ERR_ERROR) {
-			string errStr = string("Invalid register '") + raw + "'";
-			Print::inst().log(LOG_ERROR, file, line, errStr);
-			ModelUtil_recordError(model, RET_BAD_REG);
-		}
+	// Validate registers as present.
+	for (ItemToken* item : m_optRegs) {
+		IF_NULL(item, "analyze() null instr reg");
+		this->getReg(model, *item);                // ignore val for now
 	}
 
-	// If there'a an immediate, validate the value.
-	if (m_itemImm != nullptr) {this->validateImm(model, *m_itemImm, *m_itemOp);}
+	// Validate immediate as present.
+	if (m_optImm != nullptr) {
+		this->getImm(model, *m_optImm, *m_reqOp);
+	}
 
-	// Claim any open labels.
-	this->pairOpenLabels(model, *m_itemOp, ADDR_TEXT);
+	// Claim any open/unpaired labels to "program space" instruction.
+	this->pairLabels(model, *m_reqOp, ADDR_TEXT);
 }
 
 //==============================================================================
-// Adds node to model's overall program data structures.
-void InstrNode::addToProgram(DataModel_t& model) {
-	// Simply add the node to the global program.
-	model.m_nodes.push_back(this);
-}
-
-//==============================================================================
-// Computes address-related data for model and node.
-void InstrNode::genAddresses(DataModel_t& model) {
+// Analyze program- generating addresses for each symbol.
+void InstrNode::imageAddress(DataModel_t& model) {
 	// Instruction takes 1 word in text section.
 	model.m_textSize += ISA_WORD_BYTES;
 }
 
 //==============================================================================
-// Assembles the node, adding its binary data to the model.
-void InstrNode::genAssemble(DataModel_t& model) {
+// Assembles program- generating binary values in the data model.
+void InstrNode::imageAssemble(DataModel_t& model) {
 	// Instruction to create (+broken out fields).
 	uint16_t binInstr = 0x0000;
 	Instr_t  fields;
 
 	// Prep register values for populating fields.
 	vector<uint8_t> regInts;
-	this->extractRegs(regInts);
+	for (ItemToken* item : m_optRegs) {
+		IF_NULL(item,"assemble() null instr reg");
+		regInts.push_back(this->getReg(model, *item));
+	}
 	size_t numRegs = regInts.size();
 
 	// Add fields.
-	fields.m_opcode = IsaUtil_asInstr(m_itemOp->m_lexTkn);
-	if (m_itemFlag != nullptr) {fields.m_flags = m_itemFlag->m_rawStr;}
+	fields.m_opcode = IsaUtil_asInstr(m_reqOp->m_lexTkn);
+	if (m_optFlag != nullptr) {fields.m_flags = m_optFlag->m_rawStr;}
 	if (numRegs > 0) {fields.m_r1 = regInts[0];}
 	if (numRegs > 1) {fields.m_r2 = regInts[1];}
 	if (numRegs > 2) {fields.m_r3 = regInts[2];}
-	if (m_itemImm != nullptr) {fields.m_imm = this->getImmVal(*m_itemImm);}
+	if (m_optImm != nullptr) {
+		fields.m_imm = this->getImm(model, *m_optImm, *m_reqOp);
+	}
 
 	// "Fields... Assemble!".
 	RetErr_e retErr = IsaUtil_genInstr(binInstr, fields);
-	if (retErr) {Terminate_assert("Couldn't assemble instruction");}
+	if (retErr) {Terminate_assert("assemble() failed instr");}
 
 	// Add instruction to text section.
 	model.m_textVals.push_back(binInstr);
@@ -192,11 +164,11 @@ void InstrNode::genAssemble(DataModel_t& model) {
 //==============================================================================
 // General destructor- ensures all memory is freed on deletion.
 InstrNode::~InstrNode(void) {
-	// Free pre-checked tokens (ie ptrs pre-checked in ctor).
-	delete m_itemOp;
-	for (ItemToken* item : m_itemRegs) {delete item;}
+	// Free required items (ie known to need freeing).
+	delete m_reqOp;
 
-	// Free other tokens as needed.
-	if (m_itemFlag != nullptr) {delete m_itemFlag;}
-	if (m_itemImm  != nullptr) {delete m_itemImm;}
+	// Free other items as necessary.
+	for (ItemToken* item : m_optRegs) {if (item != nullptr) {delete item;}    }
+	if (m_optFlag != nullptr)                               {delete m_optFlag;}
+	if (m_optImm  != nullptr)                               {delete m_optImm; }
 }

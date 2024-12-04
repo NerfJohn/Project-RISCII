@@ -10,11 +10,11 @@
 #include "Ds/ItemToken.h"
 
 /*
- * Class implementing single ISA based instructions (in the assembly language).
+ * Build node used to represent an ISA instruction.
  *
- * Implements the checks/translations needed to assemble/link a binary
- * instruction. Derives functions from AAsmNode to allow for the node to be part
- * of a larger data structure, yet still be accessed appropriately.
+ * Building node from items off the parser's action stack, implements functions
+ * to analyze and generate binary instructions. Ensures arguments semantically
+ * fit into instruction (as defined by the ISA).
  */
 class InstrNode: public AAsmNode {
 public:
@@ -25,56 +25,44 @@ public:
 	/*
 	 * Constructor called by parser. Builds itself directly from action stack.
 	 *
-	 * Builds node from all items stored on the given stack. Constructor
+	 * Builds node from ALL items stored on the given stack. Constructor
 	 * implements some checks on stack composition, but generally assumes the
-	 * items have already been checked/parsed by a parser.
+	 * items have ALREADY BEEN CHECKED by a parser.
 	 */
 	InstrNode(std::stack<ItemToken*>& itemStack);
 
 	/*
-	 * Runs local analytics and record-keeping on node's data.
+	 * Analyzes node- validating local arguments/symbols.
 	 *
-	 * Localized analysis focused on checking arguments are semantically correct
-	 * and tracking locally declared symbols/labels. Intended as the first step
-	 * of file-level analysis.
+	 * Validates node's arguments- ensuring value are semantically correct. Also
+	 * declares/creates symbols and pairs them with their target nodes/address
+	 * spaces.
 	 *
 	 * @param model shared data of the entire program
-	 * @param syms  symbol table of localized symbols
+	 * @param table record of locally declared symbols
 	 */
-	void doLocalAnalysis(DataModel_t& model, SymTable& syms);
+	void localAnalyze(DataModel_t& model, SymTable& table);
 
 	/*
-	 * Adds node to model's overall program data structures.
+	 * Analyze program- generating addresses for each symbol.
 	 *
-	 * Function focused on adding nodes and symbols to the model (as
-	 * appropriate). Additional logic is performed to necessary errors/warnings.
-	 * Should be done after each node has been locally analyzed/linked.
+	 * Primarily calculates addresses for each symbol. Also computes program
+	 * sizes for state step checks. Assumes program nodes are being called in
+	 * the order they will be assembled/placed.
 	 *
 	 * @param model shared data of the entire program
 	 */
-	void addToProgram(DataModel_t& model);
+	virtual void imageAddress(DataModel_t& model);
 
 	/*
-	 * Computes address-related data for model and node.
+	 * Assembles program- generating binary values in the data model.
 	 *
-	 * Nodes that take up space in the binary image update the model to reflect
-	 * their effect on addresses while nodes that use addresses use the model to
-	 * determine their actual value.
-	 *
-	 * @param model shared data of the entire program
-	 */
-	void genAddresses(DataModel_t& model);
-
-	/*
-	 * Assembles the node, adding its binary data to the model.
-	 *
-	 * Nodes that take up space in the binary image generate and update the
-	 * model with their binary equivalent. Function has no effect on all other
-	 * nodes.
+	 * Generates and stores binary values in the data model. Assumes program
+	 * nodes are being called in the order they will be placed into the file.
 	 *
 	 * @param model shared data of the entire program
 	 */
-	void genAssemble(DataModel_t& model);
+	virtual void imageAssemble(DataModel_t& model);
 
 	/*
 	 * General destructor- ensures all memory is freed on deletion.
@@ -82,17 +70,16 @@ public:
 	~InstrNode(void);
 
 private:
-	// Raw items/tokens composing the instruction.
-	ItemToken*               m_itemOp;   // MUST be non-null
-	ItemToken*               m_itemFlag;
-	std::deque<ItemToken*>   m_itemRegs;
-	ItemToken*               m_itemImm;
+	// Raw items REQUIRED to compose instruction.
+	ItemToken*               m_reqOp;
 
-	// Helper function to warn about repeated flags in instructions.
+	// Raw items OPTIONAL/MULTI-ELEMENT to compose instruction.
+	ItemToken*               m_optFlag;
+	std::deque<ItemToken*>   m_optRegs; // undo "stack inversion" of regs
+	ItemToken*               m_optImm;
+
+	// Helper function to warn about repeated flags in instruction.
 	std::string getRepeats(std::string const& str);
-
-	// Helper function to extract register values (quickly- minimal checks).
-	void extractRegs(std::vector<uint8_t>& regInts);
 };
 
 #endif /* DS_INSTRNODE_H_ */

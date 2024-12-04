@@ -10,11 +10,11 @@
 #include "Ds/ItemToken.h"
 
 /*
- * Class implementing a declaration of a labeled address.
+ * Build node representing local label declaration.
  *
- * Implements checks/translations required to declare named addresses that can
- * be referred to by other nodes. Derives functions from AAsmNode to allow for
- * the node to be part of a larger data structure, yet still be accessed.
+ * Building node from item's off the parser's action stack, implements functions
+ * to declare and manage label declarations. Creates a unique symbol per
+ * declaration, ensuring it is defined and addressed correctly.
  */
 class DeclNode: public AAsmNode {
 public:
@@ -25,68 +25,58 @@ public:
 	/*
 	 * Constructor called by parser. Builds itself directly from action stack.
 	 *
-	 * Builds node from all items stored on the given stack. Constructor
+	 * Builds node from ALL items stored on the given stack. Constructor
 	 * implements some checks on stack composition, but generally assumes the
-	 * items have already been checked/parsed by a parser.
+	 * items have ALREADY BEEN CHECKED by a parser.
 	 */
 	DeclNode(std::stack<ItemToken*>& itemStack);
 
 	/*
-	 * Runs local analytics and record-keeping on node's data.
+	 * Analyzes node- validating local arguments/symbols.
 	 *
-	 * Localized analysis focused on checking arguments are semantically correct
-	 * and tracking locally declared symbols/labels. Intended as the first step
-	 * of file-level analysis.
+	 * Validates node's arguments- ensuring value are semantically correct. Also
+	 * declares/creates symbols and pairs them with their target nodes/address
+	 * spaces.
 	 *
 	 * @param model shared data of the entire program
-	 * @param syms  symbol table of localized symbols
+	 * @param table record of locally declared symbols
 	 */
-	void doLocalAnalysis(DataModel_t& model, SymTable& syms);
+	void localAnalyze(DataModel_t& model, SymTable& table);
 
 	/*
-	 * Analyzes and links labels/symbols at the local level.
+	 * Handles local links/symbols- modifying and linking to local symbols.
 	 *
-	 * Function focused on gathering additional information on locally declared
-	 * labels/symbols, including linking localized references to their declared
-	 * symbol. Should be done after each node has been locally analyzed.
+	 * Primarily links references to local symbols as applicable. Also applies
+	 * symbol modifiers and pairing checks, ensuring all local symbol info is
+	 * accounted for and linked as able.
 	 *
 	 * @param model shared data of the entire program
-	 * @param syms  symbol table of localized symbols
+	 * @param table record of locally declared symbols
 	 */
-	void doLocalLinking(DataModel_t& model, SymTable& syms);
+	void localLink(DataModel_t& model, SymTable& table);
 
 	/*
-	 * Adds node to model's overall program data structures.
+	 * Finishing program checks- requesting deletions as needed to slim program.
 	 *
-	 * Function focused on adding nodes and symbols to the model (as
-	 * appropriate). Additional logic is performed to necessary errors/warnings.
-	 * Should be done after each node has been locally analyzed/linked.
+	 * Primarily acts as a way for state steps to remove nodes with no more use.
+	 * Also acts as a last opportunity to check program for errors and warnings,
+	 * such as unused symbols.
 	 *
 	 * @param model shared data of the entire program
+	 * @return      CLEAN_DELETE if node can be deleted, CLEAN_KEEP otherwise
 	 */
-	void addToProgram(DataModel_t& model);
+	CleanAction_e globalClean(DataModel_t& model);
 
 	/*
-	 * Runs last (iterable) checks on global program prior to modification.
+	 * Analyze program- generating addresses for each symbol.
 	 *
-	 * Executes any last actions (on node of global program) before program is
-	 * considered ready to modifications or translation. Should be done after
-	 * each node in global program has been globally linked.
-	 *
-	 * @param model shared data of the entire program
-	 */
-	virtual void cleanProgram(DataModel_t& model);
-
-	/*
-	 * Computes address-related data for model and node.
-	 *
-	 * Nodes that take up space in the binary image update the model to reflect
-	 * their effect on addresses while nodes that use addresses use the model to
-	 * determine their actual value.
+	 * Primarily calculates addresses for each symbol. Also computes program
+	 * sizes for state step checks. Assumes program nodes are being called in
+	 * the order they will be assembled/placed.
 	 *
 	 * @param model shared data of the entire program
 	 */
-	void genAddresses(DataModel_t& model);
+	void imageAddress(DataModel_t& model);
 
 	/*
 	 * General destructor- ensures all memory is freed on deletion.
@@ -94,10 +84,10 @@ public:
 	~DeclNode(void);
 
 private:
-	// Raw items/tokens composing the declaration.
-	ItemToken*               m_itemLabel;   // MUST be non-null
+	// Raw items REQUIRED to compose label declaration.
+	ItemToken*               m_reqLabel;
 
-	// Symbol created/managed by declaration.
+	// Symbol created by declaration.
 	Symbol_t*                m_sym;
 };
 

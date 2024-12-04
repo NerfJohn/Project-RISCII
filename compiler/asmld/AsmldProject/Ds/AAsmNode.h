@@ -5,107 +5,111 @@
 #ifndef DS_AASMNODE_H_
 #define DS_AASMNODE_H_
 
-#include "Device/SymTable.h"
+#include "Domain/CleanAction_e.h"
 #include "Domain/DataModel_t.h"
 #include "Ds/ItemToken.h"
 
 /*
- * Abstract class used to give nodes a general interface for operations.
+ * Abstract class used to define nodes used to build the program.
  *
- * Nodes, the building blocks of the core data structure, act as derived classes
- * of this abstract class. This ensures all node functions define necessary
- * functions, being able to be stored/called as generic build pieces.
+ * Defines common/necessary functions to read/process/generate the program.
+ * Also defines protected helper functions common to multiple derived node types
+ * for convenience.
  */
 class AAsmNode {
 public:
 	/*
-	 * Runs local analytics and record-keeping on node's data.
+	 * Analyzes node- validating local arguments/symbols.
 	 *
-	 * Localized analysis focused on checking arguments are semantically correct
-	 * and tracking locally declared symbols/labels. Intended as the first step
-	 * of file-level analysis.
+	 * Validates node's arguments- ensuring value are semantically correct. Also
+	 * declares/creates symbols and pairs them with their target nodes/address
+	 * spaces.
 	 *
 	 * @param model shared data of the entire program
-	 * @param syms  symbol table of localized symbols
+	 * @param table record of locally declared symbols
 	 */
-	virtual void doLocalAnalysis(DataModel_t& model, SymTable& syms);
+	virtual void localAnalyze(DataModel_t& model, SymTable& table);
 
 	/*
-	 * Analyzes and links labels/symbols at the local level.
+	 * Handles local links/symbols- modifying and linking to local symbols.
 	 *
-	 * Function focused on gathering additional information on locally declared
-	 * labels/symbols, including linking localized references to their declared
-	 * symbol. Should be done after each node has been locally analyzed.
+	 * Primarily links references to local symbols as applicable. Also applies
+	 * symbol modifiers and pairing checks, ensuring all local symbol info is
+	 * accounted for and linked as able.
 	 *
 	 * @param model shared data of the entire program
-	 * @param syms  symbol table of localized symbols
+	 * @param table record of locally declared symbols
 	 */
-	virtual void doLocalLinking(DataModel_t& model, SymTable& syms);
+	virtual void localLink(DataModel_t& model, SymTable& table);
 
 	/*
-	 * Adds node to model's overall program data structures.
+	 * Handles global links/symbols- finishing overall symbol linkage.
 	 *
-	 * Function focused on adding nodes and symbols to the model (as
-	 * appropriate). Additional logic is performed to necessary errors/warnings.
-	 * Should be done after each node has been locally analyzed/linked.
+	 * Finishes work of AAsmNode::localLink() by linking remaining references
+	 * to symbols/labels. Also handles re-linking weak symbols/references as
+	 * applicable.
 	 *
 	 * @param model shared data of the entire program
 	 */
-	virtual void addToProgram(DataModel_t& model);
+	virtual void globalLink(DataModel_t& model);
 
 	/*
-	 * Runs last (iterable) checks on global program prior to modification.
+	 * Finishing program checks- requesting deletions as needed to slim program.
 	 *
-	 * Executes any last actions (on node of global program) before program is
-	 * considered ready to modifications or translation. Should be done after
-	 * each node in global program has been globally linked.
+	 * Primarily acts as a way for state steps to remove nodes with no more use.
+	 * Also acts as a last opportunity to check program for errors and warnings,
+	 * such as unused symbols.
 	 *
 	 * @param model shared data of the entire program
+	 * @return      CLEAN_DELETE if node can be deleted, CLEAN_KEEP otherwise
 	 */
-	virtual void cleanProgram(DataModel_t& model);
+	virtual CleanAction_e globalClean(DataModel_t& model);
 
 	/*
-	 * Computes address-related data for model and node.
+	 * Analyze program- generating addresses for each symbol.
 	 *
-	 * Nodes that take up space in the binary image update the model to reflect
-	 * their effect on addresses while nodes that use addresses use the model to
-	 * determine their actual value.
+	 * Primarily calculates addresses for each symbol. Also computes program
+	 * sizes for state step checks. Assumes program nodes are being called in
+	 * the order they will be assembled/placed.
 	 *
 	 * @param model shared data of the entire program
 	 */
-	virtual void genAddresses(DataModel_t& model);
+	virtual void imageAddress(DataModel_t& model);
 
 	/*
-	 * Assembles the node, adding its binary data to the model.
+	 * Assembles program- generating binary values in the data model.
 	 *
-	 * Nodes that take up space in the binary image generate and update the
-	 * model with their binary equivalent. Function has no effect on all other
-	 * nodes.
+	 * Generates and stores binary values in the data model. Assumes program
+	 * nodes are being called in the order they will be placed into the file.
 	 *
 	 * @param model shared data of the entire program
 	 */
-	virtual void genAssemble(DataModel_t& model);
+	virtual void imageAssemble(DataModel_t& model);
+
+	/*
+	 * General destructor- public to allow for generic node deletion.
+	 */
+	virtual ~AAsmNode(void);
 
 protected:
-	// Protect constructor/destructor to ensure class is abstract.
-	         AAsmNode() {/* no actions */}
-	virtual ~AAsmNode() {/* no actions */}
+	// Protect constructor to ensure class is abstract.
+	AAsmNode() {/* no actions */}
 
-	// Helper function for common immediate value validation.
-	virtual void validateImm(DataModel_t& model,
-			                 ItemToken const& immItem,
-					         ItemToken const& immOp);
+	// Common helper function to get/validate register value.
+	uint8_t getReg(DataModel_t& model, ItemToken const& reg);
 
-	// Helper function for common immediate value extraction.
-	virtual int32_t getImmVal(ItemToken const& immItem);
+	// Common helper function to get/validate immediate values.
+	int32_t getImm(DataModel_t& model,
+			       ItemToken const& imm,
+				   ItemToken const& op);
 
-	// Helper function for pairing nodes to labels.
-	virtual void pairOpenLabels(DataModel_t& model,
-			                    ItemToken& fileLoc,
-								AddrSpace_e const space);
+	// Common helper function to claim unpaired labels.
+	void pairLabels(DataModel_t& model,
+			        ItemToken const& loc,
+					AddrSpace_e const space);
 
-	// Helper function for freeing symbols upon destruction.
-	virtual void freeSymbol(Symbol_t*& sym);
+	// Common helper function to free symbols/ptrs to symbols.
+	void freeSymbol(Symbol_t*& sym);
 };
 
 #endif /* DS_AASMNODE_H_ */

@@ -9,58 +9,24 @@
 using namespace std;
 
 //==============================================================================
-// Creates a new symbol with a label- returning a link to symbol info.
-RetErr_e SymTable::define(ItemToken& labelTkn, Symbol_t*& sym) {
-	// Result to return (optimistic).
-	RetErr_e retErr = RET_ERR_NONE;
-
-	// (Sanity check item is a label.)
-	if (labelTkn.m_lexTkn != TOKEN_LABEL) {Terminate_assert("No-label symbol");}
-
-	// Act based on presence of a symbol with the same name.
-	string name = labelTkn.m_rawStr;
-	if (m_table.find(name) != m_table.end()) {
-		// Symbol name already used- return its reference instead.
-		sym = m_table.at(name);
-		retErr = RET_ERR_ERROR;              // "already defined" error
-	}
-	else {
-		// Symbol name not defined- create new symbol.
-		Symbol_t* newSym = new Symbol_t();
-		if (newSym == nullptr) {Terminate_assert("Couldn't create symbol");}
-
-		// Fill in symbol with given data.
-		newSym->m_name    = name;
-		newSym->m_file    = labelTkn.m_file;
-		newSym->m_line    = labelTkn.m_line;
-		newSym->m_numRefs = 1;               // just created- only reference
-
-		// Save symbol to table.
-		m_table.insert({name, newSym});
-
-		// Return reference to new symbol.
-		sym = newSym;
-	}
-
-	// Return result of the process.
-	return retErr;
-}
-
-//==============================================================================
-// Adds the given symbol to the table (if the nameis not already taken).
-RetErr_e SymTable::addSym(std::string const& name, Symbol_t* sym) {
-	// Result to return (pessimistic).
+// Adds given symbol to table (if key has no assigned symbol).
+RetErr_e SymTable::addSym(std::string const& key, Symbol_t* sym) {
+	// Result of the process (pessimistic).
 	RetErr_e retErr = RET_ERR_ERROR;
 
-	// Only add actual symbols- bug otherwise.
-	if (sym == nullptr) {Terminate_assert("SymTable- adding null symbol");}
+	// (Input symbol ptrs CANNOT be null.)
+	IF_NULL(sym, "Adding null symbol");
 
-	// Add symbol to table if key isn't already used.
-	if (m_table.find(name) == m_table.end()) {
-		// Save symbol to table.
-		m_table.insert({name, sym});
+	// TODO- check reserved labels- this XOR symbols below
 
-		// Good run- return as such.
+	// Add symbol if key hasn't already been taken.
+	if (m_table.find(key) == m_table.end()) {
+		// Save symbol.
+		m_table.insert({key, sym});
+
+		// TODO- trip flag if "start" label was added"
+
+		// "All good in the [SymTable]."
 		retErr = RET_ERR_NONE;
 	}
 
@@ -69,21 +35,37 @@ RetErr_e SymTable::addSym(std::string const& name, Symbol_t* sym) {
 }
 
 //==============================================================================
-// Gets a symbol based on the given name.
-RetErr_e SymTable::getSym(std::string const& name, Symbol_t*& sym) {
-	// Result to return (pessimistic).
+// Finds symbol based on key.
+RetErr_e SymTable::getSym(std::string const& key, Symbol_t*& sym) {
+	// Result of the process (pessimistic).
 	RetErr_e retErr = RET_ERR_ERROR;
 
-	// Populate the pointer if found.
-	if (m_table.find(name) != m_table.end()) {
-		// Get symbol.
-		sym = m_table.at(name);
-		if (sym == nullptr) {Terminate_assert("getSym() on null symbol");}
+	// TODO- check reserved labels- this XOR symbols below
 
-		// Symbol found successfully.
+	// Update reference ONLY IF key is taken.
+	if (m_table.find(key) != m_table.end()) {
+		// Retrieve symbol.
+		sym = m_table.at(key);
+
+		// (Sanity check ptr.)
+		IF_NULL(sym, "Got null symbol");
+
+		// "All good in the [SymTable]."
 		retErr = RET_ERR_NONE;
 	}
 
 	// Return result of the process.
 	return retErr;
 }
+
+//==============================================================================
+// Populates the given vector with table's symbols.
+void SymTable::asList(std::vector<Symbol_t*>& syms) {
+	// Overwrite vector with map's contents.
+	syms.clear();
+	for (auto entry : m_table) {
+		IF_NULL(entry.second, "asList() found null symbol");
+		syms.push_back(entry.second);
+	}
+}
+

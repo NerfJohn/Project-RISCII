@@ -82,13 +82,13 @@ void StepGenImage_execute(DataModel_t& model) {
 
 	// Generate the binary sections (FIRST the labels, THEN the values).
 	for (AAsmNode* node : model.m_nodes) {
-		if (node == nullptr) {Terminate_assert("Addressed null node");}
-		node->genAddresses(model);
+		IF_NULL(node, "Addressed null node");
+		node->imageAddress(model);
 	}
 	// TODO- update assembler defined labels
 	for (AAsmNode* node : model.m_nodes) {
-		if (node == nullptr) {Terminate_assert("Assembled null node");}
-		node->genAssemble(model);
+		IF_NULL(node, "Assembled null node");
+		node->imageAssemble(model);
 	}
 
 	// Target requires at least one word in each section.

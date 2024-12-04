@@ -9,6 +9,9 @@
 #include "Domain/DataModel_t.h"
 #include "Domain/RetCode_e.h"
 
+// Common "assert on nullptr" check
+#define IF_NULL(x,y) if ((x) == nullptr) {Terminate_assert((y));}
+
 /*
  * Terminates the program without any additional output/processing.
  *

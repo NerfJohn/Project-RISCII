@@ -33,6 +33,41 @@ static void StepReadFiles_openReadFile(DataModel_t& model,
 }
 
 //==============================================================================
+// Helper function to add nodes/symbols to the model's overall program data.
+static void StepReadFiles_addElements(DataModel_t& model,
+		                              std::vector<AAsmNode*>& nodes,
+									  SymTable& table) {
+	// Nodes can simply be added- we've handled what we needed to.
+	for (AAsmNode* node : nodes) {model.m_nodes.push_back(node);}
+
+	// Find global symbols to add them to model.
+	vector<Symbol_t*> symbols;
+	table.asList(symbols);
+	for (Symbol_t* sym : symbols) {
+		// Only add "global" labels.
+		IF_NULL(sym, "add() null symbol to global table");
+		if (sym->m_isGlobal &&
+			(model.m_gSyms.addSym(sym->m_name, sym) == RET_ERR_ERROR)) {
+			// Already defined- get other definition log.
+			Symbol_t* glbSym = nullptr;
+			model.m_gSyms.getSym(sym->m_name, glbSym);
+			IF_NULL(sym, "add() got null symbol");
+
+			// Log error.
+			string errStr = string("Global re-def '") +
+					        sym->m_name               +
+							"' (first at "            +
+							glbSym->m_file            +
+							"/"                       +
+							to_string(glbSym->m_line) +
+							")";
+			Print::inst().log(LOG_ERROR,sym->m_file, sym->m_line , errStr);
+			ModelUtil_recordError(model, RET_G_REDEF);
+		}
+	}
+}
+
+//==============================================================================
 // Executes process to analyze each input file in the model, saving the results.
 void StepReadFiles_execute(DataModel_t& model) {
 	// (Inform User.)
@@ -63,21 +98,18 @@ void StepReadFiles_execute(DataModel_t& model) {
 			// FIRST, analyze each node- checking args/local symbols.
 			SymTable localSyms;
 			for (AAsmNode* node : fileNodes) {
-				if (node == nullptr) {Terminate_assert("Analyzed null node");}
-				node->doLocalAnalysis(model, localSyms);
+				IF_NULL(node, "Analyzed null node");
+				node->localAnalyze(model, localSyms);
 			}
 
 			// NEXT, perform local linking/linkage handling.
 			for (AAsmNode* node : fileNodes) {
-				if (node == nullptr) {Terminate_assert("Linking null node");}
-				node->doLocalLinking(model, localSyms);
+				IF_NULL(node, "Locally linked null node");
+				node->localLink(model, localSyms);
 			}
 
-			// THEN, add relevant nodes to the global program.
-			for (AAsmNode* node : fileNodes) {
-				if (node == nullptr) {Terminate_assert("Added null node");}
-				node->addToProgram(model);
-			}
+			// LAST, add nodes/symbols to overall program (in model).
+			StepReadFiles_addElements(model, fileNodes, localSyms);
 		}
 
 		// Stop reading files if errors were found.

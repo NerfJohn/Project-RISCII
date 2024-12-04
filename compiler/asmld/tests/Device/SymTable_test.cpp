@@ -5,131 +5,86 @@
 
 #include "Device/SymTable.h"
 
-TEST(SymTable, defineAssert) {
+TEST(SymTable, addGetSymGood) {
 	// Setup inputs.
-	ItemToken tkn;
-	tkn.m_lexTkn = TOKEN_COMMENT; // ie NOT a label
-	tkn.m_rawStr = "name";
-	tkn.m_file   = "foobar";
-	tkn.m_line   = 4;
+	SymTable table;
+	Symbol_t* symPtr = nullptr;
+	Symbol_t sym;
+	sym.m_name = "myName";
+	
+	// Call functions under test.
+	RetErr_e addRet = table.addSym("myName", &sym);
+	RetErr_e getRet = table.getSym("myName", symPtr);
+	
+	// Check results.
+	EXPECT_EQ(addRet, RET_ERR_NONE);
+	EXPECT_EQ(getRet, RET_ERR_NONE);
+	EXPECT_EQ(symPtr, &sym);
+	EXPECT_EQ(symPtr->m_name, "myName");
+}
+
+TEST(SymTable, addGetSymBadGet) {
+	// Setup inputs.
+	SymTable table;
+	Symbol_t* symPtr = nullptr;
+	Symbol_t sym;
+	sym.m_name = "myName";
+	
+	// Call functions under test.
+	RetErr_e addRet = table.addSym("myName", &sym);
+	RetErr_e getRet = table.getSym("notMyName", symPtr);
+	
+	// Check results.
+	EXPECT_EQ(addRet, RET_ERR_NONE);
+	EXPECT_EQ(getRet, RET_ERR_ERROR);
+	EXPECT_EQ(symPtr, nullptr);
+}
+
+TEST(SymTable, addSymTwice) {
+	// Setup inputs.
+	SymTable table;
+	Symbol_t sym;
+	sym.m_name = "myName";
+	
+	// Call functions under test.
+	RetErr_e addRet1 = table.addSym("myName", &sym);
+	RetErr_e addRet2 = table.addSym("myName", &sym);
+	
+	// Check results.
+	EXPECT_EQ(addRet1, RET_ERR_NONE);
+	EXPECT_EQ(addRet2, RET_ERR_ERROR);
+}
+
+TEST(SymTable, addSymNull) {
+	// Setup inputs.
 	SymTable table;
 	
-	// Call function under test.
-	Symbol_t* sym;
-	RetErr_e ret = table.define(tkn, sym);
+	// Call functions under test.
+	table.addSym("myName", nullptr);
 	
 	// Check results.
 	EXPECT_EQ(OsExit_hasRet(), true);
 	EXPECT_EQ(OsExit_getCode(), RET_ASSERT);
 }
 
-TEST(SymTable, defineNew) {
-	// Setup inputs.
-	ItemToken tkn;
-	tkn.m_lexTkn = TOKEN_LABEL;
-	tkn.m_rawStr = "name";
-	tkn.m_file   = "foobar";
-	tkn.m_line   = 4;
-	SymTable table;
-	
-	// Call function under test.
-	Symbol_t* sym;
-	RetErr_e ret = table.define(tkn, sym);
-	
-	// Check results.
-	EXPECT_NE(sym, nullptr);
-	EXPECT_EQ(ret, RET_ERR_NONE);
-	EXPECT_EQ(sym->m_file, tkn.m_file);
-	EXPECT_EQ(sym->m_line, tkn.m_line);
-}
-
-TEST(SymTable, defineTwice) {
-	// Setup inputs.
-	ItemToken tkn;
-	tkn.m_lexTkn = TOKEN_LABEL;
-	tkn.m_rawStr = "name";
-	tkn.m_file   = "foobar";
-	tkn.m_line   = 4;
-	SymTable table;
-	
-	// Call function under test.
-	Symbol_t* sym;
-	table.define(tkn, sym);
-	tkn.m_line = 10;
-	RetErr_e ret = table.define(tkn, sym);
-	
-	// Check results.
-	EXPECT_NE(sym, nullptr);
-	EXPECT_EQ(ret, RET_ERR_ERROR);
-	EXPECT_EQ(sym->m_file, tkn.m_file);
-	EXPECT_EQ(sym->m_line, 4);
-}
-
-TEST(SymTable, addSymGood) {
+TEST(SymTable, asList) {
 	// Setup inputs.
 	SymTable table;
 	Symbol_t sym;
-	sym.m_name = "foo";
+	std::vector<Symbol_t*> list;
+	sym.m_name = "myName";
 	
 	// Call function under test.
-	RetErr_e ret = table.addSym("foo", &sym);
+	table.asList(list);
 	
 	// Check results.
-	EXPECT_EQ(ret, RET_ERR_NONE);
-}
-
-TEST(SymTable, addSymBad) {
-	// Setup inputs.
-	SymTable table;
-	Symbol_t sym;
-	sym.m_name = "foo";
+	EXPECT_EQ(list.size(), 0);
 	
-	// Call function under test.
-	table.addSym("foo", &sym);
-	RetErr_e ret = table.addSym("foo", &sym);
+	// Call function again with new inputs.
+	table.addSym("myName", &sym);
+	table.asList(list);
 	
-	// Check results.
-	EXPECT_EQ(ret, RET_ERR_ERROR);
-}
-
-TEST(SymTable, getSymGood) {
-	// Setup inputs.
-	SymTable table;
-	ItemToken tkn;
-	Symbol_t* sym;
-	tkn.m_lexTkn = TOKEN_LABEL;
-	tkn.m_rawStr = "name";
-	tkn.m_file   = "foobar";
-	tkn.m_line   = 4;
-	table.define(tkn, sym);
-	
-	// Ensure NOT global yet.
-	EXPECT_EQ(sym->m_isGlobal, false);
-	
-	// Call function under test.
-	RetErr_e ret = table.getSym(tkn.m_rawStr, sym);
-	
-	// Check results.
-	EXPECT_NE(sym, nullptr);
-	EXPECT_EQ(ret, RET_ERR_NONE);
-}
-
-TEST(SymTable, getSymBad) {
-	// Setup inputs.
-	SymTable table;
-	ItemToken tkn;
-	Symbol_t* sym;
-	tkn.m_lexTkn = TOKEN_LABEL;
-	tkn.m_rawStr = "name";
-	tkn.m_file   = "foobar";
-	tkn.m_line   = 4;
-	table.define(tkn, sym);
-	
-	// Call function under test.
-	RetErr_e ret = table.getSym("NOT HERE", sym);
-	
-	// Check results.
-	EXPECT_NE(sym, nullptr);
-	EXPECT_EQ(ret, RET_ERR_ERROR);
-	EXPECT_EQ(OsExit_hasRet(), false);
+	// Check results again.
+	EXPECT_EQ(list.size(), 1);
+	EXPECT_EQ(list[0], &sym);
 }

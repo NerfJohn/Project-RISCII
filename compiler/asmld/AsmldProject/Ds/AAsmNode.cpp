@@ -12,103 +12,120 @@
 using namespace std;
 
 //==============================================================================
-// Runs local analytics on node's data.
-void AAsmNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {/* --- */}
+// Analyzes node- validating local arguments/symbols.
+void AAsmNode::localAnalyze(DataModel_t& model, SymTable& table) { /* --- */}
 
 //==============================================================================
-// Analyzes and links labels/symbols at the local level.
-void AAsmNode::doLocalLinking(DataModel_t& mode, SymTable& syms) {/* --- */}
+// Handles local links/symbols- modifying and linking to local symbols.
+void AAsmNode::localLink(DataModel_t& model, SymTable& table) { /* --- */}
 
 //==============================================================================
-// Adds node to model's overall program data structures.
-void AAsmNode::addToProgram(DataModel_t& model) {/* --- */}
+// Handles global links/symbols- finishing overall symbol linkage.
+void AAsmNode::globalLink(DataModel_t& model) { /* --- */}
 
 //==============================================================================
-// Runs last (iterable) checks on global program prior to modification.
-void AAsmNode::cleanProgram(DataModel_t& model) {/* --- */}
+// Finishing program checks- requesting deletions as needed to slim program.
+CleanAction_e AAsmNode::globalClean(DataModel_t& model) {return CLEAN_KEEP;}
 
 //==============================================================================
-// Computes address-related data for model and node.
-void AAsmNode::genAddresses(DataModel_t& model) {/* --- */}
+// Analyze program- generating addresses for each symbol.
+void AAsmNode::imageAddress(DataModel_t& model) { /* --- */}
 
 //==============================================================================
-// Assembles the node, adding its binary data to the model.
-void AAsmNode::genAssemble(DataModel_t& model) {/* --- */}
+// Assembles program- generating binary values in the data model.
+void AAsmNode::imageAssemble(DataModel_t& model) { /* --- */}
 
 //==============================================================================
-// Helper function for common immediate value validation.
-void AAsmNode::validateImm(DataModel_t& model,
-		                   ItemToken const& immItem,
-				           ItemToken const& immOp) {
-	// Get operation/context of immediate.
-	InstrType_e op = IsaUtil_asInstr(immOp.m_lexTkn);
+// General destructor- public to allow for generic node deletion.
+AAsmNode::~AAsmNode(void) { /* --- */}
 
-	// Get common vars.
-	string   raw  = immItem.m_rawStr;
-	string   file = immItem.m_file;
-	uint32_t line = immItem.m_line;
+//==============================================================================
+// Common helper function to get/validate register value.
+uint8_t AAsmNode::getReg(DataModel_t& model, ItemToken const& reg) {
+	// Result of the process.
+	uint8_t retReg = 0;
 
-	// Analyze the immediate.
-	Imm_t procImm;
-	if (IsaUtil_toImm(raw, procImm) == RET_ERR_ERROR) {
-		Terminate_assert("Analyzed invalid immediate");
+	// (Item is register, right?)
+	if (reg.m_lexTkn != TOKEN_REGISTER) {Terminate_assert("getReg() w/o reg");}
+
+	// Attempt to get register value.
+	RetErr_e retErr = IsaUtil_toReg(reg.m_rawStr, retReg);
+
+	// Log error if failed.
+	if (retErr) {
+		string errStr = string("Invalid register '") + reg.m_rawStr + "'";
+		Print::inst().log(LOG_ERROR, reg.m_file, reg.m_line, errStr);
+		ModelUtil_recordError(model, RET_BAD_REG);
 	}
-	string dbgStr = string("'") + raw + "' -> " + to_string(procImm.m_val);
-	Print::inst().log(LOG_DEBUG, file, line, dbgStr);
 
-	// Validate immediate based on operation (or lack thereof).
-	bool isValid = (op == INSTR_INVALID) ?
-			IsaUtil_isValidWord(procImm) :
-			IsaUtil_isValidImm(op, procImm);
+	// Return resulting register value.
+	return retReg;
+}
+
+//==============================================================================
+// Common helper function to get/validate immediate values.
+int32_t AAsmNode::getImm(DataModel_t& model,
+		                 ItemToken const& imm,
+			             ItemToken const& op) {
+	// (Item is immediate, right?)
+	if (imm.m_lexTkn != TOKEN_IMMEDIATE) {Terminate_assert("getImm() w/o imm");}
+
+	// Get operation/context of immediate.
+	InstrType_e opType = IsaUtil_asInstr(op.m_lexTkn);
+
+	// Get the immediate value (should be shoe-in due to lexing).
+	Imm_t fullImm;
+	if (IsaUtil_toImm(imm.m_rawStr, fullImm) == RET_ERR_ERROR) {
+		Terminate_assert("toImm() on lexed imm");
+	}
+
+	// Validate immediate value (within context).
+	bool isValid = (opType == INSTR_INVALID)           ?
+			        IsaUtil_isValidWord(fullImm)       :
+			        IsaUtil_isValidImm(opType, fullImm);
+
+	// Log error if validation failed.
 	if (isValid == false) {
-		string errStr = string("Invalid immediate '") + raw + "'";
-		Print::inst().log(LOG_ERROR, file, line, errStr);
+		string errStr = string("Invalid immediate '") + imm.m_rawStr + "'";
+		Print::inst().log(LOG_ERROR, imm.m_file, imm.m_line, errStr);
 		ModelUtil_recordError(model, RET_BAD_IMM);
 	}
+
+	// Return resulting immediate value.
+	return fullImm.m_val;
 }
 
 //==============================================================================
-// Helper function for common immediate value extraction.
-int32_t AAsmNode::getImmVal(ItemToken const& immItem) {
-	// Value extracted.
-	Imm_t imm;
-
-	// Extract.
-	if (IsaUtil_toImm(immItem.m_rawStr, imm) == RET_ERR_ERROR) {
-		Terminate_assert("Extracted bad immediate value");
-	}
-
-	// Return just value of immediate.
-	return imm.m_val;
-}
-
-//==============================================================================
-// Helper function for pairing nodes to labels.
-void AAsmNode::pairOpenLabels(DataModel_t& model,
-		                      ItemToken& fileLoc,
-							  AddrSpace_e const space) {
-	// Pair with any open labels.
+// Common helper function to claim unpaired labels.
+void AAsmNode::pairLabels(DataModel_t& model,
+		                  ItemToken const& loc,
+				          AddrSpace_e const space) {
+	// Pair with ALL unpaired labels.
 	for (Symbol_t* sym : model.m_openLabels) {
-		// (Sanity check.)
-		if (sym == nullptr) {Terminate_assert("Paired with null symbol");}
-
-		// Set the address space- token order takes care of exact address.
+		// Set label's/symbol's address space to caller's.
+		IF_NULL(sym, "pairLabels() with null symbol");
 		sym->m_space = space;
+
+		// Pairing is a "reference" of sorts- adjust counter.
+		sym->m_numRefs++;
 
 		// (Log pairing.)
 		string dbgStr = string("Paired '") + sym->m_name + "'";
-		Print::inst().log(LOG_DEBUG, fileLoc.m_file, fileLoc.m_line, dbgStr);
+		Print::inst().log(LOG_DEBUG, loc.m_file, loc.m_line, dbgStr);
 	}
 
-	// All open labels claimed- clear list.
+	// Paired all labels- clear list.
 	model.m_openLabels.clear();
 }
 
 //==============================================================================
-// Helper function for freeing symbols upon destruction.
+// Common helper function to free symbols/ptrs to symbols.
 void AAsmNode::freeSymbol(Symbol_t*& sym) {
-	// Free symbol if last reference.
-	if (sym == nullptr)      {Terminate_assert("Deleted null symbol");}
+	// Adjust reference counter.
+	IF_NULL(sym, "free() on null symbol");
 	sym->m_numRefs--;
+
+	// Nullify ptr- freeing actual symbol if last reference.
 	if (sym->m_numRefs == 0) {delete sym;}
+	sym = nullptr;
 }

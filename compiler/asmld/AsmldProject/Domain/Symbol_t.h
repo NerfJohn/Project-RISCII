@@ -16,7 +16,7 @@
  * common repository between label definitions and related references. It is
  * intended to be created/managed by a table when linking related nodes.
  */
-typedef struct symbol_t{ // (name given to appease build warning...)
+typedef struct symbol_t { // (name given to appease build warning...)
 	// (Mutable) Name of the symbol.
 	std::string m_name     = "";
 

@@ -14,57 +14,62 @@ using namespace std;
 // Constructor called by parser. Builds itself directly from action stack.
 DeclNode::DeclNode(std::stack<ItemToken*>& itemStack) {
 	// (Init members.)
-	m_itemLabel = nullptr;
-	m_sym       = nullptr;
+	m_reqLabel = nullptr;
+	m_sym      = {};
 
-	// Parse all items from the stack (ie trusting parser knows its grammar).
+	// Parse all items from the stack.
 	while (itemStack.size() > 0) {
-		// (Sanity check item.)
-		ItemToken* tkn = itemStack.top();
-		if (tkn == nullptr) {Terminate_assert("Null token in LabelNode stack");}
+		// Get next item.
+		ItemToken* item = itemStack.top();
+		IF_NULL(item, "DeclNode() with null item");
 
-		// Take ownership of items based on type (ie REALLY trusting parser...).
-		switch (tkn->m_lexTkn) {
-			case TOKEN_LABEL:    m_itemLabel = move(tkn); break;
-			default:
-				// Likely colon/formatter- no longer needed.
-				delete tkn;
-				break;
+		// "Take" item in appropriate spot (REALLY trusting parser, here).
+		switch (item->m_lexTkn) {
+			case TOKEN_LABEL:    m_reqLabel = item; break;
+			default: /* colon */ delete       item; break;
 		}
 
 		// Item saved/moved- remove from stack.
 		itemStack.pop();
 	}
 
-	// (Sanity check pertinent details.)
-	if (m_itemLabel == nullptr) {Terminate_assert("LabelNode has no label");}
+	// Ensure required items are present.
+	IF_NULL(m_reqLabel, "DeclNode() without label");
 
 	// (Log creation.)
 	Print::inst().log(LOG_DEBUG,
-					  m_itemLabel->m_file,
-					  m_itemLabel->m_line,
+					  m_reqLabel->m_file,
+					  m_reqLabel->m_line,
 					  "DeclNode created");
 }
 
 //==============================================================================
-// Runs local analytics and record-keeping on node's data.
-void DeclNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
-	// Get common vars (ptr pre-checked by ctor).
-	string   raw  = m_itemLabel->m_rawStr;
-	string   file = m_itemLabel->m_file;
-	uint32_t line = m_itemLabel->m_line;
+// Analyzes node- validating local arguments/symbols.
+void DeclNode::localAnalyze(DataModel_t& model, SymTable& table) {
+	// Get common vars.
+	string   raw  = m_reqLabel->m_rawStr;
+	string   file = m_reqLabel->m_file;
+	uint32_t line = m_reqLabel->m_line;
 
-	// Create/save a new symbol.
-	RetErr_e retErr = syms.define(*m_itemLabel, m_sym);
-	if (m_sym == nullptr) {Terminate_assert("Defined null symbol");}
+	// Create new symbol.
+	m_sym = new Symbol_t();
+	IF_NULL(m_sym, "new symbol() failed");
+	m_sym->m_name = raw;
+	m_sym->m_file = file;
+	m_sym->m_line = line;
 
 	// (Log creation.)
 	Print::inst().log(LOG_DEBUG, file, line, string("Decl '") + raw + "'");
 
-	// Record error if symbol was already defined (locally).
-	if (retErr) {
+	// Attempt to add new definition to the table.
+	if (table.addSym(raw, m_sym)== RET_ERR_ERROR) {
+		// Already defined- get other definition log.
+		table.getSym(raw, m_sym);
+		IF_NULL(m_sym, "analyze() got null symbol");
+
+		// Log error.
 		string errStr = string("Local re-def '") +
-				        m_itemLabel->m_rawStr    +
+				        raw                      +
 						"' (first at "           +
 						m_sym->m_file            +
 						"/"                      +
@@ -74,15 +79,15 @@ void DeclNode::doLocalAnalysis(DataModel_t& model, SymTable& syms) {
 		ModelUtil_recordError(model, RET_L_REDEF);
 	}
 
-	// Put symbol (ptr) in model to allow it to be paired.
+	// Allow label to be paired to other nodes.
 	model.m_openLabels.push_back(m_sym);
 }
 
 //==============================================================================
-// Analyzes and links labels/symbols at the local level.
-void DeclNode::doLocalLinking(DataModel_t& model, SymTable& syms) {
-	// Ensure symbol has a given address space.
-	if (m_sym == nullptr) {Terminate_assert("Local linked null symbol");}
+// Handles local links/symbols- modifying and linking to local symbols.
+void DeclNode::localLink(DataModel_t& model, SymTable& table) {
+	// Ensure label is tied to an address space (ie paired).
+	IF_NULL(m_sym, "localLink() with null decl symbol");
 	if (m_sym->m_space == ADDR_INVALID) {
 		string errStr = string("Unpaired label '") + m_sym->m_name + "'";
 		Print::inst().log(LOG_ERROR, m_sym->m_file, m_sym->m_line, errStr);
@@ -91,94 +96,46 @@ void DeclNode::doLocalLinking(DataModel_t& model, SymTable& syms) {
 }
 
 //==============================================================================
-// Adds node to model's overall program data structures.
-void DeclNode::addToProgram(DataModel_t& model) {
-	// (Sanity check.)
-	if (m_sym == nullptr)  {Terminate_assert("Adding with null symbol");}
-
-	// Add symbol to global table as applicable.
-	if (m_sym->m_isGlobal) {
-		// Attempt to add to global table.
-		RetErr_e retErr = model.m_gSyms.addSym(m_sym->m_name, m_sym);
-		if (retErr) {
-			model.m_gSyms.getSym(m_sym->m_name, m_sym);
-			string errStr = string("Global re-def '") +
-					        m_itemLabel->m_rawStr     +
-							"' (first at "            +
-							m_sym->m_file             +
-							"/"                       +
-							to_string(m_sym->m_line)  +
-							")";
-			Print::inst().log(LOG_ERROR,
-					          m_itemLabel->m_file,
-							  m_itemLabel->m_line,
-							  errStr);
-			ModelUtil_recordError(model, RET_G_REDEF);
-		}
-	}
-
-	// Warn if (locally) unused.
-	if ((m_sym->m_isGlobal == false) && (m_sym->m_numRefs <= 1)) {
-		string wrnStr = "Local unused '" + m_sym->m_name + "'";
-		Print::inst().log(LOG_WARNING,
-				          m_itemLabel->m_file,
-						  m_itemLabel->m_line,
-						  wrnStr);
+// Finishing program checks- requesting deletions as needed to slim program.
+CleanAction_e DeclNode::globalClean(DataModel_t& model) {
+	// Warn user if unused (ie only reference is its own pairing).
+	IF_NULL(m_sym, "clean() with null decl symbol");
+	if (m_sym->m_numRefs == 1) {
+		string wrnStr = "Unused '" + m_sym->m_name + "'";
+		Print::inst().log(LOG_WARNING, m_sym->m_file, m_sym->m_line, wrnStr);
 		ModelUtil_recordWarn(model);
 	}
 
-	// Otherwise, add node to global program.
-	model.m_nodes.push_back(this);
+	// Regardless, keep declaration around.
+	return CLEAN_KEEP;
 }
 
 //==============================================================================
-// Runs last (iterable) checks on global program prior to modification.
-void DeclNode::cleanProgram(DataModel_t& model) {
-	// Warn if (globally) unused.
-	if (m_sym->m_isGlobal && (m_sym->m_numRefs <= 1)) {
-		string wrnStr = "Global unused '" + m_sym->m_name + "'";
-		Print::inst().log(LOG_WARNING,
-				          m_itemLabel->m_file,
-						  m_itemLabel->m_line,
-						  wrnStr);
-		ModelUtil_recordWarn(model);
-	}
-}
-
-//==============================================================================
-// Computes address-related data for model and node.
-void DeclNode::genAddresses(DataModel_t& model) {
-	// (Sanity check.)
-	if (m_sym == nullptr) {Terminate_assert("Addressed null symbol");}
-
+// Analyze program- generating addresses for each symbol.
+void DeclNode::imageAddress(DataModel_t& model) {
 	// Set symbol's address based on it's address space.
-	uint32_t addr;
+	IF_NULL(m_sym, "address() with null decl symbol");
+	uint32_t addr = 0;
 	switch (m_sym->m_space) {
 		case ADDR_TEXT: addr = model.m_textSize; break;
 		case ADDR_DATA: addr = model.m_dataSize; break;
 		default:
 			// Unknown address space- bug.
-			Terminate_assert("Addressed symbol with no address space");
+			Terminate_assert("address() unknown address space");
 	}
 	m_sym->m_addr = (uint16_t)(addr);
 
 	// (Log address realization).
-	string dbgStr = string("Addr '")      +
-			        m_itemLabel->m_rawStr +
-					"' = "                +
-					to_string(addr);
-	Print::inst().log(LOG_DEBUG,
-			          m_itemLabel->m_file,
-			          m_itemLabel->m_line,
-					  dbgStr);
+	string dbgStr = string("Addr '") + m_sym->m_name + "' = " + to_string(addr);
+	Print::inst().log(LOG_DEBUG, m_sym->m_file, m_sym->m_line, dbgStr);
 }
 
 //==============================================================================
 // General destructor- ensures all memory is freed on deletion.
 DeclNode::~DeclNode(void) {
-	// Free token (pre-checked by ctor).
-	delete m_itemLabel;
+	// Free required/known items.
+	delete m_reqLabel;
 
-	// Free symbol.
+	// Free token as needed (ie common helper logic).
 	this->freeSymbol(m_sym);
 }
