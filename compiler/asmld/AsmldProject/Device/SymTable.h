@@ -10,6 +10,9 @@
 #include "Domain/RetErr_e.h"
 #include "Domain/Symbol_t.h"
 
+// Name of required, pre-known label- managed by SymTable.
+#define SYM_START_NAME (std::string("__START"))
+
 /*
  * Table used to add/lookup/store program's symbols.
  *

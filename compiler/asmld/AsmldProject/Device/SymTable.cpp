@@ -17,14 +17,16 @@ RetErr_e SymTable::addSym(std::string const& key, Symbol_t* sym) {
 	// (Input symbol ptrs CANNOT be null.)
 	IF_NULL(sym, "Adding null symbol");
 
-	// TODO- check reserved labels- this XOR symbols below
+	// Modify "start" symbol to always be global + referenced.
+	if (key.compare(SYM_START_NAME) == 0) {
+		sym->m_isGlobal = true;
+		sym->m_numRefs++;
+	}
 
-	// Add symbol if key hasn't already been taken.
+	// Otherwise, add symbol if key hasn't already been taken.
 	if (m_table.find(key) == m_table.end()) {
 		// Save symbol.
 		m_table.insert({key, sym});
-
-		// TODO- trip flag if "start" label was added"
 
 		// "All good in the [SymTable]."
 		retErr = RET_ERR_NONE;
@@ -39,8 +41,6 @@ RetErr_e SymTable::addSym(std::string const& key, Symbol_t* sym) {
 RetErr_e SymTable::getSym(std::string const& key, Symbol_t*& sym) {
 	// Result of the process (pessimistic).
 	RetErr_e retErr = RET_ERR_ERROR;
-
-	// TODO- check reserved labels- this XOR symbols below
 
 	// Update reference ONLY IF key is taken.
 	if (m_table.find(key) != m_table.end()) {

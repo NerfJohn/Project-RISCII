@@ -5,17 +5,36 @@
 #include "Device/Print.h"
 #include "Device/Terminate.h"
 #include "Ds/AAsmNode.h"
+#include "Util/ModelUtil.h"
 
 #include "State/StepProcPrgm.h"
 
 using namespace std;
 
+//==============================================================================
 // Executes process to process overall program in model.
 void StepProcPrgm_execute(DataModel_t& model) {
 	// (Inform User.)
 	Print::inst().log(LOG_INFO, "=Process Program=");
 
-	// Complete primary checks/parsing or program.
+	// Ensure program's "anchor point" is defined correctly.
+	Symbol_t* startSym = nullptr;
+	if (model.m_gSyms.getSym(SYM_START_NAME, startSym) == RET_ERR_ERROR) {
+		string errStr = string("Start label '") +
+				        SYM_START_NAME          +
+						"' must be defined";
+		Print::inst().log(LOG_ERROR, errStr);
+		ModelUtil_recordError(model, RET_NO_MAIN);
+	}
+	else if (startSym->m_space != ADDR_TEXT) {
+		string errStr = string("Start label '")         +
+		                SYM_START_NAME                  +
+				        "' must define text section";
+		Print::inst().log(LOG_ERROR, errStr);
+		ModelUtil_recordError(model, RET_IN_TEXT);
+	}
+
+	// Complete primary checks/parsing of program.
 	for (AAsmNode* node : model.m_nodes) {
 		IF_NULL(node, "Globally linked null node");
 		node->globalLink(model);

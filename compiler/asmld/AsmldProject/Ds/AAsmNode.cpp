@@ -178,24 +178,6 @@ void AAsmNode::linkGlobal(DataModel_t& model,
 }
 
 //==============================================================================
-// Common helper function to resolve a label's address.
-void AAsmNode::setAddress(DataModel_t const& model, Symbol_t* const& sym) {
-	// Set address based on address space symbol represents.
-	IF_NULL(sym, "setAddr() with null symbol");
-	switch (sym->m_space) {
-		case ADDR_TEXT: sym->m_addr = (uint16_t)(model.m_textSize); break;
-		case ADDR_DATA: sym->m_addr = (uint16_t)(model.m_dataSize); break;
-		case ADDR_BSS:
-			// Bss comes after init data in RAM.
-			sym->m_addr = (uint16_t)(model.m_dataSize + model.m_bssSize);
-			break;
-		default:
-			// Unknown address space? Bug!
-			Terminate_assert("setAddr() with unknown space");
-	}
-}
-
-//==============================================================================
 // Common helper function to free symbols/ptrs to symbols.
 void AAsmNode::freeSymbol(Symbol_t*& sym) {
 	// Adjust reference counter.

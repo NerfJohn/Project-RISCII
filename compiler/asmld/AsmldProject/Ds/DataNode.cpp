@@ -147,8 +147,7 @@ void DataNode::imageAddress(DataModel_t& model) {
 		IF_NULL(item, "address() null data item");
 		switch (item->m_lexTkn) {
 			case TOKEN_LABEL:
-				// Label- resolve address, which is ALWAYS word size.
-				this->setAddress(model, m_syms[symIdx]);
+				// Label- ALWAYS word size.
 				totSize += ISA_WORD_BYTES;
 				symIdx++;
 				break;

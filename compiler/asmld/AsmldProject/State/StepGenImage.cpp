@@ -2,6 +2,7 @@
  * StepGenImage.cpp: Step/process to generate binary image from data model.
  */
 
+#include <algorithm>
 #include "Device/File.h"
 #include "Device/Print.h"
 #include "Device/Terminate.h"
@@ -78,7 +79,13 @@ void StepGenImage_execute(DataModel_t& model) {
 	// (Inform User.)
 	Print::inst().log(LOG_INFO, "=Gen Image=");
 
-	// TODO- "rotate" nodes so first node is start of the program.
+	// "Rotate" nodes so first node is start of the program.
+	IF_NULL(model.m_start, "Generating with no start");
+	while (model.m_nodes.front() != model.m_start) {
+		rotate(model.m_nodes.begin(),
+			   model.m_nodes.begin() + 1,
+			   model.m_nodes.end());
+	}
 
 	// Generate the binary sections (FIRST the labels, THEN the values).
 	for (AAsmNode* node : model.m_nodes) {

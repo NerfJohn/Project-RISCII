@@ -118,9 +118,6 @@ protected:
 			        ItemToken const& label,
 					Symbol_t*& sym);
 
-	// Common helper function to resolve a label's address.
-	void setAddress(DataModel_t const& model, Symbol_t* const& sym);
-
 	// Common helper function to free symbols/ptrs to symbols.
 	void freeSymbol(Symbol_t*& sym);
 };

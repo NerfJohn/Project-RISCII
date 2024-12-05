@@ -34,6 +34,7 @@ typedef struct {
 	// Parsed/analyzed program.
 	std::vector<AAsmNode*>   m_nodes;            // nodes creating the program
 	SymTable                 m_gSyms;            // global symbols
+	AAsmNode*                m_start;            // starting node of program
 	std::vector<Symbol_t*>   m_openLabels;       // unpaired labels
 
 	// Binary image results.

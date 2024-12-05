@@ -79,6 +79,11 @@ void DeclNode::localAnalyze(DataModel_t& model, SymTable& table) {
 		ModelUtil_recordError(model, RET_L_REDEF);
 	}
 
+	// Save "anchor point" of program to model for later.
+	if (m_reqLabel->m_rawStr.compare(SYM_START_NAME) == 0) {
+		model.m_start = this;
+	}
+
 	// Allow label to be paired to other nodes.
 	model.m_openLabels.push_back(m_sym);
 }

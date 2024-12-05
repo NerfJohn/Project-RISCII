@@ -30,7 +30,9 @@ typedef enum {
 	RET_NO_PAIR = 0x0D, // label not paired to instruction/data
 	RET_L_NODEF = 0x0E, // label not defined locally
 	RET_G_REDEF = 0x0F, // multiply defined label- global
-	RET_G_NODEF = 0x10  // label not defined globally
+	RET_G_NODEF = 0x10, // label not defined globally
+	RET_NO_MAIN = 0x11, // start label not defined
+	RET_IN_TEXT = 0x12  // start label didn't define a text section item
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */
