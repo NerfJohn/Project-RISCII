@@ -7,6 +7,7 @@
 #include "Device/Terminate.h"
 #include "Ds/DataNode.h"
 #include "Ds/DeclNode.h"
+#include "Ds/FuncNode.h"
 #include "Ds/InstrNode.h"
 #include "Ds/ModNode.h"
 #include "Util/ModelUtil.h"
@@ -26,6 +27,7 @@ static void SubStepParseTkns_buildNode(AAsmNode*& node,
 		case ACTION_DATA:  node = new DataNode(itemStack);  break;
 		case ACTION_DECL:  node = new DeclNode(itemStack);  break;
 		case ACTION_MOD:   node = new ModNode(itemStack);   break;
+		case ACTION_FUNC:  node = new FuncNode(itemStack);  break;
 		default:
 			// No matching node? compiler bug.
 			Terminate_assert("Tried creating unknown node");

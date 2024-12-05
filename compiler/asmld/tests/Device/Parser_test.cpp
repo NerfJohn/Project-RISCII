@@ -261,7 +261,7 @@ TEST(Parser, labelDecl) {
 	EXPECT_EQ(stack.top(), PARSE_FILE);
 }
 
-TEST(Parser, modifier) {
+TEST(Parser, modifierGlobal) {
 	// Prep input.
 	std::stack<ParseState_e> stack;
 	stack.push((ParseState_e)(PARSE_FILE));
@@ -279,6 +279,30 @@ TEST(Parser, modifier) {
 	EXPECT_EQ(stack.top(), TOKEN_LABEL);
 	stack.pop();
 	EXPECT_EQ(stack.top(), ACTION_MOD);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_FILE);
+}
+
+TEST(Parser, laKeyword) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_FILE));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_KW_LA);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_KW_LA);
+	stack.pop();
+	EXPECT_EQ(stack.top(), TOKEN_REGISTER);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_LBL_IMM);
+	stack.pop();
+	EXPECT_EQ(stack.top(), ACTION_FUNC);
 	stack.pop();
 	EXPECT_EQ(stack.top(), PARSE_FILE);
 }

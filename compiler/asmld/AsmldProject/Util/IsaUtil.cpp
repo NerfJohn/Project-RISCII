@@ -48,6 +48,7 @@ using namespace std;
 
 // Definitions of bit flags in assembly.
 #define ARITH_FLAG  'a'
+#define SHIFT_FLAG  's'
 
 //==============================================================================
 // Helper function to generate instruction with "RegRegReg" data format.
@@ -85,6 +86,21 @@ static void IsaUtil_toRR4(uint16_t& instr, Instr_t const& fields) {
 }
 
 //==============================================================================
+// Helper function to generate instruction with "Reg8bIm" data format.
+static void IsaUtil_toR8(uint16_t& instr, Instr_t const& fields) {
+	// Implicit 0s for unset bits.
+	instr = 0x0000;
+
+	// Size arguments to bit fields.
+	uint16_t op = OPCODE_MASK & (uint16_t)(fields.m_opcode);
+	uint16_t r1 = REG_MASK & fields.m_r1;
+	uint16_t imm = IMM8_MASK & (uint16_t)(fields.m_imm);
+
+	// Format instruction.
+	instr = TO_BIT12(op) | TO_BIT9(r1) | TO_BIT0(imm);
+}
+
+//==============================================================================
 // Generate binary ISA instruction from given fields.
 RetErr_e IsaUtil_genInstr(uint16_t& instr, Instr_t const& fields) {
 	// Result of the process.
@@ -96,6 +112,9 @@ RetErr_e IsaUtil_genInstr(uint16_t& instr, Instr_t const& fields) {
 
 	// Format base instruction.
 	switch (fields.m_opcode) {
+		case INSTR_LBI:
+			IsaUtil_toR8(instr, fields);
+			break;
 		case INSTR_SHR:
 			if (hasImm) {IsaUtil_toRR4(instr, fields);}
 			else        {IsaUtil_toRRR(instr, fields);}
@@ -114,6 +133,7 @@ RetErr_e IsaUtil_genInstr(uint16_t& instr, Instr_t const& fields) {
 	for (char flag : flags) {
 		switch(flag) {
 			case ARITH_FLAG: instr |= TO_BIT4(0x1); break;
+			case SHIFT_FLAG: instr |= TO_BIT8(0x1); break;
 			default:
 				// Unknown flag- "error" out,
 				retErr = RET_ERR_ERROR;

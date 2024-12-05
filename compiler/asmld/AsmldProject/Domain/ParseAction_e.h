@@ -20,6 +20,7 @@ typedef enum {
 	ACTION_DATA,                                 // data related directives
 	ACTION_DECL,                                 // label declaration
 	ACTION_MOD,                                  // label modifier
+	ACTION_FUNC,                                 // _la function
 
 	// Special values.
 	ACTION_INVALID,                              // Unknown/Invalid action

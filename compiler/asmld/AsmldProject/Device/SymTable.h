@@ -18,7 +18,7 @@
  *
  * Effectively just a storage class for symbols. Can be used to store local
  * and global labels. Tables act as individual instances, but shares common
- * definitions for pre-known labels (e.g. __SIZE, __START) baked into class.
+ * definitions for pre-defined labels (e.g. __SIZE, __START) baked into class.
  */
 class SymTable {
 public:
@@ -26,8 +26,8 @@ public:
 	 * Adds given symbol to table (if key has no assigned symbol).
 	 *
 	 * Addition carried out ONLY IF key doesn't already correspond to a
-	 * symbol. Symbol ptr MUST not be NULL. Function factors for pre-known
-	 * labels (e.g. __SIZE, __START).
+	 * symbol. Symbol ptr MUST not be NULL. Function factors for pre-defined
+	 * labels (e.g. __SIZE, __BSS).
 	 *
 	 * @param key string used to find symbol later
 	 * @param sym symbol to add to table under key
@@ -39,8 +39,8 @@ public:
 	 * Finds symbol based on key.
 	 *
 	 * Populates symbol reference ONLY IF symbol is found with the key. Symbol
-	 * ptr is guaranteed to NOT be NULL. Function factors for pre-known labels
-	 * (e.g. __SIZE, __START).
+	 * ptr is guaranteed to NOT be NULL. Function factors for pre-defined labels
+	 * (e.g. __SIZE, __BSS).
 	 *
 	 * @param key key to use to find symbol
 	 * @param sym symbol found using the key
@@ -52,8 +52,8 @@ public:
 	 * Populates the given vector with table's symbols.
 	 *
 	 * Overwrites vector's contents with symbols currently in the symbol table.
-	 * Symbol ptrs are guaranteed to NOT be NULL. Pre-known labels (e.g. __SIZE,
-	 * __START) are NOT included in the list.
+	 * Symbol ptrs are guaranteed to NOT be NULL. Pre-defined labels (e.g.
+	 * __SIZE, __BSS) are NOT included in the list.
 	 *
 	 * @param syms vector to overwrite/populate with the table's symbols
 	 */
