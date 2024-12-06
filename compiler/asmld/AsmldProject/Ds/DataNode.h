@@ -106,6 +106,18 @@ private:
 	uint32_t allocImm(DataModel_t& model,
 			          ItemToken const& imm,
 					  ItemToken const& type);
+
+	// Helper function to validate/extract escape chars.
+	RetErr_e asEscape(uint8_t& chr);
+
+	// Helper function to validate string literal (more so escape chars).
+	void validateStr(DataModel_t& model, ItemToken const& str);
+
+	// Helper function to determine bytes to allocate for string literal.
+	uint32_t allocStr(DataModel_t& model, ItemToken const& str);
+
+	// Helper function to translate string literal into data section.
+	void genStr(DataModel_t& model, ItemToken const& str);
 };
 
 #endif /* DS_DATANODE_H_ */

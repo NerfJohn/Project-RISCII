@@ -239,6 +239,23 @@ TEST(Parser, initDataLabel) {
 	EXPECT_EQ(stack.top(), TOKEN_LABEL);
 }
 
+TEST(Parser, initDataStrLit) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_INIT_DATA));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_STRLIT);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.size(), 1);
+	EXPECT_EQ(stack.top(), TOKEN_STRLIT);
+}
+
 TEST(Parser, labelDecl) {
 	// Prep input.
 	std::stack<ParseState_e> stack;

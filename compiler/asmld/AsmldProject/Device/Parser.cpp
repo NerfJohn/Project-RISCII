@@ -118,6 +118,7 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 			case PARSE_INIT_DATA:
 				IS(TOKEN_IMMEDIATE) WITH(SEQ_EPSILON)
 				IS(TOKEN_LABEL)     WITH(SEQ_EPSILON)
+				IS(TOKEN_STRLIT)    WITH(SEQ_EPSILON)
 				break;
 			case PARSE_LBL_IMM:
 				IS(TOKEN_LABEL)     WITH(SEQ_EPSILON)

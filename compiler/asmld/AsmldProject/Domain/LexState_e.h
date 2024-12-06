@@ -25,11 +25,14 @@ typedef enum {
 	LEX_HANDLE_MINUS,                      // "-" sign found
 	LEX_HANDLE_ZERO,                       // "0" found for decimal or hex
 	LEX_HANDLE_HEX,                        // "0x" sign found
+	LEX_HANDLE_ESCAPE,                     // "\" found for string escape char
 	LEX_LOOP_DECIMAL,                      // loop used to capture decimal imm
 	LEX_LOOP_HEX,                          // loop used to capture hex imm
 	LEX_LOOP_NAME,                         // loop for label/keywords
 	LEX_LOOP_DIRECTIVE,                    // loop for directive keywords
+	LEX_LOOP_STR,                          // loop for string literals
 	LEX_FOUND_COLON,                       // ':' char found
+	LEX_FOUND_STRLIT,                      // string literal finished
 
 	// Special values.
 	LEX_ERROR,                             // end state for "bad" lexing

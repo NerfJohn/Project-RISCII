@@ -265,3 +265,19 @@ TEST(Lexer, laKeyword) {
 	EXPECT_EQ(state, LEX_NAME);
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
+
+TEST(Lexer, strLit) {
+	// Sample inputs.
+	LexState_e  state = LEX_START;
+	std::string input = "\"string \\n\\r\\t\\\"\\0\\\\\",";
+	
+	// Lex through entire string.
+	while(input.size()) {
+		state = Lexer_nextState(state, (uint8_t)(input[0]));
+		input.erase(input.begin());
+	}
+	
+	// Check final lexing results.
+	EXPECT_EQ(state, TOKEN_STRLIT);
+	EXPECT_EQ(OsExit_hasRet(), false);
+}

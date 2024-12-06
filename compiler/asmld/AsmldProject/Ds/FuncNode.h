@@ -9,7 +9,13 @@
 #include "Ds/AAsmNode.h"
 #include "Ds/ItemToken.h"
 
-// TODO
+/*
+ * Build node representing built-in function.
+ *
+ * Building node from items off the parser's action stack, implements functions
+ * to load a defined address into a given register. Generates two instructions
+ * to do so, loading either a label's address or constant value.
+ */
 class FuncNode: public AAsmNode {
 public:
 	// Enforce node class as "no copy".

@@ -56,8 +56,9 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 			IS('$')      TO(LEX_HANDLE_DOLLAR)
 			IS('-')      TO(LEX_HANDLE_MINUS)
 			IS('0')      TO(LEX_HANDLE_ZERO)
-			IN('1','9')  TO(LEX_LOOP_DECIMAL)
 			IS(':')      TO(LEX_FOUND_COLON)
+			IS('"')      TO(LEX_LOOP_STR)
+			IN('1','9')  TO(LEX_LOOP_DECIMAL)
 			IS('.')      TO(LEX_LOOP_DIRECTIVE)  // covers all directives
 			LABEL        TO(LEX_LOOP_NAME)       // covers labels/keywords
 			break;
@@ -83,12 +84,26 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 		case LEX_HANDLE_MINUS:
 			IN('0','9')  TO(LEX_LOOP_DECIMAL)    // -[0-9]...
 			break;
+		case LEX_HANDLE_ESCAPE:
+			IS('\n')     TO(LEX_ERROR)           // didn't finish escape
+			IS('\r')     TO(LEX_ERROR)           // didn't finish escape
+			ENDOF        TO(LEX_ERROR)           // didn't finish escape
+			ELSE         TO(LEX_LOOP_STR)        // lex accepts any "escape"
+			break;
 		case LEX_HANDLE_ZERO:
 			IS('x')      TO(LEX_HANDLE_HEX)      // 0x...
 			IN('0','9')  TO(LEX_LOOP_DECIMAL)    // 0[0-9]...
 			break;
 		case LEX_HANDLE_HEX:
 			HEX          TO(LEX_LOOP_HEX)        // 0x[hex num]...
+			break;
+		case LEX_LOOP_STR:
+			IS('"')      TO(LEX_FOUND_STRLIT)    // finished literal
+			IS('\\')     TO(LEX_HANDLE_ESCAPE)   // escape char started
+			IS('\n')     TO(LEX_ERROR)           // didn't finish escape
+			IS('\r')     TO(LEX_ERROR)           // didn't finish escape
+			ENDOF        TO(LEX_ERROR)           // didn't finish escape
+			ELSE         TO(LEX_LOOP_STR)        // lex accepts any "escape"
 			break;
 		case LEX_LOOP_DECIMAL:
 			IN('0','9')  TO(LEX_LOOP_DECIMAL)    // greedy grab decimals
@@ -108,6 +123,9 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 			break;
 		case LEX_FOUND_COLON:
 			ELSE         TO(TOKEN_COLON)         // colon = standalong char
+			break;
+		case LEX_FOUND_STRLIT:
+			ELSE         TO(TOKEN_STRLIT)        // string literal confirmed
 			break;
 		default:                                 // (No matching "from" state)
 			// Start at non-state? compiler bug.

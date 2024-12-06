@@ -32,7 +32,8 @@ typedef enum {
 	RET_G_REDEF = 0x0F, // multiply defined label- global
 	RET_G_NODEF = 0x10, // label not defined globally
 	RET_NO_MAIN = 0x11, // start label not defined
-	RET_IN_TEXT = 0x12  // start label didn't define a text section item
+	RET_IN_TEXT = 0x12, // start label didn't define a text section item
+	RET_BAD_ESC = 0x13  // invalid escape char (in string literal)
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

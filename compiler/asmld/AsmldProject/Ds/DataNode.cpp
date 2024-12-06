@@ -12,6 +12,16 @@
 using namespace std;
 
 //==============================================================================
+
+// Definitions for recognized escape chars.
+#define ESC_NULL       ('0')
+#define ESC_BSLASH     ('\\')
+#define ESC_QUOTE      ('"')
+#define ESC_NEWLINE    ('n')
+#define ESC_RETURN     ('r')
+#define ESC_TAB        ('t')
+
+//==============================================================================
 // Helper function to determine bytes to allocate using immediate.
 uint32_t DataNode::allocImm(DataModel_t& model,
 		                    ItemToken const& imm,
@@ -24,11 +34,120 @@ uint32_t DataNode::allocImm(DataModel_t& model,
 		case TOKEN_KW_DATA: retNum += ISA_WORD_BYTES; break; // init as word
 		default:
 			// Unknown directive type. Bug!
-			Terminate_assert("allocImm()unknown directive");
+			Terminate_assert("allocImm() unknown directive");
 	}
 
 	// Return resulting number of bytes to allocate.
 	return retNum;
+}
+
+//==============================================================================
+// Helper function to validate/extract escape chars.
+RetErr_e DataNode::asEscape(uint8_t& chr) {
+	// Result of the process (optimistic).
+	RetErr_e retErr = RET_ERR_NONE;
+
+	// Adjust given char to it's equivalent escape value.
+	switch (chr) {
+		case ESC_NULL:    chr = '\0'; break;
+		case ESC_BSLASH:  chr = '\\'; break;
+		case ESC_QUOTE:   chr = '"';  break;
+		case ESC_NEWLINE: chr = '\n'; break;
+		case ESC_RETURN:  chr = '\r'; break;
+		case ESC_TAB:     chr = '\t'; break;
+		default:
+			// No matching escape- failure.
+			retErr = RET_ERR_ERROR;
+	}
+
+	// Return result of process.
+	return retErr;
+}
+
+//==============================================================================
+// Helper function to validate string literal (more so escape chars).
+void DataNode::validateStr(DataModel_t& model, ItemToken const& str) {
+	// Flag to track when char is escaped.
+	bool isEsc = false;
+
+	// Check bytes for escape chars to validate.
+	for (uint8_t byte : str.m_rawStr) {
+		// Record unknown escape chars.
+		if (isEsc && (this->asEscape(byte) == RET_ERR_ERROR)) {
+			string errStr = string("Unknown escape '\\") + (char)(byte) + "'";
+			Print::inst().log(LOG_ERROR, str.m_file, str.m_line, errStr);
+			ModelUtil_recordError(model, RET_BAD_ESC);
+		}
+
+		// Handle finding escapes.
+		if (isEsc) {isEsc = false;}
+		else       {isEsc = (byte == ESC_BSLASH);}
+	}
+}
+
+//==============================================================================
+// Helper function to determine bytes to allocate for string literal.
+uint32_t DataNode::allocStr(DataModel_t& model, ItemToken const& str) {
+	// Number of bytes to allocate/return.
+	uint32_t retNum = 0;
+
+	// Flag to track when char is escaped.
+	bool isEsc = false;
+
+	// Count each byte allocated by the string literal.
+	for (uint8_t byte : str.m_rawStr) {
+		// Count bytes- with 1 byte escapes and ignoring enclosing quotes
+		if      (isEsc)             {isEsc = false;}
+		else if (byte == ESC_QUOTE) {/* don't count */}
+		else                        {retNum++; isEsc = (byte == ESC_BSLASH);}
+	}
+
+	// Inform user if string will get padded during assembly.
+	if (retNum % ISA_WORD_BYTES) {
+		// Log event.
+		string infStr = string("Padding ")          +
+				        str.m_rawStr                +
+						" with NULL for alignment";
+		Print::inst().log(LOG_INFO, str.m_file, str.m_line, infStr);
+
+		// Adjust count.
+		while (retNum % ISA_WORD_BYTES) {retNum++;}
+	}
+
+	// Return resulting number of bytes to allocate.
+	return retNum;
+}
+
+//==============================================================================
+// Helper function to translate string literal into data section.
+void DataNode::genStr(DataModel_t& model, ItemToken const& str) {
+	// Flag to track when char is escaped.
+	bool isEsc        = false;
+
+	// String to contain extracted byte values.
+	string rawBytes = "";
+
+	// Remove surrounding quotes- adding padding as needed.
+	string strLit = str.m_rawStr.substr(1, str.m_rawStr.size() - 2);
+	while (strLit.size() % ISA_WORD_BYTES) {strLit += (char)(NULL);}
+
+	// Parse literal into its raw bytes.
+	for (uint8_t byte : strLit) {
+		// Add each byte- adding converted escape as needed.
+		if      (isEsc)              {
+			this->asEscape(byte);
+			rawBytes += byte;
+			isEsc = false;
+		}
+		else if (byte == ESC_BSLASH) {isEsc = true;}
+		else                         {rawBytes += byte;}
+	}
+
+	// Add to model- storing LOWER address bytes at LOWER bits.
+	for (size_t i = 0; (i + 1) < rawBytes.size(); i += 2) {
+		uint16_t word = (rawBytes[i + 1] << 8) | rawBytes[i];
+		model.m_dataVals.push_back(word);
+	}
 }
 
 //==============================================================================
@@ -47,6 +166,7 @@ DataNode::DataNode(std::stack<ItemToken*>& itemStack) {
 
 		// "Take" item in appropriate spot (REALLY trusting parser, here).
 		switch (item->m_lexTkn) {
+			case TOKEN_STRLIT:
 			case TOKEN_LABEL:
 			case TOKEN_IMMEDIATE:    m_optVals.push_back(item); break;
 			default: /* directive */ m_reqType = item;          break;
@@ -74,6 +194,10 @@ void DataNode::localAnalyze(DataModel_t& model, SymTable& table){
 		// Validate based on underlying type.
 		IF_NULL(item, "analyze() null data item");
 		switch(item->m_lexTkn) {
+			case TOKEN_STRLIT:
+				// String literal- validate escapes.
+				this->validateStr(model, *item);
+				break;
 			case TOKEN_LABEL:
 				// Label- no actions to take as of yet.
 				break;
@@ -146,6 +270,10 @@ void DataNode::imageAddress(DataModel_t& model) {
 		// Get size based off underlying type.
 		IF_NULL(item, "address() null data item");
 		switch (item->m_lexTkn) {
+			case TOKEN_STRLIT:
+				// String literal- determined by length of realized string.
+				totSize += this->allocStr(model, *item);
+				break;
 			case TOKEN_LABEL:
 				// Label- ALWAYS word size.
 				totSize += ISA_WORD_BYTES;
@@ -185,6 +313,10 @@ void DataNode::imageAssemble(DataModel_t& model) {
 			// Translate based on underlying type.
 			IF_NULL(item, "assemble()null data item");
 			switch (item->m_lexTkn) {
+				case TOKEN_STRLIT:
+					// String literal- add realized bytes.
+					this->genStr(model, *item);
+					break;
 				case TOKEN_LABEL:
 					// Label- add resolved address.
 					IF_NULL(m_syms[symIdx], "assemble() null symbol data item");
