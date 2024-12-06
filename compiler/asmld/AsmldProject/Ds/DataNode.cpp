@@ -127,9 +127,8 @@ void DataNode::genStr(DataModel_t& model, ItemToken const& str) {
 	// String to contain extracted byte values.
 	string rawBytes = "";
 
-	// Remove surrounding quotes- adding padding as needed.
+	// Remove surrounding quotes.
 	string strLit = str.m_rawStr.substr(1, str.m_rawStr.size() - 2);
-	while (strLit.size() % ISA_WORD_BYTES) {strLit += (char)(NULL);}
 
 	// Parse literal into its raw bytes.
 	for (uint8_t byte : strLit) {
@@ -142,6 +141,9 @@ void DataNode::genStr(DataModel_t& model, ItemToken const& str) {
 		else if (byte == ESC_BSLASH) {isEsc = true;}
 		else                         {rawBytes += byte;}
 	}
+
+	// Add padding.
+	while (rawBytes.size() % ISA_WORD_BYTES) {rawBytes += (char)(NULL);}
 
 	// Add to model- storing LOWER address bytes at LOWER bits.
 	for (size_t i = 0; (i + 1) < rawBytes.size(); i += 2) {
