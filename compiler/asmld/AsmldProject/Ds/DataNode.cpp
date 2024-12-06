@@ -170,8 +170,10 @@ DataNode::DataNode(std::stack<ItemToken*>& itemStack) {
 		switch (item->m_lexTkn) {
 			case TOKEN_STRLIT:
 			case TOKEN_LABEL:
-			case TOKEN_IMMEDIATE:    m_optVals.push_back(item); break;
-			default: /* directive */ m_reqType = item;          break;
+			case TOKEN_IMMEDIATE:    m_optVals.push_front(item); break;
+			case TOKEN_LCURLY:
+			case TOKEN_RCURLY:       delete item;                break;
+			default: /* directive */ m_reqType = item;           break;
 		}
 
 		// Item saved/moved- remove from stack.
@@ -296,6 +298,15 @@ void DataNode::imageAddress(DataModel_t& model) {
 	switch(m_reqType->m_lexTkn) {
 		case TOKEN_KW_DATA: model.m_dataSize += totSize;               break;
 		default: Terminate_assert("address() unknown data directive"); break;
+	}
+
+	// Warn if no memory was allocated.
+	if (totSize == 0) {
+		Print::inst().log(LOG_WARNING,
+				          m_reqType->m_file,
+						  m_reqType->m_line,
+						  "No memory allocated");
+		ModelUtil_recordWarn(model);
 	}
 }
 

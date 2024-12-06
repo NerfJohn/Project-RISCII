@@ -256,6 +256,95 @@ TEST(Parser, initDataStrLit) {
 	EXPECT_EQ(stack.top(), TOKEN_STRLIT);
 }
 
+TEST(Parser, initDataLcurly) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_INIT_DATA));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_LCURLY);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_LCURLY);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_INIT_LIST);
+}
+
+TEST(Parser, initListImm) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_INIT_LIST));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_IMMEDIATE);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_IMMEDIATE);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_INIT_LIST);
+}
+
+TEST(Parser, initListLabel) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_INIT_LIST));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_LABEL);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_LABEL);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_INIT_LIST);
+}
+
+TEST(Parser, initListStrLit) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_INIT_LIST));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_STRLIT);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_STRLIT);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_INIT_LIST);
+}
+
+TEST(Parser, initListRcurly) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_INIT_LIST));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_RCURLY);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.size(), 1);
+	EXPECT_EQ(stack.top(), TOKEN_RCURLY);
+}
+
 TEST(Parser, labelDecl) {
 	// Prep input.
 	std::stack<ParseState_e> stack;

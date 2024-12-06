@@ -22,6 +22,8 @@ typedef enum {
 	TOKEN_LABEL,                     // labeled address
 	TOKEN_STRLIT,                    // string literal
 	TOKEN_COLON,                     // ':' character
+	TOKEN_LCURLY,                    // '{' character
+	TOKEN_RCURLY,                    // '}' character
 	TOKEN_KW_DATA,                   // ".data"       keyword
 	TOKEN_KW_GLOBAL,                 // ".global"     keyword
 	TOKEN_KW_LA,                     // "_la"         keyword

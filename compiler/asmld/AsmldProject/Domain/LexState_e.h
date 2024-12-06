@@ -33,6 +33,8 @@ typedef enum {
 	LEX_LOOP_STR,                          // loop for string literals
 	LEX_FOUND_COLON,                       // ':' char found
 	LEX_FOUND_STRLIT,                      // string literal finished
+	LEX_FOUND_LCURLY,                      // '{' char found
+	LEX_FOUND_RCURLY,                      // '}' char found
 
 	// Special values.
 	LEX_ERROR,                             // end state for "bad" lexing

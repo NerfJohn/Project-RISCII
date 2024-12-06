@@ -281,3 +281,35 @@ TEST(Lexer, strLit) {
 	EXPECT_EQ(state, TOKEN_STRLIT);
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
+
+TEST(Lexer, lcurly) {
+	// Sample inputs.
+	LexState_e  state = LEX_START;
+	std::string input = "{0";
+	
+	// Lex through entire string.
+	while(input.size()) {
+		state = Lexer_nextState(state, (uint8_t)(input[0]));
+		input.erase(input.begin());
+	}
+	
+	// Check final lexing results.
+	EXPECT_EQ(state, TOKEN_LCURLY);
+	EXPECT_EQ(OsExit_hasRet(), false);
+}
+
+TEST(Lexer, rcurly) {
+	// Sample inputs.
+	LexState_e  state = LEX_START;
+std::string input = "}\n";
+	
+	// Lex through entire string.
+	while(input.size()) {
+		state = Lexer_nextState(state, (uint8_t)(input[0]));
+		input.erase(input.begin());
+	}
+	
+	// Check final lexing results.
+	EXPECT_EQ(state, TOKEN_RCURLY);
+	EXPECT_EQ(OsExit_hasRet(), false);
+}

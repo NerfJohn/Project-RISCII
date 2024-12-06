@@ -20,7 +20,8 @@ typedef enum {
 	PARSE_OPT_FLAGS,                             // optional flags
 	PARSE_REG_IMM,                               // either reg or imm required
 	PARSE_LBL_IMM,                               // either label or imm required
-	PARSE_INIT_DATA                              // initialized data
+	PARSE_INIT_DATA,                             // initialized data
+	PARSE_INIT_LIST                              // list of init data
 } ParseState_e;
 
 #endif /* DOMAIN_PARSESTATE_E_H_ */

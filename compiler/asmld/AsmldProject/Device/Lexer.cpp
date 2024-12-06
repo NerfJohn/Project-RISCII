@@ -57,6 +57,8 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 			IS('-')      TO(LEX_HANDLE_MINUS)
 			IS('0')      TO(LEX_HANDLE_ZERO)
 			IS(':')      TO(LEX_FOUND_COLON)
+			IS('{')      TO(LEX_FOUND_LCURLY)
+			IS('}')      TO(LEX_FOUND_RCURLY)
 			IS('"')      TO(LEX_LOOP_STR)
 			IN('1','9')  TO(LEX_LOOP_DECIMAL)
 			IS('.')      TO(LEX_LOOP_DIRECTIVE)  // covers all directives
@@ -122,10 +124,16 @@ LexState_e Lexer_nextState(LexState_e const state, uint8_t const byte) {
 			ELSE         TO(LEX_DIRECTIVE)
 			break;
 		case LEX_FOUND_COLON:
-			ELSE         TO(TOKEN_COLON)         // colon = standalong char
+			ELSE         TO(TOKEN_COLON)         // colon = standalone char
 			break;
 		case LEX_FOUND_STRLIT:
 			ELSE         TO(TOKEN_STRLIT)        // string literal confirmed
+			break;
+		case LEX_FOUND_LCURLY:
+			ELSE         TO(TOKEN_LCURLY)        // standalone character
+			break;
+		case LEX_FOUND_RCURLY:
+			ELSE         TO(TOKEN_RCURLY)        // standalone character
 			break;
 		default:                                 // (No matching "from" state)
 			// Start at non-state? compiler bug.
