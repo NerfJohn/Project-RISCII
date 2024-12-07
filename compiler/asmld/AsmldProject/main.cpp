@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
 		prgmData.m_nodes      = {};              // no initial nodes
 		prgmData.m_gSyms      = {};              // no initial symbols
 		prgmData.m_start      = nullptr;         // no "start" to program
+		prgmData.m_hasData    = false;           // no known data section
 		prgmData.m_openLabels = {};              // no initial unpaired labels
 
 		// Binary image results.

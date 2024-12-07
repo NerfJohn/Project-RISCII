@@ -25,6 +25,7 @@ typedef enum {
 	TOKEN_LCURLY,                    // '{' character
 	TOKEN_RCURLY,                    // '}' character
 	TOKEN_KW_DATA,                   // ".data"       keyword
+	TOKEN_KW_BSS,                    // ".bss"        keyword
 	TOKEN_KW_GLOBAL,                 // ".global"     keyword
 	TOKEN_KW_LA,                     // "_la"         keyword
 	TOKEN_KW_SHR,                    // "shift right" keyword

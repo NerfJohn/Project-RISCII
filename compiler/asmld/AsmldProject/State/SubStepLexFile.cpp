@@ -19,6 +19,7 @@ using namespace std;
 
 // Definitions for expected keywords.
 #define KW_DATA      (".data")
+#define KW_BSS       (".bss")
 #define KW_GLOBAL    (".global")
 #define KW_LA        ("_la")
 #define KW_SHR       ("SHR")
@@ -49,6 +50,7 @@ static void SubStepLexFile_parseDirective(std::string const& buffer,
 
 	// Set token as keyword as applicable.
 	if KEYWORD(KW_DATA,   TOKEN_KW_DATA);
+	if KEYWORD(KW_BSS,    TOKEN_KW_BSS);
 	if KEYWORD(KW_GLOBAL, TOKEN_KW_GLOBAL);
 
 	// Set state based on process.

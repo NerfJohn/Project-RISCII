@@ -70,9 +70,6 @@ int32_t AAsmNode::getImm(DataModel_t& model,
 	// (Item is immediate, right?)
 	if (imm.m_lexTkn != TOKEN_IMMEDIATE) {Terminate_assert("getImm() w/o imm");}
 
-	// Get operation/context of immediate.
-	InstrType_e opType = IsaUtil_asInstr(op.m_lexTkn);
-
 	// Get the immediate value (should be shoe-in due to lexing).
 	Imm_t fullImm;
 	if (IsaUtil_toImm(imm.m_rawStr, fullImm) == RET_ERR_ERROR) {
@@ -80,9 +77,15 @@ int32_t AAsmNode::getImm(DataModel_t& model,
 	}
 
 	// Validate immediate value (within context).
-	bool isValid = (opType == INSTR_INVALID)           ?
-			        IsaUtil_isValidWord(fullImm)       :
-			        IsaUtil_isValidImm(opType, fullImm);
+	InstrType_e opType  = IsaUtil_asInstr(op.m_lexTkn);
+	bool        isValid = false;
+	switch (op.m_lexTkn) {
+		case TOKEN_KW_DATA:  isValid = IsaUtil_isValidWord(fullImm); break;
+		case TOKEN_KW_BSS:   isValid = (fullImm.m_val >= 0);         break;
+		default:
+			// Instruction based immediate- requires opcode knowledge.
+			isValid = IsaUtil_isValidImm(opType, fullImm); break;
+	}
 
 	// Log error if validation failed.
 	if (isValid == false) {

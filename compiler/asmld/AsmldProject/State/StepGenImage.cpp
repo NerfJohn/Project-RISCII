@@ -87,6 +87,13 @@ void StepGenImage_execute(DataModel_t& model) {
 			   model.m_nodes.end());
 	}
 
+	// Target requires data section- create as needed (PRIOR to address calc).
+	if (model.m_hasData == false) {
+		Print::inst().log(LOG_INFO, "Data section required- adding 0x0000");
+		model.m_dataVals.push_back(0x0000);
+		model.m_dataSize += ISA_WORD_BYTES;
+	}
+
 	// Generate the binary sections (FIRST the labels, THEN the values).
 	for (AAsmNode* node : model.m_nodes) {
 		IF_NULL(node, "Addressed null node");
@@ -96,17 +103,6 @@ void StepGenImage_execute(DataModel_t& model) {
 	for (AAsmNode* node : model.m_nodes) {
 		IF_NULL(node, "Assembled null node");
 		node->imageAssemble(model);
-	}
-
-	// Target requires at least one word in each section.
-	if (model.m_textSize < TARGET_SECT_MIN_BYTES) {
-		// Generating with no "start" instruction? compiler bug.
-		Terminate_assert("Generated 0 instruction image");
-	}
-	if (model.m_dataSize < TARGET_SECT_MIN_BYTES) {
-		Print::inst().log(LOG_INFO, "Data section required- adding 0x0000");
-		model.m_dataVals.push_back(0x0000);
-		model.m_dataSize += ISA_WORD_BYTES;
 	}
 
 	// (Sanity check "word precision" of ISA).

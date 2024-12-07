@@ -34,6 +34,10 @@ LIST(SEQ_DATA)    = {ITEM(PARSE_FILE),
 
 LIST(SEQ_LIST)    = {ITEM(PARSE_INIT_LIST)};
 
+LIST(SEQ_BSS)     = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_DATA),
+					 ITEM(TOKEN_IMMEDIATE)};
+
 LIST(SEQ_MOD)     = {ITEM(PARSE_FILE),
 		             ITEM(ACTION_MOD),
 					 ITEM(TOKEN_LABEL)};
@@ -105,6 +109,7 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 				IS(TOKEN_EOF)       WITH(SEQ_EPSILON)      // end of parsing
 				IS(TOKEN_LABEL)     WITH(SEQ_DECL)
 				IS(TOKEN_KW_DATA)   WITH(SEQ_DATA)
+				IS(TOKEN_KW_BSS)    WITH(SEQ_BSS)
 				IS(TOKEN_KW_GLOBAL) WITH(SEQ_MOD)
 				IS(TOKEN_KW_LA)     WITH(SEQ_LA)
 				IS(TOKEN_KW_SHR)    WITH(SEQ_SHR)

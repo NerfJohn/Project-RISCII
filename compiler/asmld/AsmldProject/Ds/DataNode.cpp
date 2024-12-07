@@ -31,10 +31,21 @@ uint32_t DataNode::allocImm(DataModel_t& model,
 
 	// Allocation depends on type of directive.
 	switch (type.m_lexTkn) {
-		case TOKEN_KW_DATA: retNum += ISA_WORD_BYTES; break; // init as word
+		case TOKEN_KW_DATA: retNum += ISA_WORD_BYTES;                 break;
+		case TOKEN_KW_BSS:  retNum += this->getImm(model, imm, type); break;
 		default:
 			// Unknown directive type. Bug!
 			Terminate_assert("allocImm() unknown directive");
+	}
+
+	// Inform user if allocation will be padded.
+	if (retNum % ISA_WORD_BYTES) {
+		// Log event.
+		string infStr = string("Padding reservation for alignment");
+		Print::inst().log(LOG_INFO, imm.m_file, imm.m_line, infStr);
+
+		// Adjust count.
+		while (retNum % ISA_WORD_BYTES) {retNum++;}
 	}
 
 	// Return resulting number of bytes to allocate.
@@ -220,9 +231,13 @@ void DataNode::localAnalyze(DataModel_t& model, SymTable& table){
 	AddrSpace_e space = ADDR_INVALID;
 	switch(m_reqType->m_lexTkn) {
 		case TOKEN_KW_DATA: space = ADDR_DATA; break;
+		case TOKEN_KW_BSS:  space = ADDR_BSS;  break;
 		default: Terminate_assert("analyze() unknown data directive"); break;
 	}
 	this->pairLabels(model, *m_reqType, space);
+
+	// Update model for "naturally" occurring data section.
+	if (space == ADDR_DATA) {model.m_hasData = true;}
 }
 
 //==============================================================================
@@ -297,6 +312,7 @@ void DataNode::imageAddress(DataModel_t& model) {
 	// Save size to proper location.
 	switch(m_reqType->m_lexTkn) {
 		case TOKEN_KW_DATA: model.m_dataSize += totSize;               break;
+		case TOKEN_KW_BSS:  model.m_bssSize  += totSize;               break;
 		default: Terminate_assert("address() unknown data directive"); break;
 	}
 

@@ -412,3 +412,25 @@ TEST(Parser, laKeyword) {
 	stack.pop();
 	EXPECT_EQ(stack.top(), PARSE_FILE);
 }
+
+TEST(Parser, bssKeyword) {
+	// Prep input.
+	std::stack<ParseState_e> stack;
+	stack.push((ParseState_e)(PARSE_FILE));
+	
+	// Attempt a bad parse.
+	RetErr_e retErr = Parser_parse(stack, TOKEN_KW_BSS);
+
+	// Check final parsing results.
+	EXPECT_EQ(retErr, RET_ERR_NONE);
+	EXPECT_EQ(OsExit_hasRet(), false);
+	
+	// Check stack.
+	EXPECT_EQ(stack.top(), TOKEN_KW_BSS);
+	stack.pop();
+	EXPECT_EQ(stack.top(), TOKEN_IMMEDIATE);
+	stack.pop();
+	EXPECT_EQ(stack.top(), ACTION_DATA);
+	stack.pop();
+	EXPECT_EQ(stack.top(), PARSE_FILE);
+}

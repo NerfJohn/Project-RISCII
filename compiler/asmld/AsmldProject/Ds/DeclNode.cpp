@@ -122,8 +122,9 @@ void DeclNode::imageAddress(DataModel_t& model) {
 	IF_NULL(m_sym, "address() with null decl symbol");
 	uint32_t addr = 0;
 	switch (m_sym->m_space) {
-		case ADDR_TEXT: addr = model.m_textSize; break;
-		case ADDR_DATA: addr = model.m_dataSize; break;
+		case ADDR_TEXT: addr = model.m_textSize;                   break;
+		case ADDR_DATA: addr = model.m_dataSize;                   break;
+		case ADDR_BSS:  addr = model.m_dataSize + model.m_bssSize; break;
 		default:
 			// Unknown address space- bug.
 			Terminate_assert("address() unknown address space");
