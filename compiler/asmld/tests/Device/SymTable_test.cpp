@@ -107,3 +107,87 @@ TEST(SymTable, labelSTART) {
 	EXPECT_EQ(sym->m_isGlobal, true);
 	EXPECT_EQ(sym->m_numRefs, 1);
 }
+
+TEST(SymTable, labelSIZE) {
+	// Setup inputs.
+	SymTable table;
+	Symbol_t* sym = nullptr;
+	
+	// Check symbol is already present in (new) table.
+	RetErr_e ret = table.getSym("__SIZE", sym);
+	EXPECT_EQ(ret, RET_ERR_NONE);
+	EXPECT_NE(sym, nullptr);
+	
+	// Check symbol defaults.
+	EXPECT_EQ(sym->m_name, "__SIZE");
+	EXPECT_EQ(sym->m_file, "asmld_predef");
+	EXPECT_EQ(sym->m_line, 0);
+	EXPECT_EQ(sym->m_isGlobal, true);
+	EXPECT_EQ(sym->m_numRefs, 1);
+	
+	// Check all tables share the same instance.
+	SymTable table2;
+	Symbol_t* sym2 = nullptr;
+	table2.getSym("__SIZE", sym2);
+	EXPECT_EQ(sym, sym2);
+
+	// Check it cannot be re-added.
+	ret = table.addSym("__SIZE", sym);
+	EXPECT_EQ(ret, RET_ERR_ERROR);	
+}
+
+TEST(SymTable, labelBSS) {
+	// Setup inputs.
+	SymTable table;
+	Symbol_t* sym = nullptr;
+	
+	// Check symbol is already present in (new) table.
+	RetErr_e ret = table.getSym("__BSS", sym);
+	EXPECT_EQ(ret, RET_ERR_NONE);
+	EXPECT_NE(sym, nullptr);
+	
+	// Check symbol defaults.
+	EXPECT_EQ(sym->m_name, "__BSS");
+	EXPECT_EQ(sym->m_file, "asmld_predef");
+	EXPECT_EQ(sym->m_line, 0);
+	EXPECT_EQ(sym->m_isGlobal, true);
+	EXPECT_EQ(sym->m_numRefs, 1);
+	
+	// Check all tables share the same instance.
+	SymTable table2;
+	Symbol_t* sym2 = nullptr;
+	table2.getSym("__BSS", sym2);
+	EXPECT_EQ(sym, sym2);
+
+	// Check it cannot be re-added.
+	ret = table.addSym("__BSS", sym);
+	EXPECT_EQ(ret, RET_ERR_ERROR);	
+}
+
+TEST(SymTable, labelFREE) {
+	// Setup inputs.
+	SymTable table;
+	Symbol_t* sym = nullptr;
+	
+	// Check symbol is already present in (new) table.
+	RetErr_e ret = table.getSym("__FREE", sym);
+	EXPECT_EQ(ret, RET_ERR_NONE);
+	EXPECT_NE(sym, nullptr);
+	
+	// Check symbol defaults.
+	EXPECT_EQ(sym->m_name, "__FREE");
+	EXPECT_EQ(sym->m_file, "asmld_predef");
+	EXPECT_EQ(sym->m_line, 0);
+	EXPECT_EQ(sym->m_isGlobal, true);
+	EXPECT_EQ(sym->m_numRefs, 1);
+	
+	// Check all tables share the same instance.
+	SymTable table2;
+	Symbol_t* sym2 = nullptr;
+	table2.getSym("__FREE", sym2);
+	EXPECT_EQ(sym, sym2);
+
+	// Check it cannot be re-added.
+	ret = table.addSym("__FREE", sym);
+	EXPECT_EQ(ret, RET_ERR_ERROR);	
+}

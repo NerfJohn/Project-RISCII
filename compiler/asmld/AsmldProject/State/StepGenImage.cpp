@@ -49,6 +49,30 @@ using namespace std;
 						  " bss)")
 
 //==============================================================================
+// Helper function to resolve "address" values for pre-defined symbols.
+static void StepGenImage_resolvePredefs(DataModel_t& model) {
+	// Common vars.
+	Symbol_t* sym = nullptr;
+
+	// Resolve address of .bss section.
+	model.m_gSyms.getSym(SYM_BSS_NAME, sym);
+	IF_NULL(sym, "resolve() couldn't find bss symbol");
+	sym->m_addr = (uint16_t)(model.m_dataSize);
+
+	// Resolve address of "free RAM" section.
+	model.m_gSyms.getSym(SYM_FREE_NAME, sym);
+	IF_NULL(sym, "resolve() couldn't find free symbol");
+	sym->m_addr = (uint16_t)(model.m_dataSize + model.m_bssSize);
+
+	// Resolve "address" of image size.
+	model.m_gSyms.getSym(SYM_SIZE_NAME, sym);
+	IF_NULL(sym, "resolve() couldn't find size symbol");
+	sym->m_addr = (uint16_t)(model.m_textSize +
+			                 model.m_dataSize +
+							 TARGET_HDRS_SIZE);
+}
+
+//==============================================================================
 // Helper function to open a file for writing (with info/error handling).
 static RetErr_e StepGenImage_openWriteFile(DataModel_t& model) {
 	// Result of process (optimistic).
@@ -99,7 +123,7 @@ void StepGenImage_execute(DataModel_t& model) {
 		IF_NULL(node, "Addressed null node");
 		node->imageAddress(model);
 	}
-	// TODO- update assembler defined labels
+	StepGenImage_resolvePredefs(model);
 	for (AAsmNode* node : model.m_nodes) {
 		IF_NULL(node, "Assembled null node");
 		node->imageAssemble(model);

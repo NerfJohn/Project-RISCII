@@ -10,8 +10,11 @@
 #include "Domain/RetErr_e.h"
 #include "Domain/Symbol_t.h"
 
-// Name of required, pre-known label- managed by SymTable.
+// Name of pre-known label- managed by SymTable.
 #define SYM_START_NAME (std::string("__START"))
+#define SYM_BSS_NAME   (std::string("__BSS"))
+#define SYM_FREE_NAME  (std::string("__FREE"))
+#define SYM_SIZE_NAME  (std::string("__SIZE"))
 
 /*
  * Table used to add/lookup/store program's symbols.
@@ -22,6 +25,14 @@
  */
 class SymTable {
 public:
+	/*
+	 * Constructor to ensure shared, pre-defined labels are defined.
+	 *
+	 * (TL;DR Cmake's g++ doesn't like "designated initializers" and I'm lazy
+	 * enough to just make a "one time init statics" constructor to fix it).
+	 */
+	SymTable(void);
+
 	/*
 	 * Adds given symbol to table (if key has no assigned symbol).
 	 *
@@ -62,6 +73,12 @@ public:
 private:
 	// Core "name to symbol" map of the table.
 	std::map<std::string, Symbol_t*> m_table;
+
+	// Pre-defined labels shared by ALL tables.
+	static bool                      s_symsInit;
+	static Symbol_t                  s_symBSS;
+	static Symbol_t                  s_symFREE;
+	static Symbol_t                  s_symSIZE;
 };
 
 #endif /* DEVICE_SYMTABLE_H_ */
