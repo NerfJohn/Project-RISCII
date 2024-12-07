@@ -23,7 +23,22 @@ using namespace std;
 #define KW_GLOBAL    (".global")
 #define KW_WEAK      (".weak")
 #define KW_LA        ("_la")
+#define KW_AND       ("AND")
+#define KW_ORR       ("ORR")
+#define KW_XOR       ("XOR")
+#define KW_SHL       ("SHL")
 #define KW_SHR       ("SHR")
+#define KW_ADD       ("ADD")
+#define KW_SUB       ("SUB")
+#define KW_LBI       ("LBI")
+#define KW_LDR       ("LDR")
+#define KW_STR       ("STR")
+#define KW_BRC       ("BRC")
+#define KW_JPR       ("JPR")
+#define KW_JLR       ("JLR")
+#define KW_SWP       ("SWP")
+#define KW_NOP       ("NOP")
+#define KW_HLT       ("HLT")
 
 // (Targeted macros to simplify the parsing process.)
 #define KEYWORD(x,y) (0 == buffer.compare(x)) {tkn = (y);}
@@ -38,7 +53,22 @@ static void SubStepLexFile_parseName(std::string const& buffer,
 
 	// Set token as keyword as applicable.
 	if KEYWORD(KW_LA,  TOKEN_KW_LA);
+	if KEYWORD(KW_AND, TOKEN_KW_AND);
+	if KEYWORD(KW_ORR, TOKEN_KW_ORR);
+	if KEYWORD(KW_XOR, TOKEN_KW_XOR);
+	if KEYWORD(KW_SHL, TOKEN_KW_SHL);
 	if KEYWORD(KW_SHR, TOKEN_KW_SHR);
+	if KEYWORD(KW_ADD, TOKEN_KW_ADD);
+	if KEYWORD(KW_SUB, TOKEN_KW_SUB);
+	if KEYWORD(KW_LBI, TOKEN_KW_LBI);
+	if KEYWORD(KW_LDR, TOKEN_KW_LDR);
+	if KEYWORD(KW_STR, TOKEN_KW_STR);
+	if KEYWORD(KW_BRC, TOKEN_KW_BRC);
+	if KEYWORD(KW_JPR, TOKEN_KW_JPR);
+	if KEYWORD(KW_JLR, TOKEN_KW_JLR);
+	if KEYWORD(KW_SWP, TOKEN_KW_SWP);
+	if KEYWORD(KW_NOP, TOKEN_KW_NOP);
+	if KEYWORD(KW_HLT, TOKEN_KW_HLT);
 }
 
 //==============================================================================

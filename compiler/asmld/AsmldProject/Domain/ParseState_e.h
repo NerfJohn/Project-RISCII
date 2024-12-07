@@ -21,7 +21,8 @@ typedef enum {
 	PARSE_REG_IMM,                               // either reg or imm required
 	PARSE_LBL_IMM,                               // either label or imm required
 	PARSE_INIT_DATA,                             // initialized data
-	PARSE_INIT_LIST                              // list of init data
+	PARSE_INIT_LIST,                             // list of init data
+	PARSE_RTI_JPR                                // either RTI or JPR format
 } ParseState_e;
 
 #endif /* DOMAIN_PARSESTATE_E_H_ */

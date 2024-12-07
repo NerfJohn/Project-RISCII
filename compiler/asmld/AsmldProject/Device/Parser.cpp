@@ -34,6 +34,8 @@ LIST(SEQ_DATA)    = {ITEM(PARSE_FILE),
 
 LIST(SEQ_LIST)    = {ITEM(PARSE_INIT_LIST)};
 
+LIST(SEQ_IMM)     = {ITEM(TOKEN_IMMEDIATE)};
+
 LIST(SEQ_BSS)     = {ITEM(PARSE_FILE),
 		             ITEM(ACTION_DATA),
 					 ITEM(TOKEN_IMMEDIATE)};
@@ -51,12 +53,48 @@ LIST(SEQ_LA)      = {ITEM(PARSE_FILE),
 					 ITEM(PARSE_LBL_IMM),
 					 ITEM(TOKEN_REGISTER)};
 
-LIST(SEQ_SHR)     = {ITEM(PARSE_FILE),
+LIST(SEQ_OP_DATA) = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_INSTR),
+					 ITEM(PARSE_REG_IMM),
+					 ITEM(TOKEN_REGISTER),
+					 ITEM(TOKEN_REGISTER)};
+
+LIST(SEQ_OP_SHR)  = {ITEM(PARSE_FILE),
 					 ITEM(ACTION_INSTR),
 		             ITEM(PARSE_REG_IMM),
 					 ITEM(TOKEN_REGISTER),
 					 ITEM(TOKEN_REGISTER),
 					 ITEM(PARSE_OPT_FLAGS)};
+
+LIST(SEQ_OP_LBI)  = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_INSTR),
+					 ITEM(TOKEN_IMMEDIATE),
+					 ITEM(TOKEN_REGISTER),
+					 ITEM(PARSE_OPT_FLAGS)};
+
+LIST(SEQ_OP_MEM)  = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_INSTR),
+					 ITEM(TOKEN_IMMEDIATE),
+					 ITEM(TOKEN_REGISTER),
+					 ITEM(TOKEN_REGISTER)};
+
+LIST(SEQ_OP_BRC)  = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_INSTR),
+					 ITEM(TOKEN_IMMEDIATE),
+					 ITEM(TOKEN_FLAGS)};
+
+LIST(SEQ_OP_JPR)  = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_INSTR),
+					 ITEM(PARSE_RTI_JPR)};
+
+LIST(SEQ_OP_JLR)  = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_INSTR),
+					 ITEM(TOKEN_IMMEDIATE),
+					 ITEM(TOKEN_REGISTER),
+					 ITEM(TOKEN_REGISTER)};
+
+LIST(SEQ_OP_CMD)  = {ITEM(PARSE_FILE),
+		             ITEM(ACTION_INSTR)};
 
 //==============================================================================
 // Returns the given state as a LexToken. Returns TOKEN_INVALID if not a token.
@@ -113,8 +151,23 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 				IS(TOKEN_KW_GLOBAL) WITH(SEQ_MOD)
 				IS(TOKEN_KW_WEAK)   WITH(SEQ_MOD)
 				IS(TOKEN_KW_LA)     WITH(SEQ_LA)
-				IS(TOKEN_KW_SHR)    WITH(SEQ_SHR)
-				break;
+				IS(TOKEN_KW_AND)    WITH(SEQ_OP_DATA)
+				IS(TOKEN_KW_ORR)    WITH(SEQ_OP_DATA)
+				IS(TOKEN_KW_XOR)    WITH(SEQ_OP_DATA)
+				IS(TOKEN_KW_SHL)    WITH(SEQ_OP_DATA)
+				IS(TOKEN_KW_SHR)    WITH(SEQ_OP_SHR)
+				IS(TOKEN_KW_ADD)    WITH(SEQ_OP_DATA)
+				IS(TOKEN_KW_SUB)    WITH(SEQ_OP_DATA)
+				IS(TOKEN_KW_LBI)    WITH(SEQ_OP_LBI)
+				IS(TOKEN_KW_LDR)    WITH(SEQ_OP_MEM)
+				IS(TOKEN_KW_STR)    WITH(SEQ_OP_MEM)
+				IS(TOKEN_KW_BRC)    WITH(SEQ_OP_BRC)
+				IS(TOKEN_KW_JPR)    WITH(SEQ_OP_JPR)
+				IS(TOKEN_KW_JLR)    WITH(SEQ_OP_JLR)
+				IS(TOKEN_KW_SWP)    WITH(SEQ_OP_MEM)
+				IS(TOKEN_KW_NOP)    WITH(SEQ_OP_CMD)
+				IS(TOKEN_KW_HLT)    WITH(SEQ_OP_CMD)
+ 				break;
 			case PARSE_OPT_FLAGS:
 				IS(TOKEN_FLAGS)     WITH(SEQ_EPSILON)
 				IS(TOKEN_REGISTER)  ONLY(SEQ_EPSILON)      // resolve to nothing
@@ -138,6 +191,10 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 			case PARSE_LBL_IMM:
 				IS(TOKEN_LABEL)     WITH(SEQ_EPSILON)
 				IS(TOKEN_IMMEDIATE) WITH(SEQ_EPSILON)
+				break;
+			case PARSE_RTI_JPR:
+				IS(TOKEN_FLAGS)     WITH(SEQ_EPSILON)
+				IS(TOKEN_REGISTER)  WITH(SEQ_IMM)
 				break;
 			default:
 				// Top can't be broken down? compiler bug.
