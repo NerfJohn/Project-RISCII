@@ -76,6 +76,11 @@ void ModNode::localLink(DataModel_t& model, SymTable& table) {
 				sym->m_isGlobal = true;
 				dbgStr = string("'") + m_reqLabel->m_rawStr + "' = global";
 				break;
+			case TOKEN_KW_WEAK:
+				prev = sym->m_isWeak;
+				sym->m_isWeak = true;
+				dbgStr = string("'") + m_reqLabel->m_rawStr + "' = weak";
+				break;
 			default:
 				// Unknown directive? Bug!
 				Terminate_assert("localLink() with unknown mod");

@@ -21,6 +21,7 @@ using namespace std;
 #define KW_DATA      (".data")
 #define KW_BSS       (".bss")
 #define KW_GLOBAL    (".global")
+#define KW_WEAK      (".weak")
 #define KW_LA        ("_la")
 #define KW_SHR       ("SHR")
 
@@ -52,6 +53,7 @@ static void SubStepLexFile_parseDirective(std::string const& buffer,
 	if KEYWORD(KW_DATA,   TOKEN_KW_DATA);
 	if KEYWORD(KW_BSS,    TOKEN_KW_BSS);
 	if KEYWORD(KW_GLOBAL, TOKEN_KW_GLOBAL);
+	if KEYWORD(KW_WEAK,   TOKEN_KW_WEAK);
 
 	// Set state based on process.
 	if (tkn == TOKEN_INVALID) {state = LEX_ERROR;}

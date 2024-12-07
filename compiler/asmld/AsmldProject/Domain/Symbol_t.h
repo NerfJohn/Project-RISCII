@@ -30,6 +30,7 @@ typedef struct symbol_t { // (name given to appease build warning...)
 
 	// Modifiers applied to symbol.
 	bool        m_isGlobal = false;
+	bool        m_isWeak   = false;
 
 	// Reference counter (decl + refs).
 	uint32_t    m_numRefs  = 0;

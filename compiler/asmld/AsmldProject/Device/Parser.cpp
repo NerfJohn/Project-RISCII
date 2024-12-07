@@ -111,6 +111,7 @@ RetErr_e Parser_parse(std::stack<ParseState_e>& stack, LexToken_e const token) {
 				IS(TOKEN_KW_DATA)   WITH(SEQ_DATA)
 				IS(TOKEN_KW_BSS)    WITH(SEQ_BSS)
 				IS(TOKEN_KW_GLOBAL) WITH(SEQ_MOD)
+				IS(TOKEN_KW_WEAK)   WITH(SEQ_MOD)
 				IS(TOKEN_KW_LA)     WITH(SEQ_LA)
 				IS(TOKEN_KW_SHR)    WITH(SEQ_SHR)
 				break;

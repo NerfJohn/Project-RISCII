@@ -154,6 +154,28 @@ void AAsmNode::linkGlobal(DataModel_t& model,
 	// (Item is label, right?)
 	if (label.m_lexTkn != TOKEN_LABEL) {Terminate_assert("glink() w/o label");}
 
+	// Attempt to re-link weak references.
+	if ((sym != nullptr) && (sym->m_isWeak)) {
+		// Remove reference.
+		sym->m_numRefs--;
+
+		// If a global symbol exists, re-link to it instead.
+		if (model.m_gSyms.getSym(label.m_rawStr, sym)== RET_ERR_NONE) {
+			// Symbol found- log re-link.
+			string dbgStr = string("Relink '")     +
+					        label.m_rawStr         +
+							"' (to "               +
+							sym->m_file            +
+							"/"                    +
+							to_string(sym->m_line) +
+							")";
+			Print::inst().log(LOG_DEBUG, label.m_file, label.m_line, dbgStr);
+		}
+
+		// (Re)apply reference.
+		sym->m_numRefs++;
+	}
+
 	// Attempt link ONLY IF link hasn't been found.
 	if (sym == nullptr) {
 		// Search table for symbol to link to (MUST find for validity).
