@@ -12,8 +12,10 @@ using namespace std;
 #define FLAG_PREFIX '-'
 
 // Flag options of asmld.exe.
-#define FLAG_HELP ("-h")
-#define FLAG_NAME ("-o")
+#define FLAG_HELP    ("-h")
+#define FLAG_VERSION ("-v")
+#define FLAG_NAME    ("-o")
+#define FLAG_LEVEL   ("-ll")
 
 // (Yep, that's right- cheeky, targeted macros.)
 #define FLAG(x)  (0 == flagStr.compare(x))
@@ -23,8 +25,10 @@ using namespace std;
 // Helper function to parse asmld.exe specific flags/details.
 void GetOpt::parseFlag(std::string const& flagStr) {
 	// Set types as applicable.
-	if      FLAG(FLAG_HELP) SET(CLI_TYPE_LONE, CLI_FLAG_HELP)
-	else if FLAG(FLAG_NAME) SET(CLI_TYPE_ARG, CLI_FLAG_NAME)
+	if      FLAG(FLAG_HELP)    SET(CLI_TYPE_LONE, CLI_FLAG_HELP)
+	else if FLAG(FLAG_VERSION) SET(CLI_TYPE_LONE, CLI_FLAG_VERSION)
+	else if FLAG(FLAG_NAME)    SET(CLI_TYPE_ARG,  CLI_FLAG_NAME)
+	else if FLAG(FLAG_LEVEL)   SET(CLI_TYPE_ARG,  CLI_FLAG_LEVEL)
 }
 
 //==============================================================================
@@ -81,6 +85,6 @@ bool GetOpt::getOpt(void) {
 		}
 	}
 
-	// Return
+	// Return.
 	return doParse;
 }

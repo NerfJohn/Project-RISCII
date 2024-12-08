@@ -18,34 +18,34 @@ using namespace std;
 //==============================================================================
 
 // Macros for easing reading of checks in step execution.
-#define LOG_BIN_ERR_STR  (string("Image is too large- ")    + \
-				          to_string(binSize)                + \
-						  " > "                             + \
+#define LOG_BIN_ERR_STR  (string("Image is too large- ")      + \
+				          to_string(binSize)                  + \
+						  " > "                               + \
 						  to_string(TARGET_BIN_MAX_BYTES))
-#define LOG_RAM_ERR_STR  (string("Ram usage is too high- ") + \
-				          to_string(ramSize)                + \
-						  " > "                             + \
+#define LOG_RAM_ERR_STR  (string("Ram usage is too high- ")   + \
+				          to_string(ramSize)                  + \
+						  " > "                               + \
 						  to_string(TARGET_RAM_MAX_BYTES))
 
 // Macros for easing reading of summary in step execution.
-#define LOG_NAME_STR     (string("\tName:  ") + model.m_outFile)
-#define LOG_BIN_INFO_STR (string("\tImage: ")               + \
-                          to_string(binSize)                + \
-                          "/"                               + \
-						  to_string(TARGET_BIN_MAX_BYTES)   + \
-						  " bytes ("                        + \
-						  to_string(model.m_textSize)       + \
-						  " text, "                         + \
-						  to_string(model.m_dataSize)       + \
+#define LOG_NAME_STR     (string("    Name:  ") + model.m_outFile)
+#define LOG_BIN_INFO_STR (string("    Image: ")               + \
+                          to_string(binSize)                  + \
+                          "/"                                 + \
+						  to_string(TARGET_BIN_MAX_BYTES)     + \
+						  " bytes ("                          + \
+						  to_string(model.m_textSize)         + \
+						  " text, "                           + \
+						  to_string(model.m_dataSize)         + \
 						  " data)")
-#define LOG_RAM_INFO_STR (string("\tRam:   ")               + \
-                          to_string(ramSize)                + \
-                          "/"                               + \
-						  to_string(TARGET_RAM_MAX_BYTES)   + \
-						  " bytes ("                        + \
-						  to_string(model.m_dataSize)       + \
-						  " data, "                         + \
-						  to_string(model.m_bssSize)        + \
+#define LOG_RAM_INFO_STR (string("    Ram:   ")               + \
+                          to_string(ramSize)                  + \
+                          "/"                                 + \
+						  to_string(TARGET_RAM_MAX_BYTES)     + \
+						  " bytes ("                          + \
+						  to_string(model.m_dataSize)         + \
+						  " data, "                           + \
+						  to_string(model.m_bssSize)          + \
 						  " bss)")
 
 //==============================================================================

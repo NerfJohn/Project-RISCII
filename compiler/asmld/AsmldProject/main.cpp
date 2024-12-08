@@ -43,8 +43,8 @@ int main(int argc, char* argv[]) {
 		prgmData.m_dataVals   = {};              // no initial words
 	}
 
-	// Log warnings/error by default. // TODO- "Debug" for developing
-	Print::inst().setLogLevel(LOG_DEBUG);
+	// Log warnings/error by default.
+	Print::inst().setLogLevel(LOG_WARNING);
 
 	// Parse/Handle arguments and files into desired program.
 	StepParseCli_execute(prgmData, argc, argv);

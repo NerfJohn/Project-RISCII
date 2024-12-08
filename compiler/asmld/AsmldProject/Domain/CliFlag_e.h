@@ -16,6 +16,8 @@ typedef enum {
 	// Real values.
 	CLI_FLAG_HELP,     // request program help menu
 	CLI_FLAG_NAME,     // name output file
+	CLI_FLAG_VERSION,  // request version info
+	CLI_FLAG_LEVEL,    // log level to display at
 
 	// Special values.
 	CLI_FLAG_INVALID   // invalid/unused flag

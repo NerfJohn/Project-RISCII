@@ -33,7 +33,10 @@ typedef enum {
 	RET_G_NODEF = 0x10, // label not defined globally
 	RET_NO_MAIN = 0x11, // start label not defined
 	RET_IN_TEXT = 0x12, // start label didn't define a text section item
-	RET_BAD_ESC = 0x13  // invalid escape char (in string literal)
+	RET_BAD_ESC = 0x13, // invalid escape char (in string literal)
+	RET_FNO_ARG = 0x14, // cli flag requiring argument is missing argument
+	RET_NO_FILE = 0x15, // no input files given
+	RET_BAD_ARG = 0x16  // bad cli argument given
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */
