@@ -36,7 +36,8 @@ typedef enum {
 	RET_BAD_ESC = 0x13, // invalid escape char (in string literal)
 	RET_FNO_ARG = 0x14, // cli flag requiring argument is missing argument
 	RET_NO_FILE = 0x15, // no input files given
-	RET_BAD_ARG = 0x16  // bad cli argument given
+	RET_BAD_ARG = 0x16, // bad cli argument given
+	RET_NOT_CLI = 0x17  // unknown cli flag
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

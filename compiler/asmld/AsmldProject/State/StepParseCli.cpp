@@ -113,23 +113,25 @@ void StepParseCli_execute(DataModel_t& model,
 
 	// Parse each cli argument.
 	while(args.getOpt()) {
-		// (Sanity check type.)
+		// Report unknown arguments (1/4 IF).
 		if (args.m_type == CLI_TYPE_INVALID) {
-			Terminate_assert("handleCli() unknown type");
+			string errStr = string("unrecognized '") + args.m_value + "'";
+			Print::inst().cli(errStr);
+			ModelUtil_recordError(model, RET_NOT_CLI);
 		}
 
-		// Files are saved for reading/parsing later (1/3 IF).
-		if (args.m_type == CLI_TYPE_FILE) {
+		// Files are saved for reading/parsing later (2/4 ELSE IF).
+		else if (args.m_type == CLI_TYPE_FILE) {
 			model.m_files.push_back(args.m_value);
 		}
 
-		// Flags with arguments MUST have the argument (2/3 ELSE IF).
+		// Flags with arguments MUST have the argument (3/4 ELSE IF).
 		else if ((args.m_type == CLI_TYPE_ARG) && (args.m_arg.size() == 0)) {
 			Print::inst().cli(args.m_value + " requires an argument");
 			ModelUtil_recordError(model, RET_FNO_ARG);
 		}
 
-		// Handle specific flags (3/3 ELSE IF).
+		// Handle specific flags (4/4 ELSE IF).
 		else if ((args.m_type == CLI_TYPE_LONE) ||
 				 (args.m_type == CLI_TYPE_ARG)) {
 			switch (args.m_asFlag) {
