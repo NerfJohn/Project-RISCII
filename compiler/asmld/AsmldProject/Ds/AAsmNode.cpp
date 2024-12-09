@@ -36,6 +36,10 @@ void AAsmNode::imageAddress(DataModel_t& model) { /* --- */}
 void AAsmNode::imageAssemble(DataModel_t& model) { /* --- */}
 
 //==============================================================================
+// Writes debug table information to (assumed open) binary image.
+void AAsmNode::optPrintDebug(void) { /* --- */}
+
+//==============================================================================
 // General destructor- public to allow for generic node deletion.
 AAsmNode::~AAsmNode(void) { /* --- */}
 

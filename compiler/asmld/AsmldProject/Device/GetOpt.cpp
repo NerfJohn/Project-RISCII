@@ -16,6 +16,7 @@ using namespace std;
 #define FLAG_VERSION ("-v")
 #define FLAG_NAME    ("-o")
 #define FLAG_LEVEL   ("-ll")
+#define FLAG_DEBUG   ("-g")
 
 // (Yep, that's right- cheeky, targeted macros.)
 #define FLAG(x)  (0 == flagStr.compare(x))
@@ -29,6 +30,7 @@ void GetOpt::parseFlag(std::string const& flagStr) {
 	else if FLAG(FLAG_VERSION) SET(CLI_TYPE_LONE, CLI_FLAG_VERSION)
 	else if FLAG(FLAG_NAME)    SET(CLI_TYPE_ARG,  CLI_FLAG_NAME)
 	else if FLAG(FLAG_LEVEL)   SET(CLI_TYPE_ARG,  CLI_FLAG_LEVEL)
+	else if FLAG(FLAG_DEBUG)   SET(CLI_TYPE_LONE, CLI_FLAG_DEBUG)
 }
 
 //==============================================================================

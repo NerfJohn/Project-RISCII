@@ -2,8 +2,6 @@
  * main.cpp: Main elements/execution of the assembler/linker program.
  */
 
-// TODO- clean up this file once the dust settles...
-
 #include "Device/Print.h"
 #include "Device/Terminate.h"
 #include "State/StepGenImage.h"
@@ -27,6 +25,7 @@ int main(int argc, char* argv[]) {
 		// Parsed Cli Data.
 		prgmData.m_files      = {};              // no initial files
 		prgmData.m_outFile    = "";              // no initial out filename
+		prgmData.m_doDbg      = false;           // no debug by default
 
 		// Parsed/analyzed program.
 		prgmData.m_nodes      = {};              // no initial nodes

@@ -18,6 +18,7 @@ typedef enum {
 	CLI_FLAG_NAME,     // name output file
 	CLI_FLAG_VERSION,  // request version info
 	CLI_FLAG_LEVEL,    // log level to display at
+	CLI_FLAG_DEBUG,    // create image with debug symbols/breakpoints
 
 	// Special values.
 	CLI_FLAG_INVALID   // invalid/unused flag

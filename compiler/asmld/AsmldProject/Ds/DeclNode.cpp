@@ -2,8 +2,10 @@
  * DeclNode.cpp: Represents declaration of a label/named address.
  */
 
+#include "Device/File.h"
 #include "Device/Print.h"
 #include "Device/Terminate.h"
+#include "Util/IsaUtil.h"
 #include "Util/ModelUtil.h"
 
 #include "Ds/DeclNode.h"
@@ -131,9 +133,57 @@ void DeclNode::imageAddress(DataModel_t& model) {
 	}
 	m_sym->m_addr = (uint16_t)(addr);
 
+	// If debugging, add space for breakpoint for global text addresses.
+	if ((model.m_doDbg)               &&
+		(m_sym->m_space == ADDR_TEXT) &&
+		(m_sym->m_isGlobal)) {
+		model.m_textSize += ISA_WORD_BYTES;
+	}
+
 	// (Log address realization).
 	string dbgStr = string("Addr '") + m_sym->m_name + "' = " + to_string(addr);
 	Print::inst().log(LOG_DEBUG, m_sym->m_file, m_sym->m_line, dbgStr);
+}
+
+//==============================================================================
+// Assembles program- generating binary values in the data model.
+void DeclNode::imageAssemble(DataModel_t& model) {
+	// Add (disabled) breakpoint if debugging global text address.
+	if ((model.m_doDbg)               &&
+		(m_sym->m_space == ADDR_TEXT) &&
+		(m_sym->m_isGlobal)) {
+		// Create breakpoint.
+		Instr_t  fields;
+		uint16_t instr  = 0;
+		fields.m_opcode = INSTR_NOP;
+		if (IsaUtil_genInstr(instr, fields) == RET_ERR_ERROR) {
+			Terminate_assert("assemble() failed for breakpoint");
+		}
+
+		// Save as part of text section.
+		model.m_textVals.push_back(instr);
+	}
+}
+
+//==============================================================================
+// Writes debug table information to (assumed open) binary image.
+void DeclNode::optPrintDebug(void) {
+	// Debug captures all data and global text addresses.
+	IF_NULL(m_sym, "printDebug() with null decl symbol");
+	bool isData = (m_sym->m_space == ADDR_DATA) | (m_sym->m_space == ADDR_BSS);
+	bool isGlbl = m_sym->m_isGlobal & (m_sym->m_space == ADDR_TEXT);
+
+	// Add symbol's name, space, and address in CSV format.
+	if (isData | isGlbl) {
+		string spaceText = (isData) ? "DATA" : "TEXT";
+		string symStr = m_sym->m_name             +
+				        ","                       +
+						spaceText                 +
+						","                       +
+						to_string(m_sym->m_addr)  +
+						"\n";
+		File::inst().write(symStr);
+	}
 }
 
 //==============================================================================

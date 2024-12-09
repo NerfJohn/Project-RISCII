@@ -79,6 +79,25 @@ public:
 	void imageAddress(DataModel_t& model);
 
 	/*
+	 * Assembles program- generating binary values in the data model.
+	 *
+	 * Generates and stores binary values in the data model. Assumes program
+	 * nodes are being called in the order they will be placed into the file.
+	 *
+	 * @param model shared data of the entire program
+	 */
+	void imageAssemble(DataModel_t& model);
+
+	/*
+	 * Writes debug table information to (assumed open) binary image.
+	 *
+	 * Assuming the binary image is open for writing, writes relevant info to
+	 * the file (in the form of a debug table entry). Intended as an optional
+	 * feature of the assembly/linking process.
+	 */
+	void optPrintDebug(void);
+
+	/*
 	 * General destructor- ensures all memory is freed on deletion.
 	 */
 	~DeclNode(void);

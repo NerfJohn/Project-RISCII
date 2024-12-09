@@ -87,6 +87,15 @@ public:
 	virtual void imageAssemble(DataModel_t& model);
 
 	/*
+	 * Writes debug table information to (assumed open) binary image.
+	 *
+	 * Assuming the binary image is open for writing, writes relevant info to
+	 * the file (in the form of a debug table entry). Intended as an optional
+	 * feature of the assembly/linking process.
+	 */
+	virtual void optPrintDebug(void);
+
+	/*
 	 * General destructor- public to allow for generic node deletion.
 	 */
 	virtual ~AAsmNode(void);

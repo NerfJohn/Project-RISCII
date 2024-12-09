@@ -30,6 +30,7 @@ typedef struct {
 	// Parsed Cli Data.
 	std::vector<std::string> m_files;            // input source files
 	std::string              m_outFile;          // name of created file
+	bool                     m_doDbg;            // enables adding debug symbols
 
 	// Parsed/analyzed program.
 	std::vector<AAsmNode*>   m_nodes;            // nodes creating the program

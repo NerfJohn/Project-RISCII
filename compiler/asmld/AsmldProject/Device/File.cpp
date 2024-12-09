@@ -118,8 +118,8 @@ uint8_t File::pop(void) {
 }
 
 //==============================================================================
-// Writes byte to file (if open and writing).
-void File::write(uint8_t byte) {
+// Writes byte or string (ie overloaded) to file (if open and writing).
+void File::write(uint8_t const byte) {
 	// Write requires an actively open file.
 	if (m_isOpen == false) {
 		Terminate_assert("Wrote without opening file");
@@ -137,6 +137,13 @@ void File::write(uint8_t byte) {
 	if(retErr) {
 		Terminate_assert(string("Unable to write file '") + m_name + "'");
 	}
+}
+
+//==============================================================================
+// Writes byte or string (ie overloaded) to file (if open and writing).
+void File::write(std::string const& str) {
+	// Reuse "write byte" code.
+	for (uint8_t byte : str) {this->write(byte);}
 }
 
 //==============================================================================

@@ -71,14 +71,17 @@ public:
 	uint8_t pop(void);
 
 	/*
-	 * Writes byte to file (if open and writing).
+	 * Writes byte or string (ie overloaded) to file (if open and writing).
 	 *
-	 * Writes byte to end of file. File must be opened with FILE_OP_WRITE in
-	 * order to be used.
+	 * Writes byte/string to end of file. File must be opened with FILE_OP_WRITE
+	 * in order to be used. Function is overloaded, taking either a byte or a
+	 * string, but not both at the same time.
 	 *
 	 * @param byte byte to write to file
+	 * @param str  string to write to file
 	 */
-	void write(uint8_t byte);
+	void write(uint8_t const byte);
+	void write(std::string const& str);
 
 	/*
 	 * Closes any open file.

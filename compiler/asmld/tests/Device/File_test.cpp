@@ -220,7 +220,7 @@ TEST(File, popGone) {
 	EXPECT_EQ(OsExit_getCode(), RET_ASSERT);
 }
 
-TEST(File, writeGood) {
+TEST(File, writeGoodByte) {
 	// Open "good" read file.
 	OsFile_setResponse(RET_ERR_NONE);
 	OsFile_setFile("goodFile", "dataHere");
@@ -231,6 +231,20 @@ TEST(File, writeGood) {
 	
 	// Check operation went well.
 	EXPECT_EQ(OsFile_getData(), "4");
+	EXPECT_EQ(OsExit_hasRet(), false);
+}
+
+TEST(File, writeGoodString) {
+	// Open "good" read file.
+	OsFile_setResponse(RET_ERR_NONE);
+	OsFile_setFile("goodFile", "dataHere");
+	RetErr_e res = File::inst().open("goodFile", FILE_OP_WRITE);
+	
+	// Peek byte from file.
+	File::inst().write("a string");
+	
+	// Check operation went well.
+	EXPECT_EQ(OsFile_getData(), "a string");
 	EXPECT_EQ(OsExit_hasRet(), false);
 }
 

@@ -48,6 +48,9 @@ using namespace std;
 						  to_string(model.m_bssSize)          + \
 						  " bss)")
 
+// Definitions for printing debug symbol table.
+#define DBG_TABLE_END     ("--DBG TABLE END--\n")
+
 //==============================================================================
 // Helper function to resolve "address" values for pre-defined symbols.
 static void StepGenImage_resolvePredefs(DataModel_t& model) {
@@ -153,7 +156,18 @@ void StepGenImage_execute(DataModel_t& model) {
 
 		// Write file (as able).
 		if (retErr == RET_ERR_NONE) {
-			// TODO- add debug symbols if asked.
+			// Add debug symbols as appropriate.
+			if (model.m_doDbg) {
+				// Log action.
+				Print::inst().log(LOG_INFO, "Debug- adding symbol table");
+
+				// Write debug table (+ending to distinguish when image begins).
+				for (AAsmNode* node : model.m_nodes) {
+					IF_NULL(node, "Debugged null node");
+					node->optPrintDebug();
+				}
+				File::inst().write(DBG_TABLE_END);
+			}
 
 			// Write text section.
 			TargetUtil_addTextHeader(model.m_textSize);

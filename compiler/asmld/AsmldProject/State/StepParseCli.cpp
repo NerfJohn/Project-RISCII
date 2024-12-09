@@ -29,6 +29,9 @@ using namespace std;
 // Common definition for breaking out/returning.
 #define DO_EXIT        ((model.m_numErrs > 0) || doHelp || doVer)
 
+// Definition to strin-ify boolean.
+#define BOOL_STR(x)    ((x) ? "true" : "false")
+
 //==============================================================================
 // Helper function to ensure program has a valid output filename.
 static void StepPareCli_rectifyOutFile(DataModel_t& model) {
@@ -67,6 +70,7 @@ static void StepParseCli_handleHelp(bool& doHelp) {
 	Print::inst().cli("                  warning errors/warnings (default)");
 	Print::inst().cli("                  info    process related info");
 	Print::inst().cli("                  debug   all available output");
+	Print::inst().cli("    -g        adds debug symbols to binary image");
 
 	// Mark that help menu has been requested.
 	doHelp = true;
@@ -147,6 +151,9 @@ void StepParseCli_execute(DataModel_t& model,
 				case CLI_FLAG_LEVEL:
 					StepParseCli_handleLevel(model, args.m_arg);
 					break;
+				case CLI_FLAG_DEBUG:
+					model.m_doDbg = true;
+					break;
 				default:
 					// Unknown flag? Bug!
 					Terminate_assert("handleCli() with unknown flag");
@@ -163,17 +170,23 @@ void StepParseCli_execute(DataModel_t& model,
 		ModelUtil_recordError(model, RET_NO_FILE);
 	}
 
-	// Exit as applicable.
+	// Analyze/report results (if everything if valid/correct).
+	if (DO_EXIT == false) {
+		// Ensure output filename is valid.
+		StepPareCli_rectifyOutFile(model);
+
+		// (Summarize results of cli parsing.)
+		string numFiles = string("    # files: ") +
+				          to_string(model.m_files.size());
+		string outFile  = string("    Output:  ") + model.m_outFile;
+		string doDbg    = string("    Debug:   ") + BOOL_STR(model.m_doDbg);
+		Print::inst().log(LOG_INFO, "=Cli Summary=");
+		Print::inst().log(LOG_INFO, numFiles);
+		Print::inst().log(LOG_INFO, outFile);
+		Print::inst().log(LOG_INFO, doDbg);
+	}
+
+	// Exit program (vs step) as applicable.
 	if (DO_EXIT) {Terminate_silent(model.m_retCode);}
-
-	// Ensure output filename is valid.
-	StepPareCli_rectifyOutFile(model);
-
-	// (Summarize results of cli parsing.)
-	string outFile  = string("    Output:  ") + model.m_outFile;
-	string numFiles = string("    # files: ") + to_string(model.m_files.size());
-	Print::inst().log(LOG_INFO, "=Cli Summary=");
-	Print::inst().log(LOG_INFO, outFile);
-	Print::inst().log(LOG_INFO, numFiles);
 }
 
