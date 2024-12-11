@@ -115,7 +115,7 @@ void StepGenImage_execute(DataModel_t& model) {
 	}
 
 	// Target requires data section- create as needed (PRIOR to address calc).
-	if (model.m_hasData == false) {
+	if (model.m_dataNodes == 0) {
 		Print::inst().log(LOG_INFO, "Data section required- adding 0x0000");
 		model.m_dataVals.push_back(0x0000);
 		model.m_dataSize += ISA_WORD_BYTES;

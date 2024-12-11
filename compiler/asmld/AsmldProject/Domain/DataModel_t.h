@@ -31,13 +31,19 @@ typedef struct {
 	std::vector<std::string> m_files;            // input source files
 	std::string              m_outFile;          // name of created file
 	bool                     m_doDbg;            // enables adding debug symbols
+	bool                     m_doRm;             // enables removing labels
 
 	// Parsed/analyzed program.
 	std::vector<AAsmNode*>   m_nodes;            // nodes creating the program
 	SymTable                 m_gSyms;            // global symbols
 	AAsmNode*                m_start;            // starting node of program
-	bool                     m_hasData;          // has natural data section
+	uint32_t                 m_dataNodes;        // number of (init) data nodes
 	std::vector<Symbol_t*>   m_openLabels;       // unpaired labels
+
+	// Label removal variables.
+	bool                     m_rmText;           // currently removing text
+	bool                     m_rmData;           // currently removing init data
+	bool                     m_rmBss;            // current removing bss data
 
 	// Binary image results.
 	uint32_t                 m_textSize;         // number of text words

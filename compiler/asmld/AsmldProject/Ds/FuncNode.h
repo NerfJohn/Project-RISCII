@@ -88,6 +88,18 @@ public:
 	void imageAssemble(DataModel_t& model);
 
 	/*
+	 * Determines if node (+related section nodes) should be removed.
+	 *
+	 * Updates model for removing unused sections of the program. Also returns
+	 * to indicate if node itself should be removed. Intended as an optional
+	 * feature of the assembly/linking process.
+	 *
+	 * @param model shared data of the entire program.
+	 * @return      CLEAN_DELETE if node should be deleted, CLEAN_KEEP otherwise
+	 */
+	CleanAction_e optRemoveLabel(DataModel_t& model);
+
+	/*
 	 * General destructor- ensures all memory is freed on deletion.
 	 */
 	~FuncNode(void);

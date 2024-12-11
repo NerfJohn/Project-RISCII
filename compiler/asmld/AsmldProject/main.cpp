@@ -26,13 +26,19 @@ int main(int argc, char* argv[]) {
 		prgmData.m_files      = {};              // no initial files
 		prgmData.m_outFile    = "";              // no initial out filename
 		prgmData.m_doDbg      = false;           // no debug by default
+		prgmData.m_doRm       = false;           // no removal by default
 
 		// Parsed/analyzed program.
 		prgmData.m_nodes      = {};              // no initial nodes
 		prgmData.m_gSyms      = {};              // no initial symbols
 		prgmData.m_start      = nullptr;         // no "start" to program
-		prgmData.m_hasData    = false;           // no known data section
+		prgmData.m_dataNodes  = 0;               // no known data section
 		prgmData.m_openLabels = {};              // no initial unpaired labels
+
+		// Label removal variables.
+		prgmData.m_rmText     = false;           // not removing text
+		prgmData.m_rmData     = false;           // not removing init data
+		prgmData.m_rmBss      = false;           // not removing bss data
 
 		// Binary image results.
 		prgmData.m_textSize   = 0;               // no initial bytes

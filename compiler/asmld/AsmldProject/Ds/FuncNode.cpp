@@ -136,6 +136,13 @@ void FuncNode::imageAssemble(DataModel_t& model) {
 }
 
 //==============================================================================
+// Determines if node (+related section nodes) should be removed.
+CleanAction_e FuncNode::optRemoveLabel(DataModel_t& model) {
+	// Remove instruction based on model's data.
+	return (model.m_rmText) ? CLEAN_DELETE : CLEAN_KEEP;
+}
+
+//==============================================================================
 // General destructor- ensures all memory is freed on deletion.
 FuncNode::~FuncNode(void) {
 	// Free required tokens (ie always initialized).

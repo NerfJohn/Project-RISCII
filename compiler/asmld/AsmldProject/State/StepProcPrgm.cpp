@@ -12,6 +12,37 @@
 using namespace std;
 
 //==============================================================================
+// Helper function to facilitate removing of unused labels/sections.
+static void StepProcPrgm_removeLabels(DataModel_t& model) {
+	// Log event.
+	Print::inst().log(LOG_INFO, "Remove- removing unused labels");
+
+	// Iterate over nodes until no more removes are left.
+	bool didRemove = false;
+	do {
+		// Begin iteration with fresh perspective.
+		didRemove = false;
+
+		// Iterate over program- deleting nodes as applicable.
+		vector<AAsmNode*>::iterator it = model.m_nodes.begin();
+		while (it != model.m_nodes.end()) {
+			// Get node.
+			AAsmNode* node = *it;
+			IF_NULL(node, "Cleaned null node");
+
+			// Delete/remove as instructed.
+			if (node->optRemoveLabel(model) == CLEAN_DELETE) {
+				delete node;                  // delete node itself
+				it = model.m_nodes.erase(it); // erase from list/move iterator
+				didRemove = true;             // record-keep
+			}
+			else {/* otherwise, manual increment */ it++;}
+		}
+
+	} while(didRemove);
+}
+
+//==============================================================================
 // Executes process to process overall program in model.
 void StepProcPrgm_execute(DataModel_t& model) {
 	// (Inform User.)
@@ -54,6 +85,9 @@ void StepProcPrgm_execute(DataModel_t& model) {
 		}
 		else {/* otherwise, manual increment */ it++;}
 	}
+
+	// Remove unused labels as requested.
+	if (model.m_doRm) {StepProcPrgm_removeLabels(model);}
 
 	// Terminate program (with summary) if errors were found.
 	if (model.m_numErrs > 0) {Terminate_summary(model);}

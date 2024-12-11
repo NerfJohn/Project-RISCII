@@ -13,6 +13,11 @@
 using namespace std;
 
 //==============================================================================
+
+// Definitions for interpreting reference counts.
+#define NO_REF_CNT (1)
+
+//==============================================================================
 // Constructor called by parser. Builds itself directly from action stack.
 DeclNode::DeclNode(std::stack<ItemToken*>& itemStack) {
 	// (Init members.)
@@ -107,7 +112,7 @@ void DeclNode::localLink(DataModel_t& model, SymTable& table) {
 CleanAction_e DeclNode::globalClean(DataModel_t& model) {
 	// Warn user if unused (ie only reference is its own pairing).
 	IF_NULL(m_sym, "clean() with null decl symbol");
-	if (m_sym->m_numRefs == 1) {
+	if (m_sym->m_numRefs == NO_REF_CNT) {
 		string wrnStr = "Unused '" + m_sym->m_name + "'";
 		Print::inst().log(LOG_WARNING, m_sym->m_file, m_sym->m_line, wrnStr);
 		ModelUtil_recordWarn(model);
@@ -184,6 +189,40 @@ void DeclNode::optPrintDebug(void) {
 						"\n";
 		File::inst().write(symStr);
 	}
+}
+
+//==============================================================================
+// Determines if node (+related section nodes) should be removed.
+CleanAction_e DeclNode::optRemoveLabel(DataModel_t& model) {
+	// Result of the process.
+	CleanAction_e retAct = CLEAN_KEEP;
+
+	// Set labeled section for removal accordingly.
+	IF_NULL(m_sym, "removeLabel() with null decl symbol");
+	bool hasNoRefs = m_sym->m_numRefs == NO_REF_CNT;
+	switch (m_sym->m_space) {
+		case ADDR_TEXT: model.m_rmText = hasNoRefs; break;
+		case ADDR_DATA: model.m_rmData = hasNoRefs; break;
+		case ADDR_BSS:  model.m_rmBss  = hasNoRefs; break;
+		default:
+			Terminate_assert("removeLabel() with unknown space");
+	}
+
+	// Remove label itself if not referenced.
+	if (hasNoRefs) {
+		// Setup label for removal.
+		retAct = CLEAN_DELETE;
+
+		// Log deletion.
+		string dbgStr = string("Removing '") + m_reqLabel->m_rawStr + "'";
+		Print::inst().log(LOG_DEBUG,
+				          m_reqLabel->m_file,
+						  m_reqLabel->m_line,
+						  dbgStr);
+	}
+
+	// Return result of process.
+	return retAct;
 }
 
 //==============================================================================

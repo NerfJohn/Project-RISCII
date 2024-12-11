@@ -162,6 +162,13 @@ void InstrNode::imageAssemble(DataModel_t& model) {
 }
 
 //==============================================================================
+// Determines if node (+related section nodes) should be removed.
+CleanAction_e InstrNode::optRemoveLabel(DataModel_t& model) {
+	// Remove instruction based on model's data.
+	return (model.m_rmText) ? CLEAN_DELETE : CLEAN_KEEP;
+}
+
+//==============================================================================
 // General destructor- ensures all memory is freed on deletion.
 InstrNode::~InstrNode(void) {
 	// Free required items (ie known to need freeing).

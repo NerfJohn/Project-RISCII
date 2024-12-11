@@ -40,6 +40,10 @@ void AAsmNode::imageAssemble(DataModel_t& model) { /* --- */}
 void AAsmNode::optPrintDebug(void) { /* --- */}
 
 //==============================================================================
+// Determines if node (+related section nodes) should be removed.
+CleanAction_e AAsmNode::optRemoveLabel(DataModel_t& model) {return CLEAN_KEEP;}
+
+//==============================================================================
 // General destructor- public to allow for generic node deletion.
 AAsmNode::~AAsmNode(void) { /* --- */}
 

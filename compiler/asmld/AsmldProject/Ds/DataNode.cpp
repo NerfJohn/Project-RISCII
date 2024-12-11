@@ -237,7 +237,7 @@ void DataNode::localAnalyze(DataModel_t& model, SymTable& table){
 	this->pairLabels(model, *m_reqType, space);
 
 	// Update model for "naturally" occurring data section.
-	if (space == ADDR_DATA) {model.m_hasData = true;}
+	if (space == ADDR_DATA) {model.m_dataNodes++;}
 }
 
 //==============================================================================
@@ -366,12 +366,40 @@ void DataNode::imageAssemble(DataModel_t& model) {
 }
 
 //==============================================================================
+// Determines if node (+related section nodes) should be removed.
+CleanAction_e DataNode::optRemoveLabel(DataModel_t& model) {
+	// Result of the process.
+	CleanAction_e retAct = CLEAN_KEEP;
+
+	// Return is based on underlying data type.
+	switch (m_reqType->m_lexTkn) {
+		case TOKEN_KW_DATA:
+			retAct = (model.m_rmData) ? CLEAN_DELETE : CLEAN_KEEP;
+			if (retAct == CLEAN_DELETE) {model.m_dataNodes--;}    // to delete
+			break;
+		case TOKEN_KW_BSS:
+			retAct = (model.m_rmBss) ? CLEAN_DELETE : CLEAN_KEEP;
+			break;
+		default:
+			Terminate_assert("removeLabel() with bad data type");
+	}
+
+	// Return result of the process.
+	return retAct;
+}
+
+//==============================================================================
 // General destructor- ensures all memory is freed on deletion.
 DataNode::~DataNode(void) {
 	// Free required items.
 	delete m_reqType;
 
 	// Free other items as necessary.
-	for (ItemToken* item : m_optVals) {if (item == nullptr) {delete item;}}
+	for (ItemToken* item : m_optVals) {
+		if (item == nullptr) {delete item;}
+	}
+	for (Symbol_t* sym : m_syms)      {
+		if (sym != nullptr) {this->freeSymbol(sym);}
+	}
 }
 

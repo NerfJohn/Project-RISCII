@@ -71,6 +71,7 @@ static void StepParseCli_handleHelp(bool& doHelp) {
 	Print::inst().cli("                  info    process related info");
 	Print::inst().cli("                  debug   all available output");
 	Print::inst().cli("    -g        adds debug symbols to binary image");
+	Print::inst().cli("    -r        recursively removes unused labels");
 
 	// Mark that help menu has been requested.
 	doHelp = true;
@@ -154,6 +155,9 @@ void StepParseCli_execute(DataModel_t& model,
 				case CLI_FLAG_DEBUG:
 					model.m_doDbg = true;
 					break;
+				case CLI_FLAG_REMOVE:
+					model.m_doRm = true;
+					break;
 				default:
 					// Unknown flag? Bug!
 					Terminate_assert("handleCli() with unknown flag");
@@ -180,10 +184,12 @@ void StepParseCli_execute(DataModel_t& model,
 				          to_string(model.m_files.size());
 		string outFile  = string("    Output:  ") + model.m_outFile;
 		string doDbg    = string("    Debug:   ") + BOOL_STR(model.m_doDbg);
+		string doRm     = string("    Remove:  ") + BOOL_STR(model.m_doRm);
 		Print::inst().log(LOG_INFO, "=Cli Summary=");
 		Print::inst().log(LOG_INFO, numFiles);
 		Print::inst().log(LOG_INFO, outFile);
 		Print::inst().log(LOG_INFO, doDbg);
+		Print::inst().log(LOG_INFO, doRm);
 	}
 
 	// Exit program (vs step) as applicable.
