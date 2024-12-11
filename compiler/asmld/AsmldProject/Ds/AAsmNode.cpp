@@ -88,6 +88,7 @@ int32_t AAsmNode::getImm(DataModel_t& model,
 	InstrType_e opType  = IsaUtil_asInstr(op.m_lexTkn);
 	bool        isValid = false;
 	switch (op.m_lexTkn) {
+		case TOKEN_KW_LA:
 		case TOKEN_KW_DATA:  isValid = IsaUtil_isValidWord(fullImm); break;
 		case TOKEN_KW_BSS:   isValid = (fullImm.m_val >= 0);         break;
 		default:
@@ -208,6 +209,21 @@ void AAsmNode::linkGlobal(DataModel_t& model,
 			Print::inst().log(LOG_DEBUG, label.m_file, label.m_line, dbgStr);
 		}
 	}
+}
+
+//==============================================================================
+// Common helper function to get a symbol's resolved address.
+uint16_t AAsmNode::getAddr(DataModel_t const& model, Symbol_t* const& sym) {
+	// Address to return.
+	uint16_t retAddr = 0;
+
+	// Get address- factoring for "bss offsets".
+	IF_NULL(sym, "getAddr() with null symbol");
+	retAddr = sym->m_addr;
+	if (sym->m_space == ADDR_BSS) {retAddr += (uint16_t)(model.m_dataSize);}
+
+	// Return realized address.
+	return retAddr;
 }
 
 //==============================================================================

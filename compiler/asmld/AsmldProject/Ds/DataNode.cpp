@@ -349,7 +349,8 @@ void DataNode::imageAssemble(DataModel_t& model) {
 				case TOKEN_LABEL:
 					// Label- add resolved address.
 					IF_NULL(m_syms[symIdx], "assemble() null symbol data item");
-					model.m_dataVals.push_back(m_syms[symIdx]->m_addr);
+					binData = this->getAddr(model, m_syms[symIdx]);
+					model.m_dataVals.push_back(binData);
 					symIdx++;
 					break;
 				case TOKEN_IMMEDIATE:

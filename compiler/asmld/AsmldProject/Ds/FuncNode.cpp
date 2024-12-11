@@ -106,7 +106,7 @@ void FuncNode::imageAssemble(DataModel_t& model) {
 		case TOKEN_LABEL:
 			// Label- get from resolved symbol address.
 			IF_NULL(m_sym, "assemble() with null func symbol");
-			value = m_sym->m_addr;
+			value = this->getAddr(model, m_sym);
 			break;
 		default:
 			// Unknown value. Bug!

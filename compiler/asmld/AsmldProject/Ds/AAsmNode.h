@@ -139,6 +139,9 @@ protected:
 			        ItemToken const& label,
 					Symbol_t*& sym);
 
+	// Common helper function to get a symbol's resolved address.
+	uint16_t getAddr(DataModel_t const& model, Symbol_t* const& sym);
+
 	// Common helper function to free symbols/ptrs to symbols.
 	void freeSymbol(Symbol_t*& sym);
 };

@@ -131,7 +131,7 @@ void DeclNode::imageAddress(DataModel_t& model) {
 	switch (m_sym->m_space) {
 		case ADDR_TEXT: addr = model.m_textSize;                   break;
 		case ADDR_DATA: addr = model.m_dataSize;                   break;
-		case ADDR_BSS:  addr = model.m_dataSize + model.m_bssSize; break;
+		case ADDR_BSS:  addr = model.m_bssSize;  /* offset */      break;
 		default:
 			// Unknown address space- bug.
 			Terminate_assert("address() unknown address space");
@@ -145,8 +145,11 @@ void DeclNode::imageAddress(DataModel_t& model) {
 		model.m_textSize += ISA_WORD_BYTES;
 	}
 
-	// (Log address realization).
+	// (Log address realization- factoring for bss offset calc).
 	string dbgStr = string("Addr '") + m_sym->m_name + "' = " + to_string(addr);
+	if (m_sym->m_space == ADDR_BSS) {
+		dbgStr += string(" + '") + SYM_BSS_NAME + "'";
+	}
 	Print::inst().log(LOG_DEBUG, m_sym->m_file, m_sym->m_line, dbgStr);
 }
 

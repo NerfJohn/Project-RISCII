@@ -61,11 +61,19 @@ static void StepGenImage_resolvePredefs(DataModel_t& model) {
 	model.m_gSyms.getSym(SYM_BSS_NAME, sym);
 	IF_NULL(sym, "resolve() couldn't find bss symbol");
 	sym->m_addr = (uint16_t)(model.m_dataSize);
+	Print::inst().log(LOG_DEBUG, string("Pre-def '")     +
+			                     SYM_BSS_NAME            +
+								 "' = "                  +
+								 to_string(sym->m_addr));
 
 	// Resolve address of "free RAM" section.
 	model.m_gSyms.getSym(SYM_FREE_NAME, sym);
 	IF_NULL(sym, "resolve() couldn't find free symbol");
 	sym->m_addr = (uint16_t)(model.m_dataSize + model.m_bssSize);
+	Print::inst().log(LOG_DEBUG, string("Pre-def '")     +
+			                     SYM_FREE_NAME           +
+								 "' = "                  +
+								 to_string(sym->m_addr));
 
 	// Resolve "address" of image size.
 	model.m_gSyms.getSym(SYM_SIZE_NAME, sym);
@@ -73,6 +81,10 @@ static void StepGenImage_resolvePredefs(DataModel_t& model) {
 	sym->m_addr = (uint16_t)(model.m_textSize +
 			                 model.m_dataSize +
 							 TARGET_HDRS_SIZE);
+	Print::inst().log(LOG_DEBUG, string("Pre-def '")     +
+			                     SYM_SIZE_NAME           +
+								 "' = "                  +
+								 to_string(sym->m_addr));
 }
 
 //==============================================================================
