@@ -173,13 +173,11 @@ void DeclNode::imageAssemble(DataModel_t& model) {
 //==============================================================================
 // Writes debug table information to (assumed open) binary image.
 void DeclNode::optPrintDebug(void) {
-	// Debug captures all data and global text addresses.
-	IF_NULL(m_sym, "printDebug() with null decl symbol");
-	bool isData = (m_sym->m_space == ADDR_DATA) | (m_sym->m_space == ADDR_BSS);
-	bool isGlbl = m_sym->m_isGlobal & (m_sym->m_space == ADDR_TEXT);
-
 	// Add symbol's name, space, and address in CSV format.
-	if (isData | isGlbl) {
+	IF_NULL(m_sym, "printDebug() with null decl symbol");
+	if (m_sym->m_isGlobal) {
+		bool isData = (m_sym->m_space == ADDR_DATA) |
+				      (m_sym->m_space == ADDR_BSS);
 		string spaceText = (isData) ? "DATA" : "TEXT";
 		string symStr = m_sym->m_name             +
 				        ","                       +
