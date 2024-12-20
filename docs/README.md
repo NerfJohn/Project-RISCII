@@ -9,7 +9,7 @@ This folder contains documents related to Project RISCII. The tables below descr
 
 |Folder Name|Doc Number|Description                                        |
 |-----------|----------|---------------------------------------------------|
-|AsmldManual|NA        |rough assembler/linker manual- to be refactored    |
+|AsmldManual|PR3000    |manual for RISCII assembly language + asmld program|
 
 ## Microprocessor Docuements
 
