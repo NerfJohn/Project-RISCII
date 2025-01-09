@@ -44,6 +44,7 @@ static void StepPareCli_rectifyOutFile(DataModel_t& model) {
 		// Extract the root name.
 		size_t idx = name.find(FILE_DOT);
 		if (idx < name.size()) {name = name.substr(0, ++idx);}
+		else                   {name += FILE_DOT;}
 
 		// Add the appropriate file extension.
 		name += FILE_EXT_BIN;
