@@ -10,7 +10,7 @@ using namespace std;
 
 //==============================================================================
 // Prints the given string to the stdout file. Always flushes buffer.
-void OsStdout_printStr(std::string msg) {
+void OsStdout_printStr(std::string const& msg) {
 	// Simply send data to stdout- flush to ensure send.
 	cout << msg << flush;
 }

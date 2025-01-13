@@ -16,7 +16,7 @@ static FileOp_e s_dir;
 
 //==============================================================================
 // Opens file with the specified path/name and direction.
-RetErr_e OsFile_open(std::string const name, FileOp_e const dir) {
+RetErr_e OsFile_open(std::string const& name, FileOp_e const dir) {
 	// GUILTY till innocent.
 	RetErr_e res = RET_ERR_ERROR;
 

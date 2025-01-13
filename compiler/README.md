@@ -1,4 +1,17 @@
 # Compiler
-This folder is focused on the RISCII compiler design- a fully functional compiler to turn "high level code" into a binary image that can be run on the RISCII processor. Below describes the included folders and their purpose.
+---
 
-__/AsmldProject:__ Project directory for Assembler/Linker source code (and dev tools)
+This folder contains files/folders related to Project RISCII's compiler. The tables below describe the purpose of each item (organized by folder/file).
+
+## Folders
+
+|Folder Name|Description                                                   |
+|-----------|--------------------------------------------------------------|
+|asmld      |development items for compiler's assembler/linker program     |
+|cprep      |development items for compiler's c-preprocessor program       |
+
+## Files
+
+|File   Name|Description                                                   |
+|-----------|--------------------------------------------------------------|
+|README.md  |this file- describes folder structure                         |

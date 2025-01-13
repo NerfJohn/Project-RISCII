@@ -13,29 +13,12 @@ processor/**/src/*.bak
 # (processor) Ignore bins created for testing hardware.
 processor/tools/tests/**/*.bin
 
-# (compiler) Ignore artifacts of "asmld" building/testing/developing.
-compiler/asmld/asmld.exe
-compiler/asmld/build
-compiler/asmld/AsmldProject/Debug
-compiler/asmld/AsmldProject/.settings
-
-# (compiler) Ignore artifacts of "irbend" building/testing/developing.
-compiler/irbend/irbend.exe
-compiler/irbend/build
-compiler/irbend/IrbendProject/Debug
-compiler/irbend/IrbendProject/.settings
-
-# (compiler) Ignore Eclipse generated/related files (except for makefile).
-compiler/AsmLdProject/.settings
-compiler/AsmLdProject/Debug/*
-!compiler/AsmLdProject/Debug/makefile
-
-# (compiler) Ignore CppCheck related items (bar one to ensure folder stays).
-compiler/AsmLdProject/cppCheckDir/*
-!compiler/AsmLdProject/cppCheckDir/files.txt
-
-# (compiler) Ignore .gitignore in compiler project(s)- not needed.
-compiler/*/.gitignore
+# (compiler) Ignore artifacts of component building/testing/developing.
+compiler/*/*.exe
+compiler/*/build
+compiler/*/*Project/Debug
+compiler/*/*Project/.settings
+compiler/*/*Project/.gitignore
 
 ################################################################################
 # -- General Rules --

@@ -9,6 +9,7 @@ This folder contains documents related to Project RISCII. The tables below descr
 
 |Folder Name|Doc Number|Description                                        |
 |-----------|----------|---------------------------------------------------|
+|CprepManual|PR3002    |manual for RISCII c-preprocessor program           |
 |AsmldManual|PR3000    |manual for RISCII assembly language + asmld program|
 
 ## Microprocessor Docuements

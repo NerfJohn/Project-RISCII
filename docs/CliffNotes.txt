@@ -22,7 +22,6 @@ General Tasks:
 Repository Sanitation TODO
 	- redo "processor" structure (dev vs prod project/tools- keep dev project)
 	- cleanup "processor" gitignores/README
-	- cleanup "compiler" gitignores/README
 	- software manifest for development environment
 
 Rough SW Manifest (for development environment)

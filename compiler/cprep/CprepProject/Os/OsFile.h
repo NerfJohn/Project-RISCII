@@ -21,7 +21,7 @@
  * @param dir  operation to perform on the file (ie read vs write)
  * @return     RET_ERR_NONE on success, RET_ERR_ERROR otherwise
  */
-RetErr_e OsFile_open(std::string const name, FileOp_e const dir);
+RetErr_e OsFile_open(std::string const& name, FileOp_e const dir);
 
 /*
  * Peeks next char from file (if current file is open and reading).

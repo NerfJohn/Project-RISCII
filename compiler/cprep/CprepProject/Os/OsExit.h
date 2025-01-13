@@ -15,6 +15,6 @@
  *
  * @param retCode value to return to the caller
  */
-void OsExit_exit(RetCode_e retCode);
+void OsExit_exit(RetCode_e const retCode);
 
 #endif /* OS_OSEXIT_H_ */
