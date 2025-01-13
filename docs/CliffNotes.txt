@@ -1,51 +1,94 @@
 ================================================================================
 Project RISCII: Cliff Notes
-PRT0000
-"General notes to be converted to formal document or temporarily saved"
+
+"General project notes- slated for formal documenting or temporary"
 ================================================================================
-General Project Notes:
+Project (RISCII) Overview:
 
-Project RISCII- Challenge to design a dev kit system (vs buying or off shelf)
-	- Demonstrate knowledge via design levels of systems together
-	- Should try to design pieces vs relying on 3rd party hardware/software
-	- Exact "design vs 3rd party" choices are subjective to personal preference
-		(Generally guided by involvement with binary image run by dev kit)
+Priorities of "Home Brewed" Dev Kit
+	1) Fun        - it's a personal project, not a job/"MS started in a garage"
+	2) Capability - simplicity is preferred, but quality goes a long way
+	3) Learning   - good opportunity to learn (at least vaguely) tools/systems
 
-Levels of Design
-	- Source Code/Libraries (C/asm files- drivers and basic RTOS, bootloader?)
-	- Compiler (multi files, preprocessor directives, C/IR/asm languages)
-	- Microprocessor (16-bit processing, JTAG+debugging, interrupts+circuits)
-	- Circuit Board (power regulated, programmable, devices to use MPU circuits)
+Levels of (Scoped) Design
+	1) Drivers/Libraries - common support along with basic bootloading + RTOS
+	2) Compiler          - subset c-compiler with preprocessing + assembly
+	3) Microprocessor    - 16-bit softcore processor with peripherals
+	4) Circuit Board     - pcb with required and example auxillary circuits
 
 ================================================================================
-Compiler (High) Feature/Design:
+General Tasks:
 
-General Goals
-	sources = C and static libraries
-	outputs = binary images and static libraries
-	options = optimize and debug
-		(for debug: functional > performant/capabilities)
+Repository Sanitation TODO
+	- redo "processor" structure (dev vs prod project/tools- keep dev project)
+	- cleanup "processor" gitignores/README
+	- cleanup "compiler" gitignores/README
+	- software manifest for development environment
 
-Static Libraries/Linking
-	static lib = glorified asm file
-	new asm directive: ".global"
-		labels implicitly use internal linkage
-		.global <label> gives local label global linkage
-		internal > global linkage as applicable
+Rough SW Manifest (for development environment)
+	- git (v???)
+	- python (v???)
+	- cmake (v???)
+	- eclipse (as 'ide indexer', v???)
+	- (cpp version for building? compiler + version?)
+	- (quartus/dev processor project tools/versions?)
+
+================================================================================
+Compiler Design Notes:
+
+High Level Design (Plan)
+	> quaid.exe - compiler interface, calls other exe's with proper args/flags
+	> cprep.exe - subset c-preprocessor, applies common "copy/paste" rules
+	> ccomp.exe - subset c-compiler, applies c-language + abi to make assembly
+	> asmld.exe - assembly/linker, creates binary image for hardware target
+
+Compiler Folder Structure
+	/asmld    - assembly/linker program items
+	/ccomp    - c-compiler program items
+	/cprep    - c-preprocessor program items
+	README.md - folder description
+
+Compiler Doc Structure
+	/AsmldManual - assembly language + asmld manual, based on ISA + uPManual
+	/CcompManual - c-language + ccomp manual, based on AsmldManual
+	/CprepManual - c-preprocessing language + cprep manual, no real base
+	/QuaidManual - quaid manual, based on other manuals
+	
+	(manuals distinguish between language vs program features + doc base)
+	(ccomp may distinguish ABI as well)
+	(quaid effectively has no language to distinguish)
+
+Cprep design notes-
+	Implements
+		#include <x>
+		#define  <x>
+		#ifndef  <x>
+		#ifdef   <x>
+		#endif
+	
+	Lex Tokens
+		(keywords- #include -> #endif)
+		identifier (for implements, though could be text)
+		string lit (for implements, though could be text)
+		newline    (let parser know exactly where newlines are)
+		other text (other text- treat as other "identifiers")
 		
-Debugging
-	backend adds NOPs to start of ".global" functions
-		generated ".global" function labels point to NOP
-		NOP used as SW breakpoint (can be replaced w/ HLT)
-	asmld appends table of .global labels to binary image
-		includes info needed to set/remove breakpoints
-		can probe global data (+maps) at global function starts (or on stop)
-
-Backend/Optimizer
-	"Flattened" version of C code (in SSA form)
-	Focused mainly on optimizing
-		(eg not strict on declaration matching definition, usage, etc)
-		(ie should in theory be "portable" code, though scope has 1 front/back)
-	Optimizations based around SSA form + structure
+		(all include starting whitespace, but not ending- trimmed later as needed)
+		
+	Parse Nodes
+		FileNode
+		TextNode
+		DefNode
+		IncNode
+		CondNode
+		
+		(parsing/checking may involve trimming/string manip)
+	
+	general steps
+		per source file
+			lex/parse/check source file
+			recursive find/lex/parse/check non-tree-ed includes (long store)
+			generate result file (definitions = short store)
+			
 
 ================================================================================
