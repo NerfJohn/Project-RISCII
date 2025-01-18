@@ -93,7 +93,7 @@ void Print::log(LogType_e const level,
 				std::string const& msg) {
 	// Format filename and line number as part of the message.
 	string lineStr = to_string(line);
-	string logStr = string("(") + file + "/" + lineStr + ") " + msg;
+	string logStr = string("(") + file + ":" + lineStr + ") " + msg;
 
 	// Reuse, reduce, recycle!
 	this->log(level, logStr);
