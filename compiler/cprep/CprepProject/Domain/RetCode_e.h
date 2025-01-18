@@ -19,7 +19,9 @@ typedef enum {
 	RET_NOT_CLI = 0x02, // unknown cli argument
 	RET_FNO_ARG = 0x03, // cli flag requires argument
 	RET_NO_FILE = 0x04, // no input file(s) provided
-	RET_BAD_ARG = 0x05  // cli flag with bad argument
+	RET_BAD_ARG = 0x05, // cli flag with bad argument
+	RET_NO_READ = 0x06, // couldn't find/read file
+	RET_BAD_LEX = 0x07  // could not lex token from file
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

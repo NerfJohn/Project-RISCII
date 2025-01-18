@@ -5,6 +5,7 @@
 #include "Device/Print.h"
 #include "Device/Terminate.h"
 #include "State/StepParseCli.h"
+#include "State/StepReadFiles.h"
 
 using namespace std;
 
@@ -28,6 +29,12 @@ int main(int argc, char* argv[]) {
 
 	// Parse/Handle arguments and files into desired program.
 	StepParseCli_execute(prgmData, argc, argv);
+
+	// Process each input file individually.
+	for (std::string fname : prgmData.m_files) {
+		Print::inst().log(LOG_INFO, "='" + fname + "' Process=");
+		StepReadFiles_execute(prgmData, fname);
+	}
 
 	// Program finished- job well done.
 	Terminate_summary(prgmData);

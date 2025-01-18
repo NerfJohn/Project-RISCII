@@ -11,6 +11,7 @@ project(cprep)
 # Gather files/paths (globbing because i'm lazy/arrogant).
 file(GLOB build_sources
 	CprepProject/Device/*.cpp
+	CprepProject/Ds/*.cpp
 	CprepProject/Os/*.cpp
 	CprepProject/State/*.cpp
 	CprepProject/Util/*.cpp
