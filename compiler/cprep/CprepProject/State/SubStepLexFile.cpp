@@ -102,11 +102,15 @@ void SubStepLexFile_execute(DataModel_t& model, std::queue<ItemToken*>& tkns) {
 			ItemToken* newTkn = new ItemToken();
 			if (newTkn == nullptr) {Terminate_assert("Couldn't create token");}
 
+			// (Additional processing to properly locate "to newline" tokens.)
+			bool isEol = ((lexBuffer.size() > 0) &&
+					      (lexBuffer.back() == CHAR_NEWLINE));
+
 			// Populate with lexed data.
 			newTkn->m_lexTkn = lexTkn;
 			newTkn->m_rawStr = lexBuffer;
 			newTkn->m_file   = file;
-			newTkn->m_line   = line;
+			newTkn->m_line   = (isEol) ? line - 1 : line;
 
 			// Save to list.
 			tkns.push(move(newTkn)); // (pass ownership)

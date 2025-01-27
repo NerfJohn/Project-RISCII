@@ -6,6 +6,7 @@
 #include "Device/Print.h"
 #include "Device/Terminate.h"
 #include "State/SubStepLexFile.h"
+#include "State/SubStepParseTkns.h"
 #include "Util/ModelUtil.h"
 
 #include "State/StepReadFiles.h"
@@ -48,6 +49,12 @@ void StepReadFiles_execute(DataModel_t& model, std::string const& fname) {
 
 	// Finished with now token-ized file.
 	File::inst().close();
+
+	// Parse tokens into AST (for this file).
+	AAstNode* root = nullptr;
+	if (model.m_numErrs == 0) {
+		SubStepParseTkns_execute(model, fileTkns, root);
+	}
 
 	// Terminate program (with summary) if errors were found.
 	if (model.m_numErrs > 0) {Terminate_summary(model);}

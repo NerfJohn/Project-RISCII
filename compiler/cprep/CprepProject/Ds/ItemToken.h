@@ -5,10 +5,9 @@
 #ifndef DS_ITEMTOKEN_H_
 #define DS_ITEMTOKEN_H_
 
-#include <cstdint>
-#include <string>
-#include "Domain/LexToken_e.h"
+#include "Ds/ABuildItem.h"
 
+// TODO
 /*
  * Information about a lex token found within a file (ie "living" lex token).
  *
@@ -16,15 +15,14 @@
  * file/line location. Primary value is the LexToken_e, though the other data
  * is kept for use in possible logged messages.
  */
-class ItemToken {
+class ItemToken: public ABuildItem {
 public:
 	// Data at location.
 	LexToken_e  m_lexTkn;
 	std::string m_rawStr;
 
-	// Location of data.
-	std::string m_file;
-	uint32_t    m_line;
+	// TODO
+	BuildType_e getType(void);
 };
 
 #endif /* DS_ITEMTOKEN_H_ */

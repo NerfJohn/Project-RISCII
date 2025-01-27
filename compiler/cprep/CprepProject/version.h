@@ -1,1 +1,1 @@
-#define APP_VERSION "vdb8ac49"
+#define APP_VERSION "v1f8b8ea"

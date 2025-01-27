@@ -10,9 +10,6 @@
 #include <vector>
 #include "Domain/RetCode_e.h"
 
-// Forward declare to avoid recursive includes.
-class AAsmNode;
-
 /*
  * Data passed in-between states/pieces of the entire program.
  *
