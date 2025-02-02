@@ -5,7 +5,7 @@
 #ifndef DEVICE_PRINT_H_
 #define DEVICE_PRINT_H_
 
-#include <stdint>
+#include <stdint.h>
 #include <string>
 #include "Common/Domain/LogType_e.h"
 
@@ -46,7 +46,7 @@ public:
 	 *
 	 * @param name name to add to log messages
 	 */
-	void setLogName(std::string const& name)
+	void setLogName(std::string const& name);
 
 	/*
 	 * @brief Prints log message.

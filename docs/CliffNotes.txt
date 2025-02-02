@@ -33,61 +33,29 @@ Rough SW Manifest (for development environment)
 	- (quartus/dev processor project tools/versions?)
 
 ================================================================================
-Compiler Design Notes:
+"/compiler" Organization:
 
-High Level Design (Plan)
-	> quaid.exe - compiler interface, calls other exe's with proper args/flags
-	> cprep.exe - subset c-preprocessor, applies common "copy/paste" rules
-	> ccomp.exe - subset c-compiler, applies c-language + abi to make assembly
-	> asmld.exe - assembly/linker, creates binary image for hardware target
+	Top Level Organization:
+		/_shared  shared resources- common code + templates + scripts
+		/asmld    project for assembly/linker program
+		/ccomp    project for C/target core program
+		/cprep    project for preprocessor program
+		/quaid    project for interface program
+		README.md readme explaining structure/usage
 
-Compiler Folder Structure
-	/asmld    - assembly/linker program items
-	/ccomp    - c-compiler program items
-	/cprep    - c-preprocessor program items
-	README.md - folder description
-
-Compiler Doc Structure
-	/AsmldManual - assembly language + asmld manual, based on ISA + uPManual
-	/CcompManual - c-language + ccomp manual, based on AsmldManual
-	/CprepManual - c-preprocessing language + cprep manual, no real base
-	/QuaidManual - quaid manual, based on other manuals
+	Project Organization:
+		/<name>Project  source project- named after executable
+			.cproject   Eclipse data
+			.project    Eclipse data
+			<src files> source code
+		build.sh        interface to build executable
+		clean.sh        interface to clean project/executable
+		CMakeLists.txt  CMake script to build executable
 	
-	(manuals distinguish between language vs program features + doc base)
-	(ccomp may distinguish ABI as well)
-	(quaid effectively has no language to distinguish)
-
-Cprep design notes-
-	Implements
-		#include <x>
-		#define  <x>
-		#ifndef  <x>
-		#ifdef   <x>
-		#endif
+	SW/Tools Used:
+		Git/Git Bash  interface for operations + script interpreter
+		MinGW GCC/G++ C/C++ compiler to create RISCII executables
+		CMake         build system to facilitate actual build
+		Eclipse       IDE for development quality of life
 	
-	Lex Tokens
-		(keywords- #include -> #endif)
-		identifier (for implements, though could be text)
-		string lit (for implements, though could be text)
-		newline    (let parser know exactly where newlines are)
-		other text (other text- treat as other "identifiers")
-		
-		(all include starting whitespace, but not ending- trimmed later as needed)
-		
-	Parse Nodes
-		FileNode
-		TextNode
-		DefNode
-		IncNode
-		CondNode
-		
-		(parsing/checking may involve trimming/string manip)
-	
-	general steps
-		per source file
-			lex/parse/check source file
-			recursive find/lex/parse/check non-tree-ed includes (long store)
-			generate result file (definitions = short store)
-			
-
 ================================================================================
