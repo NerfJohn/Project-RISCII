@@ -24,13 +24,13 @@ int main(void) {
 	Print::inst().log(LOG_WARNING, APP_VERSION);
 
 	// And out.
-	DataModel_t foo = {
+	PrgmInfo_t foo = {
 		.m_numWarns = 0,
 		.m_numErrs = 0,
-		.m_retCode = RET_SUCCESS
+		.m_retCode = 23
 	};
-	Terminate_summary(foo);
+	Terminate::inst().summary(foo);
 
 
-	return RET_SUCCESS;
+	return 0;
 }

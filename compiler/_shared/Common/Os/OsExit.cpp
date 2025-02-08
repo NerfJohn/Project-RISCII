@@ -10,7 +10,7 @@ using namespace std;
 
 //==============================================================================
 // Terminates program, returning given code to the caller.
-void OsExit_exit(RetCode_e const retCode) {
+void OsExit_exit(int const retCode) {
 	// Exit program with given code (ie function does NOT return).
 	exit(retCode);
 }

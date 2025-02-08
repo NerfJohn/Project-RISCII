@@ -61,7 +61,7 @@ void Print::log(LogType_e   const  level,
 			case LOG_DEBUG:   logStr += DEBUG_NAME;   break;
 			default:
 				// Bad type- src code bug!
-				Terminate_assert("log() unknown/bad log type");
+				Terminate::inst().assert("log() unknown/bad log type");
 				break;
 		}
 		logStr += "]";
