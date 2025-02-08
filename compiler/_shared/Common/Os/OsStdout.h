@@ -2,8 +2,8 @@
  * OsStdout.h: Abstraction layer for sending standard serial output.
  */
 
-#ifndef OS_OSSTDOUT_H_
-#define OS_OSSTDOUT_H_
+#ifndef COMMON_OS_OSSTDOUT_H_
+#define COMMON_OS_OSSTDOUT_H_
 
 #include <string>
 
@@ -14,4 +14,4 @@
  */
 void OsStdout_printStr(std::string const& msg);
 
-#endif /* OS_OSSTDOUT_H_ */
+#endif /* COMMON_OS_OSSTDOUT_H_ */

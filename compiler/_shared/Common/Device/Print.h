@@ -2,8 +2,8 @@
  * Print.h: Standardized formatting/behavior for printing serial output.
  */
 
-#ifndef DEVICE_PRINT_H_
-#define DEVICE_PRINT_H_
+#ifndef COMMON_DEVICE_PRINT_H_
+#define COMMON_DEVICE_PRINT_H_
 
 #include <stdint.h>
 #include <string>
@@ -93,4 +93,4 @@ private:
 	~Print() {/* no actions */}
 };
 
-#endif /* DEVICE_PRINT_H_ */
+#endif /* COMMON_DEVICE_PRINT_H_ */

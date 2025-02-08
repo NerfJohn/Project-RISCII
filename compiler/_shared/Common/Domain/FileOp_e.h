@@ -2,8 +2,8 @@
  * FileOp_e.h: Type specifying operation being performed on a file.
  */
 
-#ifndef DOMAIN_FILEOP_E_H_
-#define DOMAIN_FILEOP_E_H_
+#ifndef COMMON_DOMAIN_FILEOP_E_H_
+#define COMMON_DOMAIN_FILEOP_E_H_
 
 /*
  * @brief Enum of operations that can be performed on a file.
@@ -16,4 +16,4 @@ typedef enum {
 	FILE_OP_WRITE, // write to file (clear previous contents)
 } FileOp_e;
 
-#endif /* DOMAIN_FILEOP_E_H_ */
+#endif /* COMMON_DOMAIN_FILEOP_E_H_ */

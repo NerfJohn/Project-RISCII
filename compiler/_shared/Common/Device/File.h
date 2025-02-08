@@ -2,8 +2,8 @@
  * File.h: Standardizes file operations (albeit one file at a time).
  */
 
-#ifndef DEVICE_FILE_H_
-#define DEVICE_FILE_H_
+#ifndef COMMON_DEVICE_FILE_H_
+#define COMMON_DEVICE_FILE_H_
 
 #include <cstdint>
 #include <string>
@@ -100,4 +100,4 @@ private:
 	~File() {/* no actions */}
 };
 
-#endif /* DEVICE_FILE_H_ */
+#endif /* COMMON_DEVICE_FILE_H_ */

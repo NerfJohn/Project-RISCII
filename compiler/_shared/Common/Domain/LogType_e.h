@@ -2,8 +2,8 @@
  * LogType_e.h: Type specifying various levels of log output.
  */
 
-#ifndef DOMAIN_LOGTYPE_E_H_
-#define DOMAIN_LOGTYPE_E_H_
+#ifndef COMMON_DOMAIN_LOGTYPE_E_H_
+#define COMMON_DOMAIN_LOGTYPE_E_H_
 
 /*
  * @brief Enum of levels of log output- organized as a hirearchy.
@@ -21,4 +21,4 @@ typedef enum {
 	LOG_DEBUG   = 4  // log all available program output
 } LogType_e;
 
-#endif /* DOMAIN_LOGTYPE_E_H_ */
+#endif /* COMMON_DOMAIN_LOGTYPE_E_H_ */

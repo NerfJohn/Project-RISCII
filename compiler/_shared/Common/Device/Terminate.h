@@ -2,8 +2,8 @@
  * Terminate.h: Standardizes program exit scenarios.
  */
 
-#ifndef DEVICE_TERMINATE_H_
-#define DEVICE_TERMINATE_H_
+#ifndef COMMON_DEVICE_TERMINATE_H_
+#define COMMON_DEVICE_TERMINATE_H_
 
 #include <string>
 #include "Domain/DataModel_t.h"

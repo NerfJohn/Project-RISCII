@@ -2,8 +2,8 @@
  * RetErr_e.h: Type specifying defensive programming return values.
  */
 
-#ifndef DOMAIN_RETERR_E_H_
-#define DOMAIN_RETERR_E_H_
+#ifndef COMMON_DOMAIN_RETERR_E_H_
+#define COMMON_DOMAIN_RETERR_E_H_
 
 /*
  * @brief Enum of defensive programming return values.
@@ -17,4 +17,4 @@ typedef enum {
 	RET_ERR_ERROR = 1  // an (unspecified) error occurred
 } RetErr_e;
 
-#endif /* DOMAIN_RETERR_E_H_ */
+#endif /* COMMON_DOMAIN_RETERR_E_H_ */

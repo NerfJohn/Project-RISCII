@@ -2,8 +2,8 @@
  * OsFile.h: Abstraction layer of a (single) file in OS file system.
  */
 
-#ifndef OS_OSFILE_H_
-#define OS_OSFILE_H_
+#ifndef COMMON_OS_OSFILE_H_
+#define COMMON_OS_OSFILE_H_
 
 #include <cstdint>
 #include <string>
@@ -54,4 +54,4 @@ RetErr_e OsFile_write(uint8_t const byte);
  */
 void OsFile_close(void);
 
-#endif /* OS_OSFILE_H_ */
+#endif /* COMMON_OS_OSFILE_H_ */
