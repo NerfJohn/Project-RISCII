@@ -1,36 +1,40 @@
 /*
- * main.cpp
- *
- *  Created on: Feb 1, 2025
- *      Author: John
+ * main.cpp: Head of the program/application.
  */
 
-// TODO- format/fix
-
-#include "version.h"
 #include "Common/Device/Print.h"
 #include "Common/Device/Terminate.h"
+#include "Domain/DataModel_t.h"
+#include "Domain/RetCode_e.h"
+#include "State/StepParseCli.h"
 
 using namespace std;
 
-int main(void) {
-	// Setup.
-	Print::inst().setLogLevel(LOG_INFO);
+//==============================================================================
+// Start/main process of the program.
+int main(int argc, char* argv[]) {
+	// Init devices.
 	Print::inst().setLogName("quaid.exe");
+	Print::inst().setLogLevel(LOG_WARNING);
+	Terminate::inst().setAssertCode(RET_ASSERT);
 
-	// Some output.
-	Print::inst().log(LOG_DEBUG, "foo", "JOHN CENA");
-	Print::inst().log(LOG_ERROR, "f", 2, "blah");
-	Print::inst().log(LOG_WARNING, APP_VERSION);
+	// Init data model.
+	DataModel_t prgmData = {
+		// General Summary/Progress.
+		.m_summary = {
+			.m_numWarns = 0,
+			.m_numErrs  = 0,
+			.m_retCode  = RET_SUCCESS
+		},
 
-	// And out.
-	PrgmInfo_t foo = {
-		.m_numWarns = 0,
-		.m_numErrs = 0,
-		.m_retCode = 23
+		// Parsed Cli Data.
+		.m_files = {}
 	};
-	Terminate::inst().summary(foo);
 
+	// Parse program's cli command/call.
+	StepParseCli_execute(prgmData, argc, argv);
 
-	return 0;
+	// End program with summary of run instance.
+	Terminate::inst().summary(prgmData.m_summary);
+	return RET_SUCCESS; /* never reached, but appeal to g++ */
 }

@@ -1,5 +1,5 @@
 /*
- * PrgmInfo.h: Structure storing summary info of run instance of program.
+ * PrgmInfo_t.h: Structure storing summary info of run instance of program.
  */
 
 #ifndef COMMON_DOMAIN_PRGMINFO_H_

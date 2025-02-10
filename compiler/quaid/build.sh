@@ -11,7 +11,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd ${SCRIPT_DIR}
 
 # Generate "version" for the program (not best, but will do for now).
-(echo '#define APP_VERSION "'`git log -1 --format=%cd --date=format:%Y%m%d`'"') > ./${PROJ_NAME}/version.h
+(echo '#define APP_VERSION "'`git log -1 --format=%cd --date=format:v%Y%m%d`'"') > ./${PROJ_NAME}/version.h
 
 # Serial of commands to get executable in home directory.
 cmake -S . -B build -G 'MSYS Makefiles' && cmake --build build && mv ./build/${EXEC_NAME}.exe .
