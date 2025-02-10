@@ -18,7 +18,7 @@ typedef struct {
 	uint32_t m_numWarns;
 	uint32_t m_numErrs;
 	
-	// Return code to be used by the program.
+	// Return code  used by the program.
 	int      m_retCode;
 } PrgmInfo_t;
 

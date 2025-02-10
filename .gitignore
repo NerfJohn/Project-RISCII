@@ -16,6 +16,7 @@ processor/tools/tests/**/*.bin
 # (compiler) Ignore artifacts of component building/testing/developing.
 compiler/*/*.exe
 compiler/*/build
+compiler/*/*Project/version.h
 compiler/*/*Project/Debug
 compiler/*/*Project/.settings
 compiler/*/*Project/.gitignore

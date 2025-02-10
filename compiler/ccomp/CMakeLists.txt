@@ -1,6 +1,6 @@
 # Plug-and-play parameters.
-set(PROJ_NAME "CprepProject")
-set(EXEC_NAME "cprep")
+set(PROJ_NAME "CcompProject")
+set(EXEC_NAME "ccomp")
 
 # Std CMake preamble.
 cmake_minimum_required(VERSION 3.14)

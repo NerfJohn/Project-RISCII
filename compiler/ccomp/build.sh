@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Plug-and-play parameters.
-PROJ_NAME="CprepProject"
-EXEC_NAME="cprep"
+PROJ_NAME="CcompProject"
+EXEC_NAME="ccomp"
 
 # (Internet one liner for getting script directory- no symlinks).
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )

@@ -14,7 +14,7 @@ using namespace std;
 // Start/main process of the program.
 int main(int argc, char* argv[]) {
 	// Init devices.
-	Print::inst().setLogName("cprep.exe");
+	Print::inst().setLogName("ccomp.exe");
 	Print::inst().setLogLevel(LOG_WARNING);
 	Terminate::inst().setAssertCode(RET_ASSERT);
 

@@ -21,8 +21,8 @@ using namespace std;
 #define EXIT_PRGM (doExit || (model.m_summary.m_numErrs > 0))
 
 // Definitions for info requests.
-#define HELP_INFO string("Project RISCII C Preprocessor\n") + \
-	                     "Usage: cprep.exe [options...] <input files...>\n" + \
+#define HELP_INFO string("Project RISCII C Compiler Core (C -> Asm)\n")     + \
+	                     "Usage: ccomp.exe [options...] <input files...>\n" + \
 						 "\n"                                               + \
 						 "Options:\n"                                       + \
 						 "    -h        print this menu and exit\n"         + \
@@ -33,7 +33,7 @@ using namespace std;
 						 "              (d) warning errors and warnings\n"  + \
 						 "                  info    process related info\n" + \
 						 "                  debug   all available output"
-#define VERS_INFO string("cprep.exe ") + APP_VERSION
+#define VERS_INFO string("ccomp.exe ") + APP_VERSION
 
 // Definitions for "string to LogType_e" conversions.
 #define LEVEL_SILENT   ("silent")

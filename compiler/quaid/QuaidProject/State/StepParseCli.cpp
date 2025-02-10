@@ -30,8 +30,8 @@ using namespace std;
 						 "    -ll <arg> sets stdout log level to:\n"        + \
 						 "                  silent  no log info\n"          + \
 						 "                  error   only errors\n"          + \
-						 "                  warning + warnings (default)\n" + \
-						 "                  info    + process info\n"       + \
+						 "              (d) warning errors and warnings\n"  + \
+						 "                  info    process related info\n" + \
 						 "                  debug   all available output"
 #define VERS_INFO string("quaid.exe ") + APP_VERSION
 

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+	<storageModule moduleId="org.eclipse.cdt.core.settings">
+		<cconfiguration id="cmake4eclipse.mbs.toolchain.cmake.1551921625">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cmake4eclipse.mbs.toolchain.cmake.1551921625" moduleId="org.eclipse.cdt.core.settings" name="Default">
+				<externalSettings/>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.PE64" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactName="${ProjName}" buildProperties="" description="" id="cmake4eclipse.mbs.toolchain.cmake.1551921625" name="Default" optionalBuildProperties="" parent="org.eclipse.cdt.build.core.emptycfg">
+					<folderInfo id="cmake4eclipse.mbs.toolchain.cmake.1551921625.1955075031" name="/" resourcePath="">
+						<toolChain id="cmake4eclipse.mbs.toolchain.cmake.458556109" name="CMake driven" superClass="cmake4eclipse.mbs.toolchain.cmake">
+							<targetPlatform id="cmake4eclipse.mbs.targetPlatform.cmake.1256639744" name="Any Platform" superClass="cmake4eclipse.mbs.targetPlatform.cmake"/>
+							<builder arguments="-c" autoBuildTarget="all" buildPath="${ProjDirPath}" cleanBuildTarget="${ProjDirPath}/../clean.sh" command="C:\Program Files\Git\bin\bash.exe" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="cmake4eclipse.mbs.builder.747972698" incrementalBuildTarget="${ProjDirPath}/../build.sh" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="CMake Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cmake4eclipse.mbs.builder"/>
+							<tool id="cmake4eclipse.mbs.toolchain.tool.dummy.955011420" name="CMake" superClass="cmake4eclipse.mbs.toolchain.tool.dummy">
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="cmake4eclipse.mbs.option.dummy.299737418" superClass="cmake4eclipse.mbs.option.dummy" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CcompProject}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../../_shared&quot;"/>
+								</option>
+								<inputType id="cmake4eclipse.mbs.inputType.c.835796331" superClass="cmake4eclipse.mbs.inputType.c"/>
+								<inputType id="cmake4eclipse.mbs.inputType.cpp.874844791" superClass="cmake4eclipse.mbs.inputType.cpp"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+	</storageModule>
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<project id="CcompProject.null.787582627" name="CcompProject"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Default">
+			<resource resourceType="PROJECT" workspacePath="/CcompProject"/>
+		</configuration>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cmake4eclipse.mbs.toolchain.cmake.1551921625;cmake4eclipse.mbs.toolchain.cmake.1551921625.1955075031;cmake4eclipse.mbs.toolchain.tool.dummy.955011420;cmake4eclipse.mbs.inputType.cpp.874844791">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cmake4eclipse.mbs.toolchain.cmake.1551921625;cmake4eclipse.mbs.toolchain.cmake.1551921625.1955075031;cmake4eclipse.mbs.toolchain.tool.dummy.955011420;cmake4eclipse.mbs.inputType.c.835796331">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+</cproject>

@@ -19,16 +19,17 @@ int main(int argc, char* argv[]) {
 	Terminate::inst().setAssertCode(RET_ASSERT);
 
 	// Init data model.
+	PrgmInfo_t runSummary = {
+		.m_numWarns = 0,                         // no initial warnings
+		.m_numErrs  = 0,                         // no initial errors
+		.m_retCode  = RET_SUCCESS                // good so far
+	};
 	DataModel_t prgmData = {
 		// General Summary/Progress.
-		.m_summary = {
-			.m_numWarns = 0,
-			.m_numErrs  = 0,
-			.m_retCode  = RET_SUCCESS
-		},
+		.m_summary = runSummary,                 // (see above)
 
 		// Parsed Cli Data.
-		.m_files = {}
+		.m_files = {}                            // no initial files
 	};
 
 	// Parse program's cli command/call.
