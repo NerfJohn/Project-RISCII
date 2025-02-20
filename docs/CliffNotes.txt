@@ -19,6 +19,22 @@ Levels of (Scoped) Design
 ================================================================================
 General Tasks:
 
+Roadmap of Tasks:
+	- create common lexer/parser, using cprep as an example use case
+	- continue with implementation of cprep
+		(consider common vs cprep for origin- namely symbol table w/o symbols)
+		(try keeping rough docs on cprep to polish at end)
+	- create _shared scripts to build all/ make product folder
+		(asmld may just be copied over for now)
+	- implement quaid
+		(again- consider common origin and keep rough docs)
+		(note that testing will likely need to be done from _shared)
+	- convert asmld to using common libs + project structure
+	- begin implementation of core
+		(this will be heavily iterative)
+		(again common origin consideration- though last major piece anyway)
+		(emphasis on docs- may be awhile before 'finished')
+
 Repository Sanitation TODO
 	- redo "processor" structure (dev vs prod project/tools- keep dev project)
 	- cleanup "processor" gitignores/README

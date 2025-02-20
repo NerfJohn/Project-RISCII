@@ -8,6 +8,10 @@
 #include "Domain/RetCode_e.h"
 #include "State/StepParseCli.h"
 
+// TODO- delete after proper "read" state is made.
+#include "Common/Device/File.h"
+#include "State/SubStepLexFile.h"
+
 using namespace std;
 
 //==============================================================================
@@ -34,6 +38,11 @@ int main(int argc, char* argv[]) {
 
 	// Parse program's cli command/call.
 	StepParseCli_execute(prgmData, argc, argv);
+
+	// TODO- delete after proper "read" state is made.
+	File::inst().open(prgmData.m_files[0], FILE_OP_READ);
+	queue<LexToken*> tkns;
+	SubStepLexFile_execute(prgmData, tkns);
 
 	// End program with summary of run instance.
 	Terminate::inst().summary(prgmData.m_summary);

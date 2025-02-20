@@ -19,3 +19,10 @@ TODO- summary
 ## TODO
 ---
 TODO
+
+Lexing Notes:
+- keywords defined by line w/ first non whitespace being '#'
+- otherwise lexed per line- source text vs file include vs variable
+- idea is line = (opt keyword) + text, include + file, or define + var
+- EOF always treated as its own token
+- var defined per usual, file include is simply two '"' (ie no escapes)

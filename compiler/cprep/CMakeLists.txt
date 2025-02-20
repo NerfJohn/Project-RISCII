@@ -10,6 +10,7 @@ project(${EXEC_NAME})
 file(GLOB build_sources
 	${PROJ_NAME}/main.cpp
 	${PROJ_NAME}/State/*.cpp
+	${PROJ_NAME}/Util/*.cpp
 	../_shared/Common/Device/*.cpp
 	../_shared/Common/Os/*.cpp
 	../_shared/Common/Util/*.cpp
