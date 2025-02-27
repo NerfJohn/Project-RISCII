@@ -44,7 +44,8 @@ int main(int argc, char* argv[]) {
 	File::inst().open(prgmData.m_files[0], FILE_OP_READ);
 	queue<LexToken*> tkns;
 	SubStepLexFile_execute(prgmData, tkns);
-	SubStepParseTkns_execute(prgmData, tkns);
+	IAstNode* root = SubStepParseTkns_execute(prgmData, tkns);
+	delete root;
 
 	// End program with summary of run instance.
 	Terminate::inst().summary(prgmData.m_summary);

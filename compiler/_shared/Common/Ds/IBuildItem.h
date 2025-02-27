@@ -24,10 +24,14 @@ public:
 	std::string m_file;
 	uint32_t    m_line;
 	
+	/*
+	 * @brief Std destructor
+	 */
+	virtual ~IBuildItem(void) {/* no actions */}
+
 protected:
-	// Interface- only 'created/destroyed' by derived classes.
+	// Interface- only 'created' by derived classes.
 	IBuildItem(void)  {/* no actions */}
-	~IBuildItem(void) {/* no actions */}
 };
 
 #endif /* COMMON_DS_IBUILDITEM_H_ */

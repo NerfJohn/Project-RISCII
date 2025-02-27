@@ -5,10 +5,11 @@
 #ifndef UTIL_STRUTIL_H_
 #define UTIL_STRUTIL_H_
 
+#include <cstdint>
 #include <string>
 
 /*
- * Removes whitespace from "sides" of given string. Ignore "middle" whitespace.
+ * @brief Removes whitespace from "sides" of string. Ignore "middle" whitespace.
  *
  * Typical 'trim' function for strings- removing commonly ignored whitespace
  * characters from the side of a central string element. Keeps whitespace
@@ -17,5 +18,13 @@
  * @param str string to trim whitespace from
  */
 void StrUtil_trim(std::string& str);
+
+/*
+ * @brief Removes all instances of character in string.
+ *
+ * @param str string to modify/remove char from
+ * @param chr character to remove all instances of
+ */
+void StrUtil_rmAll(std::string& str, uint8_t chr);
 
 #endif /* UTIL_STRUTIL_H_ */

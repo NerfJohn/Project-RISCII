@@ -25,6 +25,7 @@ typedef enum {
 	// "Non-terminal" values.
 	PARSE_FILE,                                  // start of parsing SM
 	PARSE_TEXT,                                  // list of source text
+	PARSE_COND,                                  // list of item in conditional
 
 	// Special values.
 	PARSE_ERR_MISMATCH,                          // expected token didn't match
