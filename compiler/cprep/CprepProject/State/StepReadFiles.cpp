@@ -78,6 +78,6 @@ void StepReadFiles_execute(DataModel_t& model, std::string const& srcName) {
 
 	// Exit program (vs step) as applicable.
 	if (model.m_summary.m_numErrs > 0) {
-		Terminate::inst().silent(model.m_summary.m_retCode);
+		Terminate::inst().summary(model.m_summary);
 	}
 }

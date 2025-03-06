@@ -172,10 +172,12 @@ IAstNode* SubStepParseTkns_execute(DataModel_t&                 model,
 	} while (parser.m_actCode != PARSE_ACT_FILE);
 
 	// Confirm success of parsing.
-	if (parser.m_actStack.size() != 1) {
-		Terminate::inst().assert("parse() bad act stack size");
+	if (model.m_summary.m_numErrs == 0) {
+		if (parser.m_actStack.size() != 1) {
+			Terminate::inst().assert("parse() bad act stack size");
+		}
+		IF_NULL(parser.m_actStack.top(), "parse() bad act stack top");
 	}
-	IF_NULL(parser.m_actStack.top(), "parse() bad act stack top");
 
 	// (Final debug report on lexing.)
 	string dbgStr = to_string(nodeCnt) + " nodes created";
