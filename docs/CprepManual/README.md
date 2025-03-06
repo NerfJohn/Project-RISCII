@@ -26,3 +26,9 @@ Lexing Notes:
 - idea is line = (opt keyword) + text, include + file, or define + var
 - EOF always treated as its own token
 - var defined per usual, file include is simply two '"' (ie no escapes)
+
+Include Notes:
+- directories must end with '/' when included (cli enforced)
+- search order is 1) directory node/line origin 2) include dirs in order
+- includes parsed once per unique path per run (ie mid changes ignored)
+- all includes parsed regardless of conditionals around them

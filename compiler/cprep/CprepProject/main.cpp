@@ -7,11 +7,7 @@
 #include "Domain/DataModel_t.h"
 #include "Domain/RetCode_e.h"
 #include "State/StepParseCli.h"
-
-// TODO- delete after proper "read" state is made.
-#include "Common/Device/File.h"
-#include "State/SubStepLexFile.h"
-#include "State/SubStepParseTkns.h"
+#include "State/StepReadFiles.h"
 
 using namespace std;
 
@@ -34,18 +30,24 @@ int main(int argc, char* argv[]) {
 		.m_summary = runSummary,                 // (see above)
 
 		// Parsed Cli Data.
-		.m_files = {}                            // no initial files
+		.m_files = {},                           // no initial files
+		.m_iDirs = {},                           // no initial directories
+
+		// Processed data.
+		.m_srcAst   = nullptr,                   // begin without source
+		.m_iAsts    = {},                        // include file ASTs
+		.m_incPaths = {}                         // include file to parse
 	};
+	prgmData.m_iAsts.scopePush();
 
 	// Parse program's cli command/call.
 	StepParseCli_execute(prgmData, argc, argv);
 
-	// TODO- delete after proper "read" state is made.
-	File::inst().open(prgmData.m_files[0], FILE_OP_READ);
-	queue<LexToken*> tkns;
-	SubStepLexFile_execute(prgmData, tkns);
-	IAstNode* root = SubStepParseTkns_execute(prgmData, tkns);
-	delete root;
+	// (Pre)process each file.
+	Print::inst().log(LOG_INFO, "=Core Process=");
+	for (string file : prgmData.m_files) {
+		StepReadFiles_execute(prgmData, file);
+	}
 
 	// End program with summary of run instance.
 	Terminate::inst().summary(prgmData.m_summary);

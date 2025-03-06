@@ -14,6 +14,7 @@
  */
 typedef enum {
 	// Group #1: Flags with argument.
+	CLI_FLAG_INC_DIR,                            // include directory
 	CLI_FLAG_LOG_LEVEL,                          // log level to display up to
 
 	// Group #2: Flags without argument.

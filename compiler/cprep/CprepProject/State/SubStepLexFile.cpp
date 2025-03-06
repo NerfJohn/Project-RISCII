@@ -8,9 +8,9 @@
 #include "Common/Device/Terminate.h"
 #include "Common/Util/InfoUtil.h"
 #include "Common/Util/LexerDefs.h"
+#include "Common/Util/StrUtil.h"
 #include "Domain/LexState_e.h"
 #include "Domain/RetCode_e.h"
-#include "Util/StrUtil.h"
 
 #include "State/SubStepLexFile.h"
 
@@ -63,6 +63,7 @@ static int SubStepLexFile_nextState(int     const  state,
 			break;
 		case LEX_LOOP_INC_FILE:
 			EOFILE(byte,         LEX_TKN_TEXT);      // incomplete- source text
+			IS    (byte,'\n',    LEX_END_TEXT);      // incomplete- source text
 			IS    (byte,'"',     LEX_LOOP_INC_END);  // grab full file include
 			ELSE  (              LEX_LOOP_INC_FILE);
 			break;

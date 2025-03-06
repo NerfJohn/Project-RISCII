@@ -8,6 +8,7 @@
 #include "Common/Device/Terminate.h"
 #include "Common/Util/GetOptDefs.h"
 #include "Common/Util/InfoUtil.h"
+#include "Common/Util/StrUtil.h"
 #include "Domain/CliFlag_e.h"
 #include "Domain/RetCode_e.h"
 
@@ -32,7 +33,8 @@ using namespace std;
 						 "                  error   only errors\n"          + \
 						 "              (d) warning errors and warnings\n"  + \
 						 "                  info    process related info\n" + \
-						 "                  debug   all available output"
+						 "                  debug   all available output\n" + \
+                         "    -I  <arg> add include directory path"
 #define VERS_INFO string("cprep.exe ") + APP_VERSION
 
 // Definitions for "string to LogType_e" conversions.
@@ -49,6 +51,7 @@ static int StepParseCli_asFlag(std::string argStr) {
 	AS_FLAG(argStr, "h",  CLI_FLAG_HELP);
 	AS_FLAG(argStr, "v",  CLI_FLAG_VERSION);
 	AS_FLAG(argStr, "ll", CLI_FLAG_LOG_LEVEL);
+	AS_FLAG(argStr, "I",  CLI_FLAG_INC_DIR);
 
 	// Otherwise, it's not a flag.
 	return CLI_FLAG_INVALID;
@@ -99,6 +102,15 @@ static void StepParseCli_handleFlag(DataModel_t&  model,
 			break;
 		case CLI_FLAG_LOG_LEVEL:
 			StepParseCli_handleLevel(model, args.m_arg);
+			break;
+		case CLI_FLAG_INC_DIR:
+			model.m_iDirs.push_back(args.m_arg);
+			StrUtil_asDir(model.m_iDirs.back());
+			if (model.m_iDirs.back().compare(args.m_arg) != 0) {
+				// Required re-format -> not a directory
+				Print::inst().cli(string("Bad directory '") + args.m_arg + "'");
+				InfoUtil_recordError(model.m_summary, RET_BAD_ARG);
+			}
 			break;
 		default:
 			// Unknown flag? GetOpt/callback error- bug!
@@ -163,8 +175,11 @@ void StepParseCli_execute(DataModel_t&      model,
 		// (Summarize results of cli parsing.)
 		string numFiles = string("    # files: ") +
 				          to_string(model.m_files.size());
+		string numDirs  = string("    # iDirs: ") +
+				          to_string(model.m_iDirs.size());
 		Print::inst().log(LOG_INFO, "=Cli Summary=");
 		Print::inst().log(LOG_INFO, numFiles);
+		Print::inst().log(LOG_INFO, numDirs);
 	}
 
 	// Exit program (vs step) as applicable.

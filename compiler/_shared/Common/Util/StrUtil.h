@@ -2,8 +2,8 @@
  * StrUtil.h: Utilities for querying/manipulating std strings.
  */
 
-#ifndef UTIL_STRUTIL_H_
-#define UTIL_STRUTIL_H_
+#ifndef COMMON_UTIL_STRUTIL_H_
+#define COMMON_UTIL_STRUTIL_H_
 
 #include <cstdint>
 #include <string>
@@ -27,4 +27,13 @@ void StrUtil_trim(std::string& str);
  */
 void StrUtil_rmAll(std::string& str, uint8_t chr);
 
-#endif /* UTIL_STRUTIL_H_ */
+/*
+ * @brief Extract directory from file path.
+ *
+ * Assumes directories always end with '/' (ie stupid simple approach).
+ *
+ * @param str string to modify into just a directory
+ */
+void StrUtil_asDir(std::string& str);
+
+#endif /* COMMON_UTIL_STRUTIL_H_ */

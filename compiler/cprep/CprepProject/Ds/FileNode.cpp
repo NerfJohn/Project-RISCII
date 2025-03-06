@@ -51,6 +51,13 @@ FileNode::FileNode(std::stack<IBuildItem*>& actStack) {
 }
 
 //==============================================================================
+// Locate included files, adding them to the model for processing.
+void FileNode::findIncludes(DataModel_t& model) {
+	// Forward call to children (in order).
+	for (IAstNode* child : m_reqNodes) {child->findIncludes(model);}
+}
+
+//==============================================================================
 // Std destructor- deletes underlying nodes/tokens.
 FileNode::~FileNode(void) {
 	// Delete underlying nodes.

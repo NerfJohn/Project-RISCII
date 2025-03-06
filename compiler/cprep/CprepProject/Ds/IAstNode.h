@@ -6,6 +6,7 @@
 #define DS_IASTNODE_H_
 
 #include "Common/Ds/IBuildItem.h"
+#include "Domain/DataModel_t.h"
 
 /*
  * @brief "Interface" class for nodes making up Abstract Syntax Tree (AST).
@@ -15,6 +16,17 @@
  */
 class IAstNode: public IBuildItem {
 public:
+	/*
+	 * @brief Locate included files, adding them to the model for processing.
+	 *
+	 * Implements basic "quotation" inclusion logic. Includes scheduled for
+	 * parsing only if haven't been already. Checks all includes- regardless
+	 * of pre-processing conditions.
+	 *
+	 * @param model data model of the entire program
+	 */
+	virtual void findIncludes(DataModel_t& model) {/* no actions */}
+
 	/*
 	 * @brief Std destructor.
 	 */

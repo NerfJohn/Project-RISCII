@@ -27,6 +27,17 @@ public:
 	InclNode(std::stack<IBuildItem*>& actStack);
 
 	/*
+	 * @brief Locate included files, adding them to the model for processing.
+	 *
+	 * Implements basic "quotation" inclusion logic. Includes scheduled for
+	 * parsing only if haven't been already. Checks all includes- regardless
+	 * of pre-processing conditions.
+	 *
+	 * @param model data model of the entire program
+	 */
+	void findIncludes(DataModel_t& model);
+
+	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */
 	~InclNode(void);
@@ -34,6 +45,9 @@ public:
 private:
 	// "Required" items- checked for correctness on creation.
 	std::string m_reqFname;
+
+	// Helper function to check if file exists.
+	bool fileExists(std::string const& fname);
 };
 
 #endif /* DS_INCLNODE_H_ */

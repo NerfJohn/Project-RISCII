@@ -4,8 +4,8 @@
 
 #include "Common/Device/Terminate.h"
 #include "Common/Ds/LexToken.h"
+#include "Common/Util/StrUtil.h"
 #include "Domain/ParseState_e.h"
-#include "Util/StrUtil.h"
 
 #include "Ds/DefNode.h"
 

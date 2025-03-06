@@ -4,8 +4,8 @@
 
 #include "Common/Device/Terminate.h"
 #include "Common/Ds/LexToken.h"
+#include "Common/Util/StrUtil.h"
 #include "Domain/ParseState_e.h"
-#include "Util/StrUtil.h"
 
 #include "Ds/CondNode.h"
 
@@ -71,6 +71,13 @@ CondNode::CondNode(std::stack<IBuildItem*>& actStack) {
 
 	// Ensure defined name was caught.
 	if (m_reqDef.size() == 0) {Terminate::inst().assert("DefNode() no name");}
+}
+
+//==============================================================================
+// Locate included files, adding them to the model for processing.
+void CondNode::findIncludes(DataModel_t& model) {
+	// Forward call to children (in order).
+	for (IAstNode* child : m_reqNodes) {child->findIncludes(model);}
 }
 
 //==============================================================================

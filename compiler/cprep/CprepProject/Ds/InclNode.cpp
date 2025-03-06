@@ -2,10 +2,14 @@
  * InclNode.cpp: Node representing file inclusion.
  */
 
+#include "Common/Device/File.h"
+#include "Common/Device/Print.h"
 #include "Common/Device/Terminate.h"
 #include "Common/Ds/LexToken.h"
+#include "Common/Util/InfoUtil.h"
+#include "Common/Util/StrUtil.h"
 #include "Domain/ParseState_e.h"
-#include "Util/StrUtil.h"
+#include "Domain/RetCode_e.h"
 
 #include "Ds/InclNode.h"
 
@@ -15,6 +19,17 @@ using namespace std;
 
 // Definitions for creating node.
 #define FORMAT_CHAR '"'
+
+//==============================================================================
+// Helper function to check if file exists.
+bool InclNode::fileExists(std::string const& fname) {
+	// Check existence by attempting to open (read to no overwrite data).
+	RetErr_e retErr = File::inst().open(fname, FILE_OP_READ);
+	File::inst().close();
+
+	// Return based on result of opening.
+	return (retErr == RET_ERR_NONE);
+}
 
 //==============================================================================
 // Constructor- creates node from action stack items.
@@ -61,6 +76,39 @@ InclNode::InclNode(std::stack<IBuildItem*>& actStack) {
 	}
 
 	// Possible "file" was empty literal- no checks to do.
+}
+
+//==============================================================================
+// Locate included files, adding them to the model for processing.
+void InclNode::findIncludes(DataModel_t& model) {
+	// 1st: Attempt to find file within origin's original directory.
+	string incPath    = m_file;
+	StrUtil_asDir(incPath);
+	incPath          += m_reqFname;
+	bool isValidPath  = this->fileExists(incPath);
+
+	// 2nd: Attempt to find file within included directories.
+	if (isValidPath == false) {
+		// Check each directory (in order of record).
+		for (string dir : model.m_iDirs) {
+			// Determine path.
+			incPath      = dir + m_reqFname;
+			isValidPath  = this->fileExists(incPath);
+
+			// Stop search if found.
+			if (isValidPath) {break;}
+		}
+	}
+
+	// Found? Schedule for parsing if it hasn't been already- otherwise, error.
+	if (isValidPath == false) {
+		string errStr = string("No such file '") + m_reqFname + "'";
+		Print::inst().log(LOG_ERROR, m_file, m_line, errStr);
+		InfoUtil_recordError(model.m_summary, RET_BAD_INC);
+	}
+	else if (model.m_iAsts.get(incPath) == nullptr) {
+		model.m_incPaths.push(incPath);
+	}
 }
 
 //==============================================================================
