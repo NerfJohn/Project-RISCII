@@ -37,6 +37,12 @@ public:
 	 */
 	void findIncludes(DataModel_t& model);
 
+	// TODO
+	void checkDefines(DataModel_t&model);
+
+	// TODO
+	void writeText(DataModel_t& model);
+
 	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */
@@ -45,6 +51,9 @@ public:
 private:
 	// "Required" items- checked for correctness on creation.
 	std::string m_reqFname;
+
+	// Items determined while processing.
+	std::string m_finFname;
 
 	// Helper function to check if file exists.
 	bool fileExists(std::string const& fname);

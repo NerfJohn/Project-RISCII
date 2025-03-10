@@ -46,7 +46,7 @@ RetErr_e SymTable::addLocal(std::string const& name, void* symbol) {
 		// "All good in the [SymTable]."
 		retErr = RET_ERR_NONE;
 	}
-	
+
 	// Return result of operation.
 	return retErr;
 }
@@ -83,7 +83,7 @@ void* SymTable::get(std::string const& name) {
 	void* retPtr = nullptr;
 	
 	// Search for symbol- starting from the lowest scope.
-	for (size_t i = m_table.size() - 1; i <= 0; i--) {
+	for (int i = m_table.size() - 1; i >= 0; i--) {
 		// Stop search (successfully) if found.
 		if (m_table[i].find(name) != m_table[i].end()) {
 			// Update ptr.
@@ -96,4 +96,15 @@ void* SymTable::get(std::string const& name) {
 	
 	// Return result of operation.
 	return retPtr;
+}
+
+//==============================================================================
+// TODO
+size_t SymTable::size(void) {
+	// Size = sum of each scope's size.
+	size_t retSize = 0;
+	for (map<string, void*> scope : m_table) {retSize += scope.size();}
+
+	// Voila! the size.
+	return retSize;
 }

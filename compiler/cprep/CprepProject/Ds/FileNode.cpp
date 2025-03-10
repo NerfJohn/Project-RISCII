@@ -58,6 +58,20 @@ void FileNode::findIncludes(DataModel_t& model) {
 }
 
 //==============================================================================
+// TODO
+void FileNode::checkDefines(DataModel_t& model) {
+	// Forward call to children (in order).
+	for (IAstNode* child : m_reqNodes) {child->checkDefines(model);}
+}
+
+//==============================================================================
+// TODO
+void FileNode::writeText(DataModel_t& model) {
+	// Forward call to children (in order).
+	for (IAstNode* child : m_reqNodes) {child->writeText(model);}
+}
+
+//==============================================================================
 // Std destructor- deletes underlying nodes/tokens.
 FileNode::~FileNode(void) {
 	// Delete underlying nodes.

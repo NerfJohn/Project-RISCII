@@ -123,9 +123,6 @@ IAstNode* SubStepParseTkns_execute(DataModel_t&                 model,
 	// Ease of access.
 	string fname = File::inst().getName();
 
-	// (Note entrance into sub-step.)
-	Print::inst().log(LOG_DEBUG, fname, "Beginning parsing...");
-
 	// Prep for parsing.
 	ParserInit_t initData = {
 		.m_tkns            = tkns,

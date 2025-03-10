@@ -27,6 +27,9 @@ void StrUtil_trim(std::string& str);
  */
 void StrUtil_rmAll(std::string& str, uint8_t chr);
 
+// TODO
+void StrUtil_rmFtype(std::string& str);
+
 /*
  * @brief Extract directory from file path.
  *

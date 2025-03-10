@@ -35,6 +35,17 @@ void StrUtil_rmAll(std::string& str, uint8_t chr) {
 }
 
 //==============================================================================
+// TODO
+void StrUtil_rmFtype(std::string& str) {
+	// Determine index of last file type/extension related character.
+	int idx = str.size() - 1;
+	for (; idx >= 0; idx--) {if (str[idx] == EXT_CHAR) {break;}}
+
+	// Throw away "type" portion of string.
+	if (idx >= 0) {str = str.substr(0, idx);}
+}
+
+//==============================================================================
 // Extract directory from file path.
 void StrUtil_asDir(std::string& str) {
 	// Determine index of last directory related character.

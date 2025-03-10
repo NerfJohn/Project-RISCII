@@ -65,6 +65,9 @@ public:
 	 */
 	void* get(std::string const& name);
 
+	// TODO
+	size_t size(void);
+
 private:
 	// Internal structure of symbol table.
 	std::vector<std::map<std::string, void*>> m_table;

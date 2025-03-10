@@ -25,6 +25,9 @@ public:
 	 */
 	DefNode(std::stack<IBuildItem*>& actStack);
 
+	// TODO
+	void checkDefines(DataModel_t&model);
+
 	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */
@@ -33,6 +36,9 @@ public:
 private:
 	// "Required" items- checked for correctness on creation.
 	std::string m_reqDef;
+
+	// Items filled in while processing.
+	std::string m_defSym; // "Symbol" for definition- namely for displaying
 };
 
 #endif /* DS_DEFNODE_H_ */

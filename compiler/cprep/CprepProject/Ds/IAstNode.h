@@ -27,6 +27,12 @@ public:
 	 */
 	virtual void findIncludes(DataModel_t& model) {/* no actions */}
 
+	// TODO
+	virtual void checkDefines(DataModel_t& model) {/* no actions */}
+
+	// TODO
+	virtual void writeText(DataModel_t& model) {/* no actions */}
+
 	/*
 	 * @brief Std destructor.
 	 */

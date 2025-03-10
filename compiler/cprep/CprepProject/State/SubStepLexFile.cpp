@@ -137,9 +137,6 @@ void SubStepLexFile_execute(DataModel_t& model, std::queue<LexToken*>& tkns) {
 	// Ease of access.
 	string fname = File::inst().getName();
 
-	// (Note entrance into sub-step.)
-	Print::inst().log(LOG_DEBUG, fname, "Beginning lexing...");
-
 	// Prep for lexing.
 	LexInit_t initData = {
 		.m_nextState = SubStepLexFile_nextState,

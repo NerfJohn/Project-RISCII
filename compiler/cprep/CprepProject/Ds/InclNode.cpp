@@ -36,6 +36,7 @@ bool InclNode::fileExists(std::string const& fname) {
 InclNode::InclNode(std::stack<IBuildItem*>& actStack) {
 	// Init members.
 	m_reqFname = "";
+	m_finFname = "";
 	m_type     = PARSE_ACT_INCL;
 	m_file     = "";
 	m_line     = 0;
@@ -107,8 +108,31 @@ void InclNode::findIncludes(DataModel_t& model) {
 		InfoUtil_recordError(model.m_summary, RET_BAD_INC);
 	}
 	else if (model.m_iAsts.get(incPath) == nullptr) {
+		string dbgStr = string("Including '") + incPath + "'";
+		Print::inst().log(LOG_DEBUG, m_file, m_line, dbgStr);
 		model.m_incPaths.push(incPath);
 	}
+
+	// In any case- save the final path.
+	m_finFname = incPath;
+}
+
+//==============================================================================
+// TODO
+void InclNode::checkDefines(DataModel_t& model) {
+	// Expand search to included AST.
+	IAstNode* ast = (IAstNode*)(model.m_iAsts.get(m_finFname));
+	IF_NULL(ast, "checkDefines() null ast");
+	ast->checkDefines(model);
+}
+
+//==============================================================================
+// TODO
+void InclNode::writeText(DataModel_t& model) {
+	// Expand search to included AST.
+	IAstNode* ast = (IAstNode*)(model.m_iAsts.get(m_finFname));
+	IF_NULL(ast, "writeText() null ast");
+	ast->writeText(model);
 }
 
 //==============================================================================

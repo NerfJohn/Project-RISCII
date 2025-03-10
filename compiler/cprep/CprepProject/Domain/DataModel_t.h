@@ -33,6 +33,7 @@ typedef struct {
 	IAstNode*               m_srcAst;            // AST of source file
 	SymTable                m_iAsts;             // include file ASTs
 	std::queue<std::string> m_incPaths;          // include file to parse
+	SymTable                m_defs;              // defined variables
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

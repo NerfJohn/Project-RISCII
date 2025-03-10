@@ -25,6 +25,9 @@ public:
 	 */
 	TextNode(std::stack<IBuildItem*>& actStack);
 
+	// TODO
+	void writeText(DataModel_t& model);
+
 	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */

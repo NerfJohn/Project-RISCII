@@ -7,6 +7,7 @@
 #include "Domain/DataModel_t.h"
 #include "Domain/RetCode_e.h"
 #include "State/StepParseCli.h"
+#include "State/StepCreateFile.h"
 #include "State/StepReadFiles.h"
 
 using namespace std;
@@ -36,9 +37,11 @@ int main(int argc, char* argv[]) {
 		// Processed data.
 		.m_srcAst   = nullptr,                   // begin without source
 		.m_iAsts    = {},                        // include file ASTs
-		.m_incPaths = {}                         // include file to parse
+		.m_incPaths = {},                        // include file to parse
+		.m_defs     = {}                         // no starting definitions
 	};
 	prgmData.m_iAsts.scopePush();
+	prgmData.m_defs.scopePush();
 
 	// Parse program's cli command/call.
 	StepParseCli_execute(prgmData, argc, argv);
@@ -47,6 +50,7 @@ int main(int argc, char* argv[]) {
 	Print::inst().log(LOG_INFO, "=Core Process=");
 	for (string file : prgmData.m_files) {
 		StepReadFiles_execute(prgmData, file);
+		StepCreateFile_execute(prgmData, file);
 	}
 
 	// End program with summary of run instance.

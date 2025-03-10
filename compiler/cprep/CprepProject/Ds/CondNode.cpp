@@ -2,6 +2,7 @@
  * CondNode.cpp: Node representing conditionally included section of file.
  */
 
+#include "Common/Device/Print.h"
 #include "Common/Device/Terminate.h"
 #include "Common/Ds/LexToken.h"
 #include "Common/Util/StrUtil.h"
@@ -18,6 +19,7 @@ CondNode::CondNode(std::stack<IBuildItem*>& actStack) {
 	m_reqIfDefined = false;
 	m_reqDef       = "";
 	m_reqNodes     = {};
+	m_condMet      = false;
 	m_type         = PARSE_ACT_COND;
 	m_file         = "";
 	m_line         = 0;
@@ -78,6 +80,30 @@ CondNode::CondNode(std::stack<IBuildItem*>& actStack) {
 void CondNode::findIncludes(DataModel_t& model) {
 	// Forward call to children (in order).
 	for (IAstNode* child : m_reqNodes) {child->findIncludes(model);}
+}
+
+//==============================================================================
+// TODO
+void CondNode::checkDefines(DataModel_t& model) {
+	// Determine if variable is defined.
+	bool isDefined = (model.m_defs.get(m_reqDef) != nullptr);
+
+	// Forward to children if condition is met.
+	m_condMet = m_reqIfDefined == isDefined;    // refresh per run
+	if (m_condMet) {
+		string dbgStr = string("Condition met for '") + m_reqDef + "'";
+		Print::inst().log(LOG_DEBUG, m_file, m_line, dbgStr);
+		for (IAstNode* child: m_reqNodes) {child->checkDefines(model);}
+	}
+}
+
+//==============================================================================
+// TODO
+void CondNode::writeText(DataModel_t& model) {
+	// Forward to children (as applicable).
+	if (m_condMet) {
+		for (IAstNode* child: m_reqNodes) {child->writeText(model);}
+	}
 }
 
 //==============================================================================

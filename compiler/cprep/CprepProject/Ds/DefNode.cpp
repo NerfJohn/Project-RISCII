@@ -2,10 +2,13 @@
  * DefNode.cpp: Node representing preprocessor (only) variable definition.
  */
 
+#include "Common/Device/Print.h"
 #include "Common/Device/Terminate.h"
 #include "Common/Ds/LexToken.h"
+#include "Common/Util/InfoUtil.h"
 #include "Common/Util/StrUtil.h"
 #include "Domain/ParseState_e.h"
+#include "Domain/RetCode_e.h"
 
 #include "Ds/DefNode.h"
 
@@ -16,6 +19,7 @@ using namespace std;
 DefNode::DefNode(std::stack<IBuildItem*>& actStack) {
 	// Init members.
 	m_reqDef   = "";
+	m_defSym   = "";
 	m_type     = PARSE_ACT_DEF;
 	m_file     = "";
 	m_line     = 0;
@@ -56,6 +60,30 @@ DefNode::DefNode(std::stack<IBuildItem*>& actStack) {
 
 	// Ensure defined name was caught.
 	if (m_reqDef.size() == 0) {Terminate::inst().assert("DefNode() no name");}
+}
+
+//==============================================================================
+// TODO
+void DefNode::checkDefines(DataModel_t& model) {
+	// Variable can only be defined once (per source file).
+	string* sym = (string*)(model.m_defs.get(m_reqDef));
+	if (sym != nullptr) {
+		// Already defined!
+		string errStr = string("Re-def '") +
+				        m_reqDef           +
+						"' (first at "     +
+						*sym               +
+						")";
+		Print::inst().log(LOG_ERROR, m_file, m_line, errStr);
+		InfoUtil_recordError(model.m_summary, RET_TWO_DEF);
+	}
+	else {
+		// Otherwise, add to definitions.
+		string dbgStr = string("Defined '") + m_reqDef + "'";
+		Print::inst().log(LOG_DEBUG, m_file, m_line, dbgStr);
+		m_defSym = m_file + ":" + to_string(m_line);
+		model.m_defs.addLocal(m_reqDef, &m_defSym);
+	}
 }
 
 //==============================================================================

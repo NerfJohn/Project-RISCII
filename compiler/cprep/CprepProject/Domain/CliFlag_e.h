@@ -14,6 +14,7 @@
  */
 typedef enum {
 	// Group #1: Flags with argument.
+	CLI_FLAG_DEF,                                // var definition for all files
 	CLI_FLAG_INC_DIR,                            // include directory
 	CLI_FLAG_LOG_LEVEL,                          // log level to display up to
 

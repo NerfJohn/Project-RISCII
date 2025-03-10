@@ -2,6 +2,7 @@
  * TextNode.cpp: Node representing non-pre-processor related source text.
  */
 
+#include "Common/Device/File.h"
 #include "Common/Device/Terminate.h"
 #include "Common/Ds/LexToken.h"
 #include "Domain/ParseState_e.h"
@@ -81,6 +82,13 @@ TextNode::TextNode(std::stack<IBuildItem*>& actStack) {
 
 	// Ensure node contains at least SOME text.
 	if (m_reqText.size() == 0) {Terminate::inst().assert("TextNode() empty");}
+}
+
+//==============================================================================
+// TODO
+void TextNode::writeText(DataModel_t& model) {
+	// Write source text to new file.
+	File::inst().write(m_reqText);
 }
 
 //==============================================================================

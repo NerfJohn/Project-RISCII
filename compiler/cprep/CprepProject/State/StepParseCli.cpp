@@ -34,7 +34,8 @@ using namespace std;
 						 "              (d) warning errors and warnings\n"  + \
 						 "                  info    process related info\n" + \
 						 "                  debug   all available output\n" + \
-                         "    -I  <arg> add include directory path"
+                         "    -I  <arg> add include directory path\n"       + \
+						 "    -D  <arg> define variable for all files"
 #define VERS_INFO string("cprep.exe ") + APP_VERSION
 
 // Definitions for "string to LogType_e" conversions.
@@ -45,6 +46,15 @@ using namespace std;
 #define LEVEL_DEBUG    ("debug")
 
 //==============================================================================
+
+// "Symbol" for cli originated variable definitions.
+string s_cliSym = "command line";
+
+// "Char set" used to verify cli-defined definitions.
+string s_varLetter = "abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+string s_varNumber = "0123456789";
+
+//==============================================================================
 // Helper function to act as "string to flag enum" callback for GetOpt.
 static int StepParseCli_asFlag(std::string argStr) {
 	// Attempt to match string to known flag.
@@ -52,6 +62,7 @@ static int StepParseCli_asFlag(std::string argStr) {
 	AS_FLAG(argStr, "v",  CLI_FLAG_VERSION);
 	AS_FLAG(argStr, "ll", CLI_FLAG_LOG_LEVEL);
 	AS_FLAG(argStr, "I",  CLI_FLAG_INC_DIR);
+	AS_FLAG(argStr, "D",  CLI_FLAG_DEF);
 
 	// Otherwise, it's not a flag.
 	return CLI_FLAG_INVALID;
@@ -86,6 +97,49 @@ static void StepParseCli_handleLevel(DataModel_t&       model,
 }
 
 //==============================================================================
+// Helper function to handle "add include directory" flag/command.
+static void StepParseCli_handleDir(DataModel_t& model, string const& dir) {
+	// Add to include directories.
+	model.m_iDirs.push_back(dir);
+
+	// Ensure input matches "directory" expectations.
+	StrUtil_asDir(model.m_iDirs.back());
+	if (model.m_iDirs.back().compare(dir) != 0) {
+		// Required re-format = not a directory.
+		Print::inst().cli(string("Bad directory '") + dir + "'");
+		InfoUtil_recordError(model.m_summary, RET_BAD_ARG);
+	}
+}
+
+//==============================================================================
+// Helper function to handle "add include directory" flag/command.
+static void StepParseCli_handleDef(DataModel_t& model, string const& def) {
+	// Add definition for all files (allow repeats- cli rules > def rules).
+	model.m_defs.addGlobal(def, &s_cliSym);
+
+	// Verify the variable meets cli definition stds.
+	bool badVar = false;
+	for (size_t i = 0; i < def.size(); i++) {
+		// Analyze.
+		char chr = def[i];
+		bool isLetter = (s_varLetter.find(chr) != string::npos);
+		bool isNumber = (s_varNumber.find(chr) != string::npos);
+
+		// Check (alphanumeric w/ letter prefix).
+		if ((isLetter == false) & ((i == 0) | (isNumber == false))) {
+			badVar = true;
+			break;         // already bad- stop check
+		}
+	}
+
+	// Error as needed.
+	if (badVar) {
+		Print::inst().cli(string("Bad definition '") + def + "'");
+		InfoUtil_recordError(model.m_summary, RET_BAD_ARG);
+	}
+}
+
+//==============================================================================
 // Helper function to handle parsed flag options.
 static void StepParseCli_handleFlag(DataModel_t&  model,
 		                            GetOpt const& args,
@@ -104,13 +158,10 @@ static void StepParseCli_handleFlag(DataModel_t&  model,
 			StepParseCli_handleLevel(model, args.m_arg);
 			break;
 		case CLI_FLAG_INC_DIR:
-			model.m_iDirs.push_back(args.m_arg);
-			StrUtil_asDir(model.m_iDirs.back());
-			if (model.m_iDirs.back().compare(args.m_arg) != 0) {
-				// Required re-format -> not a directory
-				Print::inst().cli(string("Bad directory '") + args.m_arg + "'");
-				InfoUtil_recordError(model.m_summary, RET_BAD_ARG);
-			}
+			StepParseCli_handleDir(model, args.m_arg);
+			break;
+		case CLI_FLAG_DEF:
+			StepParseCli_handleDef(model, args.m_arg);
 			break;
 		default:
 			// Unknown flag? GetOpt/callback error- bug!
@@ -177,9 +228,12 @@ void StepParseCli_execute(DataModel_t&      model,
 				          to_string(model.m_files.size());
 		string numDirs  = string("    # iDirs: ") +
 				          to_string(model.m_iDirs.size());
+		string numDefs  = string("    # defs:  ") +
+				 	 	  to_string(model.m_defs.size());
 		Print::inst().log(LOG_INFO, "=Cli Summary=");
 		Print::inst().log(LOG_INFO, numFiles);
 		Print::inst().log(LOG_INFO, numDirs);
+		Print::inst().log(LOG_INFO, numDefs);
 	}
 
 	// Exit program (vs step) as applicable.

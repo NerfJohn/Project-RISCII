@@ -36,6 +36,12 @@ public:
 	 */
 	void findIncludes(DataModel_t& model);
 
+	// TODO
+	void checkDefines(DataModel_t&model);
+
+	// TODO
+	void writeText(DataModel_t& model);
+
 	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */
@@ -46,6 +52,9 @@ private:
 	bool                  m_reqIfDefined;
 	std::string           m_reqDef;
 	std::deque<IAstNode*> m_reqNodes;
+
+	// Items determined during processing.
+	bool                  m_condMet;
 };
 
 #endif /* DS_CONDNODE_H_ */

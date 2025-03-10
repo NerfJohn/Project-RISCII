@@ -36,6 +36,12 @@ public:
 	 */
 	void findIncludes(DataModel_t& model);
 
+	// TODO
+	void checkDefines(DataModel_t&model);
+
+	// TODO
+	void writeText(DataModel_t& model);
+
 	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */
