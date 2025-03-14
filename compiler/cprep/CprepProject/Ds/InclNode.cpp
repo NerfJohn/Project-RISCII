@@ -120,10 +120,20 @@ void InclNode::findIncludes(DataModel_t& model) {
 //==============================================================================
 // TODO
 void InclNode::checkDefines(DataModel_t& model) {
-	// Expand search to included AST.
-	IAstNode* ast = (IAstNode*)(model.m_iAsts.get(m_finFname));
-	IF_NULL(ast, "checkDefines() null ast");
-	ast->checkDefines(model);
+	// Ensure nesting limit is met.
+	if (model.m_nestsLeft > 0) {
+		// Expand search to included AST.
+		model.m_nestsLeft--;
+		IAstNode* ast = (IAstNode*)(model.m_iAsts.get(m_finFname));
+		IF_NULL(ast, "checkDefines() null ast");
+		ast->checkDefines(model);
+		model.m_nestsLeft++;
+	}
+	else {
+		// Nesting has gone too far.
+		Print::inst().log(LOG_ERROR, m_file, m_line, "Nesting limit reached");
+		InfoUtil_recordError(model.m_summary, RET_NO_NEST);
+	}
 }
 
 //==============================================================================

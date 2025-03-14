@@ -34,6 +34,7 @@ typedef struct {
 	SymTable                m_iAsts;             // include file ASTs
 	std::queue<std::string> m_incPaths;          // include file to parse
 	SymTable                m_defs;              // defined variables
+	uint32_t                m_nestsLeft;         // levels of nesting left over
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

@@ -35,10 +35,11 @@ int main(int argc, char* argv[]) {
 		.m_iDirs = {},                           // no initial directories
 
 		// Processed data.
-		.m_srcAst   = nullptr,                   // begin without source
-		.m_iAsts    = {},                        // include file ASTs
-		.m_incPaths = {},                        // include file to parse
-		.m_defs     = {}                         // no starting definitions
+		.m_srcAst    = nullptr,                   // begin without source
+		.m_iAsts     = {},                        // include file ASTs
+		.m_incPaths  = {},                        // include file to parse
+		.m_defs      = {},                        // no starting definitions
+		.m_nestsLeft = 50                         // allowed # of nested files
 	};
 	prgmData.m_iAsts.scopePush();
 	prgmData.m_defs.scopePush();
