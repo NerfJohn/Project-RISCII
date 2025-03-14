@@ -118,7 +118,7 @@ void InclNode::findIncludes(DataModel_t& model) {
 }
 
 //==============================================================================
-// TODO
+// Verifies definitions/conditions are correct.
 void InclNode::checkDefines(DataModel_t& model) {
 	// Ensure nesting limit is met.
 	if (model.m_nestsLeft > 0) {
@@ -137,7 +137,7 @@ void InclNode::checkDefines(DataModel_t& model) {
 }
 
 //==============================================================================
-// TODO
+// Writes contents (as applicable) to already opened write file.
 void InclNode::writeText(DataModel_t& model) {
 	// Expand search to included AST.
 	IAstNode* ast = (IAstNode*)(model.m_iAsts.get(m_finFname));

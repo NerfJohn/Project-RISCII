@@ -65,7 +65,11 @@ public:
 	 */
 	void* get(std::string const& name);
 
-	// TODO
+	/*
+	 * @brief Gets the total number of entries across all scopes.
+	 *
+	 * @return total number of symbols across all scopes.
+	 */
 	size_t size(void);
 
 private:

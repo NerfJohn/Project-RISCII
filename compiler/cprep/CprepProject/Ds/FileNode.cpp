@@ -58,14 +58,14 @@ void FileNode::findIncludes(DataModel_t& model) {
 }
 
 //==============================================================================
-// TODO
+// Verifies definitions/conditions are correct.
 void FileNode::checkDefines(DataModel_t& model) {
 	// Forward call to children (in order).
 	for (IAstNode* child : m_reqNodes) {child->checkDefines(model);}
 }
 
 //==============================================================================
-// TODO
+// Writes contents (as applicable) to already opened write file.
 void FileNode::writeText(DataModel_t& model) {
 	// Forward call to children (in order).
 	for (IAstNode* child : m_reqNodes) {child->writeText(model);}

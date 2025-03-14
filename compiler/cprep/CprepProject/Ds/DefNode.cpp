@@ -63,7 +63,7 @@ DefNode::DefNode(std::stack<IBuildItem*>& actStack) {
 }
 
 //==============================================================================
-// TODO
+// Verifies definitions/conditions are correct.
 void DefNode::checkDefines(DataModel_t& model) {
 	// Variable can only be defined once (per source file).
 	string* sym = (string*)(model.m_defs.get(m_reqDef));

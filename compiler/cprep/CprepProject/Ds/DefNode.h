@@ -25,7 +25,14 @@ public:
 	 */
 	DefNode(std::stack<IBuildItem*>& actStack);
 
-	// TODO
+	/*
+	 * @brief Verifies definitions/conditions are correct.
+	 *
+	 * Affects data stored in ASTs (src and included). Re-calling with different
+	 * model info will overwrite previous progress.
+	 *
+	 * @param model data model of the entire program
+	 */
 	void checkDefines(DataModel_t&model);
 
 	/*

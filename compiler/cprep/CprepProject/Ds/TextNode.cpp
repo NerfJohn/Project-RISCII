@@ -85,7 +85,7 @@ TextNode::TextNode(std::stack<IBuildItem*>& actStack) {
 }
 
 //==============================================================================
-// TODO
+// Writes contents (as applicable) to already opened write file.
 void TextNode::writeText(DataModel_t& model) {
 	// Write source text to new file.
 	File::inst().write(m_reqText);

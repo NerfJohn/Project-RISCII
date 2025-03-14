@@ -99,7 +99,7 @@ void* SymTable::get(std::string const& name) {
 }
 
 //==============================================================================
-// TODO
+// Gets the total number of entries across all scopes.
 size_t SymTable::size(void) {
 	// Size = sum of each scope's size.
 	size_t retSize = 0;

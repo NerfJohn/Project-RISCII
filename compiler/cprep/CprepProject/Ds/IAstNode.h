@@ -27,10 +27,24 @@ public:
 	 */
 	virtual void findIncludes(DataModel_t& model) {/* no actions */}
 
-	// TODO
+	/*
+	 * @brief Verifies definitions/conditions are correct.
+	 *
+	 * Affects data stored in ASTs (src and included). Re-calling with different
+	 * model info will overwrite previous progress.
+	 *
+	 * @param model data model of the entire program
+	 */
 	virtual void checkDefines(DataModel_t& model) {/* no actions */}
 
-	// TODO
+	/*
+	 * @brief Writes contents (as applicable) to already opened write file.
+	 *
+	 * Assumes write file opened with Common/Device/File. Takes paths based on
+	 * progress determined by calling checkDefines().
+	 *
+	 * @param model data model of the entire program
+	 */
 	virtual void writeText(DataModel_t& model) {/* no actions */}
 
 	/*

@@ -25,7 +25,14 @@ public:
 	 */
 	TextNode(std::stack<IBuildItem*>& actStack);
 
-	// TODO
+	/*
+	 * @brief Writes contents (as applicable) to already opened write file.
+	 *
+	 * Assumes write file opened with Common/Device/File. Takes paths based on
+	 * progress determined by calling checkDefines().
+	 *
+	 * @param model data model of the entire program
+	 */
 	void writeText(DataModel_t& model);
 
 	/*

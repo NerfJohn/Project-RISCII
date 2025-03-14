@@ -83,7 +83,7 @@ void CondNode::findIncludes(DataModel_t& model) {
 }
 
 //==============================================================================
-// TODO
+// Verifies definitions/conditions are correct.
 void CondNode::checkDefines(DataModel_t& model) {
 	// Determine if variable is defined.
 	bool isDefined = (model.m_defs.get(m_reqDef) != nullptr);
@@ -98,7 +98,7 @@ void CondNode::checkDefines(DataModel_t& model) {
 }
 
 //==============================================================================
-// TODO
+// Writes contents (as applicable) to already opened write file.
 void CondNode::writeText(DataModel_t& model) {
 	// Forward to children (as applicable).
 	if (m_condMet) {

@@ -35,7 +35,7 @@ void StrUtil_rmAll(std::string& str, uint8_t chr) {
 }
 
 //==============================================================================
-// TODO
+// Removes the file extension from a file path.
 void StrUtil_rmFtype(std::string& str) {
 	// Determine index of last file type/extension related character.
 	int idx = str.size() - 1;

@@ -1,5 +1,5 @@
 /*
- * StepCreateFile.cpp: TODO
+ * StepCreateFile.cpp: Step to create new pre-processed file.
  */
 
 #include "Common/Device/File.h"
@@ -19,8 +19,8 @@ using namespace std;
 #define EXT_TYPE ".i"
 
 //==============================================================================
-// TODO
-void StepCreateFile_openWriteFile(DataModel_t& model, string& file) {
+// Helper function to handle opening the output file for writing.
+static void StepCreateFile_openWriteFile(DataModel_t& model, string& file) {
 	// Derive output file's name.
 	StrUtil_rmFtype(file);
 	file += EXT_TYPE;
@@ -38,7 +38,7 @@ void StepCreateFile_openWriteFile(DataModel_t& model, string& file) {
 
 
 //==============================================================================
-// TODO
+// Translates source file into (created) pre-processed file.
 void StepCreateFile_execute(DataModel_t& model, std::string& file) {
 	// Ensure new file's "combo" of definition's don't conflict.
 	model.m_defs.scopePush();

@@ -27,7 +27,13 @@ void StrUtil_trim(std::string& str);
  */
 void StrUtil_rmAll(std::string& str, uint8_t chr);
 
-// TODO
+/*
+ * @brief Removes the file extension from a file path.
+ *
+ * Assumes file extension begins with '.' (ie stupid simple approach).
+ *
+ * @param str string remove file extension from
+ */
 void StrUtil_rmFtype(std::string& str);
 
 /*
