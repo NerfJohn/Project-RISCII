@@ -15,10 +15,9 @@ This document describes the abilities of the RISCII C-preprocessor program (ie c
 |Term            |Description                                              |
 |----------------|---------------------------------------------------------|
 |cprep.exe       |C-preprocessor program (ie topic of this manual)         |
-
-directive
-variable
-block
+|directive       |unless specified, keyword in preprocessor "language"     |
+|variable        |unless specified, preprocessor defined name/identifier   |
+|block           |unless specified, conditional directives + contents      |
 
 ---
 
