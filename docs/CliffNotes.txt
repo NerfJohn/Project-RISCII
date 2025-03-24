@@ -20,9 +20,6 @@ Levels of (Scoped) Design
 General Tasks:
 
 Roadmap of Tasks:
-	- convert asmld to using common libs + project structure
-	- create _shared scripts to build all/ make product folder
-		(asmld may just be copied over for now)
 	- implement quaid
 		(again- consider common origin and keep rough docs)
 		(note that testing will likely need to be done from _shared)
@@ -69,5 +66,29 @@ Rough SW Manifest (for development environment)
 		MinGW GCC/G++ C/C++ compiler to create RISCII executables
 		CMake         build system to facilitate actual build
 		Eclipse       IDE for development quality of life
+	
+================================================================================
+"quaid" Thoughts
+
+	Arguments:
+		<default> C-file requring cprep/ccomp/asmld passes
+		-h        help menu + exit
+		-v        version tag + exit
+		-ll <arg> set log level (silent/error/warning/info/debug)
+		-as <arg> ASM-file requring cprep/asmld passes
+		-E        run cprep only
+		-S        run cprep/ccomp only
+		-D <arg>  define preprocess var for all files
+		-I <arg>  define include directory for all files
+		-g        create debug image
+		-o        name/path of created image
+		-O1       enable asmld optimizations
+		-O2       enable asmld+ccomp optimizations
+		
+	Process:
+		> parse cli- likely life rules/storage from other programs
+		> general 1) log 2) call 3) cond log/exit 4) repeat structure
+		> log level passes directly w/ mostly extra info snippets
+		> special Os "driver" to handle calls
 	
 ================================================================================
