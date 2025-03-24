@@ -8,6 +8,9 @@
 #include "Domain/RetCode_e.h"
 #include "State/StepParseCli.h"
 
+// TODO
+#include "Device/Cmd.h"
+
 using namespace std;
 
 //==============================================================================
@@ -34,6 +37,12 @@ int main(int argc, char* argv[]) {
 
 	// Parse program's cli command/call.
 	StepParseCli_execute(prgmData, argc, argv);
+
+	// TODO
+	int a;
+	prgmData.m_files[0] += " -t";
+	Print::inst().cli(to_string(Cmd_run(prgmData.m_files[0])));
+
 
 	// End program with summary of run instance.
 	Terminate::inst().summary(prgmData.m_summary);
