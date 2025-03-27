@@ -20,6 +20,7 @@ compiler/*/*Project/version.h
 compiler/*/*Project/Debug
 compiler/*/*Project/.settings
 compiler/*/*Project/.gitignore
+compiler/_shared/bin
 
 ################################################################################
 # -- General Rules --
