@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 #include "Common/Domain/PrgmInfo_t.h"
+#include "Domain/OptLevel_e.h"
+#include "Domain/ProcDepth_e.h"
 
 /*
  * @brief Data passed in-between states/pieces of the entire program.
@@ -21,7 +23,14 @@ typedef struct {
 	PrgmInfo_t m_summary;                        // summary of run instance
 
 	// Parsed Cli Data.
-	std::vector<std::string> m_files;            // input source files
+	std::vector<std::string> m_cFiles;           // input (C) source files
+	std::vector<std::string> m_sFiles;           // input (S) source files
+	ProcDepth_e              m_depth;            // depth of processing to do
+	std::vector<std::string> m_iDefs;            // pre-processor definitions
+	std::vector<std::string> m_iDirs;            // include directories
+	bool                     m_doDbg;            // enables adding debug symbols
+	std::string              m_outFile;          // name of created file
+	OptLevel_e               m_optLvl;           // level of optimization
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

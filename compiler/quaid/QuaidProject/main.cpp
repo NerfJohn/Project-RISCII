@@ -32,7 +32,14 @@ int main(int argc, char* argv[]) {
 		.m_summary = runSummary,                 // (see above)
 
 		// Parsed Cli Data.
-		.m_files = {}                            // no initial files
+		.m_cFiles  = {},                         // no initial input files
+		.m_sFiles  = {},                         // no initial input  files
+		.m_depth   = PROC_TO_BIN,                // by default- create image
+		.m_iDefs   = {},                         // no initial definitions
+		.m_iDirs   = {},                         // no initial directories
+		.m_doDbg   = false,                      // by default- don't debug
+		.m_outFile = "",                         // no initial output name
+		.m_optLvl  = OPT_LVL_NONE                // by default- don't optimize
 	};
 
 	// Parse program's cli command/call.
@@ -40,8 +47,8 @@ int main(int argc, char* argv[]) {
 
 	// TODO
 	int a;
-	prgmData.m_files[0] += " -t";
-	Print::inst().cli(to_string(Cmd_run(prgmData.m_files[0])));
+	prgmData.m_cFiles[0] += " -t";
+	Print::inst().cli(to_string(Cmd_run(prgmData.m_cFiles[0])));
 
 
 	// End program with summary of run instance.
