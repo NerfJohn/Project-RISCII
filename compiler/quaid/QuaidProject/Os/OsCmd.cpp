@@ -1,12 +1,13 @@
 /*
- * OsCmd.cpp: TODO
+ * OsCmd.cpp: Abstraction layer for using the command prompt/cli.
  */
 
 #include <windows.h>
 
 #include "Os/OsCmd.h"
 
-// TODO
+//==============================================================================
+// Runs the given command as a cli prompt. Is blocking.
 RetErr_e OsCmd_run(std::string& cmd, int& res) {
 	// Prep command to be run.
 	LPSTR cliCmd = &(cmd[0]);

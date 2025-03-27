@@ -1,11 +1,15 @@
 /*
- * ProcDepth_e.h: TODO
+ * ProcDepth_e.h: "Depth" of processing to do on input files.
  */
 
 #ifndef DOMAIN_PROCDEPTH_E_H_
 #define DOMAIN_PROCDEPTH_E_H_
 
-// TODO
+/*
+ * @brief Defines different processing "depths"/outcomes possible.
+ *
+ * Effectively determines "output" of program by indicating to skip later steps.
+ */
 typedef enum {
 	// Real "values".
 	PROC_TO_CPP,      // pre-process only
