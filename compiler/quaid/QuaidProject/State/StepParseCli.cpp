@@ -108,6 +108,7 @@ static void StepParseCli_handleLevel(DataModel_t&       model,
 
 	// Set log level.
 	Print::inst().setLogLevel(newLvl);
+	model.m_logLvl = newLvl;
 }
 
 //==============================================================================
@@ -116,9 +117,10 @@ static void StepPareCli_rectifyOutFile(DataModel_t& model) {
 	// Create output filename if none is given.
 	if (model.m_outFile.size() == 0) {
 		// Get name of the first input file.
-		if (model.m_cFiles.size() == 0) {
+		if ((model.m_cFiles.size() == 0) && (model.m_sFiles.size() == 0)) {
 			Terminate::inst().assert("rectify() no input");}
-		string name = model.m_cFiles[0];
+		string name = (model.m_cFiles.size()) ? model.m_cFiles[0] :
+				                                model.m_sFiles[0];
 
 		// Replace file type.
 		StrUtil_rmFtype(name);
@@ -270,7 +272,9 @@ void StepParseCli_execute(DataModel_t&      model,
 	}
 
 	// Ensure at least some input to work with.
-	if ((model.m_cFiles.size() == 0) && (EXIT_PRGM == false)) {
+	if ((model.m_cFiles.size() == 0) &&
+		(model.m_sFiles.size() == 0) &&
+		(EXIT_PRGM == false)) {
 		Print::inst().cli("requires at least one input file");
 		InfoUtil_recordError(model.m_summary, RET_NO_FILE);
 	}
