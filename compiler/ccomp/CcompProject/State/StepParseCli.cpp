@@ -32,7 +32,8 @@ using namespace std;
 						 "                  error   only errors\n"          + \
 						 "              (d) warning errors and warnings\n"  + \
 						 "                  info    process related info\n" + \
-						 "                  debug   all available output"
+						 "                  debug   all available output\n" + \
+						 "    -O1       perform general optimizations"
 #define VERS_INFO string("ccomp.exe ") + APP_VERSION
 
 // Definitions for "string to LogType_e" conversions.
@@ -49,6 +50,7 @@ static int StepParseCli_asFlag(std::string argStr) {
 	AS_FLAG(argStr, "h",  CLI_FLAG_HELP);
 	AS_FLAG(argStr, "v",  CLI_FLAG_VERSION);
 	AS_FLAG(argStr, "ll", CLI_FLAG_LOG_LEVEL);
+	AS_FLAG(argStr, "O1", CLI_FLAG_OPTIMIZE);
 
 	// Otherwise, it's not a flag.
 	return CLI_FLAG_INVALID;
@@ -99,6 +101,9 @@ static void StepParseCli_handleFlag(DataModel_t&  model,
 			break;
 		case CLI_FLAG_LOG_LEVEL:
 			StepParseCli_handleLevel(model, args.m_arg);
+			break;
+		case CLI_FLAG_OPTIMIZE:
+			model.m_doOpt = true;
 			break;
 		default:
 			// Unknown flag? GetOpt/callback error- bug!
@@ -161,10 +166,13 @@ void StepParseCli_execute(DataModel_t&      model,
 	// Analyze/report results (if everything if valid/correct).
 	if (EXIT_PRGM == false) {
 		// (Summarize results of cli parsing.)
-		string numFiles = string("    # files: ") +
+		string numFiles = string("    # files : ") +
 				          to_string(model.m_files.size());
+		string optStr   = string("    optimize: ") + ((model.m_doOpt) ?
+				          "true" : "false");
 		Print::inst().log(LOG_INFO, "=Cli Summary=");
 		Print::inst().log(LOG_INFO, numFiles);
+		Print::inst().log(LOG_INFO, optStr);
 	}
 
 	// Exit program (vs step) as applicable.

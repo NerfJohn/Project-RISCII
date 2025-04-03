@@ -22,6 +22,7 @@ typedef struct {
 
 	// Parsed Cli Data.
 	std::vector<std::string> m_files;            // input source files
+	bool                     m_doOpt;            // perform optimizations
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

@@ -33,7 +33,8 @@ int main(int argc, char* argv[]) {
 		.m_summary = runSummary,                 // (see above)
 
 		// Parsed Cli Data.
-		.m_files = {}                            // no initial files
+		.m_files = {},                           // no initial files
+		.m_doOpt = false                         // default- no optimization
 	};
 
 	// Parse program's cli command/call.

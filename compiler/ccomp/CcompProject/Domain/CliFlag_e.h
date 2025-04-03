@@ -19,6 +19,7 @@ typedef enum {
 	// Group #2: Flags without argument.
 	CLI_FLAG_HELP,                               // request program help menu
 	CLI_FLAG_VERSION,                            // request version info
+	CLI_FLAG_OPTIMIZE,                           // optimize output
 
 	// Special values.
 	CLI_FLAG_INVALID,                            // invalid/unknown flag
