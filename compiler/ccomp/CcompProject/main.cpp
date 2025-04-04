@@ -11,6 +11,7 @@
 // TODO
 #include "Common/Device/File.h"
 #include "Common/Util/StrUtil.h"
+#include "State/SubStepLexFile.h"
 
 using namespace std;
 
@@ -45,9 +46,14 @@ int main(int argc, char* argv[]) {
 		// Read in file.
 		string contents = "";
 		File::inst().open(file, FILE_OP_READ);
-		while(File::inst().peek() != 0xFF) {contents += File::inst().pop();}
+		//while(File::inst().peek() != 0xFF) {contents += File::inst().pop();}
+		queue<LexToken*> tkns;
+		SubStepLexFile_execute(prgmData, tkns);
 		File::inst().close();
 
+		while(tkns.size()) {Print::inst().cli(to_string(tkns.front()->m_type)); tkns.pop();}
+
+		/*
 		// Get new filename.
 		string fname = file;
 		StrUtil_rmFtype(fname);
@@ -57,6 +63,7 @@ int main(int argc, char* argv[]) {
 		File::inst().open(fname, FILE_OP_WRITE);
 		File::inst().write(contents);
 		File::inst().close();
+		*/
 	}
 
 

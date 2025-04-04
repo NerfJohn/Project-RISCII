@@ -17,7 +17,7 @@
 #define LABEL(in,out)      if (_IN(in,'a','z') || _IN(in,'A','Z') ||  \
 	                           _IN(in,'0','9') || _IS(in, '_'))       \
 		                   {return (out); break;}
-#define HEX(in,out)        if (_IN(in,'a','f') || _IN(in,'A','F')) || \
+#define HEX(in,out)        if (_IN(in,'a','f') || _IN(in,'A','F')  || \
 	                           _IN(in,'0','9'))                       \
 		                   {return (out); break;}
 #define WS(in,out)         if (_IS(in,' ')  || _IS(in,'\n')        || \
