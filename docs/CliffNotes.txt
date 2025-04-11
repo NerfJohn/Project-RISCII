@@ -20,9 +20,6 @@ Levels of (Scoped) Design
 General Tasks:
 
 Roadmap of Tasks:
-	- implement quaid
-		(again- consider common origin and keep rough docs)
-		(note that testing will likely need to be done from _shared)
 	- begin implementation of core
 		(this will be heavily iterative)
 		(again common origin consideration- though last major piece anyway)
@@ -42,6 +39,34 @@ Rough SW Manifest (for development environment)
 	- (quartus/dev processor project tools/versions?)
 
 ================================================================================
-"ccomp" thoughts
+"ccomp" thoughts:
+
+Critical Feature-set
+	- char/int (w/ unsigned/volatile, defaults at 8/16 bit signed)
+	- ptr      (recurse init, de-ref, getAddr, ptr arith)
+	- array    (1D init, literal size, str/struct init, access op)
+	- void     (func return, ptr type for variable)
+	- cast     (char/int/void w/ unsigned/volatile and ptrs, lax-ish checks)
+	- lit      (dec/hex int lit, char and string lits, 'struct' lit of char/int)
+	- func     (0+ params, 8/16 only args/ret, requires return even if void)
+	- while    (w/ break and continue)
+	- if/else  (w/ 'else if', no break/continue)
+	- ops      (no mul/div/mod, no &&/||, no special assigns/incs/decs)
+	- other    (parens and single line comments, str/char lits are single line)
 	
-================================================================================
+Extended Feature-set
+	- for      (w/ break/continue)
+	- sizeof   (types and vars, factors for arrays)
+	- QoL ops  (yes &&/||, yes special assigns/incs/decs)
+	- static   (func, local/global vars)
+	- enum     (decl w/ inits)
+	- Qol arrs (recurse init, n-D init w/ n-D struct lit)
+	- struct   (1D init, dot/arrow op, std packing)
+
+Dev Notes
+	esc chars for char lit: \ ' 0 n r t
+	esc chars for str lit:  \ " 0 n r t
+	minus pre-pended to int lit if right next to it
+
+	
+===============================================================================

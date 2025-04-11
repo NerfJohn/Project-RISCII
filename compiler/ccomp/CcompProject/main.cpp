@@ -12,6 +12,7 @@
 #include "Common/Device/File.h"
 #include "Common/Util/StrUtil.h"
 #include "State/SubStepLexFile.h"
+#include "State/SubStepParseTkns.h"
 
 using namespace std;
 
@@ -49,9 +50,8 @@ int main(int argc, char* argv[]) {
 		//while(File::inst().peek() != 0xFF) {contents += File::inst().pop();}
 		queue<LexToken*> tkns;
 		SubStepLexFile_execute(prgmData, tkns);
+		SubStepParseTkns_execute(prgmData, tkns);
 		File::inst().close();
-
-		while(tkns.size()) {Print::inst().cli(to_string(tkns.front()->m_type)); tkns.pop();}
 
 		/*
 		// Get new filename.

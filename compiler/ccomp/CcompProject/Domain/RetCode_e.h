@@ -22,6 +22,8 @@ typedef enum {
 	RET_NO_FILE = 0x05, // no input file(s) given
 	//RET_NO_READ = 0x06, // unable to read input file // TODO
 	RET_BAD_LEX = 0x07, // unknown lex sequence
+	RET_MIS_TKN = 0x08, // mismatched token during parsing
+	RET_UEX_TKN = 0x09, // unexpected token during parsing
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */
