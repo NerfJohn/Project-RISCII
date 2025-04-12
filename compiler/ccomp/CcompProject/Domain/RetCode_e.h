@@ -20,7 +20,7 @@ typedef enum {
 	RET_FNO_ARG = 0x03, // cli flag without required argument
 	RET_BAD_ARG = 0x04, // bad cli flag argument
 	RET_NO_FILE = 0x05, // no input file(s) given
-	//RET_NO_READ = 0x06, // unable to read input file // TODO
+	RET_NO_READ = 0x06, // unable to read input file
 	RET_BAD_LEX = 0x07, // unknown lex sequence
 	RET_MIS_TKN = 0x08, // mismatched token during parsing
 	RET_UEX_TKN = 0x09, // unexpected token during parsing

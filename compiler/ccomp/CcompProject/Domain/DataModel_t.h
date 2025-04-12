@@ -9,6 +9,9 @@
 #include <vector>
 #include "Common/Domain/PrgmInfo_t.h"
 
+// #include "Ds/IAstNode.h" without the recursive dependency.
+class IAstNode;
+
 /*
  * @brief Data passed in-between states/pieces of the entire program.
  *
@@ -23,6 +26,9 @@ typedef struct {
 	// Parsed Cli Data.
 	std::vector<std::string> m_files;            // input source files
 	bool                     m_doOpt;            // perform optimizations
+
+	// Processed Data.
+	IAstNode*                m_ast;              // AST of parsed file
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

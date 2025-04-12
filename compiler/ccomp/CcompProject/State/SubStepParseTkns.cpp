@@ -11,6 +11,9 @@
 #include "Domain/LexState_e.h"
 #include "Domain/ParseState_e.h"
 #include "Domain/RetCode_e.h"
+#include "Ds/FileNode.h"
+#include "Ds/LitNode.h"
+#include "Ds/VDeclNode.h"
 
 #include "State/SubStepParseTkns.h"
 
@@ -36,7 +39,7 @@ LIST(SEQ_LIT_NEXT)   = {PARSE_LIT_NEXT};
 LIST(SEQ_LIT_LINE)   = {PARSE_LIT_NEXT, PARSE_LIT_ITEM};
 LIST(SEQ_LIT_ACT)    = {PARSE_ACT_LIT};
 
-LIST(SEQ_PRED_ARR)   = {PARSE_PRED_VDEC, LEX_TKN_RSQUARE, PARSE_LIT_STRT};
+LIST(SEQ_PRED_ARR)   = {PARSE_PRED_VDEC, LEX_TKN_RSQUARE, LEX_TKN_INT_LIT};
 LIST(SEQ_PRED_VDEC)  = {PARSE_ACT_VDEC};
 LIST(SEQ_PRED_VNIT)  = {PARSE_ACT_VDEC, LEX_TKN_SEMICOLON, PARSE_LIT_STRT};
 
@@ -132,12 +135,18 @@ static bool SubStepParseTkns_isAct(int state) {
 
 //==============================================================================
 // Helper function to create the specific node found by parser.
-static IAstNode* SubStepPareTkns_newNode(Parser& parser) {
+static IAstNode* SubStepPareTkns_newNode(Parser& parser, DataModel_t& model) {
 	// Create new node.
 	switch (parser.m_actCode) {
-		case PARSE_ACT_FILE: Print::inst().cli("FileNode"); return nullptr; break;
-		case PARSE_ACT_LIT:  Print::inst().cli("LitNode"); return nullptr; break;
-		case PARSE_ACT_VDEC: Print::inst().cli("VdecNode"); return nullptr; break;
+		case PARSE_ACT_FILE:
+			return new FileNode(parser.m_actStack);
+			break;
+		case PARSE_ACT_LIT:
+			return new LitNode(parser.m_actStack);
+			break;
+		case PARSE_ACT_VDEC:
+			return new VDeclNode(parser.m_actStack, model); // address warns
+			break;
 		default:
 			// No node? fall into assert below.
 			break;
@@ -176,7 +185,7 @@ IAstNode* SubStepParseTkns_execute(DataModel_t&                 model,
 		// Create node.
 		if (SubStepParseTkns_isAct(parser.m_actCode)) {
 			// Convert stack elements into new node.
-			IAstNode* newNode = SubStepPareTkns_newNode(parser);
+			IAstNode* newNode = SubStepPareTkns_newNode(parser, model);
 			parser.m_actStack.push(newNode);
 
 			// Bookkeeping.

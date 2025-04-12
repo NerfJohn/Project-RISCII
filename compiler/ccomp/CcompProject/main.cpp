@@ -6,13 +6,9 @@
 #include "Common/Device/Terminate.h"
 #include "Domain/DataModel_t.h"
 #include "Domain/RetCode_e.h"
+#include "Ds/IAstNode.h"
 #include "State/StepParseCli.h"
-
-// TODO
-#include "Common/Device/File.h"
-#include "Common/Util/StrUtil.h"
-#include "State/SubStepLexFile.h"
-#include "State/SubStepParseTkns.h"
+#include "State/StepReadFile.h"
 
 using namespace std;
 
@@ -36,34 +32,24 @@ int main(int argc, char* argv[]) {
 
 		// Parsed Cli Data.
 		.m_files = {},                           // no initial files
-		.m_doOpt = false                         // default- no optimization
+		.m_doOpt = false,                        // default- no optimization
+
+		// Processed Data.
+		.m_ast   = nullptr                       // AST of parsed file
 	};
 
 	// Parse program's cli command/call.
 	StepParseCli_execute(prgmData, argc, argv);
 
-	// TODO- "translate" files.
+	// Translate each file.
+	Print::inst().log(LOG_INFO, "=Core Process=");
 	for (string file : prgmData.m_files) {
-		// Read in file.
-		string contents = "";
-		File::inst().open(file, FILE_OP_READ);
-		//while(File::inst().peek() != 0xFF) {contents += File::inst().pop();}
-		queue<LexToken*> tkns;
-		SubStepLexFile_execute(prgmData, tkns);
-		SubStepParseTkns_execute(prgmData, tkns);
-		File::inst().close();
+		// Translate file.
+		Print::inst().log(LOG_INFO, string("Translating '") + file + "'...");
+		StepReadFiles_execute(prgmData, file);
 
-		/*
-		// Get new filename.
-		string fname = file;
-		StrUtil_rmFtype(fname);
-		fname += ".s";
-
-		// Populate new file.
-		File::inst().open(fname, FILE_OP_WRITE);
-		File::inst().write(contents);
-		File::inst().close();
-		*/
+		// Clean-up model (for next file).
+		if (prgmData.m_ast != nullptr) {delete prgmData.m_ast;}
 	}
 
 

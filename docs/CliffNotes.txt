@@ -67,6 +67,7 @@ Dev Notes
 	esc chars for char lit: \ ' 0 n r t
 	esc chars for str lit:  \ " 0 n r t
 	minus pre-pended to int lit if right next to it
+	array decl must be 1D and given an int literal size
 
 	
 ===============================================================================
