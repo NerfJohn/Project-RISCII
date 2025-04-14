@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
 		.m_doOpt = false,                        // default- no optimization
 
 		// Processed Data.
-		.m_ast   = nullptr                       // AST of parsed file
+		.m_ast   = nullptr,                      // default- no AST
+		.m_syms  = {}                            // default- no symbols
 	};
 
 	// Parse program's cli command/call.
@@ -47,6 +48,10 @@ int main(int argc, char* argv[]) {
 		// Translate file.
 		Print::inst().log(LOG_INFO, string("Translating '") + file + "'...");
 		StepReadFiles_execute(prgmData, file);
+
+		// TODO- replace w/ step.
+		IF_NULL(prgmData.m_ast, "analyze() null tree");
+		prgmData.m_ast->analyze(prgmData);
 
 		// Clean-up model (for next file).
 		if (prgmData.m_ast != nullptr) {delete prgmData.m_ast;}

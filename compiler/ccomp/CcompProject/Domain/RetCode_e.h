@@ -24,6 +24,7 @@ typedef enum {
 	RET_BAD_LEX = 0x07, // unknown lex sequence
 	RET_MIS_TKN = 0x08, // mismatched token during parsing
 	RET_UEX_TKN = 0x09, // unexpected token during parsing
+	RET_V_REDEF = 0x0A  // redefined var decl
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

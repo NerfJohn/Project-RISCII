@@ -29,6 +29,16 @@ public:
 	FileNode(std::stack<IBuildItem*>& actStack);
 
 	/*
+	 * @brief Analyze AST, creating and linking symbols.
+	 *
+	 * Intended as "primer" for conduct primary checks on AST. Manages creation,
+	 * scoping, and linking of all symbols.
+	 *
+	 * @param model data model of the entire program
+	 */
+	void analyze(DataModel_t& model);
+
+	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */
 	~FileNode(void);

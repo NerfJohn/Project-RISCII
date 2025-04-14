@@ -42,6 +42,18 @@ FileNode::FileNode(std::stack<IBuildItem*>& actStack) {
 		// Consume any parsed tokens.
 		actStack.pop();
 	}
+
+	// Ensure decls are present.
+	for (IAstNode* decl : m_decls) {IF_NULL(decl, "FileNode() null decl");}
+}
+
+//==============================================================================
+// Analyze AST, creating and linking symbols.
+void FileNode::analyze(DataModel_t& model) {
+	// Pass call to children.
+	model.m_syms.scopePush();
+	for (IAstNode* decl : m_decls) {decl->analyze(model);}
+	model.m_syms.scopePop();
 }
 
 //==============================================================================

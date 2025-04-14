@@ -6,6 +6,9 @@
 #include "Common/Device/Terminate.h"
 #include "Common/Util/InfoUtil.h"
 #include "Domain/ParseState_e.h"
+#include "Domain/RetCode_e.h"
+#include "Domain/Symbol_t.h"
+#include "Util/DsUtil.h"
 
 #include "Ds/VDeclNode.h"
 
@@ -121,6 +124,30 @@ VDeclNode::VDeclNode(std::stack<IBuildItem*>& actStack, DataModel_t& model) {
 
 	// Ensure var name is saved.
 	IF_NULL(m_id, "VDeclNode() no var name");
+}
+
+//==============================================================================
+// Analyze AST, creating and linking symbols.
+void VDeclNode::analyze(DataModel_t& model) {
+	// Create new symbol.
+	Symbol_t* newSym = new Symbol_t();
+	IF_NULL(newSym, "varSymbol() failed");
+	newSym->m_type = m_cType;
+
+	// Add to symbol table.
+	if (model.m_syms.addLocal(m_id->m_rawData, newSym) == RET_ERR_ERROR) {
+		// Already taken within scope.
+		string errStr = string("Re-def '") + m_id->m_rawData + "'";
+		Print::inst().log(LOG_ERROR, m_id->m_file, m_id->m_line, errStr);
+		InfoUtil_recordError(model.m_summary, RET_V_REDEF);
+	}
+	else {
+		string dbgStr = string("Decl '") + m_id->m_rawData + "'";
+		Print::inst().log(LOG_DEBUG, m_id->m_file, m_id->m_line, dbgStr);
+	}
+
+	// In practice- pass to children (though likely unneeded).
+	if (m_initVal != nullptr) {m_initVal->analyze(model);}
 }
 
 //==============================================================================

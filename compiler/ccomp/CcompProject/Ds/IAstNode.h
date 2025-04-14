@@ -17,6 +17,16 @@
 class IAstNode: public IBuildItem {
 public:
 	/*
+	 * @brief Analyze AST, creating and linking symbols.
+	 *
+	 * Intended as "primer" for conduct primary checks on AST. Manages creation,
+	 * scoping, and linking of all symbols.
+	 *
+	 * @param model data model of the entire program
+	 */
+	virtual void analyze(DataModel_t& model) {/* no actions */}
+
+	/*
 	 * @brief Std destructor.
 	 */
 	virtual ~IAstNode(void) {/* no actions */}

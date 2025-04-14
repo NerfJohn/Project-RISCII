@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include "Common/Device/SymTable.h"
 #include "Common/Domain/PrgmInfo_t.h"
 
 // #include "Ds/IAstNode.h" without the recursive dependency.
@@ -29,6 +30,8 @@ typedef struct {
 
 	// Processed Data.
 	IAstNode*                m_ast;              // AST of parsed file
+	SymTable                 m_syms;             // Symbols of parsed file
+
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

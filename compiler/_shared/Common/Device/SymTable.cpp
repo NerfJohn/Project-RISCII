@@ -35,7 +35,7 @@ RetErr_e SymTable::addLocal(std::string const& name, void* symbol) {
 	IF_NULL(symbol, "addLocal() nullptr");
 
 	// Get local table's index.
-	size_t idx = m_table.size() - 1;
+	int idx = m_table.size() - 1;
 	if (idx < 0) {Terminate::inst().assert("addLocal() no scope");}
 	
 	// Add symbol if not already taken.
