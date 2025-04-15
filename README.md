@@ -1,20 +1,23 @@
 # Project RISCII
+*"Personally designed dev kit"*
+
 ---
 
-Project RISCII (pronounced "risky"- no affiliation with RISC-II) is a personal project focused on designing an embedded system. The current scope includes the following "levels":
+Project RISCII (pronounced "risky"- not RISC-II) is a personal project focused on designing an embedded system from scratch. The primary 'levels' include:
+
 - low-level drivers and libraries
 - compiler
-- microprocessor
+- (softcore) microprocessor
 - circuit board
 
-*Note: This project is 1) ultimately for personal enjoyment and 2) in no way meant to be a commercial/professional product. Use/reference at your own risk.*
+This project is ultimately for personal enjoyment. ***However***, if there is educational or commerical value, it is free for use (albeit at the user's risk).
 
-## Status: Phase II Release- Microprocessor with Sample Assembler/Linker
+## Current Trajectory
 
-The softcore microprocessor deisgn has been completed. An assembler/linker program (albeit with rough documentation) has also been developed and used in testing of the microprocessor.
+The main pushes at the time of this writing are:
 
-The microprocessor can be found under [/processor/DevProject](./processor/DevProject). The sample assembler/linker can be found under [/compiler/AsmLdProject](./compiler/AsmLdProject).
+1. Finishing the basic C(esque) compiler
+2. Creating a circuit board design
+3. Refactoring compiler for simplicity
 
-## Next Steps: Phase II 1/2- Compiler Backend + Shape-up
-
-The next stage of the compiler, the back-end, is the next step. Also, better documentation of the assembler/linker and overall plan for the compiler (ie features/division of tasks/etc) will be worked on.
+The circuit board is slated for summer 2025 (with the compiler/libraries finished before/after then). Compiler refactoring is being worked on to make compiling more approachable from a readability/educational perspective.

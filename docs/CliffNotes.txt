@@ -1,73 +1,12 @@
 ================================================================================
 Project RISCII: Cliff Notes
-
 "General project notes- slated for formal documenting or temporary"
 ================================================================================
-Project (RISCII) Overview:
-
-Priorities of "Home Brewed" Dev Kit
-	1) Fun        - it's a personal project, not a job/"MS started in a garage"
-	2) Capability - simplicity is preferred, but quality goes a long way
-	3) Learning   - good opportunity to learn (at least vaguely) tools/systems
-
-Levels of (Scoped) Design
-	1) Drivers/Libraries - common support along with basic bootloading + RTOS
-	2) Compiler          - subset c-compiler with preprocessing + assembly
-	3) Microprocessor    - 16-bit softcore processor with peripherals
-	4) Circuit Board     - pcb with required and example auxillary circuits
-
-================================================================================
-General Tasks:
-
-Roadmap of Tasks:
-	- begin implementation of core
-		(this will be heavily iterative)
-		(again common origin consideration- though last major piece anyway)
-		(emphasis on docs- may be awhile before 'finished')
-
-Repository Sanitation TODO
-	- redo "processor" structure (dev vs prod project/tools- keep dev project)
-	- cleanup "processor" gitignores/README
-	- software manifest for development environment
-
-Rough SW Manifest (for development environment)
-	- git/git bash (v??? on both?)
-	- python (v???)
-	- cmake (v???)
-	- eclipse (as 'ide indexer', v???)
-	- MinGW GCC/G++ (v??? on both?)
-	- (quartus/dev processor project tools/versions?)
-
-================================================================================
-"ccomp" thoughts:
-
-Critical Feature-set
-	- char/int (w/ unsigned/volatile, defaults at 8/16 bit signed)
-	- ptr      (recurse init, de-ref, getAddr, ptr arith)
-	- array    (1D init, literal size, str/struct init, access op)
-	- void     (func return, ptr type for variable)
-	- cast     (char/int/void w/ unsigned/volatile and ptrs, lax-ish checks)
-	- lit      (dec/hex int lit, char and string lits, 'struct' lit of char/int)
-	- func     (0+ params, 8/16 only args/ret, requires return even if void)
-	- while    (w/ break and continue)
-	- if/else  (w/ 'else if', no break/continue)
-	- ops      (no mul/div/mod, no &&/||, no special assigns/incs/decs)
-	- other    (parens and single line comments, str/char lits are single line)
+Rules:
+	> Limit to 2-3 "sections"- too many notes otherwise
+	> Maintain "backlog" (below) to know what to write next
+	> Keep notes short (within 80 chars) and readable
 	
-Extended Feature-set
-	- for      (w/ break/continue)
-	- sizeof   (types and vars, factors for arrays)
-	- QoL ops  (yes &&/||, yes special assigns/incs/decs)
-	- static   (func, local/global vars)
-	- enum     (decl w/ inits)
-	- Qol arrs (recurse init, n-D init w/ n-D struct lit)
-	- struct   (1D init, dot/arrow op, std packing)
-
-Dev Notes
-	esc chars for char lit: \ ' 0 n r t
-	esc chars for str lit:  \ " 0 n r t
-	minus pre-pended to int lit if right next to it
-	array decl must be 1D and given an int literal size
-
-	
+Backlog:
+	> (REMINDER to always update 1) dependencies 2) ref docs 3) READMEs)
 ===============================================================================
