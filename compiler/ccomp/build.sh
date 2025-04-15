@@ -14,4 +14,4 @@ cd ${SCRIPT_DIR}
 (echo '#define APP_VERSION "'`git log -1 --format=%cd --date=format:v%Y%m%d`'"') > ./${PROJ_NAME}/version.h
 
 # Serial of commands to get executable in home directory.
-cmake -S . -B build -G 'MSYS Makefiles' && cmake --build build && mv ./build/${EXEC_NAME}.exe .
+cmake -S . -B build -G 'MSYS Makefiles' -DCMAKE_BUILD_TYPE=Release && cmake --build build && mv ./build/${EXEC_NAME}.exe .

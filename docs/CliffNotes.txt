@@ -9,4 +9,49 @@ Rules:
 	
 Backlog:
 	> (REMINDER to always update 1) dependencies 2) ref docs 3) READMEs)
+	> Create template document describing writing of docs/READMEs
+===============================================================================
+Sample Doc Template:
+
+Key Syntax:
+	> Headers 1-4
+	> italics/bold/both
+	> code line/block
+	> internal links
+	> tables
+	> list by bullet/number
+	> strikethrough
+
+Key Elements:
+	> Doc head (name/number/one line quote/ line)
+	> Doc front (purpose/contents/common terms)
+	> Formatting headers (spacing/lines)
+	> Formatting info (length/follow by code/list)
+	> Widths (table/list)
+	> extras (internal links/side notes)
+	> Doc vs README rules
+
+===============================================================================
+Ccomp General Idea:
+
+Further Wrapper of asmld:
+	> Abstracts overtly fine details of assembly language
+	> Implements ABI and "stack" operations for user
+	> In general, a front/back-end together
+	> In general, C-esque- though not strictly C itself
+	
+Details and Dependencies:
+	> Same "Dev Stack" as rest of compiler development
+		>> Git/Git Bash for version control and running build/clean scripts
+		>> Eclipse IDE for convenience of developing
+		>> MinGW GCC/G++ for compiling/building image
+		>> CMake for building (along with G++)
+	> Compiling towards RISCII ISA/Assembly (PR3000)
+	> Will maintain own "common" folder until ready to copy to _shared
+
+Internal Backlog:
+	> (Eventually move Common to _shared + restore include/indexer paths to it)
+	> (Eventually write manual for syntax/use, learn/arch, and dev/tools)
+	> (Eventually confirm scipts/code/etc are acceptable for fun/learning)
+
 ===============================================================================
