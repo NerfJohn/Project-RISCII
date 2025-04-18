@@ -9,35 +9,43 @@
 using namespace std;
 
 // TODO
-class Msg {
-public:
-	//Msg(Msg&& s) {m_str = s.m_str; cout << "COPY" << endl;}
-	Msg(string foo) {m_str = foo; cout << "STR" << endl;}
-	Msg() {cout << "CTOR" << endl;}
-	Msg& operator<<(int s) {m_str += to_string(s); return *this;}
-	Msg& operator<<(string& s) {m_str += s; return *this;}
-	Msg& operator<<(const char* s) {m_str += s; return *this;}
-	operator string&() {cout << "TOSTR" << endl; return m_str;}
-	//string& toS() {return m_str;}
-	~Msg() {m_str = "ball"; cout << "DEL" << endl;}
-private:
-	string m_str;
-};
+#include "Common/Device/Print.h"
+#include "Common/Util/Msg.h"
+#include "Common/Util/Ptr.h"
 
 
 //==============================================================================
 // Start/main process of the program.
 int main(int argc, char* argv[]) {
 
-	int value = 42;
-	string bar = "yep";
-	string foo = Msg("str") << value;
+	/*
+	struct foo {
+		int f = 3;
+		string b = "bar";
+		bool o = false;
 
-	string qq = Msg() << "my own = '" << 32 << "'";
+		~foo(void) {Print_cli("down");}
+	};
 
-	cout << foo << endl;
-	cout << bar << endl;
-	cout << qq << endl;
+	Ptr<struct foo> ptr(new struct foo());
+	Ptr<struct foo> nwe(nullptr);
 
+	if (ptr.isNull() == false) {Print_cli("FALSE");}
+	else                       {Print_cli("TRUE");}
+
+	string str = Msg() + ptr.refCnt() + " and " + ptr->f + " with " + (*ptr).b + " lastly ";
+	Print_cli(str);
+
+	//string m = Msg() + (*nwe).b;
+
+	ptr = nwe;
+
+	Print_cli((string)(Msg() + ptr.refCnt()));
+
+	ptr.~Ptr();
+	*/
+	Ptr<int> ope(nullptr);
+
+	Print_cli("END");
 	return 0;
 }

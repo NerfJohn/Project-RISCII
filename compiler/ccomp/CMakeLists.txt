@@ -11,6 +11,7 @@ file(GLOB build_sources
 	${PROJ_NAME}/main.cpp
 	${PROJ_NAME}/Common/Device/*.cpp
 	${PROJ_NAME}/Common/Os/*.cpp
+	${PROJ_NAME}/Common/Util/*.cpp
 )
 file(GLOB build_includes
 	${PROJ_NAME}
