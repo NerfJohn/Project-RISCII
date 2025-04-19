@@ -2,50 +2,34 @@
  * main.cpp: Head of the program/application.
  */
 
-#include <iostream>
-#include <cstdint>
-#include <string>
+#include "Common/Device/Print.h"
+#include "Common/Device/Terminate.h"
+#include "Domain/DataModel_t.h"
+#include "State/StepParseCli.h"
+#include "Util/AppUtil.h"
 
 using namespace std;
-
-// TODO
-#include "Common/Device/Print.h"
-#include "Common/Util/Msg.h"
-#include "Common/Util/Ptr.h"
-
 
 //==============================================================================
 // Start/main process of the program.
 int main(int argc, char* argv[]) {
+	// Init devices.
+	Terminate_setBugCode(RET_ASSERT);
+	Print_setLogLevel(LOG_WARNING);
+	Print_setLogName("ccomp.exe");    // Set to name of program
 
-	/*
-	struct foo {
-		int f = 3;
-		string b = "bar";
-		bool o = false;
-
-		~foo(void) {Print_cli("down");}
+	// Init program's data.
+	DataModel_t model = {
+		// General Summary/Progress.
+		.m_numErrs  = 0,
+		.m_numWarns = 0,
+		.m_exitCode = RET_SUCCESS                // start optimistic
 	};
 
-	Ptr<struct foo> ptr(new struct foo());
-	Ptr<struct foo> nwe(nullptr);
+	// Collect inputs.
+	StepParseCli_execute(model, argc, argv);
 
-	if (ptr.isNull() == false) {Print_cli("FALSE");}
-	else                       {Print_cli("TRUE");}
-
-	string str = Msg() + ptr.refCnt() + " and " + ptr->f + " with " + (*ptr).b + " lastly ";
-	Print_cli(str);
-
-	//string m = Msg() + (*nwe).b;
-
-	ptr = nwe;
-
-	Print_cli((string)(Msg() + ptr.refCnt()));
-
-	ptr.~Ptr();
-	*/
-	Ptr<int> ope(nullptr);
-
-	Print_cli("END");
-	return 0;
+	// Exit for successful run of program.
+	AppUtil_exitSummary(model);
+	return RET_SUCCESS; // Not reached- appeasing g++
 }
