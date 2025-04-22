@@ -67,6 +67,6 @@ void File_write(std::string const& str);  // Option #2: string
 /*
  * @brief Closes file (if open). Has no effect on closed file.
  */
-void close(void);
+void File_close(void);
 
 #endif /* COMMON_DEVICE_FILE_H_ */

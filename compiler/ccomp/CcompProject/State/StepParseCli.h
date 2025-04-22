@@ -12,7 +12,7 @@
  *
  * State parses the raw command line input, recording files and flags found in
  * the data model. Also performs error checking and response handling of certain
- * flags (e.g. -h flag). Terminates program upon found errors.
+ * flags (e.g. -h flag).
  *
  * @param model data model of the entire program
  * @param argc  number of command line arguments

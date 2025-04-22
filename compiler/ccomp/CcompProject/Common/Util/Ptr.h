@@ -27,7 +27,6 @@ public:
 	 * nullptr.
 	 *
 	 * @param ptr pointer to track/safeguard
-	 * @return    reference to new Ptr<> instance
 	 */
 	Ptr(T* const ptr) {
 		// Init.
@@ -45,6 +44,21 @@ public:
 	/*
 	 * @brief Copy constructor- ties previous allocation to Ptr.
 	 *
+	 * Defined specifically for STL functionality (eg queue.push()). Works
+	 * similar to copy assignment operator.
+	 *
+	 * @param ptr Ptr<> instance to copy
+	 */
+	Ptr(Ptr const& ptr) {
+		// Copy.
+		m_ptr    = ptr.m_ptr;
+		m_refCnt = ptr.m_refCnt;
+		if (m_ptr != nullptr) {*m_refCnt += 1;}
+	}
+
+	/*
+	 * @brief Copy assignment- ties previous allocation to Ptr.
+	 *
 	 * Only accepts other Ptr<> instances to ensure memory safety. Effectively
 	 * destructs/overwrites previous Ptr<> instance. Increments reference count
 	 * of input Ptr<>.
@@ -56,13 +70,8 @@ public:
 		// Clean-up.
 		this->clean();
 
-		// Copy.
-		m_ptr    = ptr.m_ptr;
-		m_refCnt = ptr.m_refCnt;
-		if (m_ptr != nullptr) {*m_refCnt += 1;}
-
-		// Return.
-		return *this;
+		// Reuse code.
+		return Ptr<T>(ptr);
 	}
 
 	/*

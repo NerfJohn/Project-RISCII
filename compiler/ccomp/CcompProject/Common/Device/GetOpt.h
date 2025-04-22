@@ -19,7 +19,7 @@
 class GetOpt {
 public:
 	// Parsed data- shared with user.
-	CliType_e   m_type;     // resulting (error) type
+	CliType_e   m_type;     // resulting (error?) type
 	int         m_flagCode; // user specific result
 	std::string m_value;    // raw value of token
 	std::string m_arg;      // flag argument (empty if not applicable)

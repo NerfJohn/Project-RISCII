@@ -6,8 +6,11 @@
 #define DOMAIN_DATAMODEL_T_H_
 
 #include <cstdint>
+#include <queue>
 #include <string>
 #include <vector>
+#include "Common/Ds/LexToken.h"
+#include "Common/Util/Ptr.h"
 #include "Domain/RetCode_e.h"
 
 /*
@@ -26,6 +29,10 @@ typedef struct {
 	// Parsed Cli Results.
 	std::vector<std::string> m_files;            // input files
 	bool                     m_doOpt;            // optimize option
+
+	// AST Processing Artifacts.
+	std::queue<Ptr<LexToken>> m_tkns;            // lex tokens
+
 } DataModel_t;
 
 #endif /* DOMAIN_DATAMODEL_T_H_ */

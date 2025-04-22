@@ -38,7 +38,7 @@ using namespace std;
 
 //==============================================================================
 // User-specific functions GetOpt relies on for parsing.
-int asFlag(std::string s) {
+int asFlag(std::string str) {
 	// Attempt to match to a flag.
 	AS_FLAG("h",  CLI_FLAG_HELP);
 	AS_FLAG("v",  CLI_FLAG_VERSION);
@@ -114,7 +114,7 @@ void StepParseCli_execute(DataModel_t& model, int argc, char* argv[]) {
 				StepParseCli_handleFlag(model, args, doExit);
 				break;
 			case CLI_TYPE_UNKNOWN:
-				Print_cli(string("Unknown '") + args.m_value + "'");
+				Print_cli(string("unknown '") + args.m_value + "'");
 				AppUtil_error(model, RET_NOT_CLI);
 				break;
 			case CLI_TYPE_NO_ARG:
@@ -126,7 +126,7 @@ void StepParseCli_execute(DataModel_t& model, int argc, char* argv[]) {
 				AppUtil_exitBug("getOpt() bad type");
 		}
 
-		// Break out for errors or other exit scenario.
+		// Break out for errors/"exit on handle" flags.
 		if (EXIT_PRGM) {break;}
 	}
 
@@ -143,7 +143,4 @@ void StepParseCli_execute(DataModel_t& model, int argc, char* argv[]) {
 		Print_log(LOG_INFO, Msg() + "    # files : " + model.m_files.size());
 		Print_log(LOG_INFO, Msg() + "    optimize: " + model.m_doOpt);
 	}
-
-	// Exit program (vs step) as applicable.
-	if (EXIT_PRGM) {Terminate_silent(model.m_exitCode);}
 }

@@ -16,7 +16,7 @@
  */
 typedef enum {
 	// Group #1: Flags without argument.
-	CLI_FLAG_HELP = GETOPT_BAD_FLAG + 1,         // request program help menu
+	CLI_FLAG_HELP,                               // request program help menu
 	CLI_FLAG_VERSION,                            // request version info
 	CLI_FLAG_O1,                                 // optimize program
 

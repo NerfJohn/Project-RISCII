@@ -36,14 +36,14 @@
 //=== "External Values" ========================================================
 
 // User-specific functions GetOpt relies on for parsing.
-int asFlag(std::string s);
+int asFlag(std::string str);
 bool needArg(int flgCode);
 
 // Definitions used by GetOpt for user specific values.
-#define GETOPT_BAD_FLAG 0
+#define GETOPT_BAD_FLAG -1
 
 // Macros specialized for "asFlag" function.
-#define AS_FLAG(flg, type) if (s.compare(std::string("") + FLAG_PREFIX + \
+#define AS_FLAG(flg, type) if (str.compare(std::string("") + FLAG_PREFIX + \
 		                   (flg)) == 0) {return (type);}
 
 #endif /* COMMON_DEVICE_GETOPTDEFS_H_ */
