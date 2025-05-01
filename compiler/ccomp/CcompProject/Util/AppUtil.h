@@ -7,6 +7,9 @@
 
 #include "Domain/DataModel_t.h"
 
+// Common definition to check general progress.
+#define APP_OK (model.m_numErrs == 0)
+
 /*
  * @brief Updates data model for occurrence of an error.
  *

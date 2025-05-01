@@ -21,7 +21,9 @@ typedef enum {
 	RET_BAD_ARG = 0x04, // bad cli flag argument
 	RET_NO_FILE = 0x05, // no input file(s) given
 	RET_NO_READ = 0x06, // unable to read input file
-	RET_BAD_LEX = 0x07  // bad lex path/matching
+	RET_BAD_LEX = 0x07, // bad lex path/matching
+	RET_MIS_TKN = 0x08, // mismatch token (parsing)
+	RET_UEX_TKN = 0x09  // unexpected token (parsing)
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

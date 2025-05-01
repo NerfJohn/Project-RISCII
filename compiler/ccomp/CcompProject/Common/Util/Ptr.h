@@ -70,8 +70,13 @@ public:
 		// Clean-up.
 		this->clean();
 
-		// Reuse code.
-		return Ptr<T>(ptr);
+		// Copy.
+		m_ptr    = ptr.m_ptr;
+		m_refCnt = ptr.m_refCnt;
+		if (m_ptr != nullptr) {*m_refCnt += 1;}
+
+		// Return.
+		return *this;
 	}
 
 	/*
@@ -105,6 +110,13 @@ public:
 		// Return.
 		return *m_ptr;
 	}
+
+	/*
+	 * @brief Explicit cast of represented ptr. Intended for base/derived casts.
+	 *
+	 * @return reference to same ptr with different underlying ptr
+	 */
+	template<typename K> Ptr<K>& toType(void) {return (Ptr<K>&)(*this);}
 
 	/*
 	 * @brief Getter function to check if stored pointer is null.

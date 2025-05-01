@@ -19,6 +19,7 @@ typedef enum {
 	LEX_TKN_CMMNT,                               // Single line user comment
 	LEX_TKN_ID,                                  // variable identifier
 	LEX_TKN_INT,
+	LEX_TKN_CHAR,
 	LEX_TKN_STAR,
 	LEX_TKN_LPAREN,
 	LEX_TKN_RPAREN,

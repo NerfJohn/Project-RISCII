@@ -4,7 +4,6 @@
 
 #include "Common/Device/Lexer.h"
 #include "Common/Device/Print.h"
-#include "Common/Util/LexerDefs.h"
 #include "Common/Util/Msg.h"
 #include "Domain/LexState_e.h"
 #include "Domain/RetCode_e.h"
@@ -51,7 +50,8 @@ int nextState(int state, std::string const& buffer, uint8_t chr) {
 	// Identify specific keywords/operators.
 	if (isKword == true) {
 		// First check against keywords.
-		ISWORD("int", LEX_TKN_INT);
+		ISWORD("int",  LEX_TKN_INT);
+		ISWORD("char", LEX_TKN_CHAR);
 
 		// No matches? Must be a variable then.
 		return LEX_TKN_ID;

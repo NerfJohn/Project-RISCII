@@ -21,7 +21,7 @@ Lexer::Lexer(std::string const& fname) {
 	m_fileOpened = (File_open(fname, FILE_OP_READ) == RET_ERR_NONE);
 	m_curLine    = 1; // naturally begin with first line
 
-	// Haven't lexed yet- nothign to share.
+	// Haven't lexed yet- nothing to share.
 	m_tknCode = LEXER_ERROR;
 	m_value   = "";
 	m_line    = 0;

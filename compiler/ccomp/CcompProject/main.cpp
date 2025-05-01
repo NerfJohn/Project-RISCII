@@ -8,14 +8,10 @@
 #include "Domain/DataModel_t.h"
 #include "State/StepLexFile.h"
 #include "State/StepParseCli.h"
+#include "State/StepParseFile.h"
 #include "Util/AppUtil.h"
 
 using namespace std;
-
-//==============================================================================
-
-// Macro to quickly detect errors (ie for quicker exit).
-#define IS_OK (model.m_numErrs == 0)
 
 //==============================================================================
 // Start/main process of the program.
@@ -42,7 +38,7 @@ int main(int argc, char* argv[]) {
 
 	// Collect inputs.
 	StepParseCli_execute(model, argc, argv);
-	bool cliErr = (IS_OK == false);
+	bool cliErr = (APP_OK == false);
 
 	// Compile each file.
 	Print_log(LOG_INFO, "=Process=");
@@ -52,10 +48,11 @@ int main(int argc, char* argv[]) {
 
 		// Compile.
 		Print_log(LOG_INFO, Msg() + "Compiling '" + file + "'...");
-		if (IS_OK){StepLexFile_execute(model, file);}
+		if (APP_OK){StepLexFile_execute(model, file);}
+		if (APP_OK){StepParseFile_execute(model);}
 
 		// Breakout for errors.
-		if (IS_OK == false) {break;}
+		if (APP_OK == false) {break;}
 	}
 
 	// Exit with summary (nix cli- no log level resolution).
