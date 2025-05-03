@@ -38,26 +38,27 @@ int main(int argc, char* argv[]) {
 	};
 
 	// Collect inputs.
-	StepParseCli_execute(model, argc, argv);
-	bool cliErr = (APP_OK == false);
+	bool cliExit = StepParseCli_execute(model, argc, argv);
 
 	// Compile each file.
-	Print_log(LOG_INFO, "=Process=");
-	for (string file : model.m_files) {
-		// Prep/cleanup.
-		model.m_tkns = {};
+	if (false == cliExit) {
+		Print_log(LOG_INFO, "=Process=");
+		for (string file : model.m_files) {
+			// Prep/cleanup.
+			model.m_tkns = {};
 
-		// Compile.
-		Print_log(LOG_INFO, Msg() + "Compiling '" + file + "'...");
-		if (APP_OK){StepLexFile_execute(model, file);}
-		if (APP_OK){StepParseFile_execute(model);}
+			// Compile.
+			Print_log(LOG_INFO, Msg() + "Compiling '" + file + "'...");
+			if (APP_OK){StepLexFile_execute(model, file);}
+			if (APP_OK){StepParseFile_execute(model);}
 
-		// Breakout for errors.
-		if (APP_OK == false) {break;}
+			// Breakout for errors.
+			if (APP_OK == false) {break;}
+		}
 	}
 
 	// Exit with summary (nix cli- no log level resolution).
-	if (cliErr) {Terminate_silent(model.m_exitCode);}
-	else        {AppUtil_exitSummary(model);}
+	if (cliExit) {Terminate_silent(model.m_exitCode);}
+	else         {AppUtil_exitSummary(model);}
 	return RET_SUCCESS; // Not reached- appeasing g++
 }

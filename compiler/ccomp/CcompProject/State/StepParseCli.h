@@ -12,12 +12,13 @@
  *
  * State parses the raw command line input, recording files and flags found in
  * the data model. Also performs error checking and response handling of certain
- * flags (e.g. -h flag).
+ * flags (e.g. -h flag). Return indicates it early exit is needed.
  *
  * @param model data model of the entire program
  * @param argc  number of command line arguments
  * @param argv  array of c-string command line arguments
+ * @return      true if early exit is needed, false otherwise
  */
-void StepParseCli_execute(DataModel_t& model, int argc, char* argv[]);
+bool StepParseCli_execute(DataModel_t& model, int argc, char* argv[]);
 
 #endif /* STATE_STEPPARSECLI_H_ */

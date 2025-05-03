@@ -95,7 +95,7 @@ static void StepParseCli_handleFlag(DataModel_t&  model,
 
 //==============================================================================
 // Check/parses arguments from command line into data model.
-void StepParseCli_execute(DataModel_t& model, int argc, char* argv[]) {
+bool StepParseCli_execute(DataModel_t& model, int argc, char* argv[]) {
 	// Track "exit on handle" flags.
 	bool doExit = false;
 
@@ -143,4 +143,7 @@ void StepParseCli_execute(DataModel_t& model, int argc, char* argv[]) {
 		Print_log(LOG_INFO, Msg() + "    # files : " + model.m_files.size());
 		Print_log(LOG_INFO, Msg() + "    optimize: " + model.m_doOpt);
 	}
+
+	// Return.
+	return EXIT_PRGM;
 }
