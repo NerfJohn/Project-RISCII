@@ -12,6 +12,7 @@
 #include "Common/Ds/LexToken.h"
 #include "Common/Util/Ptr.h"
 #include "Domain/RetCode_e.h"
+#include "Ds/IAstNode.h"
 
 /*
  * @brief Data passed in-between states/pieces of the entire program.
@@ -20,7 +21,7 @@
  * parts of the program is saved and shared via this struct. It is intended for
  * the program to only ever have one, shared instance of this type.
  */
-typedef struct {
+typedef struct datamodel{
 	// General Summary/Progress.
 	uint32_t  m_numErrs;                         // # of errors found
 	uint32_t  m_numWarns;                        // # of warnings found
@@ -32,6 +33,7 @@ typedef struct {
 
 	// AST Processing Artifacts.
 	std::queue<Ptr<LexToken>> m_tkns;            // lex tokens
+	Ptr<IAstNode>             m_ast;             // current AST
 
 } DataModel_t;
 

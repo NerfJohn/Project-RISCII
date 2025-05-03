@@ -24,11 +24,11 @@ public:
 	 *
 	 * Pointer MUST be only passed directly to one Ptr<> instance (use '='
 	 * operator to pass to other Ptr<> instances). Pointer can be real or
-	 * nullptr.
+	 * nullptr (defaults to nullptr if not specified).
 	 *
 	 * @param ptr pointer to track/safeguard
 	 */
-	Ptr(T* const ptr) {
+	Ptr(T* const ptr = nullptr) {
 		// Init.
 		m_ptr    = ptr;
 		m_refCnt = new size_t(0);
@@ -38,7 +38,7 @@ public:
 			Print_bug("ptr() bad ref alloc");
 			Terminate_bug(); // Does NOT return
 		}
-		else if (m_ptr != nullptr) {*m_refCnt += 1;}
+		*m_refCnt += 1;
 	}
 
 	/*
@@ -73,7 +73,7 @@ public:
 		// Copy.
 		m_ptr    = ptr.m_ptr;
 		m_refCnt = ptr.m_refCnt;
-		if (m_ptr != nullptr) {*m_refCnt += 1;}
+		*m_refCnt += 1;
 
 		// Return.
 		return *this;
@@ -147,8 +147,9 @@ private:
 		// Destruct.
 		if (*m_refCnt > 0) {*m_refCnt -= 1;}
 		if (*m_refCnt == 0) {
-			if (m_ptr != nullptr) {delete m_ptr;}
+			if (m_ptr != nullptr) {delete m_ptr; m_ptr = nullptr;}
 			delete m_refCnt;
+			m_refCnt = nullptr;
 		}
 	}
 };

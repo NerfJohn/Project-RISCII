@@ -7,6 +7,8 @@
 #include "Common/Util/Msg.h"
 #include "Common/Util/ParserDefs.h"
 #include "Domain/ParseState_e.h"
+#include "Ds/FileNode.h"
+#include "Ds/FuncNode.h"
 #include "Util/AppUtil.h"
 
 #include "State/StepParseFile.h"
@@ -49,6 +51,30 @@ bool isAct(int state) {
 }
 
 //==============================================================================
+// Helper function to handle node creation/saving.
+static void StepParseFile_createNode(Parser& parser) {
+	// Create new node.
+	IBuildItem* ptr = nullptr;
+	switch(parser.m_actCode) {
+		case PARSE_ACT_FILE: ptr = new FileNode(parser.m_actStack); break;
+		case PARSE_ACT_FDEC: ptr = new FuncNode(parser.m_actStack); break;
+		default:
+			// No node- bug!
+			AppUtil_exitBug("createNode() no matching node");
+			break;
+	}
+	Ptr<IBuildItem> node(ptr);
+	if (node.isNull()) {AppUtil_exitBug("createNode() null node made");}
+
+	// (Stay informative.)
+	string dbg = Msg() + "created node #" + parser.m_actCode;
+	Print_log(LOG_DEBUG, node->m_file, node->m_line, dbg);
+
+	// Re-add node (to be included in larger nodes).
+	parser.m_actStack.push(node);
+}
+
+//==============================================================================
 // Parses model's tokens into AST, saving it to the model.
 void StepParseFile_execute(DataModel_t& model) {
 	// Get filename (for logging).
@@ -69,8 +95,8 @@ void StepParseFile_execute(DataModel_t& model) {
 
 		// Create node.
 		if (isAct(parser.m_actCode) == true) {
-			// TODO
-			Print_cli(Msg() + "NODE " + parser.m_actCode);
+			// Create.
+			StepParseFile_createNode(parser);
 
 			// Bookkeeping.
 			numNodes++;
@@ -103,7 +129,7 @@ void StepParseFile_execute(DataModel_t& model) {
 		}
 
 		// Save.
-		Print_cli("TODO- save AST");
+		model.m_ast = parser.m_actStack.top().toType<IAstNode>();
 	}
 
 	// (Final debug report on lexing.)

@@ -33,7 +33,8 @@ int main(int argc, char* argv[]) {
 		.m_doOpt = false,                        // default = no optimization
 
 		// AST Processing Artifacts.
-		.m_tkns = {}
+		.m_tkns = {},
+		.m_ast  = Ptr<IAstNode>(nullptr)
 	};
 
 	// Collect inputs.
