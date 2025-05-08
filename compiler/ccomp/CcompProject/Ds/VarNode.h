@@ -1,20 +1,21 @@
 /*
- * FuncNode.h: Node representing a function (declaration or definition).
+ * VarNode.h: Node representing declaration/initialization of a data variable.
  */
 
-#ifndef DS_FUNCNODE_H_
-#define DS_FUNCNODE_H_
+#ifndef DS_VARNODE_H_
+#define DS_VARNODE_H_
 
 #include <stack>
 #include "Common/Ds/LexToken.h"
 #include "Common/Util/Ptr.h"
+#include "Domain/Sym_t.h"
+#include "Domain/Type_t.h"
 #include "Ds/IAstNode.h"
-#include "Ds/VarNode.h"
 
 /*
- * @brief Representation of head of function- defined or declared.
+ * @brief Representation of data variable- defined or initialized.
  */
-class FuncNode: public IAstNode {
+class VarNode: public IAstNode {
 public:
 	/*
 	 * @brief Constructor- creates node from action stack items.
@@ -24,7 +25,7 @@ public:
 	 *
 	 * @param actStack action stack with node's build items
 	 */
-	FuncNode(std::stack<Ptr<IBuildItem>>& actStack);
+	VarNode(std::stack<Ptr<IBuildItem>>& actStack);
 
 	/*
 	 * @brief Analyzes node- prepping information to be checked by check().
@@ -37,21 +38,25 @@ public:
 	void analyze(DataModel_t& model);
 
 	/*
+	 * @brief Getter for variable's type.
+	 *
+	 * @return type of variable
+	 */
+	Ptr<Type_t>& getType(void);
+
+	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */
-	~FuncNode(void);
+	~VarNode(void);
 
 private:
 	// Nodes/tokens pulled from action stack.
-	std::deque<Ptr<LexToken>> m_typeTkns; // return type tokens
+	std::deque<Ptr<LexToken>> m_typeTkns; // var type tokens
 	Ptr<LexToken>             m_name;     // identifier
-	std::deque<Ptr<VarNode>>  m_params;   // parameters
-	bool                      m_isDef;    // presence of definition // TODO len(statements) > 0
 
 	// Processed elements.
-	Ptr<Type_t>               m_varType;  // 'kind' of direct function
-	Ptr<Type_t>               m_retType;  // 'kind' of return
+	Ptr<Type_t>               m_varType;  // 'kind' of variable
 	Ptr<Sym_t>                m_sym;      // declared symbol
 };
 
-#endif /* DS_FUNCNODE_H_ */
+#endif /* DS_VARNODE_H_ */

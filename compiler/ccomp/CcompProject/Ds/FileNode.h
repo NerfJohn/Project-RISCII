@@ -24,6 +24,16 @@ public:
 	FileNode(std::stack<Ptr<IBuildItem>>& actStack);
 
 	/*
+	 * @brief Analyzes node- prepping information to be checked by check().
+	 *
+	 * Primarily creates/links symbols while also translating inherited tokens
+	 * into useful, comparable values.
+	 *
+	 * @param model data model of the entire program
+	 */
+	void analyze(DataModel_t& model);
+
+	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */
 	~FileNode(void);

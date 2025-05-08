@@ -9,6 +9,7 @@
 #include "Domain/ParseState_e.h"
 #include "Ds/FileNode.h"
 #include "Ds/FuncNode.h"
+#include "Ds/VarNode.h"
 #include "Util/AppUtil.h"
 
 #include "State/StepParseFile.h"
@@ -18,10 +19,24 @@ using namespace std;
 //==============================================================================
 
 // Lists of states non-terminal parse states can be broken down into.
+LIST(SEQ_EP_EXCL)   = {};
 
-// TODO- rework when adding other decls/inits.
-LIST(SEQ_FILE_TODO) = {PARSE_FILE, PARSE_ACT_FDEC, LEX_TKN_ID, PARSER_THIS};
+LIST(SEQ_FILE_ITEM) = {PARSE_FILE, PARSE_PRED_BEGIN,
+		               LEX_TKN_ID, PARSE_TYPE_START};
 LIST(SEQ_FILE_END)  = {PARSE_ACT_FILE, LEX_TKN_EOF};
+
+LIST(SEQ_TYPE_PTR)  = {PARSE_TYPE_PTR, PARSER_THIS};
+
+LIST(SEQ_PRED_VDEC) = {PARSE_ACT_VDEC, PARSER_THIS};
+LIST(SEQ_PRED_FPAR) = {PARSE_PRED_FEND,  LEX_TKN_RPAREN,
+		               PARSE_PARS_BEGIN, LEX_TKN_LPAREN};
+LIST(SEQ_PRED_FDEC) = {PARSE_ACT_FDEC, PARSER_THIS};
+LIST(SEQ_PRED_FDEF) = {PARSE_ACT_FDEC, LEX_TKN_RCURLY, LEX_TKN_LCURLY};
+
+LIST(SEQ_PARS_NEW)  = {PARSE_PARS_CONT, PARSE_ACT_VDEC,
+		               LEX_TKN_ID,      PARSE_TYPE_START};
+LIST(SEQ_PARS_NEXT) = {PARSE_PARS_CONT,  PARSE_ACT_VDEC, LEX_TKN_ID,
+		               PARSE_TYPE_START, LEX_TKN_COMMA};
 
 //==============================================================================
 // User-specific functions the Parser relies on for parsing.
@@ -29,9 +44,34 @@ RetErr_e parseState(int state, int tkn, std::vector<int> const*& seq) {
 	// Let the games begin!
 	switch (state) {
 		case PARSE_FILE:
-			TKN_IS(LEX_TKN_EOF,   SEQ_FILE_END);   // end of parsing
-			TKN_IS(LEX_TKN_INT,   SEQ_FILE_TODO);
-			TKN_IS(LEX_TKN_CHAR,  SEQ_FILE_TODO);
+			TKN_IS  (LEX_TKN_EOF,       SEQ_FILE_END);   // end of parsing
+			TKN_IS  (LEX_TKN_INT,       SEQ_FILE_ITEM);
+			TKN_IS  (LEX_TKN_VOID,      SEQ_FILE_ITEM);
+			break;
+		case PARSE_TYPE_START:
+			TKN_IS  (LEX_TKN_INT,       SEQ_TYPE_PTR);
+			TKN_IS  (LEX_TKN_VOID,      SEQ_TYPE_PTR);
+			break;
+		case PARSE_TYPE_PTR:
+			TKN_IS  (LEX_TKN_STAR,      SEQ_TYPE_PTR);   // greedy grab ptrs
+			TKN_ELSE(                   SEQ_EP_EXCL);
+			break;
+		case PARSE_PRED_BEGIN:
+			TKN_IS  (LEX_TKN_SEMICOLON, SEQ_PRED_VDEC);  // var decl
+			TKN_IS  (LEX_TKN_LPAREN,    SEQ_PRED_FPAR);  // func decl/def
+	        break;
+		case PARSE_PRED_FEND:
+			TKN_IS  (LEX_TKN_SEMICOLON, SEQ_PRED_FDEC);
+			TKN_IS  (LEX_TKN_LCURLY,    SEQ_PRED_FDEF);
+			break;
+		case PARSE_PARS_BEGIN:
+			TKN_IS  (LEX_TKN_RPAREN,    SEQ_EP_EXCL);    // empty params
+			TKN_IS  (LEX_TKN_INT,       SEQ_PARS_NEW);
+			TKN_IS  (LEX_TKN_VOID,      SEQ_PARS_NEW);
+			break;
+		case PARSE_PARS_CONT:
+			TKN_IS  (LEX_TKN_RPAREN,    SEQ_EP_EXCL);
+			TKN_IS  (LEX_TKN_COMMA,     SEQ_PARS_NEXT);
 			break;
 		default:
 			// Top can't be broken down- bug!
@@ -57,6 +97,7 @@ static void StepParseFile_createNode(Parser& parser) {
 	IBuildItem* ptr = nullptr;
 	switch(parser.m_actCode) {
 		case PARSE_ACT_FILE: ptr = new FileNode(parser.m_actStack); break;
+		case PARSE_ACT_VDEC: ptr = new VarNode(parser.m_actStack);  break;
 		case PARSE_ACT_FDEC: ptr = new FuncNode(parser.m_actStack); break;
 		default:
 			// No node- bug!

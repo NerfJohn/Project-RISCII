@@ -61,6 +61,6 @@ bool isAct(int state);
 
 // Macros specialized for "parseState" function.
 #define TKN_IS(val,lst) if (tkn == (val)) {seq = &(lst); return RET_ERR_NONE;}
-#define TKN_ELSE(seq)   return seq = &(lst); return RET_ERR_NONE;
+#define TKN_ELSE(lst)   seq = &(lst); return RET_ERR_NONE;
 
 #endif /* COMMON_UTIL_PARSERDEFS_H_ */

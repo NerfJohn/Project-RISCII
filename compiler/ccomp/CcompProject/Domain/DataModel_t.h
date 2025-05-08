@@ -9,9 +9,11 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include "Common/Device/SymTable.h"
 #include "Common/Ds/LexToken.h"
 #include "Common/Util/Ptr.h"
 #include "Domain/RetCode_e.h"
+#include "Domain/Sym_t.h"
 #include "Ds/IAstNode.h"
 
 /*
@@ -34,6 +36,10 @@ typedef struct datamodel{
 	// AST Processing Artifacts.
 	std::queue<Ptr<LexToken>> m_tkns;            // lex tokens
 	Ptr<IAstNode>             m_ast;             // current AST
+	SymTable<Ptr<Sym_t>>      m_syms;            // current sym table
+	Ptr<Sym_t>                m_fSym;            // sym of current function
+	uint32_t                  m_symCnt;          // # of symbols created
+
 
 } DataModel_t;
 

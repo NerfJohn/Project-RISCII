@@ -23,7 +23,8 @@ typedef enum {
 	RET_NO_READ = 0x06, // unable to read input file
 	RET_BAD_LEX = 0x07, // bad lex path/matching
 	RET_MIS_TKN = 0x08, // mismatch token (parsing)
-	RET_UEX_TKN = 0x09  // unexpected token (parsing)
+	RET_UEX_TKN = 0x09, // unexpected token (parsing)
+	RET_MUL_DEF = 0x0A  // multiply defined name
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

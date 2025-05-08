@@ -23,6 +23,16 @@ public:
 	 */
 	virtual ~IAstNode(void) {/* no actions */}
 
+	/*
+	 * @brief Analyzes node- prepping information to be checked by check().
+	 *
+	 * Primarily creates/links symbols while also translating inherited tokens
+	 * into useful, comparable values.
+	 *
+	 * @param model data model of the entire program
+	 */
+	virtual void analyze(DataModel_t& model) {/* no actions */}
+
 protected:
 	// "Interface"- only 'created' by derived classes.
 	IAstNode(void)  {/* no actions */}

@@ -18,10 +18,16 @@
 typedef enum {
 	// "Action" values.
 	PARSE_ACT_FILE       = LEX_TKN_MAX + 1,      // Root of file's AST
-	PARSE_ACT_FDEC,                              // Function decl/definition
+	PARSE_ACT_VDEC,                              // Variable decl/init
+	PARSE_ACT_FDEC,                              // Function decl/def
 
 	// "Non-terminal" values.
-	// TODO
+	PARSE_PRED_BEGIN,                            // "var/func" predicate states
+	PARSE_PRED_FEND,
+	PARSE_TYPE_START,                            // "type" states
+	PARSE_TYPE_PTR,
+	PARSE_PARS_BEGIN,                            // "param list" states
+	PARSE_PARS_CONT,
 
 	// Special values.
 	PARSE_FILE           = PARSER_START,         // start of parsing SM

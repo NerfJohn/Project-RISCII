@@ -2,6 +2,7 @@
  * FileNode.cpp: Node representing entire file/translation unit.
  */
 
+#include "Common/Util/Msg.h"
 #include "Domain/ParseState_e.h"
 #include "Util/AppUtil.h"
 
@@ -27,6 +28,7 @@ FileNode::FileNode(std::stack<Ptr<IBuildItem>>& actStack) {
 		// Claim (as applicable).
 		switch(item->m_type) {
 			case PARSE_ACT_FDEC:
+			case PARSE_ACT_VDEC:
 				// Save (undo stack inversion).
 				m_elements.push_front(item.toType<IAstNode>());
 				break;
@@ -43,6 +45,22 @@ FileNode::FileNode(std::stack<Ptr<IBuildItem>>& actStack) {
 		// To next item.
 		actStack.pop();
 	}
+}
+
+//==============================================================================
+// Analyzes node- prepping information to be checked by check().
+void FileNode::analyze(DataModel_t& model) {
+	// (Stay informative.)
+	Print_log(LOG_DEBUG, Msg() + "Analyzing '" + m_file + "'");
+
+	// Analyze each element (in order).
+	model.m_symCnt = 0;
+	model.m_syms.scopePush();
+	for (Ptr<IAstNode> elm : m_elements) {elm->analyze(model);}
+	model.m_syms.scopePop();
+
+	// (Keep staying informative.)
+	Print_log(LOG_DEBUG, Msg() + model.m_symCnt + " symbols created");
 }
 
 //==============================================================================

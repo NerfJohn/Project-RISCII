@@ -19,15 +19,19 @@ typedef enum {
 	LEX_TKN_CMMNT,                               // Single line user comment
 	LEX_TKN_ID,                                  // variable identifier
 	LEX_TKN_INT,
-	LEX_TKN_CHAR,
+	LEX_TKN_VOID,
 	LEX_TKN_STAR,
 	LEX_TKN_LPAREN,
 	LEX_TKN_RPAREN,
 	LEX_TKN_LCURLY,
 	LEX_TKN_RCURLY,
+	LEX_TKN_COMMA,
+	LEX_TKN_SEMICOLON,
 	LEX_TKN_EOF,                                 // End of file char/marker
 
 	// "Internal path" values.
+	LEX_HNDL_SLASH,
+	LEX_LOOP_CMT,
 	LEX_LOOP_KWORD,                              // loop to grab "keyword"s
 	LEX_LOOP_OP,                                 // loop to grab "operator"s
 

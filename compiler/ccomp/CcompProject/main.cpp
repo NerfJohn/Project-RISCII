@@ -33,8 +33,11 @@ int main(int argc, char* argv[]) {
 		.m_doOpt = false,                        // default = no optimization
 
 		// AST Processing Artifacts.
-		.m_tkns = {},
-		.m_ast  = Ptr<IAstNode>(nullptr)
+		.m_tkns   = {},
+		.m_ast    = Ptr<IAstNode>(nullptr),
+		.m_syms   = {},
+		.m_fSym   = Ptr<Sym_t>(nullptr),
+		.m_symCnt = 0
 	};
 
 	// Collect inputs.
@@ -45,12 +48,17 @@ int main(int argc, char* argv[]) {
 		Print_log(LOG_INFO, "=Process=");
 		for (string file : model.m_files) {
 			// Prep/cleanup.
-			model.m_tkns = {};
+			model.m_tkns   = {};
+			model.m_ast    = Ptr<IAstNode>(nullptr);
+			while (model.m_syms.scopeNum() > 0) {model.m_syms.scopePop();}
+			model.m_fSym   = Ptr<Sym_t>(nullptr);
+			model.m_symCnt = 0;
 
 			// Compile.
 			Print_log(LOG_INFO, Msg() + "Compiling '" + file + "'...");
-			if (APP_OK){StepLexFile_execute(model, file);}
-			if (APP_OK){StepParseFile_execute(model);}
+			if (APP_OK) {StepLexFile_execute(model, file);}
+			if (APP_OK) {StepParseFile_execute(model);}
+			if (APP_OK) {model.m_ast->analyze(model);}
 
 			// Breakout for errors.
 			if (APP_OK == false) {break;}

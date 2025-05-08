@@ -25,13 +25,24 @@ int nextState(int state, std::string const& buffer, uint8_t chr) {
 		case LEX_START:                          // start of all lex paths
 			EOFILE(          LEX_TKN_EOF);       // end of all files
 			WS    (          LEX_START);         // ignore whitespace
-			IS    ('*',      LEX_LOOP_OP);
+			IS    ('/',      LEX_HNDL_SLASH);
+			IS    ('*',      LEX_LOOP_OP);       // operator 'keywords'
 			IS    ('(',      LEX_LOOP_OP);
 			IS    (')',      LEX_LOOP_OP);
 			IS    ('{',      LEX_LOOP_OP);
 			IS    ('}',      LEX_LOOP_OP);
+			IS    (',',      LEX_LOOP_OP);
+			IS    (';',      LEX_LOOP_OP);
 			// TODO- is # -> literals paths
 			LABEL (          LEX_LOOP_KWORD);    // checked AFTER # checks
+			break;
+		case LEX_HNDL_SLASH:
+			IS    ('/',      LEX_LOOP_CMT);
+			break;
+		case LEX_LOOP_CMT:
+			IS    ('\n',     LEX_TKN_CMMNT);
+			EOFILE(          LEX_TKN_CMMNT);
+			ELSE  (          LEX_LOOP_CMT);
 			break;
 		case LEX_LOOP_KWORD:
 			LABEL (          LEX_LOOP_KWORD);
@@ -51,7 +62,7 @@ int nextState(int state, std::string const& buffer, uint8_t chr) {
 	if (isKword == true) {
 		// First check against keywords.
 		ISWORD("int",  LEX_TKN_INT);
-		ISWORD("char", LEX_TKN_CHAR);
+		ISWORD("void", LEX_TKN_VOID);
 
 		// No matches? Must be a variable then.
 		return LEX_TKN_ID;
@@ -63,6 +74,8 @@ int nextState(int state, std::string const& buffer, uint8_t chr) {
 		ISWORD(")", LEX_TKN_RPAREN);
 		ISWORD("{", LEX_TKN_LCURLY);
 		ISWORD("}", LEX_TKN_RCURLY);
+		ISWORD(",", LEX_TKN_COMMA);
+		ISWORD(";", LEX_TKN_SEMICOLON);
 
 		// No matches? Unknown operator.
 		return LEXER_ERROR;
