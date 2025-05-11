@@ -32,3 +32,18 @@ void TypeUtil_initCore(Type_t& type, std::deque<Ptr<LexToken>>& tkns) {
 		AppUtil_exitBug("initCore() no core");
 	}
 }
+
+//==============================================================================
+// TODO
+bool TypeUtil_cmpType(Type_t const& typeA, Type_t const& typeB) {
+	// Result.
+	bool res = true;
+
+	// Do comparisons.
+	res = (typeA.m_type   == typeB.m_type)    &&
+		  (typeA.m_ptrCnt == typeB.m_ptrCnt)  &&
+		  (typeA.m_hasLoc == typeB.m_hasLoc);
+
+	// Return.
+	return res;
+}

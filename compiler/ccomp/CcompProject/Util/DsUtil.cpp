@@ -4,6 +4,7 @@
 
 #include "Common/Util/Msg.h"
 #include "Util/AppUtil.h"
+#include "Util/TypeUtil.h"
 
 #include "Util/DsUtil.h"
 
@@ -60,4 +61,14 @@ void DsUtil_addSym(DataModel_t& model, std::string& name, Ptr<Sym_t>& newSym) {
 		string dbg = Msg() + "Added symbol '" + name + "'";
 		Print_log(LOG_DEBUG, newSym->m_file, newSym->m_line, dbg);
 	}
+}
+
+//==============================================================================
+// TODO
+void DsUtil_cmpSyms(DataModel_t& model, Ptr<Sym_t>& symA, Ptr<Sym_t>& symB) {
+	// Result of comparisons.
+	uint32_t numErrs = 0;
+
+	// Compare base types.
+	numErrs += TypeUtil_cmpType(*(symA->m_type), *(symB->m_type));
 }

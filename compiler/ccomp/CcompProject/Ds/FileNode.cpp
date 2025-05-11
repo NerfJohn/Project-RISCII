@@ -64,5 +64,21 @@ void FileNode::analyze(DataModel_t& model) {
 }
 
 //==============================================================================
+// TODO
+Ptr<Type_t> FileNode::check(DataModel_t& model) {
+	// (Stay informative.)
+	Print_log(LOG_DEBUG, Msg() + "Checking '" + m_file + "'");
+
+	// Check each element (in order).
+	for (Ptr<IAstNode> elm : m_elements) {elm->check(model);}
+
+	// (Keep staying informative.)
+	Print_log(LOG_DEBUG, Msg() + "Finished checks");
+
+	// No "type" for files.
+	return Ptr<Type_t>(nullptr);
+}
+
+//==============================================================================
 // Std destructor- deletes underlying nodes/tokens.
 FileNode::~FileNode(void) {/* no actions */}

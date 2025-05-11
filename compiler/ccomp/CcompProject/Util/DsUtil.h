@@ -19,4 +19,7 @@
  */
 void DsUtil_addSym(DataModel_t& model, std::string& name, Ptr<Sym_t>& newSym);
 
+// TODO
+void DsUtil_cmpSyms(DataModel_t& model, Ptr<Sym_t>& symA, Ptr<Sym_t>& symB);
+
 #endif /* UTIL_DSUTIL_H_ */

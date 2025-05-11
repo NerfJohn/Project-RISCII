@@ -33,6 +33,9 @@ public:
 	 */
 	void analyze(DataModel_t& model);
 
+	// TODO
+	Ptr<Type_t> check(DataModel_t& model);
+
 	/*
 	 * @brief Std destructor- deletes underlying nodes/tokens.
 	 */

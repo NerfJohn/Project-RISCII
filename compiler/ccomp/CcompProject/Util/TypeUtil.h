@@ -21,4 +21,7 @@
  */
 void TypeUtil_initCore(Type_t& type, std::deque<Ptr<LexToken>>& tkns);
 
+// TODO
+bool TypeUtil_cmpType(Type_t const& typeA, Type_t const& typeB);
+
 #endif /* UTIL_TYPEUTIL_H_ */

@@ -6,6 +6,7 @@
 #define DS_IASTNODE_H_
 
 #include "Common/Ds/IBuildItem.h"
+#include "Domain/Type_t.h"
 
 // Forward declaration to allow IAstNodes to be in model.
 struct datamodel; typedef struct datamodel DataModel_t;
@@ -32,6 +33,9 @@ public:
 	 * @param model data model of the entire program
 	 */
 	virtual void analyze(DataModel_t& model) {/* no actions */}
+
+	// TODO
+	virtual Ptr<Type_t> check(DataModel_t& model) {return Ptr<Type_t>(nullptr);}
 
 protected:
 	// "Interface"- only 'created' by derived classes.
