@@ -3,7 +3,7 @@
 
 ---
 
-This folder contains files/folders related to Project RISCII's compiler. **Compilers** translate human readable code into computer readable code. This compiler is run as a collection of separately compiled programs.
+This folder contains files/folders related to Project RISCII's compiler. **Compilers** translate human readable code into computer readable code. This compiler is run as a collection of separately compiled sub-programs.
 
 #### Folders
 
@@ -34,7 +34,7 @@ Once compiled, the RISCII compiler can be invoked using `./_shared/bin/quaid.exe
 
 The RISCII compiler was developed on a Windows 11 machine with the following software:
 
-- **MinGW GCC/G++** v9.2.0 (for compiling)
+- **MinGW GCC/G++** v9.2.0 (for compiling sub-programs)
 - **Git Bash** v5.1.16 (for running build/helper scripts)
 - **Git** v2.38.1 (for version control)
 - **Eclispe IDE** v4.27.0 2023-03 (for code development)
