@@ -13,6 +13,29 @@
 
 using namespace std;
 
+
+// TODO
+#include "Device/AsmWriter.h"
+void foo(void) {
+	string fname = "out.s";
+	AsmWriter asmGen(fname);
+
+	string myAddr = "myAddr";
+	string label  = "0r";
+	deque<int32_t> qq = {4,5,6};
+
+	if (RET_ERR_ERROR == asmGen.labelLocal(myAddr)) {Print_cli("err0");}
+	if (RET_ERR_ERROR == asmGen.labelGlobal(myAddr)) {Print_cli("err1");}
+	if (RET_ERR_ERROR == asmGen.dataBss(23)) {Print_cli("err2");}
+	if (RET_ERR_ERROR == asmGen.dataInit(qq)) {Print_cli("err3");}
+	if (RET_ERR_ERROR == asmGen.loadLit(ASMWRITER_REG_L0, 127)) {Print_cli("err4");}
+	if (RET_ERR_ERROR == asmGen.loadLit(ASMWRITER_REG_FP, 128)) {Print_cli("err5");}
+	if (RET_ERR_ERROR == asmGen.loadLit(ASMWRITER_REG_SP, myAddr)) {Print_cli("err6");}
+	if (RET_ERR_ERROR == asmGen.loadVal(ASMWRITER_REG_L1, ASMWRITER_REG_L2, -3)) {Print_cli("err7");}
+
+	Terminate_silent(RET_SUCCESS);
+}
+
 //==============================================================================
 // Start/main process of the program.
 int main(int argc, char* argv[]) {
@@ -39,6 +62,8 @@ int main(int argc, char* argv[]) {
 		.m_fSym   = Ptr<Sym_t>(nullptr),
 		.m_symCnt = 0
 	};
+
+	foo();
 
 	// Collect inputs.
 	bool cliExit = StepParseCli_execute(model, argc, argv);

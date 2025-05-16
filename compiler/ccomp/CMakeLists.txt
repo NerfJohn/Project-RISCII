@@ -9,6 +9,7 @@ project(${EXEC_NAME})
 # Gather files/paths (globbing because i'm lazy/arrogant).
 file(GLOB build_sources
 	${PROJ_NAME}/main.cpp
+	${PROJ_NAME}/Device/*.cpp
 	${PROJ_NAME}/Ds/*.cpp
 	${PROJ_NAME}/State/*.cpp
 	${PROJ_NAME}/Util/*.cpp
