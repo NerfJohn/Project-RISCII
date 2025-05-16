@@ -3,7 +3,7 @@
 
 ---
 
-Project RISCII (pronounced "risky"- not RISC-II) is a personal project focused on designing an embedded system from scratch. The primary 'levels' include:
+Project RISCII (pronounced "risky"- not RISC-II) is a personal project focused on designing the breadth an embedded system from scratch. The primary 'levels' include:
 
 - low-level drivers and libraries
 - compiler
@@ -16,8 +16,8 @@ This project is ultimately for personal enjoyment. ***However***, if there is ed
 
 The main pushes at the time of this writing are:
 
-1. Finishing the basic C(esque) compiler
-2. Creating a circuit board design
-3. Refactoring compiler for simplicity
+1. Creating a circuit board design
+2. Writing drivers/libraries- including simple RTOS + SW upgrade concept
+3. Cleanup/tidy project pieces
 
-The circuit board is slated for summer 2025 (with the compiler/libraries finished before/after then). Compiler refactoring is being worked on to make compiling more approachable from a readability/educational perspective.
+The circuit board is slated for summer 2025 (with the compiler/libraries finished before/after then). Time is also being put into tidy-ing up various pieces for readability and/or functionality.

@@ -13,7 +13,6 @@
 typedef enum {
 	// Real "values".
 	PROC_TO_CPP,      // pre-process only
-	PROC_TO_ASM,      // pre-process + compile (ie don't assemble)
 	PROC_TO_BIN       // perform full processing
 } ProcDepth_e;
 

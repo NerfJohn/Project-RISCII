@@ -25,7 +25,7 @@ using namespace std;
 #define EXIT_PRGM (doExit || (model.m_summary.m_numErrs > 0))
 
 // Definitions for info requests.
-#define HELP_INFO string("Project RISCII C compiler (interface program)\n") + \
+#define HELP_INFO string("Project RISCII Compiler (interface program)\n")   + \
 	                     "Usage: quaid.exe [options...] <input files...>\n" + \
 						 "\n"                                               + \
 						 "Options:\n"                                       + \
@@ -37,15 +37,12 @@ using namespace std;
 						 "              (d) warning errors and warnings\n"  + \
 						 "                  info    process related info\n" + \
 						 "                  debug   all available output\n" + \
-						 "    -as <arg> add assembly input file\n"          + \
 						 "    -E        pre-process only\n"                 + \
-						 "    -S        pre-process + compile only\n"       + \
                          "    -I  <arg> add include directory path\n"       + \
 						 "    -D  <arg> define variable for all files\n"    + \
 						 "    -g        adds debug symbols to binary\n"     + \
 						 "    -o  <arg> sets binary filename\n"             + \
-						 "    -O1       do minor optimizations\n"           + \
-						 "    -O2       do minor + major optimizations"
+						 "    -O1       do minor optimizations\n"
 #define VERS_INFO string("quaid.exe ") + APP_VERSION
 
 // Definitions for "string to LogType_e" conversions.
@@ -68,15 +65,12 @@ static int StepParseCli_asFlag(std::string argStr) {
 	AS_FLAG(argStr, "h",  CLI_FLAG_HELP);
 	AS_FLAG(argStr, "v",  CLI_FLAG_VERSION);
 	AS_FLAG(argStr, "ll", CLI_FLAG_LOG_LEVEL);
-	AS_FLAG(argStr, "as", CLI_FLAG_ASM_FILE);
 	AS_FLAG(argStr, "E",  CLI_FLAG_TO_CPP);
-	AS_FLAG(argStr, "S",  CLI_FLAG_TO_ASM);
 	AS_FLAG(argStr, "I",  CLI_FLAG_INC_DIR);
 	AS_FLAG(argStr, "D",  CLI_FLAG_DEF);
 	AS_FLAG(argStr, "g",  CLI_FLAG_DEBUG);
 	AS_FLAG(argStr, "o",  CLI_FLAG_NAME);
 	AS_FLAG(argStr, "O1", CLI_FLAG_O1);
-	AS_FLAG(argStr, "O2", CLI_FLAG_O2);
 
 	// Otherwise, it's not a flag.
 	return CLI_FLAG_INVALID;
@@ -117,10 +111,9 @@ static void StepPareCli_rectifyOutFile(DataModel_t& model) {
 	// Create output filename if none is given.
 	if (model.m_outFile.size() == 0) {
 		// Get name of the first input file.
-		if ((model.m_cFiles.size() == 0) && (model.m_sFiles.size() == 0)) {
+		if (model.m_sFiles.size() == 0) {
 			Terminate::inst().assert("rectify() no input");}
-		string name = (model.m_cFiles.size()) ? model.m_cFiles[0] :
-				                                model.m_sFiles[0];
+		string name = model.m_sFiles[0];
 
 		// Replace file type.
 		StrUtil_rmFtype(name);
@@ -192,14 +185,8 @@ static void StepParseCli_handleFlag(DataModel_t&  model,
 		case CLI_FLAG_LOG_LEVEL:
 			StepParseCli_handleLevel(model, args.m_arg);
 			break;
-		case CLI_FLAG_ASM_FILE:
-			model.m_sFiles.push_back(args.m_arg);
-			break;
 		case CLI_FLAG_TO_CPP:
 			model.m_depth = PROC_TO_CPP;
-			break;
-		case CLI_FLAG_TO_ASM:
-			model.m_depth = PROC_TO_ASM;
 			break;
 		case CLI_FLAG_INC_DIR:
 			StepParseCli_handleDir(model, args.m_arg);
@@ -215,9 +202,6 @@ static void StepParseCli_handleFlag(DataModel_t&  model,
 			break;
 		case CLI_FLAG_O1:
 			model.m_optLvl = OPT_LVL_O1;
-			break;
-		case CLI_FLAG_O2:
-			model.m_optLvl = OPT_LVL_O2;
 			break;
 		default:
 			// Unknown flag? GetOpt/callback error- bug!
@@ -249,7 +233,7 @@ void StepParseCli_execute(DataModel_t&      model,
 		// Handle argument appropriately.
 		switch(args.m_type) {
 			case CLI_TYPE_FILE:
-				model.m_cFiles.push_back(args.m_value);
+				model.m_sFiles.push_back(args.m_value);
 				break;
 			case CLI_TYPE_FLAG:
 				StepParseCli_handleFlag(model, args, doExit);
@@ -272,9 +256,7 @@ void StepParseCli_execute(DataModel_t&      model,
 	}
 
 	// Ensure at least some input to work with.
-	if ((model.m_cFiles.size() == 0) &&
-		(model.m_sFiles.size() == 0) &&
-		(EXIT_PRGM == false)) {
+	if ((model.m_sFiles.size() == 0) && (EXIT_PRGM == false)) {
 		Print::inst().cli("requires at least one input file");
 		InfoUtil_recordError(model.m_summary, RET_NO_FILE);
 	}
@@ -285,14 +267,10 @@ void StepParseCli_execute(DataModel_t&      model,
 		StepPareCli_rectifyOutFile(model);
 
 		// (Summarize results of cli parsing.)
-		string numCFiles = string("    # C-files: ") +
-				          to_string(model.m_cFiles.size());
 		string numSFiles = string("    # S-files: ") +
 				          to_string(model.m_sFiles.size());
 		string depth     = string("    depth    : ") +
-				           ((model.m_depth == PROC_TO_CPP) ? "i" :
-				           (model.m_depth == PROC_TO_ASM) ? "s"  :
-				        		                           "bin");
+				           ((model.m_depth == PROC_TO_CPP) ? "i" : "bin");
 		string numDirs   = string("    # I-dirs : ") +
 						         to_string(model.m_iDirs.size());
 		string numDefs   = string("    # I-defs : ") +
@@ -301,11 +279,8 @@ void StepParseCli_execute(DataModel_t&      model,
 				           ((model.m_doDbg) ? "true" : "false");
 		string binName   = string("    bin name : ") + model.m_outFile;
 		string optLvl    = string("    optimize : ") +
-				           ((model.m_optLvl == OPT_LVL_O1) ? "1" :
-				           (model.m_optLvl == OPT_LVL_O2) ? "2"  :
-				        		                           "none");
+				           ((model.m_optLvl == OPT_LVL_O1) ? "1" : "none");
 		Print::inst().log(LOG_INFO, "=Cli Summary=");
-		Print::inst().log(LOG_INFO, numCFiles);
 		Print::inst().log(LOG_INFO, numSFiles);
 		Print::inst().log(LOG_INFO, depth);
 		Print::inst().log(LOG_INFO, numDirs);

@@ -25,7 +25,6 @@ typedef struct {
 
 	// Parsed Cli Data.
 	LogType_e                m_logLvl;           // log level of program
-	std::vector<std::string> m_cFiles;           // input (C) source files
 	std::vector<std::string> m_sFiles;           // input (S) source files
 	ProcDepth_e              m_depth;            // depth of processing to do
 	std::vector<std::string> m_iDefs;            // pre-processor definitions

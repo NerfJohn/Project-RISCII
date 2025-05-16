@@ -21,8 +21,7 @@ typedef enum {
 	RET_BAD_ARG = 0x04, // bad cli flag argument
 	RET_NO_FILE = 0x05, // no input file(s) given
 	RET_ERR_CPP = 0x06, // error while preprocessing
-	RET_ERR_CMP = 0x07, // error while (core) compiling
-	RET_ERR_ASM = 0x08  // error while assembling
+	RET_ERR_ASM = 0x07  // error while assembling
 } RetCode_e;
 
 #endif /* DOMAIN_RETCODE_E_H_ */

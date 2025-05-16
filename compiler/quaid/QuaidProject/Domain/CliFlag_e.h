@@ -14,7 +14,6 @@
  */
 typedef enum {
 	// Group #1: Flags with argument.
-	CLI_FLAG_ASM_FILE,                           // assembly input file
 	CLI_FLAG_DEF,                                // var definition for all files
 	CLI_FLAG_INC_DIR,                            // include directory
 	CLI_FLAG_NAME,                               // name output file
@@ -24,10 +23,8 @@ typedef enum {
 	CLI_FLAG_HELP,                               // request program help menu
 	CLI_FLAG_VERSION,                            // request version info
 	CLI_FLAG_TO_CPP,                             // pre-process only
-	CLI_FLAG_TO_ASM,                             // pre-process + compile only
 	CLI_FLAG_DEBUG,                              // add debug symbols to image
 	CLI_FLAG_O1,                                 // do minor optimizations
-	CLI_FLAG_O2,                                 // do minor/major optimizations
 
 	// Special values.
 	CLI_FLAG_INVALID,                            // invalid/unknown flag

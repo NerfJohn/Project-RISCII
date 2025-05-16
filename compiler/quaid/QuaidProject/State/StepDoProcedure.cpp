@@ -67,28 +67,11 @@ void StepDoProcedure_execute(DataModel_t& model) {
 	for (string inc : model.m_iDirs) {cprepCmd += string(" -I ") + inc;}
 	for (string def : model.m_iDefs) {cprepCmd += string(" -D ") + def;}
 	cprepCmd += logArg;
-	StepDoProcedure_addFiles(cprepCmd, model.m_cFiles, "");
 	StepDoProcedure_addFiles(cprepCmd, model.m_sFiles, "");
 	Print::inst().log(LOG_INFO, string("Running '") + cprepCmd + "'");
 	if (Cmd_run(cprepCmd) != CALL_SUCCESS) {
 		Print::inst().log(LOG_ERROR, "Errors while pre-processing");
 		InfoUtil_recordError(model.m_summary, RET_ERR_CPP);
-	}
-
-	// Run core compiler on c-files (as applicable).
-	bool ccompSkip = EXIT_PRGM                     |
-			         (model.m_cFiles.size() == 0)  |
-					 (model.m_depth == PROC_TO_CPP);
-	if (ccompSkip == false) {
-		string ccompCmd = CCOMP_EXE;
-		if (model.m_optLvl == OPT_LVL_O2) {ccompCmd += " -O1";}
-		ccompCmd += logArg;
-		StepDoProcedure_addFiles(ccompCmd, model.m_cFiles, I_EXT);
-		Print::inst().log(LOG_INFO, string("Running '") + ccompCmd + "'");
-		if (Cmd_run(ccompCmd) != CALL_SUCCESS) {
-			Print::inst().log(LOG_ERROR, "Errors while compiling");
-			InfoUtil_recordError(model.m_summary, RET_ERR_CMP);
-		}
 	}
 
 	// Run assembler/linker on all s-files (as applicable).
@@ -99,7 +82,6 @@ void StepDoProcedure_execute(DataModel_t& model) {
 		if (model.m_optLvl >= OPT_LVL_O1) {asmldCmd += " -r";}
 		asmldCmd += string(" -o ") + model.m_outFile;
 		asmldCmd += logArg;
-		StepDoProcedure_addFiles(asmldCmd, model.m_cFiles, S_EXT);
 		StepDoProcedure_addFiles(asmldCmd, model.m_sFiles, I_EXT);
 		Print::inst().log(LOG_INFO, string("Running '") + asmldCmd + "'");
 		if (Cmd_run(asmldCmd) != CALL_SUCCESS) {

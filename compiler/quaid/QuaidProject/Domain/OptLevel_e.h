@@ -11,8 +11,7 @@
 typedef enum {
 	// "Real" values.
 	OPT_LVL_NONE,    // no optimizations (ie O0)
-	OPT_LVL_O1,      // O1 optimizations
-	OPT_LVL_O2       // O2 optimizations
+	OPT_LVL_O1       // O1 optimizations
 } OptLevel_e;
 
 #endif /* DOMAIN_OPTLEVEL_E_H_ */

@@ -31,7 +31,6 @@ int main(int argc, char* argv[]) {
 
 		// Parsed Cli Data.
 		.m_logLvl  = LOG_WARNING,                // by default- warning
-		.m_cFiles  = {},                         // no initial input files
 		.m_sFiles  = {},                         // no initial input  files
 		.m_depth   = PROC_TO_BIN,                // by default- create image
 		.m_iDefs   = {},                         // no initial definitions
