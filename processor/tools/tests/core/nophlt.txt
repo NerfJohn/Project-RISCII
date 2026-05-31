@@ -1,5 +1,0 @@
-; Simple test to check HLT works as expected (+a NOP).
-
-__START:
-NOP
-HLT

@@ -1,27 +1,29 @@
-# Documents
+# Project RISCII: Documents
+*"Common location for project documentation"*
+
+**Purpose**
+
+Folder for storing the project's documentation. Includes all levels and types of documents (e.g. technical vs user oriented).
+
+**Overview**
+
+- [Legend](#legend)
+
+**Common Terms**
+
+|Term            |Description                                     |
+|----------------|------------------------------------------------|
+|---             |---                                             |
+
 ---
 
-This folder contains documents related to Project RISCII. The tables below describe the purpose contents of each folder/document (organized by design level).
+## Legend
 
-*Note: The "CliffNotes.txt" is a quick dumping ground for ideas that need to be sorted. It is mainly for developer use only.*
+Documents have a designation number indicating the level they pertain to. Below is a quick summary.
 
-## Compiler Documents
+- **Level 5:** PR5xxx
+- **Level 4:** PR4xxx
+- **Level 3:** PR3xxx
+- **Level 2:** PR2xxx
+- **Level 1:** PR1xxx
 
-|Folder Name|Doc Number|Description                                        |
-|-----------|----------|---------------------------------------------------|
-|QuaidManual|PR3003    |manual for RISCII compiler interface program       |
-|CprepManual|PR3002    |manual for RISCII c-preprocessor program           |
-|AsmldManual|PR3000    |manual for RISCII assembly language + asmld program|
-
-## Microprocessor Docuements
-
-|Folder Name|Doc Number|Description                                        |
-|-----------|----------|---------------------------------------------------|
-|uPManual   |PR2001    |manual for RISCII softcore microprocessor          |
-|ISA        |PR2000    |instruction set architecture for Project RISCII    |
-
-## Other Documents
-
-|Folder Name|Doc Number|Description                                        |
-|-----------|----------|---------------------------------------------------|
-|Template   |PR0000    |template document for Project RISCII docuements    |
