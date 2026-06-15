@@ -24,4 +24,4 @@ The project is largely based around the central stack of layers that make up mod
 
 ## Usage
 
-It is expected other places in the repository will reference the tools stored here (i.e. via relative paths/scripts). Documentation for usage and design is- at best -stored with project documentation (at worst- as source code comments).
+It is expected other places in the repository will reference the tools stored here (i.e. via relative paths/scripts). Documentation for usage and design is stored with the tool itself.

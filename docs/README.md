@@ -3,7 +3,7 @@
 
 **Purpose**
 
-Folder for storing the project's documentation. Includes all levels and types of documents (e.g. technical vs user oriented).
+Folder for storing the project's documentation. Includes all levels of documentation (though focused on "black box" details and interfaces for each level's main deliverables).
 
 **Overview**
 
