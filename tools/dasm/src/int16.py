@@ -33,4 +33,4 @@ class Int16:
     
     # Get as hex string.
     def as_hex(self):
-        return f"0x{self.value:04X}"
+        return f"{self.value:04X}"
