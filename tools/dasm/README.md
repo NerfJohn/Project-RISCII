@@ -46,3 +46,14 @@ There's a limited number of 'patterns' for instructions:
 - command operation (opcd-set vals)
 
 Narrowing down the pattern tends to be a 1) determine the opcode then 2) check or a certain flag
+
+## General Features
+
+Hoping for it to generally work as such:
+
+- Basic:      convert binary into single file assembly- simple instructions + .data arrays of signed ints
+- Helpful:    prepend address indicators to file to ease determining how stuff lays out in memory
+- Critical:   indicates if instruction included additional "flags" (ie benign non-zeroed bits)
+- Analytics:  include (via comments) general observations (size per section, type distribution, etc)
+
+Data is generally put into created output file, though would be nice if it could be printed to stdout (ie analytics + critical issues, not actul resolutions).

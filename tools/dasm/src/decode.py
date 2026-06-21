@@ -3,7 +3,7 @@
 # by John Eslinger
 ################################################################################
 
-# Common ISA definitions.
+# Common ISA opcodes.
 __opcodes = {
     0:  "NOP",
     1:  "SWP",
@@ -51,3 +51,19 @@ def __get_flags(word: int):
         if (0x0200 & word): flags += "p"
         if (0x0100 & word): flags += "c"
     return flags
+
+################################################################################
+# Interpret immediate for configurable size and sign.
+def __get_imm(word: int, bits: int, signed: bool):
+    # Extract (immediate always LSb justified).
+    mask = (0xFFFF & ~(0xFFFF << bits))
+    imm  = mask & word
+
+    # Apply sign.
+    return imm - (mask + 1) if signed and (imm >> (bits - 1)) else imm
+
+################################################################################
+# Interpret register number for configurable LSb.
+def __get_reg(word: int, lsb: int):
+    # Extract.
+    return 0x0007 & (word >> lsb)
