@@ -23,8 +23,12 @@ class Int16:
     def copy(self):
         return copy.copy(self)
     
-    # Get as integer.
+    # Get as (signed) integer.
     def as_int(self):
+        return self.value if self.value < 0x8000 else self.value - 0x10000
+    
+    # Get as (unsigned) integer.
+    def as_uint(self):
         return self.value
     
     # Get as hex string.

@@ -14,18 +14,13 @@ def main():
     print("Arguments:", sys.argv[1:])
 
     # Create a bytes object
-    data = bytes([0xDE, 0xAD, 0x0E, 0xEF])
+    data = bytes([0xFF, 0xFF])
 
     foo = int16.Int16(data)
     print(foo)
     print(foo.as_int())
+    print(foo.as_uint())
     print(foo.as_hex())
-
-    bar = foo.copy()
-    print(bar)
-    print(bar.as_int())
-    print(bar.as_hex())
-
 
 if __name__ == "__main__":
     main()
