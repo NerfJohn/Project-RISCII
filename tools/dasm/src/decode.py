@@ -29,16 +29,34 @@ def __get_type(word: int):
     # Extract opcode.
     opcode = (0xF000 & word) >> 12
 
+    # ISA opcode definitions.
+    opcodes = {
+        0:  "NOP",
+        1:  "SWP",
+        2:  "BRC",
+        3:  "HLT",
+        4:  "STR",
+        5:  "LDR",
+        6:  "JPR",
+        7:  "JLR",
+        8:  "ADD",
+        9:  "SUB",
+        10: "LBI",
+        11: "XOR",
+        12: "SHL",
+        13: "SHR",
+        14: "ORR",
+        15: "AND"
+    }
+
     # Determine opcode.
-    return __opcodes.get(opcode, lambda: None)
+    return opcodes.get(opcode, lambda: None)
 
 ################################################################################
 # Interpret flags from instruction (based on opcode).
 def __get_flags(word: int):
     # Extract type.
-    opcode = (0xF000 & word) >> 12
-    itype  = __opcodes.get(opcode, lambda: None)
-    if itype == None: return None # "short circuit" safety
+    itype = __get_type(word)
 
     # Determine (assembly explicit) flags.
     flags = ""

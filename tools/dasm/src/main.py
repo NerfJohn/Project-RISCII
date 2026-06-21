@@ -21,5 +21,10 @@ def main():
     print(img.text)
     print(img.data)
 
+    foo = int16.Int16(img.text)
+    print(foo.as_hex())
+    print(decode.__get_type(foo.as_uint()))
+    print(decode.__get_flags(foo.as_uint()))
+
 if __name__ == "__main__":
     main()
