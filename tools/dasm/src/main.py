@@ -15,14 +15,15 @@ def main():
     print("Arguments:", sys.argv[1:])
 
     # Create a bytes object
-    data = bytes([0x43, 0xFF])
+    data = bytes([0x61, 0xdF])
 
     foo = int16.Int16(data)
     print(foo)
     print(foo.as_int())
     print(foo.as_uint())
-    print(foo.as_hex())
+    print(f"0x{foo.as_hex()}")
     print(decode.__get_type(foo.as_uint()))
+    print(f"%{decode.__get_flags(foo.as_uint())}")
 
 if __name__ == "__main__":
     main()
