@@ -6,6 +6,7 @@
 import sys
 import int16
 import decode
+import image
 
 def main():
     print("Hello, World!")
@@ -14,19 +15,11 @@ def main():
     print("Script name:", sys.argv[0])
     print("Arguments:", sys.argv[1:])
 
-    # Create a bytes object
-    data = bytes([0x4d, 0x59])
-
-    foo = int16.Int16(data)
-    print(foo)
-    print(foo.as_int())
-    print(foo.as_uint())
-    print(f"0x{foo.as_hex()}")
-    print(decode.__get_type(foo.as_uint()))
-    print(f"%{decode.__get_flags(foo.as_uint())}")
-    print(decode.__get_imm(foo.as_uint(), 5, True))
-    print(decode.__get_reg(foo.as_uint(), 0))
-    print(decode.__get_reg(foo.as_uint(), 9))
+    r = image.parse_image(sys.argv[1])
+    print(r.readFile)
+    print(r.resultMsg)
+    print(r.text)
+    print(r.data)
 
 if __name__ == "__main__":
     main()
