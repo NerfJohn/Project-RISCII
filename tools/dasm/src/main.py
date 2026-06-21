@@ -15,11 +15,11 @@ def main():
     print("Script name:", sys.argv[0])
     print("Arguments:", sys.argv[1:])
 
-    r = image.parse_image(sys.argv[1])
-    print(r.readFile)
-    print(r.resultMsg)
-    print(r.text)
-    print(r.data)
+    img = image.BinImage()
+    r = image.parse_image(sys.argv[1], img)
+    print (r)
+    print(img.text)
+    print(img.data)
 
 if __name__ == "__main__":
     main()
