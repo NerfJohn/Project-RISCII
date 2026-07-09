@@ -7,5 +7,4 @@
 class DataModel():
     # Input Arguments.
     m_inFile   = ""
-    m_showHelp = False
     m_outFile  = ""

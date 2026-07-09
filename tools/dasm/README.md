@@ -17,6 +17,21 @@ Informally track "cliff notes" regarding tool's design.
 
 ---
 
+## Usage
+
+Used by calling `run.sh` with any required arguments. Calling `run.sh -h` shows the following:
+
+```
+RISCII Disassembler- convert bin to assembly
+Usage: ./run.sh [opts] <file>
+
+Options:
+    -h        show this menu and exit
+    -o <file> set output file name
+```
+
+In input file (ie binary image) is required. The output file name/path can be specified or will default to the input file name/path with a `.dasm.asm` extension.
+
 ## User Story
 
 This tool is meant to solve a few issues:

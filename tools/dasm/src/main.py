@@ -9,6 +9,7 @@ import decode
 import image
 
 import DataModel
+import CliOpt
 
 def main():
     """
@@ -31,7 +32,9 @@ def main():
     """
 
     a = DataModel.DataModel()
-    print(a.m_showHelp)
+    CliOpt.process_getCliArgs(a)
+    print(a.m_inFile)
+    print(a.m_outFile)
 
 if __name__ == "__main__":
     main()
