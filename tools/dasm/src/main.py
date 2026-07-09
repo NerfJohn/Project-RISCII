@@ -8,7 +8,10 @@ import int16
 import decode
 import image
 
+import DataModel
+
 def main():
+    """
     print("Hello, World!")
 
     print("Total arguments:", len(sys.argv))
@@ -25,6 +28,10 @@ def main():
     print(foo.as_hex())
     print(decode.__get_type(foo.as_uint()))
     print(decode.__get_flags(foo.as_uint()))
+    """
+
+    a = DataModel.DataModel()
+    print(a.m_showHelp)
 
 if __name__ == "__main__":
     main()
