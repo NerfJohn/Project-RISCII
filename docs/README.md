@@ -3,27 +3,22 @@
 
 **Purpose**
 
-Folder for storing the project's documentation. Includes all levels of documentation (though focused on "black box" details and interfaces for each level's main deliverables).
+Folder for storing project documentation- usually common docs and high level deliverables.
 
 **Overview**
 
 - [Legend](#legend)
 
-**Common Terms**
-
-|Term            |Description                                     |
-|----------------|------------------------------------------------|
-|---             |---                                             |
-
 ---
 
 ## Legend
 
-Documents have a designation number indicating the level they pertain to. Below is a quick summary.
+Documents have designation numbers indicating their "level". Below is a quick summary.
 
-- **Level 5:** PR5xxx
-- **Level 4:** PR4xxx
-- **Level 3:** PR3xxx
-- **Level 2:** PR2xxx
-- **Level 1:** PR1xxx
+- **Level 5:** PR5xxx (OS level)
+- **Level 4:** PR4xxx (Firmware level)
+- **Level 3:** PR3xxx (Compiler level)
+- **Level 2:** PR2xxx (Processor level)
+- **Level 1:** PR1xxx (PCB level)
 
+Additionally, level 0 (PR0xxx) is used for repo and non-deliverable related documents.
