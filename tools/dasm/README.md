@@ -1,74 +1,84 @@
 # RISCII Disassembler (dasm)
-*"Technical notes for development and design"*
+*"RISCII binary to text converter"*
+
+> **TODO** This document is currently in progress/revision. Contents may be incomplete or contain semantic errors.
 
 **Purpose**
 
-Informally track "cliff notes" regarding tool's design.
+To convert RISII binaries to assembly for debug/testing.
 
 **Overview**
 
-> **NOTE**: This is an informal document meant to keep track of design notes for latet development/maintenance. Thus, this document is especially prone to clumsy pacing and rushed notes.
+- [Goal](#goal)
 
 **Common Terms**
 
-|Term            |Description                                     |
-|----------------|------------------------------------------------|
-|---             |---                                             |
+|Term             |Description                                         |
+|-----------------|----------------------------------------------------|
+|dasm             |RISCII disassembler (topic of this document)        |
+|word             |16-bit value                                        |
+
+**Supporting Docs**
+
+|Term             |Description                                         |
+|-----------------|----------------------------------------------------|
+|PR2000           |RISCII ISA (defines how to interpret instructions)  |
+|PR2001           |uP Manual  (defines structure of binary)            |
 
 ---
 
-## Usage
+## Goal
 
-Used by calling `run.sh` with any required arguments. Calling `run.sh -h` shows the following:
+Program to convert RISCII binary to assembly/readable file. This allows for debugging created binaries and thus supports levels 3-5 (and partially level 2 for confirming test binaries).
+
+## Inputs
+
+Program takes 1 binary file and various command line arguments.
+
+Binary file is organized into two contiguous sections- text and data (in that order) -made of big endian words. Each section consists of a single metadata word equal to the number of following words that are part of that section. Each section must consist of at least one non-metadata word. The max size of the binary is 64 KB (32,768 words). See outline below.
+
+|Area Name    |# of Words|Description            |
+|-------------|----------|-----------------------|
+|text metadata|1         |# of instructions      |
+|text values  |1-32765   |instructions of program|
+|data metadata|1         |# of words of init data|
+|data values  |1-32765   |pre-initialized data   |
+
+Program takes in command line arguments- organized into flags, options, and files (see table below). Arguments can be given in any order. The program expects at least one file (ie the binary file).
+
+|Argument|Syntax                               |Example   |
+|--------|-------------------------------------|----------|
+|flag    |-<1-2 letters>                       |-h        |
+|option  |-<1-3 letters> <no '-' prefix string>|-o out.asm|
+|file    |<no '-' prefix string>               |in.asm    |
+
+## Outputs
+
+Program- on a successful run -outputs an assembly file based on the input file. On an unsuccessful run, the program prints out the issue as an error.
+
+Output file follows basic RISCII assembly format. Text section begins with `__START:` and contains each instruction using std argument ordering (ie `<opcode> <flags> <registers> <immediate> <label>`). Data section is expressed using a single data array (ie `.data (<word hex values>)`). 4-space tabs and newlines are used to format the file for readability. See example below.
 
 ```
-RISCII Disassembler- convert bin to assembly
-Usage: ./run.sh [opts] <file>
+__START:
+ADD         $0  $2  $3
+SUB         $1  $1      -10
+BRC %nzpc               5
+_la                             foobar
+HLT
 
-Options:
-    -h        show this menu and exit
-    -o <file> set output file name
+.data (
+0xABCD  0x5555  0x0111  0x0000
+0x0000  0xD0F0  0xFF00  0x0000
+0x89AA  0xFFCC
+)
 ```
 
-In input file (ie binary image) is required. The output file name/path can be specified or will default to the input file name/path with a `.dasm.asm` extension.
+Program output can be controlled using command line arguments. This includes both printed out outputs and file output. See examples below.
 
-## User Story
-
-This tool is meant to solve a few issues:
-
-1. General insurance policy for future debugging (i.e. if stuff gets REALLY bad and binaries are in question)
-2. A more direct way to test the asmld.exe program during development
-
-## Approach
-
-**Values**
-
-Image effectively a bunch of 16-bit values. Will want be read them in various ways:
-
-- as integer: either to get metadata count or for easier bit masking
-- as hex: likely best way to print out
-
-**Decoding**
-
-There's a limited number of 'patterns' for instructions:
-
-- Std data operations (opcd-dst-sr1-000-sr2 and opcd-dst-sr1-1-5bimm)
-    - JPR and JLR use the immediate version
-- SHR operation (opcd-dst-sr1-0-a-0-sr2 and opcd-dst-sr1-1-a-4bim)
-- LBI operation (opcd-dst-s-8bimmval)
-- memory operations (opcd-dst-sr1-6bofst)
-- BRC operation (opcd-flgs-8bimmval)
-- command operation (opcd-set vals)
-
-Narrowing down the pattern tends to be a 1) determine the opcode then 2) check or a certain flag
-
-## General Features
-
-Hoping for it to generally work as such:
-
-- Basic:      convert binary into single file assembly- simple instructions + .data arrays of signed ints
-- Helpful:    prepend address indicators to file to ease determining how stuff lays out in memory
-- Critical:   indicates if instruction included additional "flags" (ie benign non-zeroed bits)
-- Analytics:  include (via comments) general observations (size per section, type distribution, etc)
-
-Data is generally put into created output file, though would be nice if it could be printed to stdout (ie analytics + critical issues, not actul resolutions).
+|CLI Argument |Description               |Arguments                          |
+|-------------|--------------------------|-----------------------------------|
+|-h           |print help menu + exit    |NA                                 |
+|-o <filename>|set name of output file   |name of output file                |
+|-ll <level>  |set verbosity of program  |SILENT, ERROR, WARNING, INFO, DEBUG|
+|-v           |append raw hex values     |NA                                 |
+|-a           |prepend assembly addresses|NA                                 |
