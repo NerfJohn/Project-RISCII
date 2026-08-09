@@ -20,7 +20,7 @@ driver, device, etc).
 import sys
 from enum import Enum
 
-import DataModel
+import old.DataModel as DataModel
 
 ################################################################################
 # Domain Layer

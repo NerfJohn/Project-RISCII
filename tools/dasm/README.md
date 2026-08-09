@@ -31,7 +31,7 @@ To convert RISII binaries to assembly for debug/testing.
 
 Program to convert RISCII binary to assembly/readable file. This allows for debugging created binaries and thus supports levels 3-5 (and partially level 2 for confirming test binaries).
 
-## Inputs
+### Inputs
 
 Program takes 1 binary file and various command line arguments.
 
@@ -52,7 +52,7 @@ Program takes in command line arguments- organized into flags, options, and file
 |option  |-<1-3 letters> <no '-' prefix string>|-o out.asm|
 |file    |<no '-' prefix string>               |in.asm    |
 
-## Outputs
+### Outputs
 
 Program- on a successful run -outputs an assembly file based on the input file. On an unsuccessful run, the program prints out the issue as an error.
 

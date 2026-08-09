@@ -1,40 +1,30 @@
 ################################################################################
-# main.py: head of "disassembler" tool/program for RISCII images.
-# by John Eslinger
+# main.py: head of "disassembler" tool/program for RISCII binary images.
 ################################################################################
 
-import sys
-import int16
-import decode
-import image
+from LevelLog import LevelLog, LevelLogLevel as Lvl
 
-import DataModel
-import CliOpt
-
+################################################################################
+# Root of program- conducts main procedure.
 def main():
-    """
-    print("Hello, World!")
+    a = LevelLog(Lvl.DEBUG)
 
-    print("Total arguments:", len(sys.argv))
-    print("Script name:", sys.argv[0])
-    print("Arguments:", sys.argv[1:])
+    a.print(Lvl.SILENT, "silent")
+    a.print(Lvl.ERROR, "error")
+    a.print(Lvl.WARNING, "warning")
+    a.print(Lvl.INFO, "info")
+    a.print(Lvl.DEBUG, "debug")
 
-    img = image.BinImage()
-    r = image.parse_image(sys.argv[1], img)
-    print (r)
-    print(img.text)
-    print(img.data)
+    a.setLevel(Lvl.WARNING)
+    print(a)
 
-    foo = int16.Int16(img.text)
-    print(foo.as_hex())
-    print(decode.__get_type(foo.as_uint()))
-    print(decode.__get_flags(foo.as_uint()))
-    """
+    a.print(Lvl.SILENT, "silent")
+    a.print(Lvl.ERROR, "error")
+    a.print(Lvl.WARNING, "warning")
+    a.print(Lvl.INFO, "info")
+    a.print(Lvl.DEBUG, "debug")
 
-    a = DataModel.DataModel()
-    CliOpt.process_getCliArgs(a)
-    print(a.m_inFile)
-    print(a.m_outFile)
-
+################################################################################
+# Starting point of program.
 if __name__ == "__main__":
     main()
