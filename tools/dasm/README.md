@@ -49,8 +49,8 @@ Program takes in command line arguments- organized into flags, options, and file
 |Argument|Syntax                               |Example   |
 |--------|-------------------------------------|----------|
 |flag    |-<1-2 letters>                       |-h        |
-|option  |-<1-3 letters> <no '-' prefix string>|-o out.asm|
-|file    |<no '-' prefix string>               |in.asm    |
+|option  |-<1-2 letters> <no '-' prefix string>|-o out.asm|
+|file    |<no '-' prefix string>               |in.bin    |
 
 ### Outputs
 

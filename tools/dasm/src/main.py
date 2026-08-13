@@ -2,27 +2,19 @@
 # main.py: head of "disassembler" tool/program for RISCII binary images.
 ################################################################################
 
+import sys
+
 from LevelLog import LevelLog, LevelLogLevel as Lvl
+from CliOpt import CliOpt, CliOptToken as Tkn
 
 ################################################################################
 # Root of program- conducts main procedure.
 def main():
     a = LevelLog(Lvl.DEBUG)
+    b = CliOpt(sys.argv[1:], ["h"], ["o", "ll"])
 
-    a.print(Lvl.SILENT, "silent")
-    a.print(Lvl.ERROR, "error")
-    a.print(Lvl.WARNING, "warning")
-    a.print(Lvl.INFO, "info")
-    a.print(Lvl.DEBUG, "debug")
-
-    a.setLevel(Lvl.WARNING)
-    print(a)
-
-    a.print(Lvl.SILENT, "silent")
-    a.print(Lvl.ERROR, "error")
-    a.print(Lvl.WARNING, "warning")
-    a.print(Lvl.INFO, "info")
-    a.print(Lvl.DEBUG, "debug")
+    while b.nextOpt():
+        print(f"{b.m_type}, {b.m_tkn}, {b.m_value}")
 
 ################################################################################
 # Starting point of program.
